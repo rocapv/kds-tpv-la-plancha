@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TPV · La Plancha</title>
+<link rel="stylesheet" href="/css/estilo.css">
+</head>
+<body>
+<header class="barra">
+  <h1>TPV · La Plancha</h1>
+  <button id="b-mesas">Mesas</button>
+  <button id="b-llevar">Para llevar</button>
+  <span class="hueco"></span>
+  <span id="empleado" class="tenue"></span>
+  <button id="b-salir">Salir</button>
+  <span id="conexion" class="conexion"></span>
+</header>
+
+<!-- Acceso por PIN -->
+<section id="v-pin" class="pin">
+  <h2>Introduce tu PIN</h2>
+  <div class="pantalla" id="pin-pantalla"></div>
+  <div class="teclado" id="teclado"></div>
+  <p class="tenue">Demo: Laura 1111 · Marc 2222 · Pau 9999</p>
+</section>
+
+<section id="v-trabajo" class="tpv" hidden>
+  <div class="izq">
+    <div id="v-mesas"></div>
+    <div id="v-carta" hidden>
+      <div class="cats" id="cats"></div>
+      <div class="productos" id="productos"></div>
+    </div>
+  </div>
+  <aside class="der">
+    <div class="ticket-cab"><h2 id="t-titulo">Selecciona una mesa</h2><div id="t-sub" class="tenue"></div></div>
+    <div class="lineas" id="lineas"></div>
+    <div class="ticket-pie">
+      <div class="total"><span>Total</span><span id="t-total">0,00 €</span></div>
+      <div class="botones">
+        <button id="b-enviar" class="primario" disabled>Enviar a cocina</button>
+        <button id="b-cobrar" class="ok" disabled>Cobrar</button>
+        <button id="b-imprimir" disabled>Imprimir ticket</button>
+        <button id="b-anular" class="mal" disabled>Anular</button>
+      </div>
+    </div>
+  </aside>
+</section>
+
+<dialog id="d-nota">
+  <h3 id="n-titulo"></h3>
+  <p class="tenue">Nota para cocina (opcional)</p>
+  <div class="fila">
+    <button data-n="Sin cebolla">Sin cebolla</button><button data-n="Sin pepinillo">Sin pepinillo</button>
+    <button data-n="Muy hecha">Muy hecha</button><button data-n="Poco hecha">Poco hecha</button>
+    <button data-n="Sin gluten">Sin gluten</button><button data-n="Sin hielo">Sin hielo</button>
+  </div>
+  <input id="n-texto" maxlength="120" style="width:100%" placeholder="Escribe una nota…">
+  <div class="fila"><label>Cantidad <input id="n-cant" type="number" min="1" max="50" value="1" style="width:5em"></label></div>
+  <div class="fila"><button id="n-cancelar">Cancelar</button><button id="n-ok" class="primario">Añadir</button></div>
+</dialog>
+
+<dialog id="d-cobro">
+  <h3>Cobrar <span id="c-total"></span></h3>
+  <div class="fila">
+    <button data-m="efectivo" class="primario">Efectivo</button>
+    <button data-m="tarjeta">Tarjeta</button>
+    <button data-m="bizum">Bizum</button>
+  </div>
+  <div id="c-efectivo">
+    <label>Entregado (€) <input id="c-entregado" type="number" step="0.01" min="0" style="width:8em"></label>
+    <div class="fila" id="c-rapidos"></div>
+    <p>Cambio: <b id="c-cambio">—</b></p>
+  </div>
+  <div class="fila"><button id="c-cancelar">Cancelar</button><button id="c-ok" class="ok">Confirmar cobro</button></div>
+</dialog>
+
+<dialog id="d-llevar">
+  <h3>Pedido para llevar</h3>
+  <input id="l-nombre" maxlength="60" placeholder="Nombre del cliente" style="width:100%">
+  <div class="fila"><button id="l-cancelar">Cancelar</button><button id="l-ok" class="primario">Crear</button></div>
+</dialog>
+
+<pre id="ticket-impreso"></pre>
+
+<script src="/js/comun.js"></script>
+<script src="/js/tpv.js"></script>
+</body>
+</html>

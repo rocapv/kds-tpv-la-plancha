@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Informe · La Plancha</title>
+<link rel="stylesheet" href="/css/estilo.css">
+</head>
+<body>
+<header class="barra">
+  <h1>Cierre de caja</h1>
+  <input type="date" id="fecha">
+  <span class="hueco"></span>
+  <a href="/"><button>Inicio</button></a>
+  <span id="conexion" class="conexion"></span>
+</header>
+<main class="informe">
+  <section class="kpis" id="kpis"></section>
+  <section class="dos">
+    <div class="caja"><h3>Más vendidos</h3><table id="top"></table></div>
+    <div class="caja"><h3>Por método de pago</h3><table id="metodos"></table>
+      <h3 style="margin-top:1rem">Tiempo medio de cocina</h3><table id="cocina"></table></div>
+  </section>
+  <section class="caja" style="margin-top:.8rem"><h3>Ventas por hora</h3><table id="horas"></table></section>
+</main>
+<script src="/js/comun.js"></script>
+<script>
+$('#fecha').value = new Date().toLocaleDateString('sv');
+$('#fecha').onchange = cargar;
+async function cargar() {
+  const d = await api('/informe?fecha=' + $('#fecha').value);
+  $('#kpis').innerHTML = [
+    ['Facturación', euro(d.total_cent)], ['Tickets', d.tickets], ['Ticket medio', euro(d.ticket_medio_cent)],
+    ['Base imponible', euro(d.base_cent)], ['IVA 10 %', euro(d.iva_cent)],
+  ].map(([k, v]) => `<div class="kpi"><span class="tenue">${k}</span><b>${v}</b></div>`).join('');
+  $('#top').innerHTML = '<tr><th>Producto</th><th class="num">Uds.</th><th class="num">Importe</th></tr>' +
+    d.top.map(t => `<tr><td>${esc(t.nombre)}</td><td class="num">${t.unidades}</td><td class="num">${euro(t.total_cent)}</td></tr>`).join('');
+  $('#metodos').innerHTML = d.por_metodo.map(m => `<tr><td>${m.metodo}</td><td class="num">${m.tickets}</td><td class="num">${euro(m.total_cent)}</td></tr>`).join('') || '<tr><td class="tenue">Sin cobros</td></tr>';
+  $('#cocina').innerHTML = d.cocina.map(c => `<tr><td>${c.estacion}</td><td class="num">${c.lineas} líneas</td><td class="num">${Math.floor(c.seg_medio / 60)} min ${c.seg_medio % 60} s</td></tr>`).join('') || '<tr><td class="tenue">Sin datos</td></tr>';
+  const max = Math.max(1, ...d.por_hora.map(h => +h.total_cent));
+  $('#horas').innerHTML = d.por_hora.map(h => `<tr><td style="width:4em">${h.hora}:00</td>
+    <td><div class="barra-h" style="width:${(h.total_cent / max * 100).toFixed(1)}%"></div></td>
+    <td class="num" style="width:7em">${euro(h.total_cent)}</td></tr>`).join('') || '<tr><td class="tenue">Sin ventas</td></tr>';
+}
+conectarWS(ev => { if (ev.tipo === 'mesas') cargar(); });
+cargar();
+</script>
+</body>
+</html>

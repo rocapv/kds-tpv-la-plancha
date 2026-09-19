@@ -1,0 +1,14 @@
+[Unit]
+Description=KDS + TPV La Plancha (FastAPI)
+After=network-online.target
+
+[Service]
+WorkingDirectory=@DIR@/backend
+Environment=KDS_DB_USER=roca
+Environment=KDS_DB_SOCKET=/run/mysqld/mysqld.sock
+ExecStart=@DIR@/backend/.venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8090
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=default.target
