@@ -233,6 +233,19 @@ class CierreCaja(BaseModel):
     notas: str | None = Field(None, max_length=200)
 
 
+class LineaSolicitada(BaseModel):
+    producto_id: int
+    cantidad: int = Field(1, ge=1, le=20)
+    notas: str | None = Field(None, max_length=120)
+
+
+class Solicitud(BaseModel):
+    mesa_id: int | None = None
+    cliente: str | None = Field(None, max_length=60)
+    nota: str | None = Field(None, max_length=160)
+    lineas: list[LineaSolicitada] = Field(min_length=1, max_length=40)
+
+
 class Ajuste(BaseModel):
     valor: str = Field(max_length=200)
 
@@ -1766,6 +1779,160 @@ async def mandar_simulacion(accion: str, ritmo: float | None = None,
 async def parar_simulacion():
     if simulacion.tarea:
         simulacion.tarea.cancel()
+
+
+# ─────────────── Cliente (sin sesión, solo desde la LAN del local) ───────────────
+# Todo lo de aquí lo abre el cliente con su teléfono tras leer el QR de la mesa. No hay PIN,
+# así que no se expone ni un dato interno: ni estación de cocina, ni empleados, ni importes
+# ajenos. Y nada de lo que se pulse llega a cocina por sí solo: primero lo acepta un camarero.
+def _cliente_puede_pedir() -> bool:
+    return ajustes_dict().get("cliente_pedidos", "si") == "si"
+
+
+@app.get("/api/publico/local")
+def publico_local():
+    a = ajustes_dict()
+    return {"nombre": a.get("local_nombre"), "mensaje": a.get("cliente_mensaje", ""),
+            "pedidos": _cliente_puede_pedir()}
+
+
+@app.get("/api/publico/carta")
+def publico_carta():
+    """La carta tal y como la ve un cliente: sin estación, sin bajas y sin nada interno."""
+    cats = q("SELECT id, nombre, color FROM categorias WHERE activa ORDER BY orden, id")
+    prods = q("""SELECT id, categoria_id, nombre, precio_cent, alergenos, disponible
+                 FROM productos WHERE activo ORDER BY categoria_id, orden, id""")
+    for c in cats:
+        c["productos"] = [p for p in prods if p["categoria_id"] == c["id"]]
+    return [c for c in cats if c["productos"]]
+
+
+@app.get("/api/publico/mesas")
+def publico_mesas():
+    """Solo nombres, para que el cliente diga dónde está sentado si el QR no lo trae."""
+    return q("SELECT id, nombre, zona FROM mesas ORDER BY zona, id")
+
+
+@app.post("/api/publico/solicitudes", status_code=201)
+async def publico_solicitar(d: Solicitud, request: Request):
+    if not _cliente_puede_pedir():
+        raise HTTPException(409, "Ahora mismo no se admiten pedidos desde la mesa")
+    if d.mesa_id and not q1("SELECT id FROM mesas WHERE id=%s", (d.mesa_id,)):
+        raise HTTPException(404, "Esa mesa no existe")
+    # Freno sencillo contra el niño que se aburre pulsando: 3 solicitudes por mesa sin resolver.
+    if d.mesa_id:
+        abiertas = q1("""SELECT COUNT(*) n FROM solicitudes
+                         WHERE mesa_id=%s AND estado='pendiente'""", (d.mesa_id,))["n"]
+        if abiertas >= 3:
+            raise HTTPException(429, "Ya hay pedidos de esta mesa esperando confirmación")
+
+    lineas = []
+    for l in d.lineas:
+        pr = q1("""SELECT id, nombre, precio_cent, disponible FROM productos
+                   WHERE id=%s AND activo""", (l.producto_id,))
+        if not pr:
+            raise HTTPException(404, "Ese producto ya no está en la carta")
+        if not pr["disponible"]:
+            raise HTTPException(409, f"{pr['nombre']} está agotado")
+        lineas.append((l, pr))
+
+    with conn() as c, c.cursor() as cur:
+        cur.execute("""INSERT INTO solicitudes (mesa_id, cliente, nota, origen_ip)
+                       VALUES (%s,%s,%s,%s)""",
+                    (d.mesa_id, (d.cliente or "").strip() or None, d.nota,
+                     request.client.host if request.client else None))
+        sid = cur.lastrowid
+        for l, _ in lineas:
+            cur.execute("""INSERT INTO solicitud_lineas (solicitud_id, producto_id, cantidad, notas)
+                           VALUES (%s,%s,%s,%s)""", (sid, l.producto_id, l.cantidad, l.notas))
+    await hub.emitir("solicitudes", solicitud_id=sid)          # suena en el TPV
+    total = sum(l.cantidad * pr["precio_cent"] for l, pr in lineas)
+    return {"id": sid, "estado": "pendiente", "total_cent": total,
+            "lineas": [{"nombre": pr["nombre"], "cantidad": l.cantidad,
+                        "precio_cent": pr["precio_cent"]} for l, pr in lineas]}
+
+
+@app.get("/api/publico/solicitudes/{sid}")
+def publico_estado_solicitud(sid: int):
+    """Lo que el cliente puede seguir desde su teléfono: su propia comanda y nada más."""
+    s = q1("""SELECT s.id, s.estado, s.pedido_id, s.creada_en, m.nombre AS mesa
+              FROM solicitudes s LEFT JOIN mesas m ON m.id=s.mesa_id WHERE s.id=%s""", (sid,))
+    if not s:
+        raise HTTPException(404, "No encuentro ese pedido")
+    s["lineas"] = q("""SELECT sl.cantidad, sl.notas, p.nombre, p.precio_cent
+                       FROM solicitud_lineas sl JOIN productos p ON p.id=sl.producto_id
+                       WHERE sl.solicitud_id=%s""", (sid,))
+    s["total_cent"] = sum(l["cantidad"] * l["precio_cent"] for l in s["lineas"])
+    if s["pedido_id"]:
+        cocina = q("""SELECT estado, COUNT(*) n FROM lineas_pedido
+                      WHERE pedido_id=%s AND estado<>'anulada' GROUP BY estado""", (s["pedido_id"],))
+        s["cocina"] = {c["estado"]: c["n"] for c in cocina}
+    return s
+
+
+# ─────────────── Solicitudes (sala) ───────────────
+@app.get("/api/solicitudes")
+def listar_solicitudes(u: dict = Depends(exige("camarero", "encargado"))):
+    filas = q("""SELECT s.*, m.nombre AS mesa FROM solicitudes s
+                 LEFT JOIN mesas m ON m.id=s.mesa_id
+                 WHERE s.estado='pendiente' ORDER BY s.creada_en""")
+    for f in filas:
+        f["lineas"] = q("""SELECT sl.cantidad, sl.notas, sl.producto_id, p.nombre, p.precio_cent
+                           FROM solicitud_lineas sl JOIN productos p ON p.id=sl.producto_id
+                           WHERE sl.solicitud_id=%s""", (f["id"],))
+        f["total_cent"] = sum(l["cantidad"] * l["precio_cent"] for l in f["lineas"])
+    return filas
+
+
+@app.post("/api/solicitudes/{sid}/aceptar")
+async def aceptar_solicitud(sid: int, u: dict = Depends(exige("camarero", "encargado"))):
+    """La convierte en pedido de verdad: a partir de aquí es una comanda como cualquier otra."""
+    s = q1("SELECT * FROM solicitudes WHERE id=%s", (sid,))
+    if not s:
+        raise HTTPException(404, "Solicitud no encontrada")
+    if s["estado"] != "pendiente":
+        raise HTTPException(409, f"Esa solicitud ya está {s['estado']}")
+    lineas = q("""SELECT sl.*, p.precio_cent, p.estacion, p.disponible, p.nombre
+                  FROM solicitud_lineas sl JOIN productos p ON p.id=sl.producto_id
+                  WHERE sl.solicitud_id=%s""", (sid,))
+    agotados = [l["nombre"] for l in lineas if not l["disponible"]]
+    if agotados:
+        raise HTTPException(409, "Se ha agotado: " + ", ".join(agotados))
+
+    abierto = q1("SELECT id FROM pedidos WHERE mesa_id=%s AND estado='abierto'", (s["mesa_id"],)) \
+        if s["mesa_id"] else None
+    with conn() as c, c.cursor() as cur:
+        if abierto:
+            pid = abierto["id"]                               # se suma a lo que ya tiene la mesa
+        else:
+            cur.execute("""INSERT INTO pedidos (tipo, mesa_id, empleado_id, cliente)
+                           VALUES (%s,%s,%s,%s)""",
+                        ("sala" if s["mesa_id"] else "llevar", s["mesa_id"], u["id"], s["cliente"]))
+            pid = cur.lastrowid
+        for l in lineas:
+            cur.execute("""INSERT INTO lineas_pedido
+                           (pedido_id, producto_id, cantidad, precio_cent, notas, estacion)
+                           VALUES (%s,%s,%s,%s,%s,%s)""",
+                        (pid, l["producto_id"], l["cantidad"], l["precio_cent"],
+                         l["notas"], l["estacion"]))
+        cur.execute("""UPDATE solicitudes SET estado='aceptada', pedido_id=%s,
+                       atendida_por=%s, resuelta_en=NOW() WHERE id=%s""", (pid, u["id"], sid))
+    await hub.emitir("mesas")
+    await hub.emitir("solicitudes", solicitud_id=sid)
+    return pedido_completo(pid)
+
+
+@app.post("/api/solicitudes/{sid}/rechazar")
+async def rechazar_solicitud(sid: int, u: dict = Depends(exige("camarero", "encargado"))):
+    s = q1("SELECT estado FROM solicitudes WHERE id=%s", (sid,))
+    if not s:
+        raise HTTPException(404, "Solicitud no encontrada")
+    if s["estado"] != "pendiente":
+        raise HTTPException(409, f"Esa solicitud ya está {s['estado']}")
+    q("""UPDATE solicitudes SET estado='rechazada', atendida_por=%s, resuelta_en=NOW()
+         WHERE id=%s""", (u["id"], sid))
+    await hub.emitir("solicitudes", solicitud_id=sid)
+    return {"ok": True}
 
 
 # ─────────────── Frontend estático ───────────────

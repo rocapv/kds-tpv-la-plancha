@@ -40,6 +40,7 @@ La portada es el **menú principal**, con el trabajo pendiente de cada estación
 | Recogida | Pantalla de sala con los números «para llevar» listos (pública, sin PIN) |
 | Ajustes | Datos fiscales del local, IVA y minutos de aviso del KDS |
 | API | Documentación OpenAPI generada sola |
+| **Carta del cliente** | `cliente.html` · pública, en el móvil del cliente tras el QR de la mesa |
 
 ## Ticket y factura: sin impresora
 
@@ -171,6 +172,29 @@ Lo que el encargado apunta en la carta viaja con el producto hasta donde hace fa
 TPV lo lleva debajo del nombre, el diálogo de la nota lo repite antes de confirmar la comanda, cada
 línea del ticket lo arrastra y la pantalla de cocina lo enseña en rojo junto al plato. Vaciar el
 campo en la carta lo borra de verdad (un `null` explícito), para que nadie sirva con un dato viejo.
+
+## En el móvil
+
+Dos pantallas están pensadas para el teléfono, no adaptadas a él:
+
+- **El TPV del camarero.** En pantallas de menos de 800 px el ticket deja de ser una columna y pasa a
+  ser una hoja que sube desde abajo: plegada enseña el total y los botones, y se despliega tocando el
+  tirador. Los botones pasan a 46 px de alto para que se acierte con el dedo mientras se anda.
+- **La carta del cliente** (`/cliente.html?mesa=3`). Sin instalar nada y sin PIN: la abre el cliente
+  al leer el QR de su mesa.
+
+## El cliente pide desde su mesa
+
+El cliente ve la carta, añade a su cesta y envía la comanda. **Lo que envía no llega a cocina**: entra
+en una bandeja del TPV, y un camarero la acepta o la rechaza. Esa frontera es deliberada: el QR de una
+mesa no puede ser una puerta abierta a la cocina. Al aceptarla se convierte en un pedido normal, y si
+la mesa ya tenía uno abierto se le suma.
+
+El cliente sigue su propia comanda desde el teléfono —pendiente, aceptada, y qué lleva cocina— y no ve
+nada más: la carta pública no expone estaciones, ni empleados, ni pedidos ajenos. Hay un freno de tres
+solicitudes sin resolver por mesa, para el niño que se aburre pulsando.
+
+Se puede apagar entero desde Ajustes (`cliente_pedidos`), dejando la carta como simple consulta.
 
 ## Copias de seguridad
 

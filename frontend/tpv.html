@@ -12,6 +12,7 @@
   <h1>TPV · Cantina Vesta-9</h1>
   <button id="b-mesas">Mesas</button>
   <button id="b-llevar">Para llevar</button>
+  <button id="b-solicitudes" hidden>📲 <span id="n-solicitudes">0</span></button>
   <span class="hueco"></span>
   <span id="conexion" class="conexion"></span>
 </header>
@@ -38,6 +39,13 @@
     </div>
   </aside>
 </section>
+
+<dialog id="d-solicitudes">
+  <h3>Comandas pedidas desde las mesas</h3>
+  <p class="tenue">Las envía el cliente con su teléfono. Nada llega a cocina hasta que las aceptas.</p>
+  <div id="lista-solicitudes"></div>
+  <div class="fila"><button id="s-cerrar" class="primario">Cerrar</button></div>
+</dialog>
 
 <dialog id="d-nota">
   <h3 id="n-titulo"></h3>

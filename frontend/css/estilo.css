@@ -348,3 +348,84 @@ body.recogida { overflow: hidden; }
                        background: var(--acento); color: #fff; border-radius: 999px;
                        padding: .1rem .45rem; font-size: .7rem; font-weight: 700; }
 .paleta { flex-wrap: wrap; margin-bottom: .5rem; }
+
+/* ═══ Carta del cliente (móvil primero) ═══ */
+/* Esta pantalla se mira de pie, con una mano y con el sol encima: tipografía grande,
+   objetivos táctiles de 44 px y la cesta fija abajo, donde llega el pulgar. */
+body.cliente { padding-bottom: 5.5rem; }
+.barra-cliente { position: sticky; top: 0; z-index: 20; display: flex; align-items: center; gap: .6rem;
+  padding: .7rem 1rem; background: var(--panel); border-bottom: 1px solid var(--borde); }
+.barra-cliente h1 { font-size: 1.15rem; }
+.barra-cliente .hueco { flex: 1; }
+.barra-cliente .seguir { background: var(--acento); color: #111; border-color: var(--acento); font-weight: 700; }
+.aviso-local { margin: 0; padding: .7rem 1rem; background: #ffffff0c; color: var(--tenue); font-size: .95rem; }
+
+.cats-cliente { position: sticky; top: 3.4rem; z-index: 19; display: flex; gap: .4rem; overflow-x: auto;
+  padding: .6rem 1rem; background: var(--fondo); border-bottom: 1px solid var(--borde); scrollbar-width: none; }
+.cats-cliente::-webkit-scrollbar { display: none; }
+.cats-cliente button { white-space: nowrap; border-color: var(--color, var(--borde)); min-height: 44px; }
+.cats-cliente button.activa { background: var(--color, var(--acento)); color: #fff; font-weight: 700; }
+
+.carta-cliente { padding: 0 1rem 1rem; max-width: 720px; margin: 0 auto; }
+.carta-cliente h2 { margin: 1.4rem 0 .6rem; padding-left: .6rem; border-left: 5px solid var(--acento); font-size: 1.1rem; }
+.plato { display: grid; grid-template-columns: 1fr auto 44px; gap: .6rem; align-items: center;
+  padding: .8rem 0; border-bottom: 1px solid var(--borde); }
+.plato .datos b { display: block; font-size: 1.02rem; }
+.plato .alerg { display: block; color: var(--aviso); font-size: .85rem; }
+.plato .precio { font-variant-numeric: tabular-nums; font-weight: 700; }
+.plato .sumar { width: 44px; height: 44px; border-radius: 50%; font-size: 1.4rem; line-height: 1;
+  background: var(--acento); border-color: var(--acento); color: #111; padding: 0; }
+.plato .sumar.pulsado { transform: scale(.85); background: var(--ok); border-color: var(--ok); }
+.plato.agotado { opacity: .5; }
+
+.cesta { position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; display: flex; gap: .6rem;
+  padding: .7rem 1rem calc(.7rem + env(safe-area-inset-bottom)); background: var(--panel);
+  border-top: 1px solid var(--borde); box-shadow: 0 -6px 20px #0006; }
+.cesta .ver-cesta { flex: 1; text-align: left; min-height: 48px; }
+.cesta .primario { min-width: 7rem; min-height: 48px; font-size: 1.05rem; }
+.linea-cesta { display: grid; grid-template-columns: 2.2rem 2rem 2.2rem 1fr auto; gap: .5rem;
+  align-items: center; padding: .45rem 0; border-bottom: 1px dashed var(--borde); }
+.linea-cesta button { min-width: 2.2rem; min-height: 2.2rem; padding: 0; font-size: 1.2rem; }
+.linea-cesta .cant { text-align: center; font-weight: 700; }
+.linea-cesta .importe { font-variant-numeric: tabular-nums; }
+.total-cesta { justify-content: space-between; font-size: 1.2rem; font-weight: 800; }
+.campo { display: block; margin: .7rem 0; color: var(--tenue); font-size: .9rem; }
+.campo input, .campo select { display: block; width: 100%; margin-top: .25rem; min-height: 44px; font-size: 1rem; }
+.estado-grande { font-size: 1.15rem; font-weight: 700; padding: .7rem; border-radius: var(--r); background: var(--panel2); }
+.estado-grande.aceptada { background: #145a32; }
+.estado-grande.rechazada { background: var(--mal); }
+
+@media (max-width: 420px) {
+  .carta-cliente h2 { font-size: 1.05rem; }
+  dialog { min-width: auto; width: calc(100vw - 2rem); }
+}
+
+/* ═══ TPV en el móvil del camarero ═══ */
+/* La comanda se toma de pie, junto a la mesa: el ticket pasa a ser una hoja que sube
+   desde abajo. Plegado enseña total y botones; desplegado, las líneas. */
+#b-solicitudes.urgente { background: var(--acento); color: #111; border-color: var(--acento); font-weight: 700; }
+.solicitud { background: var(--panel2); border: 1px solid var(--borde); border-radius: var(--r);
+  padding: .7rem .9rem; margin-bottom: .7rem; }
+.solicitud header { display: flex; justify-content: space-between; align-items: baseline; gap: .5rem; }
+.solicitud ul { margin: .4rem 0; padding-left: 1.1rem; }
+.solicitud .nota { color: var(--aviso); margin: .3rem 0; }
+
+@media (max-width: 800px) {
+  .tpv { grid-template-columns: 1fr; height: auto; }
+  .tpv .izq { padding: .8rem .8rem 12rem; }          /* hueco para la hoja del ticket */
+  .tpv .der { position: fixed; left: 0; right: 0; bottom: 0; z-index: 25; max-height: 82vh;
+    border-left: 0; border-top: 1px solid var(--borde); box-shadow: 0 -8px 24px #0007;
+    transform: translateY(calc(100% - 11.5rem)); transition: transform .22s ease; }
+  body.ticket-abierto .tpv .der { transform: translateY(0); }
+  .ticket-cab { cursor: pointer; position: relative; padding-top: 1.3rem; }
+  .ticket-cab::before { content: ''; position: absolute; top: .5rem; left: 50%; width: 2.5rem; height: 4px;
+    margin-left: -1.25rem; border-radius: 2px; background: var(--borde); }   /* tirador */
+  .lineas { max-height: 46vh; }
+  .ticket-pie .botones button { min-height: 46px; }
+  .mesas { grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); }
+  .productos { grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); }
+  .producto { min-height: 76px; }
+  header.barra { flex-wrap: wrap; gap: .4rem .6rem; padding: .5rem .7rem; }
+  header.barra h1 { font-size: 1rem; }
+  .kds { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
+}

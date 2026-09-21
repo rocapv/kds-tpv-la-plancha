@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Carta · Cantina Vesta-9</title>
+<link rel="stylesheet" href="/css/estilo.css?v=__V__">
+</head>
+<body class="cliente">
+
+<header class="barra-cliente">
+  <div>
+    <h1 id="local">Cantina</h1>
+    <small id="donde" class="tenue"></small>
+  </div>
+  <span class="hueco"></span>
+  <span id="conexion" class="conexion"></span>
+</header>
+
+<p id="mensaje" class="aviso-local"></p>
+
+<nav class="cats-cliente" id="cats"></nav>
+
+<main id="carta" class="carta-cliente"></main>
+
+<!-- Cesta: barra fija abajo, que es donde llega el pulgar -->
+<footer class="cesta" id="cesta" hidden>
+  <button id="b-ver" class="ver-cesta">
+    <span id="n-cesta">0</span> productos · <b id="t-cesta">0,00 €</b>
+    <span class="tenue">ver</span>
+  </button>
+  <button id="b-enviar" class="primario">Pedir</button>
+</footer>
+
+<dialog id="d-cesta">
+  <h3>Tu comanda</h3>
+  <div id="lista-cesta"></div>
+  <div class="fila total-cesta"><span>Total</span><b id="t-dialogo">0,00 €</b></div>
+  <label class="campo">Mesa
+    <select id="c-mesa"></select>
+  </label>
+  <label class="campo">Tu nombre (opcional)
+    <input id="c-nombre" maxlength="60" placeholder="Para llamarte cuando esté listo">
+  </label>
+  <label class="campo">Aviso para cocina (opcional)
+    <input id="c-nota" maxlength="160" placeholder="Alergias, sin cebolla…">
+  </label>
+  <div class="fila"><button id="c-cancelar">Seguir mirando</button><button id="c-ok" class="primario">Enviar comanda</button></div>
+</dialog>
+
+<dialog id="d-estado">
+  <h3 id="e-titulo">Tu comanda</h3>
+  <div id="e-cuerpo"></div>
+  <div class="fila"><button id="e-cerrar" class="primario">Cerrar</button></div>
+</dialog>
+
+<script src="/js/comun.js?v=__V__"></script>
+<script src="/js/cliente.js?v=__V__"></script>
+</body>
+</html>

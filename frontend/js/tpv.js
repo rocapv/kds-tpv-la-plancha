@@ -10,6 +10,60 @@ async function entrar() {
   verMesas();
 }
 
+
+// ── Comandas que los clientes piden desde su móvil ──
+// Llegan a una bandeja, no a cocina: el camarero las mira, las acepta y entonces se convierten
+// en un pedido normal. Así el QR de la mesa no es una puerta abierta a la cocina.
+async function cargarSolicitudes() {
+  let lista = [];
+  try { lista = await api('/solicitudes'); } catch { return; }
+  const boton = $('#b-solicitudes');
+  boton.hidden = !lista.length;
+  boton.classList.toggle('urgente', lista.length > 0);
+  $('#n-solicitudes').textContent = lista.length;
+  $('#lista-solicitudes').innerHTML = lista.map(s => `
+    <article class="solicitud">
+      <header>
+        <b>${s.mesa ? 'Mesa ' + esc(s.mesa) : '🛍 ' + esc(s.cliente || 'Para llevar')}</b>
+        <span class="tenue">hace ${minutosDesde(s.creada_en)} min · ${euro(s.total_cent)}</span>
+      </header>
+      ${s.nota ? `<p class="nota">⚠ ${esc(s.nota)}</p>` : ''}
+      <ul>${s.lineas.map(l => `<li>${l.cantidad}× ${esc(l.nombre)}</li>`).join('')}</ul>
+      <div class="fila">
+        <button data-rechazar="${s.id}" class="mal">Rechazar</button>
+        <button data-aceptar="${s.id}" class="ok">Aceptar y pasar a cocina</button>
+      </div>
+    </article>`).join('') || '<p class="tenue">No hay comandas esperando</p>';
+
+  $('#lista-solicitudes').querySelectorAll('[data-aceptar]').forEach(b => b.onclick = async () => {
+    try {
+      pedido = await api(`/solicitudes/${b.dataset.aceptar}/aceptar`, { method: 'POST' });
+      aviso('Comanda aceptada · repásala y envíala a cocina', 'ok');
+      $('#d-solicitudes').close();
+      verCarta();
+      cargarSolicitudes();
+    } catch (e) { aviso(e.message, 'error'); }
+  });
+  $('#lista-solicitudes').querySelectorAll('[data-rechazar]').forEach(b => b.onclick = async () => {
+    if (!confirm('¿Rechazar esta comanda? El cliente lo verá en su teléfono.')) return;
+    await api(`/solicitudes/${b.dataset.rechazar}/rechazar`, { method: 'POST' }).catch(e => aviso(e.message, 'error'));
+    cargarSolicitudes();
+  });
+}
+$('#b-solicitudes').onclick = () => { cargarSolicitudes(); $('#d-solicitudes').showModal(); };
+$('#s-cerrar').onclick = () => $('#d-solicitudes').close();
+
+// ── Móvil: el ticket es una hoja que sube desde abajo ──
+function prepararMovil() {
+  const cabecera = document.querySelector('.ticket-cab');
+  if (!cabecera || cabecera.dataset.movil) return;
+  cabecera.dataset.movil = '1';
+  cabecera.onclick = () => {
+    if (window.innerWidth > 800) return;          // en pantalla grande no hay nada que plegar
+    document.body.classList.toggle('ticket-abierto');
+  };
+}
+
 // ── Mesas ──
 async function verMesas() {
   $('#v-mesas').hidden = false;
@@ -292,6 +346,7 @@ $('#b-documento').onclick = () => verDocumento(pedido.id, pedido.estado === 'cob
 // ── Tiempo real ──
 conectarWS(async ev => {
   if (!empleado) return;
+  if (ev.tipo === 'solicitudes') { cargarSolicitudes(); if (ev.solicitud_id) aviso('Nueva comanda desde una mesa', 'ok'); }
   if (ev.tipo === 'carta') { catalogo = await api('/catalogo'); if (!$('#v-carta').hidden) verCarta(); }
   if (ev.tipo === 'listo') aviso(`Pedido #${ev.pedido_id}: hay platos listos en el pase`, 'ok');
   if (pedido && (ev.tipo === 'kds' || ev.tipo === 'listo' || ev.tipo === 'mesas')) {
@@ -301,4 +356,4 @@ conectarWS(async ev => {
   if (!$('#v-mesas').hidden && (ev.tipo === 'mesas' || ev.tipo === 'reconectado')) verMesas();
 });
 
-entrar();
+entrar().then(() => { cargarSolicitudes(); prepararMovil(); });
