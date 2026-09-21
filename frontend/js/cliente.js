@@ -6,14 +6,34 @@ const LLAVE_CESTA = 'kds_cesta';
 const LLAVE_COMANDA = 'kds_mi_comanda';
 
 let carta = [], catActiva = null, cesta = [], local = {};
+let alergenos = [], destacados = [], destacado = 0;
 try { cesta = JSON.parse(localStorage.getItem(LLAVE_CESTA) || '[]'); } catch { cesta = []; }
+
+const LLAVE_TEMA = 'kds_tema';
+
+function aplicarTema(t) {
+  document.body.dataset.tema = t;
+  try { localStorage.setItem(LLAVE_TEMA, t); } catch {}
+  $('#b-tema').classList.toggle('dia', t === 'claro');
+}
+(function temaInicial() {
+  let t = null;
+  try { t = localStorage.getItem(LLAVE_TEMA); } catch {}
+  if (!t) t = matchMedia('(prefers-color-scheme: light)').matches ? 'claro' : 'oscuro';
+  document.addEventListener('DOMContentLoaded', () => aplicarTema(t), { once: true });
+  if (document.readyState !== 'loading') aplicarTema(t);
+})();
 
 const guardarCesta = () => { try { localStorage.setItem(LLAVE_CESTA, JSON.stringify(cesta)); } catch {} };
 const totalCesta = () => cesta.reduce((s, l) => s + l.cantidad * l.precio_cent, 0);
 
 // ── Carta ──
 async function cargar() {
-  [local, carta] = await Promise.all([api('/publico/local'), api('/publico/carta')]);
+  [local, carta, alergenos, destacados] = await Promise.all([
+    api('/publico/local'), api('/publico/carta'),
+    api('/publico/alergenos').catch(() => []),
+    api('/publico/destacados').catch(() => []),
+  ]);
   $('#local').textContent = local.nombre || 'Cantina';
   document.title = 'Carta · ' + (local.nombre || '');
   $('#mensaje').textContent = local.mensaje || '';
@@ -27,6 +47,8 @@ async function cargar() {
   const mia = mesas.find(m => String(m.id) === mesaDelQR);
   $('#donde').textContent = mia ? 'Mesa ' + mia.nombre : 'Carta';
 
+  pintarLeyenda();
+  pintarDestacados();
   pintarCategorias();
   pintarCarta();
   pintarCesta();
@@ -51,7 +73,7 @@ function pintarCarta() {
         <article class="plato ${p.disponible ? '' : 'agotado'}">
           <div class="datos">
             <b>${esc(p.nombre)}</b>
-            ${p.alergenos ? `<small class="alerg">⚠ ${esc(p.alergenos)}</small>` : ''}
+            ${chipsDe(p)}
             ${p.disponible ? '' : '<small class="tenue">hoy no queda</small>'}
           </div>
           <div class="precio">${euro(p.precio_cent)}</div>
@@ -60,6 +82,73 @@ function pintarCarta() {
     </section>`).join('');
   $('#carta').querySelectorAll('[data-p]').forEach(b => b.onclick = () => anadir(+b.dataset.p, b));
 }
+
+const GRAVEDAD = { muy_grave: 'roja', grave: 'ambar', leve: 'suave' };
+
+function pintarLeyenda() {
+  if (!alergenos.length) { $('#leyenda').hidden = true; return; }
+  $('#leyenda-lista').innerHTML = alergenos.map(a =>
+    `<span class="chip ${GRAVEDAD[a.gravedad] || 'suave'}">${esc(a.icono)} ${esc(a.nombre)}</span>`).join('');
+}
+
+function chipsDe(p) {
+  const suyos = (p.alergeno_claves || []).map(k => alergenos.find(a => a.clave === k)).filter(Boolean);
+  if (suyos.length) {
+    return `<span class="chips">${suyos.map(a =>
+      `<span class="chip ${GRAVEDAD[a.gravedad] || 'suave'}" title="${esc(a.nombre)}">${esc(a.icono)}</span>`).join('')}</span>`;
+  }
+  return p.alergenos ? `<small class="alerg">⚠ ${esc(p.alergenos)}</small>` : '';
+}
+
+// Destacados: una pila de tarjetas que se pasa con el dedo. La de arriba se puede pedir.
+function pintarDestacados() {
+  const caja = $('#destacados');
+  if (!destacados.length) { caja.hidden = true; return; }
+  caja.hidden = false;
+  $('#pila').innerHTML = destacados.map((d, i) => `
+    <article class="tarjeta" data-i="${i}" style="--color:${esc(d.color || '#e67e22')}">
+      ${d.foto ? `<img src="${esc(d.foto)}" alt="" loading="lazy">` : '<div class="sin-foto"></div>'}
+      <div class="texto">
+        <small>${esc(d.categoria)}</small>
+        <b>${esc(d.nombre)}</b>
+        <span class="precio">${euro(d.precio_cent)}</span>
+      </div>
+      <button class="pedir" data-pedir="${d.id}">Añadir</button>
+    </article>`).join('');
+  colocarPila();
+  $('#pila').querySelectorAll('[data-pedir]').forEach(b => b.onclick = e => {
+    e.stopPropagation();
+    anadir(+b.dataset.pedir, b);
+  });
+  // gesto: arrastrar la de arriba pasa a la siguiente
+  let x0 = null;
+  $('#pila').addEventListener('pointerdown', e => x0 = e.clientX);
+  $('#pila').addEventListener('pointerup', e => {
+    if (x0 === null) return;
+    const dx = e.clientX - x0;
+    x0 = null;
+    if (Math.abs(dx) > 40) girar(dx < 0 ? 1 : -1);
+  });
+}
+
+function colocarPila() {
+  const tarjetas = [...$('#pila').children];
+  tarjetas.forEach((t, i) => {
+    const pos = (i - destacado + tarjetas.length) % tarjetas.length;
+    t.style.setProperty('--pos', pos);
+    t.classList.toggle('arriba', pos === 0);
+    t.hidden = pos > 2;                    // solo se ven tres: la de delante y dos asomando
+  });
+  $('#d-cuenta').textContent = `${destacado + 1} / ${tarjetas.length}`;
+}
+
+function girar(paso) {
+  destacado = (destacado + paso + destacados.length) % destacados.length;
+  colocarPila();
+}
+$('#d-antes').onclick = () => girar(-1);
+$('#d-despues').onclick = () => girar(1);
+$('#b-tema').onclick = () => aplicarTema(document.body.dataset.tema === 'claro' ? 'oscuro' : 'claro');
 
 function buscar(id) {
   for (const c of carta) for (const p of c.productos) if (p.id === id) return p;

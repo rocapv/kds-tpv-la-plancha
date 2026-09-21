@@ -429,3 +429,70 @@ body.cliente { padding-bottom: 5.5rem; }
   header.barra h1 { font-size: 1rem; }
   .kds { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
 }
+
+/* ═══ Carta del cliente: tema, destacados y alérgenos ═══ */
+/* Tema claro para la terraza al sol: los mismos tokens, otros valores. La pantalla del
+   local sigue siendo oscura; esto es solo para el teléfono del cliente. */
+body.cliente[data-tema="claro"] {
+  --fondo: #f7f4ee; --panel: #fffdf8; --panel2: #efe9dd; --borde: #ddd4c4;
+  --texto: #201c16; --tenue: #6b6053; --acento: #b4581a;
+  background: var(--fondo); color: var(--texto);
+}
+body.cliente[data-tema="claro"] .aviso-local { background: #0000000a; }
+body.cliente[data-tema="claro"] .cesta { box-shadow: 0 -6px 20px #0002; }
+body.cliente[data-tema="claro"] .cats-cliente button.activa { color: #fff; }
+
+/* Interruptor día/noche: un astro que cruza la cápsula. Sol a la derecha con su halo,
+   luna a la izquierda con sus cráteres, hechos con sombras: ni una imagen ni una librería. */
+.tema { position: relative; width: 60px; height: 32px; border-radius: 999px; padding: 0;
+  background: #1b2a4a; border: 1px solid var(--borde); overflow: hidden; flex: none; }
+.tema .astro { position: absolute; top: 3px; left: 3px; width: 24px; height: 24px; border-radius: 50%;
+  background: #dfe6f5; box-shadow: inset -6px -2px 0 0 #b9c4dc, 0 0 10px #ffffff55;
+  transition: transform .35s cubic-bezier(.4,1.4,.6,1), background .35s, box-shadow .35s; }
+.tema::after { content: ''; position: absolute; inset: 0;
+  background: radial-gradient(2px 2px at 44px 8px, #fff9, transparent),
+              radial-gradient(1.5px 1.5px at 50px 20px, #fff7, transparent),
+              radial-gradient(1.5px 1.5px at 38px 22px, #fff6, transparent);
+  transition: opacity .35s; }                          /* estrellas: se apagan de día */
+.tema.dia { background: #7dc4f2; }
+.tema.dia::after { opacity: 0; }
+.tema.dia .astro { transform: translateX(28px); background: #ffd34d;
+  box-shadow: inset 0 0 0 0 transparent, 0 0 12px #ffd34daa; }
+
+/* Destacados: pila de tarjetas con perspectiva. La de delante se puede pedir; las de detrás
+   asoman para que se vea que hay más. Se pasa con el dedo o con las flechas. */
+.destacados { padding: .9rem 1rem .2rem; max-width: 720px; margin: 0 auto; }
+.destacados h2 { font-size: .85rem; text-transform: uppercase; letter-spacing: .08em; color: var(--tenue); margin-bottom: .6rem; }
+.pila { position: relative; height: 190px; perspective: 900px; touch-action: pan-y; }
+.pila .tarjeta { position: absolute; inset: 0; display: grid; grid-template-columns: 96px 1fr auto;
+  gap: .8rem; align-items: center; padding: .7rem; border-radius: 14px;
+  background: var(--panel); border: 1px solid var(--borde); border-left: 5px solid var(--color);
+  box-shadow: 0 10px 24px #0005; transition: transform .35s ease, opacity .35s ease;
+  transform: translateY(calc(var(--pos) * 10px)) scale(calc(1 - var(--pos) * .05));
+  opacity: calc(1 - var(--pos) * .25); z-index: calc(10 - var(--pos)); pointer-events: none; }
+.pila .tarjeta.arriba { pointer-events: auto; }
+.pila .tarjeta img, .pila .tarjeta .sin-foto { width: 96px; height: 96px; object-fit: cover; border-radius: 10px;
+  background: linear-gradient(135deg, var(--panel2), var(--color)); }
+.pila .texto { display: flex; flex-direction: column; gap: .15rem; min-width: 0; }
+.pila .texto small { color: var(--tenue); font-size: .8rem; }
+.pila .texto b { font-size: 1.1rem; line-height: 1.15; }
+.pila .texto .precio { font-weight: 800; font-variant-numeric: tabular-nums; }
+.pila .pedir { align-self: center; min-height: 44px; background: var(--acento); border-color: var(--acento); color: #111; font-weight: 700; }
+.destacados .mandos { display: flex; align-items: center; justify-content: center; gap: 1rem; margin-top: .5rem; }
+.destacados .mandos button { min-width: 44px; min-height: 36px; font-size: 1.3rem; line-height: 1; padding: 0; }
+
+/* Alérgenos: una marca de color por alérgeno, con su leyenda plegable. Leer «⚠ gluten,
+   lactosa, soja» en una carta es más lento que ver tres marcas. */
+.leyenda { max-width: 720px; margin: 0 auto; padding: 0 1rem; }
+.leyenda summary { padding: .6rem 0; color: var(--tenue); cursor: pointer; }
+.leyenda #leyenda-lista { display: flex; flex-wrap: wrap; gap: .4rem; padding-bottom: .6rem; }
+.chip { display: inline-flex; align-items: center; gap: .25rem; padding: .12rem .45rem;
+  border-radius: 999px; font-size: .82rem; border: 1px solid transparent; }
+.chip.roja  { background: #c0392b22; border-color: #c0392b88; color: #ff9e93; }
+.chip.ambar { background: #d6891022; border-color: #d6891088; color: #ffd27a; }
+.chip.suave { background: #88888822; border-color: #88888866; color: var(--tenue); }
+body.cliente[data-tema="claro"] .chip.roja  { color: #96271a; }
+body.cliente[data-tema="claro"] .chip.ambar { color: #8a5406; }
+.plato .chips { display: inline-flex; gap: .25rem; margin-top: .2rem; }
+
+body.cliente { background: var(--fondo); color: var(--texto); }   /* explicito: el tema se aplica al body */

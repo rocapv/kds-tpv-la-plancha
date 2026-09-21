@@ -14,10 +14,28 @@
     <small id="donde" class="tenue"></small>
   </div>
   <span class="hueco"></span>
+  <button id="b-tema" class="tema" title="Cambiar entre día y noche" aria-label="Cambiar tema">
+    <span class="astro"></span>
+  </button>
   <span id="conexion" class="conexion"></span>
 </header>
 
 <p id="mensaje" class="aviso-local"></p>
+
+<section class="destacados" id="destacados" hidden>
+  <h2>Lo que más sale</h2>
+  <div class="pila" id="pila"></div>
+  <div class="mandos">
+    <button id="d-antes" aria-label="Anterior">‹</button>
+    <span id="d-cuenta" class="tenue"></span>
+    <button id="d-despues" aria-label="Siguiente">›</button>
+  </div>
+</section>
+
+<details class="leyenda" id="leyenda">
+  <summary>Alérgenos: qué significa cada marca</summary>
+  <div id="leyenda-lista"></div>
+</details>
 
 <nav class="cats-cliente" id="cats"></nav>
 

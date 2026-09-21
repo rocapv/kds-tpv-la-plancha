@@ -1796,15 +1796,48 @@ def publico_local():
             "pedidos": _cliente_puede_pedir()}
 
 
+@app.get("/api/publico/alergenos")
+def publico_alergenos():
+    """Leyenda de alérgenos: icono, nombre y gravedad. El protocolo de actuación NO sale aquí:
+    eso es para el personal, no para la carta del cliente."""
+    return q("SELECT clave, nombre, icono, gravedad FROM alergenos ORDER BY orden, clave")
+
+
 @app.get("/api/publico/carta")
 def publico_carta():
     """La carta tal y como la ve un cliente: sin estación, sin bajas y sin nada interno."""
     cats = q("SELECT id, nombre, color FROM categorias WHERE activa ORDER BY orden, id")
-    prods = q("""SELECT id, categoria_id, nombre, precio_cent, alergenos, disponible
+    prods = q("""SELECT id, categoria_id, nombre, precio_cent, alergenos, disponible, foto
                  FROM productos WHERE activo ORDER BY categoria_id, orden, id""")
+    marcas = {}
+    for r in q("""SELECT pa.producto_id, pa.alergeno FROM producto_alergenos pa"""):
+        marcas.setdefault(r["producto_id"], []).append(r["alergeno"])
+    for p in prods:
+        p["alergeno_claves"] = marcas.get(p["id"], [])
     for c in cats:
         c["productos"] = [p for p in prods if p["categoria_id"] == c["id"]]
     return [c for c in cats if c["productos"]]
+
+
+@app.get("/api/publico/destacados")
+def publico_destacados():
+    """Lo que el local quiere enseñar primero: los más vendidos de los últimos días que
+    además estén disponibles hoy. Sin nada que configurar a mano."""
+    filas = q("""SELECT pr.id, pr.nombre, pr.precio_cent, pr.foto, c.nombre AS categoria, c.color,
+                        SUM(l.cantidad) AS unidades
+                 FROM lineas_pedido l
+                 JOIN productos pr ON pr.id=l.producto_id
+                 JOIN categorias c ON c.id=pr.categoria_id
+                 JOIN pedidos p ON p.id=l.pedido_id
+                 WHERE p.estado='cobrado' AND p.cerrado_en >= NOW() - INTERVAL 7 DAY
+                   AND pr.activo AND pr.disponible AND c.activa
+                 GROUP BY pr.id ORDER BY unidades DESC LIMIT 6""")
+    if filas:
+        return filas
+    return q("""SELECT pr.id, pr.nombre, pr.precio_cent, pr.foto, c.nombre AS categoria, c.color,
+                       0 AS unidades
+                FROM productos pr JOIN categorias c ON c.id=pr.categoria_id
+                WHERE pr.activo AND pr.disponible AND c.activa ORDER BY pr.orden, pr.id LIMIT 6""")
 
 
 @app.get("/api/publico/mesas")
