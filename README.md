@@ -95,6 +95,14 @@ ver y cerrar las sesiones abiertas.
 
 Cada pantalla pide el PIN si no hay sesión, y avisa si el rol no es el que toca.
 
+**Solo red local.** El servidor no atiende a nadie de fuera del local, en dos capas:
+el servicio escucha **solo en la IP de la LAN** (`KDS_BIND` en la unit, ni siquiera abre el
+puerto en otras interfaces) y, dentro, una guarda rechaza con 403 cualquier cliente que no esté
+en las redes de `KDS_REDES`. La guarda mira la IP real de la conexión, nunca `X-Forwarded-For`,
+que la escribe quien llama. El WebSocket cierra con el código 4403.
+Cuando se dispone de root, `sudo bash deploy/cortafuegos.sh` añade la capa que de verdad importa:
+ufw con todo denegado salvo 22, 8443 y 8090 desde la red del local, y MariaDB cerrada a cal y canto.
+
 **HTTPS.** El tráfico va cifrado en el puerto **8443**; el 8090 solo devuelve un 301 hacia él, para
 que ninguna pantalla vieja siga tecleando PIN sobre HTTP. En el aula el TLS lo termina el propio
 uvicorn, porque no hay root para instalar nginx; `deploy/nginx-kds-tpv.conf` deja la configuración

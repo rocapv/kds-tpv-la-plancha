@@ -368,6 +368,12 @@ convierte el arqueo en una herramienta de control y no en un trámite.
   tocar la base de datos. Ocultar un botón en el navegador no es seguridad.
 - **El servidor no se fía del cliente.** El pedido guarda el camarero que hay en la sesión, no el
   identificador que mande el navegador.
+- **Solo la red local.** El servicio escucha únicamente en la IP de la LAN y, además, rechaza
+  con 403 a cualquier cliente de fuera de las redes autorizadas, mirando la IP real de la conexión
+  y no una cabecera que el cliente pueda inventarse. Con permisos de administrador se añade `ufw`,
+  que deniega todo salvo SSH y los dos puertos del sistema desde la red del local, y deja MariaDB
+  accesible solo por socket Unix. Es defensa en capas: lo que no llega al proceso no puede fallar
+  en el proceso.
 - **HTTPS en todo.** TLS en el 8443, incluido el WebSocket; el 8090 solo devuelve un 301, para que
   ninguna pantalla con la dirección antigua guardada siga tecleando su PIN en claro.
 

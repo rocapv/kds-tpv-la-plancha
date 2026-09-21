@@ -1,13 +1,16 @@
 """Simulador de servicio para la demo: camareros que piden, cocina que prepara, caja que cobra.
 
 Usa SOLO la API pública (igual que las pantallas), así la demo también prueba el backend.
-    python simulador.py                  # servicio continuo contra https://localhost:8443
+    python simulador.py --url https://192.168.1.105:8443   # la IP del servidor, no localhost:
+                                         # el servicio solo escucha en la red local
     python simulador.py --pedidos 20 --rapido
     python simulador.py --sin-cocina     # deja que la cocina la lleve una persona en el KDS
 """
 import argparse
 import json
+import os
 import random
+import socket
 import ssl
 import time
 
@@ -38,7 +41,7 @@ def api(base, ruta, metodo="GET", body=None, token=None):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--url", default="https://localhost:8443")
+    ap.add_argument("--url", default="https://" + (os.getenv("KDS_BIND") or socket.gethostbyname(socket.gethostname())) + ":8443")
     ap.add_argument("--pedidos", type=int, default=0, help="0 = sin fin")
     ap.add_argument("--rapido", action="store_true", help="tiempos x10 más cortos")
     ap.add_argument("--sin-cocina", action="store_true")

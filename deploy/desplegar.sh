@@ -26,13 +26,15 @@ if ! .venv/bin/python -m pytest; then
 fi
 
 echo "══ 4/4 · Reinicio y comprobación"
+# El servicio escucha solo en la IP de la LAN, así que la comprobación va por ahí.
+IP="$(hostname -I | awk '{print $1}')"
 systemctl --user restart kds-tpv.service kds-tpv-http.service
 sleep 3
 for intento in 1 2 3 4 5; do
-  if curl -fsSk https://localhost:8443/api/salud >/dev/null; then
+  if curl -fsSk "https://$IP:8443/api/salud" >/dev/null; then
     echo "· servicio arriba"
     systemctl --user is-active kds-mariadb kds-tpv kds-tpv-http
-    echo "DESPLEGADO · https://$(hostname -I | awk '{print $1}'):8443/"
+    echo "DESPLEGADO · https://$IP:8443/"
     exit 0
   fi
   sleep 2

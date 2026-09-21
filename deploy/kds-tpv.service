@@ -9,9 +9,12 @@ WorkingDirectory=@DIR@/backend
 Environment=KDS_DB_USER=roca
 # La BD es la MariaDB de usuario que arranca kds-mariadb.service, no la del sistema.
 Environment=KDS_DB_SOCKET=%h/.local/share/kds-mariadb/kds.sock
-ExecStart=@DIR@/backend/.venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8443 \
-  --ssl-keyfile %h/.local/share/kds-tpv/certs/key.pem \
-  --ssl-certfile %h/.local/share/kds-tpv/certs/cert.pem
+# Escucha SOLO en la IP de la red local: ni siquiera abre el puerto en otras interfaces.
+# systemd sustituye ${KDS_BIND}; cámbialo aquí si la máquina cambia de IP.
+Environment=KDS_BIND=@IP@
+# Redes que el servicio atiende (segunda capa, dentro de la aplicación).
+Environment=KDS_REDES=127.0.0.0/8,@RED@
+ExecStart=@DIR@/backend/.venv/bin/uvicorn app.main:app --host ${KDS_BIND} --port 8443 --ssl-keyfile %h/.local/share/kds-tpv/certs/key.pem --ssl-certfile %h/.local/share/kds-tpv/certs/cert.pem
 Restart=always
 RestartSec=3
 

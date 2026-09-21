@@ -30,6 +30,9 @@ def base_de_pruebas():
     os.environ["KDS_DB_SOCKET"] = SOCKET
     # el usuario del sistema entra por socket; en un servidor con root sería el usuario 'kds'
     os.environ.setdefault("KDS_DB_USER", os.getenv("USER") or "kds")
+    # El cliente de pruebas no tiene IP: se presenta como "testclient" y la guarda de red
+    # lo rechazaría. Se permite solo aquí, nunca en el servicio real.
+    os.environ["KDS_HOSTS"] = "testclient"
     yield
     mariadb("-e", f"DROP DATABASE `{BD_PRUEBAS}`")
 

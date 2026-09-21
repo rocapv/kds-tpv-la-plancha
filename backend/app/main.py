@@ -10,10 +10,11 @@ from datetime import datetime
 from pathlib import Path
 
 from fastapi import Depends, FastAPI, Header, HTTPException, Request, WebSocket, WebSocketDisconnect
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
+from .red import es_de_la_lan
 from .auth import abrir_sesion, cerrar_sesion, exige, usuario, usuario_de_token
 from .db import conn, q, q1
 from .simulacion import simulacion
@@ -86,6 +87,9 @@ hub = Hub()
 
 @app.websocket("/ws")
 async def ws_endpoint(ws: WebSocket, token: str | None = None):
+    if not es_de_la_lan(ws.client.host if ws.client else None):
+        await ws.close(code=4403)      # 4403: fuera de la red local
+        return
     if not usuario_de_token(token):
         await ws.close(code=4401)      # 4401: sesión no válida
         return
@@ -1297,6 +1301,21 @@ async def parar_simulacion():
 
 
 # ─────────────── Frontend estático ───────────────
+# ─────────────── Solo LAN ───────────────
+# El sistema es de un local: no tiene por qué contestar a nadie de fuera. Dos capas:
+#   1) el servicio escucha solo en la IP de la red local (ver kds-tpv.service);
+#   2) esta guarda rechaza cualquier cliente fuera de las redes permitidas.
+# La segunda existe porque la primera se la salta un reenvío de puertos del router.
+@app.middleware("http")
+async def solo_lan(request: Request, call_next):
+    """Puerta de la casa. Se mira la IP real del cliente, NUNCA una cabecera:
+    `X-Forwarded-For` la escribe quien llama y se falsifica en un segundo."""
+    cliente = request.client.host if request.client else None
+    if not es_de_la_lan(cliente):
+        return JSONResponse({"detail": "Este servicio solo atiende a la red local"}, status_code=403)
+    return await call_next(request)
+
+
 @app.middleware("http")
 async def sin_cache(request, call_next):
     """El navegador debe revalidar siempre: en clase se edita el front y se recarga."""

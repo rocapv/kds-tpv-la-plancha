@@ -34,14 +34,22 @@ done
 echo "· Certificado TLS"
 bash "$DIR/deploy/certificado.sh"
 
+# El servicio escucha solo en la IP de la LAN y solo atiende a esa red.
+IP="$(hostname -I | awk '{print $1}')"
+RED="$(ip -4 route | awk -v ip="$IP" '$0 ~ "src "ip {print $1; exit}')"
+RED="${RED:-192.168.1.0/24}"
+echo "· servidor: escucha en $IP, atiende a $RED"
+
 mkdir -p ~/.config/systemd/user
 for u in kds-tpv kds-tpv-http; do
-  sed "s#@DIR@#$DIR#g" "$DIR/deploy/$u.service" > ~/.config/systemd/user/$u.service
+  sed "s#@DIR@#$DIR#g; s#@IP@#$IP#g; s#@RED@#$RED#g" "$DIR/deploy/$u.service" > ~/.config/systemd/user/$u.service
 done
 systemctl --user daemon-reload
 systemctl --user enable --now kds-tpv.service kds-tpv-http.service
 systemctl --user restart kds-tpv.service kds-tpv-http.service
 sleep 3
 IP="$(hostname -I | awk '{print $1}')"
-curl -fsSk https://localhost:8443/api/salud && echo
+curl -fsSk "https://$IP:8443/api/salud" && echo
 echo "OK · https://$IP:8443/   (el puerto 8090 redirige aquí)"
+echo "   Solo se atiende desde $RED. Para cerrarlo también a nivel de red:"
+echo "   sudo bash deploy/cortafuegos.sh"
