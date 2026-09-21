@@ -45,16 +45,49 @@
 <script src="/js/comun.js?v=__V__"></script>
 <script src="/js/sesion.js?v=__V__"></script>
 <script>
-async function refrescar() {
+// Cada bloque se pide por separado y aguanta su propio error. Antes iban todos en un
+// Promise.all dentro de un try: como /informe es solo del encargado, a la cocinera le
+// devolvía 403 y se llevaba por delante hasta las pantallas de cocina, diciendo además
+// «sin conexión con el servidor», que era mentira.
+let yo = null;
+
+/** Deja a la vista solo las aplicaciones que esta persona puede abrir de verdad. */
+function filtrarApps() {
+  document.querySelectorAll('.app[href]').forEach(a => {
+    const pagina = a.getAttribute('href').replace(/^\//, '').split('?')[0];
+    if (pagina === 'docs') { if (yo.rol !== 'encargado') a.remove(); return; }
+    if (pagina && yo.guis?.length && !yo.guis.includes(pagina)) a.remove();
+  });
+  // Una sección sin tarjetas no pinta nada: fuera el título suelto.
+  document.querySelectorAll('.menu section').forEach(sec => {
+    if (!sec.querySelector('.app')) sec.remove();
+  });
+}
+
+function fallo(e, donde) {
+  if (e?.estado === 403 || e?.estado === 401) return;      // no es para este puesto: sin ruido
+  console.warn(donde, e);
+  $('#estado-servicio').textContent = 'sin conexión con el servidor';
+}
+
+async function pintarCabecera() {
   try {
-    const [aj, kds, inf] = await Promise.all([api('/ajustes'), api('/kds'), api('/informe')]);
+    const aj = await api('/ajustes');
     $('#local').textContent = aj.local_nombre;
     document.title = aj.local_nombre + ' · Menú principal';
+  } catch (e) { fallo(e, 'ajustes'); }
+}
+
+async function pintarCocina() {
+  const hueco = $('#apps-cocina');
+  if (!hueco) return;
+  // Quien no puede abrir el KDS no ve ni la sección: enseñar puertas cerradas solo confunde.
+  if (yo?.guis?.length && !yo.guis.includes('kds.html')) { hueco.closest('section')?.remove(); return; }
+  try {
+    const [kds, pantallas] = await Promise.all([api('/kds'), api('/kds-pantallas')]);
     const porEstacion = {};
     kds.comandas.forEach(c => c.lineas.forEach(l => porEstacion[l.estacion] = (porEstacion[l.estacion] || 0) + 1));
-    // Cada pantalla suma las secciones que mira; la de pase (sin secciones) las cuenta todas.
-    const pantallas = await api('/kds-pantallas');
-    $('#apps-cocina').innerHTML = pantallas.map(p => {
+    hueco.innerHTML = pantallas.map(p => {
       const n = p.secciones.length
         ? p.secciones.reduce((t, e) => t + (porEstacion[e] || 0), 0)
         : kds.comandas.length;
@@ -64,18 +97,50 @@ async function refrescar() {
       return `<a class="app" href="/kds.html?pantalla=${encodeURIComponent(p.clave)}" title="${esc(p.detalle)}">
                 <span class="ico">${esc(p.icono)}</span><b>${esc(p.nombre)}</b><small>${pie}</small></a>`;
     }).join('');
+    if (!pantallas.length) hueco.innerHTML = '<p class="tenue">No hay pantallas de cocina dadas de alta (Ajustes → Cocina)</p>';
+  } catch (e) {
+    hueco.closest('section')?.remove();                    // esta persona no trabaja en cocina
+    fallo(e, 'cocina');
+  }
+}
+
+async function pintarRecogida() {
+  if (!$('#n-recogida')) return;
+  try {
     const rec = await api('/recogida');
     $('#n-recogida').textContent = rec.listos.length || rec.preparando.length
       ? `${rec.listos.length} listos · ${rec.preparando.length} en marcha` : 'sin pedidos para llevar';
+  } catch (e) { fallo(e, 'recogida'); }
+}
+
+async function pintarCaja() {
+  if (!$('#n-caja')) return;
+  try {
     const caja = await api('/arqueo');
     $('#n-caja').textContent = !caja.arqueo ? 'caja sin abrir'
       : caja.arqueo.estado === 'cerrado' ? 'cerrada · ' + caja.arqueo.numero_z
       : 'abierta · ' + euro(caja.esperado_cent) + ' en el cajón';
-    $('#estado-servicio').textContent = `${inf.tickets} tickets · ${euro(inf.total_cent)} hoy`;
-  } catch (e) { $('#estado-servicio').textContent = 'sin conexión con el servidor'; }
+  } catch (e) { fallo(e, 'arqueo'); }
 }
+
+async function pintarVentas() {
+  try {
+    const inf = await api('/informe');
+    $('#estado-servicio').textContent = `${inf.tickets} tickets · ${euro(inf.total_cent)} hoy`;
+  } catch (e) {
+    if (e?.estado === 403) $('#estado-servicio').textContent = yo?.puesto_nombre || '';
+    else fallo(e, 'informe');
+  }
+}
+
+function refrescar() {
+  pintarCabecera(); pintarCocina(); pintarRecogida(); pintarCaja(); pintarVentas();
+}
+
 setInterval(() => $('#reloj').textContent = new Date().toLocaleTimeString('es-ES'), 1000);
-exigirSesion(['camarero', 'cocina', 'encargado']).then(() => {
+exigirSesion(['camarero', 'cocina', 'encargado']).then(u => {
+  yo = u;
+  filtrarApps();
   conectarWS(() => refrescar());
   refrescar();
 });

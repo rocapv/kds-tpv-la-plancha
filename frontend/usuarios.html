@@ -36,18 +36,32 @@
   <div id="resumen" class="resumen"></div>
   <p class="tenue">Arrastra a cada persona al puesto donde trabaja: el puesto decide a qué pantalla
   entra y qué puede hacer. Quien quede fuera de las cajas se queda <b>fuera de servicio</b> y solo
-  ve el menú. La gestión (carta, usuarios, ajustes, informes y arqueo) sigue siendo del rol
-  encargado, se ponga donde se ponga.</p>
+  ve el menú. La gestión (carta, usuarios, ajustes, informes y arqueo) va por <b>escalafón</b>
+  (encargado para arriba), se ponga donde se ponga.</p>
 </main>
 
 <dialog id="d-user">
   <h3 id="u-titulo">Nuevo usuario</h3>
-  <div class="fila"><input id="u-nombre" placeholder="Nombre" maxlength="60" style="flex:1"></div>
+  <p class="tenue" id="u-numero"></p>
   <div class="fila">
-    <select id="u-rol"><option value="camarero">Camarero</option><option value="cocina">Cocina</option><option value="encargado">Encargado</option></select>
-    <input id="u-pin" placeholder="PIN (4 cifras)" inputmode="numeric" maxlength="4" style="width:9em">
-    <button id="u-dado" title="PIN libre al azar">🎲</button>
+    <input id="u-nombre" placeholder="Nombre" maxlength="60" style="flex:1">
+    <input id="u-apellidos" placeholder="Apellidos" maxlength="80" style="flex:1">
+    <button id="u-inventar" title="Inventar ficha completa: nombre, apellidos, PIN y contrasena">Inventar</button>
   </div>
+  <div class="fila">
+    <label>Escalafon <select id="u-escalafon"></select></label>
+    <label>Trabajo <select id="u-rol">
+      <option value="camarero">Sala</option><option value="cocina">Cocina</option>
+      <option value="encargado">Sala y cocina</option></select></label>
+  </div>
+  <div class="fila">
+    <input id="u-pin" placeholder="PIN (4 cifras)" inputmode="numeric" maxlength="4" style="width:9em">
+    <button id="u-dado" title="PIN libre al azar">PIN al azar</button>
+    <input id="u-clave" placeholder="Contrasena de gestion" maxlength="100" style="flex:1">
+    <button id="u-dado2" title="Contrasena al azar, facil de dictar">Clave al azar</button>
+  </div>
+  <p class="tenue">El <b>PIN</b> abre las pantallas de servicio. La <b>contrasena</b> es para entrar
+  como numero de empleado en la gestion; se guarda cifrada y solo se ve una vez, al generarla.</p>
   <div class="fila"><button id="u-cancelar">Cancelar</button><button id="u-ok" class="primario">Guardar</button></div>
 </dialog>
 
@@ -55,20 +69,47 @@
 <script src="/js/sesion.js?v=__V__"></script>
 <script src="/js/mapa.js?v=__V__"></script>
 <script>
-let editando = null;
+let editando = null, ESCALAFONES = [];
+
+const nivelMio = () => YO?.nivel || 0;
+let YO = null;
+
+async function cargarEscalafones() {
+  ESCALAFONES = await api('/escalafones');
+  $('#u-escalafon').innerHTML = ESCALAFONES.map(e =>
+    `<option value="${esc(e.clave)}" title="${esc(e.descripcion)}">${esc(e.nombre)}</option>`).join('');
+}
+
 async function cargar() {
   const lista = await api('/empleados?todos=' + ($('#ver-bajas').checked ? 'true' : 'false'));
-  $('#tabla').innerHTML = '<tr><th>Nombre</th><th>Rol</th><th>PIN</th><th>Estado</th><th></th></tr>' +
-    lista.map(e => `<tr>
-      <td>${esc(e.nombre)}</td><td>${esc(e.rol)}</td><td class="num">${e.pin}</td>
+  $('#tabla').innerHTML = `<tr><th>N.o</th><th>Nombre</th><th>Escalafon</th><th>Trabajo</th>
+      <th>PIN</th><th>Clave</th><th>Estado</th><th></th></tr>` +
+    lista.map(e => `<tr class="${e.activo ? '' : 'baja'}">
+      <td class="num"><code>${String(e.id).padStart(4, '0')}</code></td>
+      <td>${esc(e.nombre)}${e.apellidos ? ' ' + esc(e.apellidos) : ''}
+          ${e.puesto ? `<br><small class="tenue">en ${esc(e.puesto)}</small>` : ''}</td>
+      <td>${esc(e.escalafon_nombre || e.escalafon)}
+          ${+e.plus_pct ? `<br><small class="tenue">+${(+e.plus_pct).toFixed(1)} %</small>` : ''}</td>
+      <td>${esc(e.rol)}</td>
+      <td class="num">${e.pin}</td>
+      <td class="num">${e.tiene_contrasena ? 'si' : '<span class="tenue">sin clave</span>'}
+          <button data-clave="${e.id}" title="Generar una contrasena nueva">Nueva</button></td>
       <td>${e.activo ? '<span class="estado lista">activo</span>' : '<span class="estado">baja</span>'}</td>
       <td class="num">
         <button data-editar="${e.id}">Editar</button>
         ${e.activo ? `<button data-baja="${e.id}" class="mal">Dar de baja</button>` : `<button data-alta="${e.id}" class="ok">Reactivar</button>`}
       </td></tr>`).join('');
   $('#tabla').querySelectorAll('[data-editar]').forEach(b => b.onclick = () => abrir(lista.find(x => x.id == b.dataset.editar)));
+  $('#tabla').querySelectorAll('[data-clave]').forEach(b => b.onclick = async () => {
+    if (!confirm('Generar una contrasena nueva? La anterior deja de valer.')) return;
+    try {
+      const r = await api('/empleados/' + b.dataset.clave + '/contrasena', { method: 'POST' });
+      prompt('Contrasena nueva (apuntala, no se vuelve a ver):', r.contrasena_en_claro);
+      cargar();
+    } catch (e) { aviso(e.message, 'error'); }
+  });
   $('#tabla').querySelectorAll('[data-baja]').forEach(b => b.onclick = async () => {
-    if (!confirm('¿Dar de baja a este usuario?')) return;
+    if (!confirm('Dar de baja a este usuario?')) return;
     try { await api('/empleados/' + b.dataset.baja, { method: 'DELETE' }); cargar(); }
     catch (e) { aviso(e.message, 'error'); }
   });
@@ -81,30 +122,51 @@ $('#ver-bajas').onchange = cargar;
 function abrir(e = null) {
   editando = e;
   $('#u-titulo').textContent = e ? 'Editar ' + e.nombre : 'Nuevo usuario';
+  $('#u-numero').textContent = e ? 'Numero de empleado ' + String(e.id).padStart(4, '0')
+                                 : 'El numero de empleado lo pone el sistema al guardar.';
   $('#u-nombre').value = e?.nombre || '';
+  $('#u-apellidos').value = e?.apellidos || '';
   $('#u-rol').value = e?.rol || 'camarero';
+  $('#u-escalafon').value = e?.escalafon || 'base_junior';
   $('#u-pin').value = e?.pin || '';
+  $('#u-clave').value = '';
   $('#d-user').showModal();
 }
 $('#b-nuevo').onclick = () => abrir();
 $('#u-cancelar').onclick = () => $('#d-user').close();
-$('#u-dado').onclick = async () => {
-  const usados = (await api('/empleados?todos=true')).map(e => e.pin);
-  let p; do { p = String(Math.floor(1000 + Math.random() * 9000)); } while (usados.includes(p));
-  $('#u-pin').value = p;
+$('#u-inventar').onclick = async () => {
+  const s2 = await api('/empleados/sugerencia');
+  $('#u-nombre').value = s2.nombre; $('#u-apellidos').value = s2.apellidos;
+  $('#u-pin').value = s2.pin; $('#u-clave').value = s2.contrasena;
 };
+$('#u-dado').onclick = async () => { $('#u-pin').value = (await api('/empleados/sugerencia')).pin; };
+$('#u-dado2').onclick = async () => { $('#u-clave').value = (await api('/empleados/sugerencia')).contrasena; };
 $('#u-ok').onclick = async () => {
-  const body = { nombre: $('#u-nombre').value.trim(), rol: $('#u-rol').value, pin: $('#u-pin').value.trim() };
-  if (!/^\d{4}$/.test(body.pin)) return aviso('El PIN debe tener 4 cifras', 'error');
+  const body = {
+    nombre: $('#u-nombre').value.trim(),
+    apellidos: $('#u-apellidos').value.trim() || null,
+    rol: $('#u-rol').value,
+    escalafon: $('#u-escalafon').value,
+  };
+  const pin = $('#u-pin').value.trim();
+  const clave = $('#u-clave').value.trim();
+  if (pin && !/^\d{4}$/.test(pin)) return aviso('El PIN debe tener 4 cifras', 'error');
+  if (pin) body.pin = pin;
+  if (clave) body.contrasena = clave;
   if (body.nombre.length < 2) return aviso('Falta el nombre', 'error');
   try {
-    if (editando) await api('/empleados/' + editando.id, { method: 'PATCH', body });
-    else await api('/empleados', { method: 'POST', body });
+    if (editando) { await api('/empleados/' + editando.id, { method: 'PATCH', body }); }
+    else {
+      const r = await api('/empleados', { method: 'POST', body });
+      prompt(`Empleado ${String(r.id).padStart(4, '0')} creado. PIN ${r.pin}. Contrasena (apuntala):`,
+             r.contrasena_en_claro);
+    }
     $('#d-user').close(); cargar();
     aviso('Guardado', 'ok');
   } catch (e) { aviso(e.message, 'error'); }
 };
-// ?vista=mapa abre directamente el plano (cómodo para dejarlo puesto en una pantalla)
+
+// ?vista=mapa abre directamente el plano (comodo para dejarlo puesto en una pantalla)
 function verPestana(cual) {
   document.querySelectorAll('.pestanas button').forEach(o => o.classList.toggle('activa', o.dataset.vista === cual));
   $('#v-lista').hidden = cual !== 'lista';
@@ -118,7 +180,9 @@ document.querySelectorAll('.pestanas button').forEach(b => b.onclick = () => {
   if (b.dataset.vista === 'mapa') cargarMapa();
 });
 
-exigirSesion(['encargado']).then(() => {
+exigirSesion(['encargado']).then(async (yo) => {
+  YO = yo;
+  await cargarEscalafones();
   conectarWS(ev => { if (ev.tipo === 'plantilla' && !$('#v-mapa').hidden) cargarMapa(); });
   cargar();
   if (new URLSearchParams(location.search).get('vista') === 'mapa') verPestana('mapa');

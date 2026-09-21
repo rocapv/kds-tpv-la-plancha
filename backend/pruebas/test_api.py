@@ -17,7 +17,8 @@ def test_token_inventado(cliente):
 
 
 def test_pin_incorrecto(cliente):
-    assert cliente.post("/api/login", json={"pin": "0000"}).status_code == 401
+    """Un PIN que no existe (el 0000 lo usa el usuario Root de la semilla)."""
+    assert cliente.post("/api/login", json={"pin": "0137"}).status_code == 401
 
 
 def test_logout_invalida_el_token(cliente):
@@ -235,9 +236,29 @@ def test_pin_mal_formado(cliente, encargado):
 
 
 def test_siempre_queda_un_encargado(cliente, encargado):
-    jefes = [e for e in cliente.get("/api/empleados", headers=encargado).json() if e["rol"] == "encargado"]
-    assert len(jefes) == 1
-    assert cliente.delete(f"/api/empleados/{jefes[0]['id']}", headers=encargado).status_code == 409
+    """Da igual cuántos haya: al último encargado activo no se le puede dar de baja.
+
+    Se hace desde la cuenta de escalafón más alto que acepte la semilla (Root, PIN 0000),
+    porque un encargado normal no puede tocar a uno de rango superior.
+    """
+    root = cliente.post("/api/login", json={"pin": "0000"})
+    jefe = ({"Authorization": "Bearer " + root.json()["token"]} if root.status_code == 200
+            else encargado)
+    yo = cliente.get("/api/yo", headers=jefe).json()
+    activos = [e for e in cliente.get("/api/empleados", headers=jefe).json() if e["rol"] == "encargado"]
+    assert activos, "la semilla debe traer algún encargado"
+
+    # A uno mismo no: darse de baja invalida la propia sesión y el resto de la prueba no valdría.
+    dados_de_baja = []
+    for sobra in [e for e in activos if e["id"] != yo["id"]]:
+        if cliente.delete(f"/api/empleados/{sobra['id']}", headers=jefe).status_code == 200:
+            dados_de_baja.append(sobra)
+
+    # Queda solo quien está usando la sesión: el sistema tiene que negarse
+    assert cliente.delete(f"/api/empleados/{yo['id']}", headers=jefe).status_code == 409
+
+    for vuelve in dados_de_baja:                              # se deja la plantilla como estaba
+        cliente.patch(f"/api/empleados/{vuelve['id']}", headers=jefe, json={"activo": True})
 
 
 def test_el_empleado_de_baja_no_entra(cliente, encargado):

@@ -302,3 +302,8 @@ body.recogida { overflow: hidden; }
 .comanda header .borrar { background: transparent; border-color: transparent; color: var(--tenue);
                           padding: 0 .3rem; }
 .comanda header .borrar:hover { color: var(--mal); }
+
+/* Segunda puerta del panel de PIN: numero de empleado + contrasena (gestion) */
+.pin .por-clave { margin-top: 1rem; font-size: .9rem; }
+.pin .por-clave summary { cursor: pointer; color: var(--tenue); }
+.pin .por-clave .fila { margin-top: .5rem; }

@@ -6,6 +6,7 @@ TPV (sala)  ──POST──►  API  ──WS evento──►  KDS (cocina, por
 """
 import asyncio
 import json
+import secrets
 from datetime import datetime
 from pathlib import Path
 
@@ -15,7 +16,8 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from .red import es_de_la_lan
-from .auth import abrir_sesion, cerrar_sesion, exige, usuario, usuario_de_token
+from .auth import (abrir_sesion, cerrar_sesion, cifrar_clave, exige, exige_nivel,
+                   usuario, usuario_de_token)
 from .db import conn, q, q1
 from .simulacion import simulacion
 
@@ -114,7 +116,9 @@ async def ws_publico(ws: WebSocket):
 
 # ─────────────── Modelos de entrada ───────────────
 class Login(BaseModel):
-    pin: str = Field(min_length=4, max_length=4)
+    pin: str | None = Field(None, min_length=4, max_length=4)
+    empleado_id: int | None = None          # entrada de gestión: número de empleado…
+    contrasena: str | None = Field(None, min_length=6, max_length=100)   # …y contraseña
 
 
 class NuevoPedido(BaseModel):
@@ -140,15 +144,21 @@ class Cobro(BaseModel):
 
 class NuevoEmpleado(BaseModel):
     nombre: str = Field(min_length=2, max_length=60)
-    rol: str
-    pin: str = Field(pattern=r"^\d{4}$")
+    apellidos: str | None = Field(None, max_length=80)
+    rol: str = "camarero"
+    escalafon: str = "base"
+    pin: str | None = Field(None, pattern=r"^\d{4}$")      # vacío = lo genera el servidor
+    contrasena: str | None = Field(None, min_length=6, max_length=100)
     activo: bool = True
 
 
 class CambioEmpleado(BaseModel):
     nombre: str | None = Field(None, min_length=2, max_length=60)
+    apellidos: str | None = Field(None, max_length=80)
     rol: str | None = None
+    escalafon: str | None = None
     pin: str | None = Field(None, pattern=r"^\d{4}$")
+    contrasena: str | None = Field(None, min_length=6, max_length=100)
     activo: bool | None = None
 
 
@@ -255,7 +265,11 @@ def salud():
 
 @app.post("/api/login")
 def login(d: Login, user_agent: str | None = Header(None)):
-    """Único sitio donde viaja el PIN. Devuelve el token de la sesión."""
+    """Único sitio donde viajan el PIN o la contraseña. Devuelve el token de la sesión."""
+    if d.contrasena and d.empleado_id:
+        return abrir_sesion(None, user_agent, d.empleado_id, d.contrasena)
+    if not d.pin:
+        raise HTTPException(422, "Hace falta el PIN, o el número de empleado con su contraseña")
     return abrir_sesion(d.pin, user_agent)
 
 
@@ -268,6 +282,9 @@ def logout(u: dict = Depends(usuario)):
 @app.get("/api/yo")
 def yo(u: dict = Depends(usuario)):
     return {"id": u["id"], "nombre": u["nombre"], "rol": u["rol"], "caduca_en": u["caduca_en"],
+            "apellidos": u.get("apellidos"),
+            "escalafon": u.get("escalafon"), "escalafon_nombre": u.get("escalafon_nombre"),
+            "nivel": u.get("nivel"), "gestion": u.get("gestion"),
             "puesto": u.get("puesto"), "puesto_nombre": u.get("puesto_nombre"),
             "rol_operativo": u.get("rol_operativo"), "gui": u.get("gui"), "guis": u.get("guis", [])}
 
@@ -732,51 +749,156 @@ async def anular_pago(pid: int, pago_id: int, u: dict = Depends(exige("camarero"
     return pedido_completo(pid)
 
 
-# ─────────────── Empleados (app de usuarios) ───────────────
+# ─────────────── Empleados, escalafones y contraseñas ───────────────
 ROLES = ("camarero", "cocina", "encargado")
+
+CAMPOS_EMPLEADO = """e.id, e.nombre, e.apellidos, e.rol, e.escalafon, e.pin, e.activo, e.alta_en,
+                     e.puesto, (e.contrasena IS NOT NULL) AS tiene_contrasena,
+                     es.nombre AS escalafon_nombre, es.nivel, es.plus_pct, es.gestion"""
+
+# Para el botón de «invéntame un nombre». Cantina de una estación minera: mezcla de todo.
+NOMBRES_PILA = ["Ada", "Iker", "Nerea", "Hugo", "Yuki", "Omar", "Lucía", "Bram", "Noa", "Teo",
+                "Amaia", "Rashid", "Sonia", "Dmitri", "Carme", "Iván", "Leire", "Nico"]
+APELLIDOS = ["Vega", "Ortiz", "Kowalski", "Serra", "Ibáñez", "Nakamura", "Duarte", "Okonkwo",
+             "Pardo", "Lindqvist", "Salinas", "Ferreiro", "Bauer", "Mendoza", "Roca"]
+
+
+def empleado(eid: int) -> dict | None:
+    return q1(f"""SELECT {CAMPOS_EMPLEADO} FROM empleados e
+                  LEFT JOIN escalafones es ON es.clave = e.escalafon WHERE e.id=%s""", (eid,))
+
+
+def pin_libre() -> str:
+    usados = {f["pin"] for f in q("SELECT pin FROM empleados")}
+    for _ in range(500):
+        p = f"{secrets.randbelow(10000):04d}"
+        if p not in usados:
+            return p
+    raise HTTPException(409, "No quedan PIN de cuatro cifras libres")
+
+
+def contrasena_legible() -> str:
+    """Contraseña generada que se pueda dictar por teléfono: dos palabras y dos cifras."""
+    return (f"{secrets.choice(APELLIDOS).lower()}-{secrets.choice(NOMBRES_PILA).lower()}"
+            f"-{secrets.randbelow(100):02d}")
+
+
+@app.get("/api/escalafones")
+def listar_escalafones(u: dict = Depends(usuario)):
+    return q("SELECT * FROM escalafones ORDER BY nivel")
+
+
+@app.get("/api/empleados/sugerencia")
+def sugerir_datos(u: dict = Depends(exige("encargado"))):
+    """Nombre, apellidos, PIN y contraseña propuestos: el alta de un empleado no debería
+    obligar a inventarse nada."""
+    return {"nombre": secrets.choice(NOMBRES_PILA),
+            "apellidos": f"{secrets.choice(APELLIDOS)} {secrets.choice(APELLIDOS)}",
+            "pin": pin_libre(), "contrasena": contrasena_legible()}
 
 
 @app.get("/api/empleados")
 def listar_empleados(todos: bool = False, u: dict = Depends(exige("encargado"))):
-    return q("SELECT id, nombre, rol, pin, activo FROM empleados" +
-             ("" if todos else " WHERE activo") + " ORDER BY rol, nombre")
+    return q(f"""SELECT {CAMPOS_EMPLEADO} FROM empleados e
+                 LEFT JOIN escalafones es ON es.clave = e.escalafon
+                 {'' if todos else 'WHERE e.activo'}
+                 ORDER BY es.nivel DESC, e.nombre""")
+
+
+def exigir_mando_sobre(u: dict, escalafon: str | None, verbo: str):
+    """Nadie reparte galones por encima del suyo: para poner a alguien en un escalafón hay que
+    estar por encima de ese escalafón, y los de gestión solo los mueve gerencia."""
+    if not escalafon:
+        return
+    destino = q1("SELECT nivel, nombre FROM escalafones WHERE clave=%s", (escalafon,))
+    if not destino:
+        raise HTTPException(422, "Ese escalafón no existe")
+    if int(destino["nivel"]) >= 3 and u["nivel"] < 4:
+        raise HTTPException(403, f"{verbo} un {destino['nombre']} es cosa del gerente o del "
+                                 f"administrador; tú eres {u['escalafon_nombre']}")
+    if int(destino["nivel"]) >= u["nivel"] and u["nivel"] < 5:
+        raise HTTPException(403, f"No puedes {verbo.lower()} a alguien de tu mismo escalafón o "
+                                 "por encima")
 
 
 @app.post("/api/empleados", status_code=201)
 def crear_empleado(d: NuevoEmpleado, u: dict = Depends(exige("encargado"))):
     if d.rol not in ROLES:
         raise HTTPException(422, "Rol no válido")
-    if q1("SELECT id FROM empleados WHERE pin=%s", (d.pin,)):
+    exigir_mando_sobre(u, d.escalafon, "Crear")
+    pin = d.pin or pin_libre()
+    if q1("SELECT id FROM empleados WHERE pin=%s", (pin,)):
         raise HTTPException(409, "Ese PIN ya está en uso")
+    clara = d.contrasena or contrasena_legible()
     with conn() as c, c.cursor() as cur:
-        cur.execute("INSERT INTO empleados (nombre, rol, pin, activo) VALUES (%s,%s,%s,%s)",
-                    (d.nombre.strip(), d.rol, d.pin, d.activo))
+        cur.execute("""INSERT INTO empleados (nombre, apellidos, rol, escalafon, pin, contrasena,
+                                              activo, alta_en)
+                       VALUES (%s,%s,%s,%s,%s,%s,%s,CURDATE())""",
+                    (d.nombre.strip(), (d.apellidos or "").strip() or None, d.rol, d.escalafon,
+                     pin, cifrar_clave(clara), d.activo))
         eid = cur.lastrowid
-    return q1("SELECT id, nombre, rol, pin, activo FROM empleados WHERE id=%s", (eid,))
+    # La contraseña en claro se enseña UNA vez, al crearla: después ya solo se puede regenerar.
+    return {**empleado(eid), "contrasena_en_claro": clara}
 
 
 @app.patch("/api/empleados/{eid}")
 def editar_empleado(eid: int, d: CambioEmpleado, u: dict = Depends(exige("encargado"))):
-    if not q1("SELECT id FROM empleados WHERE id=%s", (eid,)):
+    actual = q1("SELECT id, escalafon FROM empleados WHERE id=%s", (eid,))
+    if not actual:
         raise HTTPException(404, "Empleado no encontrado")
     if d.rol and d.rol not in ROLES:
         raise HTTPException(422, "Rol no válido")
+    if d.escalafon:
+        exigir_mando_sobre(u, d.escalafon, "Ascender a")
+        exigir_mando_sobre(u, actual["escalafon"], "Tocar a")
     if d.pin and q1("SELECT id FROM empleados WHERE pin=%s AND id<>%s", (d.pin, eid)):
         raise HTTPException(409, "Ese PIN ya está en uso")
-    campos = {k: v for k, v in d.model_dump().items() if v is not None}
+    campos = {k: v for k, v in d.model_dump(exclude_unset=True).items() if v is not None}
+    clara = campos.pop("contrasena", None)
+    if clara:
+        campos["contrasena"] = cifrar_clave(clara)
     if campos:
-        sets = ", ".join(f"{k}=%s" for k in campos)
-        q(f"UPDATE empleados SET {sets} WHERE id=%s", (*campos.values(), eid))
-    return q1("SELECT id, nombre, rol, pin, activo FROM empleados WHERE id=%s", (eid,))
+        q(f"UPDATE empleados SET {', '.join(f'{k}=%s' for k in campos)} WHERE id=%s",
+          (*campos.values(), eid))
+    return empleado(eid)
+
+
+@app.post("/api/empleados/{eid}/contrasena")
+def regenerar_contrasena(eid: int, u: dict = Depends(exige("encargado"))):
+    """Devuelve una contraseña nueva en claro una sola vez; en la base solo queda el resumen."""
+    actual = q1("SELECT id, escalafon FROM empleados WHERE id=%s", (eid,))
+    if not actual:
+        raise HTTPException(404, "Empleado no encontrado")
+    exigir_mando_sobre(u, actual["escalafon"], "Cambiar la contraseña de")
+    clara = contrasena_legible()
+    q("UPDATE empleados SET contrasena=%s WHERE id=%s", (cifrar_clave(clara), eid))
+    return {"id": eid, "contrasena_en_claro": clara}
+
+
+@app.get("/api/nomina")
+def nomina(u: dict = Depends(exige_nivel(4, "La nómina"))):
+    """Lo que cobra cada escalafón sobre el sueldo del junior. El junior es el primer año:
+    el 5 % del empleado base se ve aquí, no en un papel aparte."""
+    base = int(ajustes_dict().get("sueldo_junior_cent", "120000"))
+    filas = q("""SELECT es.clave, es.nombre, es.nivel, es.plus_pct, COUNT(e.id) AS personas
+                 FROM escalafones es LEFT JOIN empleados e ON e.escalafon=es.clave AND e.activo
+                 GROUP BY es.clave, es.nombre, es.nivel, es.plus_pct ORDER BY es.nivel""")
+    for f in filas:
+        f["sueldo_cent"] = round(base * (1 + float(f["plus_pct"]) / 100))
+    return {"sueldo_junior_cent": base, "escalafones": filas}
 
 
 @app.delete("/api/empleados/{eid}")
 def baja_empleado(eid: int, u: dict = Depends(exige("encargado"))):
     """No se borra: se da de baja. Sus pedidos históricos deben seguir teniendo autor."""
-    if not q1("SELECT id FROM empleados WHERE id=%s", (eid,)):
+    e = q1("SELECT id, escalafon FROM empleados WHERE id=%s", (eid,))
+    if not e:
         raise HTTPException(404, "Empleado no encontrado")
-    if q1("SELECT COUNT(*) n FROM empleados WHERE activo AND rol='encargado' AND id<>%s", (eid,))["n"] == 0        and q1("SELECT rol FROM empleados WHERE id=%s", (eid,))["rol"] == "encargado":
-        raise HTTPException(409, "Debe quedar al menos un encargado activo")
+    exigir_mando_sobre(u, e["escalafon"], "Dar de baja a")
+    quedan = q1("""SELECT COUNT(*) n FROM empleados e JOIN escalafones es ON es.clave=e.escalafon
+                   WHERE e.activo AND es.gestion AND e.id<>%s""", (eid,))["n"]
+    if quedan == 0:
+        raise HTTPException(409, "Debe quedar al menos una persona de gestión activa")
     q("UPDATE empleados SET activo=0 WHERE id=%s", (eid,))
     return {"ok": True}
 

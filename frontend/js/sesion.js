@@ -42,15 +42,24 @@ async function exigirSesion(roles = []) {
           || roles.includes(rolEfectivo(yo))
           || (yo.rol === 'encargado' && roles.includes('encargado'));
         if (vale && puedeEstarAqui(yo)) { pintarBarraSesion(yo); vigilarPuesto(yo); return yo; }
-        if (vale && !puedeEstarAqui(yo)) return mandarASuPuesto(yo);
-        await pedirPin(`Esta pantalla es para ${roles.join(' o ')}. ${yo.nombre} trabaja de ${rolEfectivo(yo) || 'nada'}${yo.puesto_nombre ? ' en ' + yo.puesto_nombre : ''}.`);
-        continue;
+        // Sesión buena pero pantalla que no le toca: NO se pide PIN. Pedirlo invitaría a
+        // buscar el de otra persona; se le devuelve al menú, que ya solo enseña lo suyo.
+        return alMenu(yo, `Esta pantalla es para ${roles.join(' o ')}; ${yo.nombre} trabaja de ${rolEfectivo(yo) || 'nada'}${yo.puesto_nombre ? ' en ' + yo.puesto_nombre : ''}.`);
       } catch (e) {
         borrarSesion();
       }
     }
     await pedirPin();
   }
+}
+
+/** Devuelve a alguien al menú principal cuando ha entrado donde no le toca.
+ *  La promesa no se resuelve a propósito: la página se está yendo y nadie debe seguir pintando. */
+function alMenu(yo, motivo) {
+  aviso(motivo, 'error');
+  if (PANTALLA === 'index.html') return Promise.resolve(yo);   // ya estamos en el menú
+  setTimeout(() => location.href = '/index.html', 1600);
+  return new Promise(() => {});
 }
 
 /** Manda a cada uno a la pantalla de su puesto. Devuelve una promesa que no se resuelve:
@@ -88,6 +97,14 @@ function pedirPin(mensaje = '') {
         ${mensaje ? `<p class="aviso-rol">${esc(mensaje)}</p>` : ''}
         <div class="pantalla" id="pin-pantalla">····</div>
         <div class="teclado" id="teclado"></div>
+        <details class="por-clave">
+          <summary>Entrar con numero de empleado</summary>
+          <div class="fila">
+            <input id="acc-num" inputmode="numeric" placeholder="N.o de empleado" style="width:9em">
+            <input id="acc-clave" type="password" placeholder="Contrasena" style="flex:1">
+            <button id="acc-ok" class="primario">Entrar</button>
+          </div>
+        </details>
       </div>`;
     document.body.appendChild(caja);
 
@@ -128,6 +145,25 @@ function pedirPin(mensaje = '') {
       else if (e.key === 'Enter') validar();
       else if (e.key === 'Escape') pulsar('C');
     }
+    // La otra puerta: numero de empleado y contrasena, para quien entra a la gestion desde
+    // un teclado de verdad y no desde la pantalla tactil de barra.
+    caja.querySelector('#acc-ok').onclick = async () => {
+      const num = +caja.querySelector('#acc-num').value;
+      const clave = caja.querySelector('#acc-clave').value;
+      if (!num || clave.length < 6) return aviso('Numero de empleado y contrasena', 'error');
+      try {
+        guardarSesion(await api('/login', { method: 'POST', body: { empleado_id: num, contrasena: clave } }));
+        document.removeEventListener('keydown', porTeclado);
+        caja.remove();
+        resolve(sesion);
+      } catch (e) { aviso(e.message, 'error'); }
+    };
+    caja.querySelector('#acc-clave').onkeydown = e => {
+      if (e.key === 'Enter') caja.querySelector('#acc-ok').click();
+      e.stopPropagation();                      // que el teclado del PIN no se coma las teclas
+    };
+    caja.querySelector('#acc-num').onkeydown = e => e.stopPropagation();
+
     document.addEventListener('keydown', porTeclado);
     pintar();
   });
