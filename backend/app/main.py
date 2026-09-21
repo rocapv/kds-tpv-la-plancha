@@ -103,6 +103,47 @@ class DatosFactura(BaseModel):
     cliente_direccion: str | None = Field(None, max_length=120)
 
 
+class NuevoProducto(BaseModel):
+    categoria_id: int
+    nombre: str = Field(min_length=2, max_length=60)
+    precio_cent: int = Field(ge=0, le=100000)
+    estacion: str
+    alergenos: str | None = Field(None, max_length=120)
+    orden: int = Field(0, ge=0, le=127)
+
+
+class CambioProducto(BaseModel):
+    categoria_id: int | None = None
+    nombre: str | None = Field(None, min_length=2, max_length=60)
+    precio_cent: int | None = Field(None, ge=0, le=100000)
+    estacion: str | None = None
+    alergenos: str | None = Field(None, max_length=120)
+    orden: int | None = Field(None, ge=0, le=127)
+    activo: bool | None = None
+    disponible: bool | None = None
+
+
+class NuevaCategoria(BaseModel):
+    nombre: str = Field(min_length=2, max_length=40)
+    color: str = Field("#888888", pattern=r"^#[0-9a-fA-F]{6}$")
+    orden: int = Field(0, ge=0, le=127)
+
+
+class CambioCategoria(BaseModel):
+    nombre: str | None = Field(None, min_length=2, max_length=40)
+    color: str | None = Field(None, pattern=r"^#[0-9a-fA-F]{6}$")
+    orden: int | None = Field(None, ge=0, le=127)
+    activa: bool | None = None
+
+
+class NuevoPago(BaseModel):
+    metodo: str
+    lineas: list[int] | None = None       # pago de unas líneas concretas
+    importe_cent: int | None = None       # o un importe suelto (división en partes)
+    entregado_cent: int | None = None
+    concepto: str | None = Field(None, max_length=60)
+
+
 class Ajuste(BaseModel):
     valor: str = Field(max_length=200)
 
@@ -118,7 +159,9 @@ def pedido_completo(pid: int):
                        JOIN productos pr ON pr.id=l.producto_id
                        WHERE l.pedido_id=%s ORDER BY l.id""", (pid,))
     p["total_cent"] = sum(l["cantidad"] * l["precio_cent"] for l in p["lineas"] if l["estado"] != "anulada")
-    p["pagos"] = q("SELECT * FROM pagos WHERE pedido_id=%s", (pid,))
+    p["pagos"] = q("SELECT * FROM pagos WHERE pedido_id=%s ORDER BY id", (pid,))
+    p["pagado_cent"] = sum(g["importe_cent"] for g in p["pagos"])
+    p["pendiente_cent"] = p["total_cent"] - p["pagado_cent"]
     return p
 
 
@@ -146,9 +189,10 @@ def login(d: Login):
 
 
 @app.get("/api/catalogo")
-def catalogo():
-    cats = q("SELECT * FROM categorias ORDER BY orden")
-    prods = q("SELECT * FROM productos WHERE activo ORDER BY categoria_id, id")
+def catalogo(todo: bool = False):
+    """La carta. Con todo=true incluye bajas y agotados (lo usa la app de carta)."""
+    cats = q("SELECT * FROM categorias" + ("" if todo else " WHERE activa") + " ORDER BY orden, id")
+    prods = q("SELECT * FROM productos" + ("" if todo else " WHERE activo") + " ORDER BY categoria_id, orden, id")
     for c in cats:
         c["productos"] = [p for p in prods if p["categoria_id"] == c["id"]]
     return cats
@@ -196,9 +240,12 @@ def ver_pedido(pid: int):
 @app.post("/api/pedidos/{pid}/lineas")
 async def anadir_linea(pid: int, d: NuevaLinea):
     exigir_abierto(pid)
-    pr = q1("SELECT precio_cent, estacion FROM productos WHERE id=%s AND activo", (d.producto_id,))
+    pr = q1("SELECT nombre, precio_cent, estacion, disponible FROM productos WHERE id=%s AND activo",
+            (d.producto_id,))
     if not pr:
         raise HTTPException(404, "Producto no disponible")
+    if not pr["disponible"]:
+        raise HTTPException(409, f"{pr['nombre']} está agotado")
     q("""INSERT INTO lineas_pedido (pedido_id, producto_id, cantidad, precio_cent, notas, estacion)
          VALUES (%s,%s,%s,%s,%s,%s)""",
       (pid, d.producto_id, d.cantidad, pr["precio_cent"], d.notas or None, pr["estacion"]))
@@ -243,6 +290,8 @@ async def cobrar(pid: int, d: Cobro):
         raise HTTPException(409, "El pedido está vacío")
     if any(l["estado"] == "pendiente" for l in p["lineas"]):
         raise HTTPException(409, "Hay líneas sin enviar a cocina")
+    if p["pagado_cent"]:
+        raise HTTPException(409, "El pedido tiene pagos parciales: usa /pagos")
     cambio = None
     if d.metodo == "efectivo":
         if d.entregado_cent is None or d.entregado_cent < total:
@@ -363,6 +412,140 @@ def informe(fecha: str | None = None):
             "base_cent": base, "iva_cent": total - base,
             "ticket_medio_cent": round(total / resumen["tickets"]) if resumen["tickets"] else 0,
             "por_metodo": por_metodo, "top": top, "por_hora": por_hora, "cocina": cocina}
+
+
+# ─────────────── Carta (app de carta) ───────────────
+@app.post("/api/categorias", status_code=201)
+async def crear_categoria(d: NuevaCategoria):
+    with conn() as c, c.cursor() as cur:
+        cur.execute("INSERT INTO categorias (nombre, color, orden) VALUES (%s,%s,%s)",
+                    (d.nombre.strip(), d.color, d.orden))
+        cid = cur.lastrowid
+    await hub.emitir("carta")
+    return q1("SELECT * FROM categorias WHERE id=%s", (cid,))
+
+
+@app.patch("/api/categorias/{cid}")
+async def editar_categoria(cid: int, d: CambioCategoria):
+    if not q1("SELECT id FROM categorias WHERE id=%s", (cid,)):
+        raise HTTPException(404, "Categoría no encontrada")
+    campos = {k: v for k, v in d.model_dump().items() if v is not None}
+    if campos:
+        sets = ", ".join(f"{k}=%s" for k in campos)
+        q(f"UPDATE categorias SET {sets} WHERE id=%s", (*campos.values(), cid))
+    await hub.emitir("carta")
+    return q1("SELECT * FROM categorias WHERE id=%s", (cid,))
+
+
+@app.post("/api/productos", status_code=201)
+async def crear_producto(d: NuevoProducto):
+    if d.estacion not in ESTACIONES:
+        raise HTTPException(422, "Estación desconocida")
+    if not q1("SELECT id FROM categorias WHERE id=%s", (d.categoria_id,)):
+        raise HTTPException(404, "Categoría no encontrada")
+    with conn() as c, c.cursor() as cur:
+        cur.execute("""INSERT INTO productos (categoria_id, nombre, precio_cent, estacion, alergenos, orden)
+                       VALUES (%s,%s,%s,%s,%s,%s)""",
+                    (d.categoria_id, d.nombre.strip(), d.precio_cent, d.estacion, d.alergenos, d.orden))
+        pid = cur.lastrowid
+    await hub.emitir("carta")
+    return q1("SELECT * FROM productos WHERE id=%s", (pid,))
+
+
+@app.patch("/api/productos/{prid}")
+async def editar_producto(prid: int, d: CambioProducto):
+    if not q1("SELECT id FROM productos WHERE id=%s", (prid,)):
+        raise HTTPException(404, "Producto no encontrado")
+    if d.estacion and d.estacion not in ESTACIONES:
+        raise HTTPException(422, "Estación desconocida")
+    campos = {k: v for k, v in d.model_dump().items() if v is not None}
+    if campos:
+        sets = ", ".join(f"{k}=%s" for k in campos)
+        q(f"UPDATE productos SET {sets} WHERE id=%s", (*campos.values(), prid))
+    await hub.emitir("carta")
+    return q1("SELECT * FROM productos WHERE id=%s", (prid,))
+
+
+@app.delete("/api/productos/{prid}")
+async def quitar_producto(prid: int):
+    """Baja lógica: los pedidos antiguos deben seguir enseñando qué se vendió."""
+    if not q1("SELECT id FROM productos WHERE id=%s", (prid,)):
+        raise HTTPException(404, "Producto no encontrado")
+    q("UPDATE productos SET activo=0 WHERE id=%s", (prid,))
+    await hub.emitir("carta")
+    return {"ok": True}
+
+
+# ─────────────── Pagos: dividir cuenta y pago mixto ───────────────
+@app.post("/api/pedidos/{pid}/pagos", status_code=201)
+async def anadir_pago(pid: int, d: NuevoPago):
+    """Un pedido admite varios pagos: por líneas, por partes iguales o a importe libre.
+
+    El pedido se cierra solo cuando lo pagado alcanza el total.
+    """
+    exigir_abierto(pid)
+    if d.metodo not in ("efectivo", "tarjeta", "bizum"):
+        raise HTTPException(422, "Método de pago no válido")
+    p = pedido_completo(pid)
+    if any(l["estado"] == "pendiente" for l in p["lineas"]):
+        raise HTTPException(409, "Hay líneas sin enviar a cocina")
+    if p["pendiente_cent"] <= 0:
+        raise HTTPException(409, "El pedido ya está pagado")
+
+    lineas = []
+    if d.lineas:
+        por_id = {l["id"]: l for l in p["lineas"]}
+        for lid in d.lineas:
+            l = por_id.get(lid)
+            if not l:
+                raise HTTPException(404, f"La línea {lid} no es de este pedido")
+            if l["estado"] == "anulada":
+                raise HTTPException(409, "Hay líneas anuladas en la selección")
+            if l["pago_id"]:
+                raise HTTPException(409, f"La línea {lid} ya estaba pagada")
+            lineas.append(l)
+        importe = sum(l["cantidad"] * l["precio_cent"] for l in lineas)
+    elif d.importe_cent is not None:
+        importe = d.importe_cent
+    else:
+        importe = p["pendiente_cent"]
+    if importe <= 0:
+        raise HTTPException(422, "El importe debe ser mayor que cero")
+    if importe > p["pendiente_cent"]:
+        raise HTTPException(422, "El importe supera lo que queda por pagar")
+
+    cambio = None
+    if d.metodo == "efectivo" and d.entregado_cent is not None:
+        if d.entregado_cent < importe:
+            raise HTTPException(422, "Importe entregado insuficiente")
+        cambio = d.entregado_cent - importe
+
+    with conn() as c, c.cursor() as cur:
+        cur.execute("""INSERT INTO pagos (pedido_id, metodo, concepto, importe_cent, entregado_cent, cambio_cent)
+                       VALUES (%s,%s,%s,%s,%s,%s)""",
+                    (pid, d.metodo, d.concepto, importe, d.entregado_cent, cambio))
+        pago_id = cur.lastrowid
+        if lineas:
+            marcas = ",".join(["%s"] * len(lineas))
+            cur.execute(f"UPDATE lineas_pedido SET pago_id=%s WHERE id IN ({marcas})",
+                        (pago_id, *[l["id"] for l in lineas]))
+        cur.execute("SELECT COALESCE(SUM(importe_cent),0) AS pagado FROM pagos WHERE pedido_id=%s", (pid,))
+        if cur.fetchone()["pagado"] >= p["total_cent"]:
+            cur.execute("UPDATE pedidos SET estado='cobrado', cerrado_en=NOW() WHERE id=%s", (pid,))
+    await hub.emitir("mesas")
+    return pedido_completo(pid)
+
+
+@app.delete("/api/pedidos/{pid}/pagos/{pago_id}")
+async def anular_pago(pid: int, pago_id: int):
+    """Solo se deshace mientras el pedido siga abierto (error de caja reciente)."""
+    exigir_abierto(pid)
+    if not q1("SELECT id FROM pagos WHERE id=%s AND pedido_id=%s", (pago_id, pid)):
+        raise HTTPException(404, "Pago no encontrado")
+    q("UPDATE lineas_pedido SET pago_id=NULL WHERE pago_id=%s", (pago_id,))
+    q("DELETE FROM pagos WHERE id=%s", (pago_id,))
+    await hub.emitir("mesas")
+    return pedido_completo(pid)
 
 
 # ─────────────── Empleados (app de usuarios) ───────────────

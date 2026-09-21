@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Carta · La Plancha</title>
+<link rel="stylesheet" href="/css/estilo.css?v=__V__">
+</head>
+<body>
+<header class="barra">
+  <a href="/"><button>◀ Menú</button></a>
+  <h1>Carta</h1>
+  <span class="hueco"></span>
+  <button id="b-categoria">Nueva categoría</button>
+  <button id="b-producto" class="primario">Nuevo producto</button>
+  <span id="conexion" class="conexion"></span>
+</header>
+
+<main class="informe">
+  <p class="tenue">Un producto <b>agotado</b> sigue en la carta pero el TPV no lo deja pedir. Un producto <b>de baja</b> desaparece de la carta; los pedidos antiguos lo conservan.</p>
+  <div id="carta"></div>
+</main>
+
+<dialog id="d-prod">
+  <h3 id="p-titulo">Nuevo producto</h3>
+  <div class="fila"><input id="p-nombre" placeholder="Nombre" maxlength="60" style="flex:1"></div>
+  <div class="fila">
+    <label>Precio € <input id="p-precio" type="number" step="0.05" min="0" style="width:7em"></label>
+    <select id="p-cat"></select>
+    <select id="p-est">
+      <option value="plancha">Plancha</option><option value="freidora">Freidora</option>
+      <option value="frios">Fríos</option><option value="barra">Barra</option>
+    </select>
+  </div>
+  <div class="fila"><input id="p-alergenos" placeholder="Alérgenos (gluten, lactosa…)" maxlength="120" style="flex:1"></div>
+  <div class="fila"><button id="p-cancelar">Cancelar</button><button id="p-ok" class="primario">Guardar</button></div>
+</dialog>
+
+<dialog id="d-cat">
+  <h3 id="c-titulo">Nueva categoría</h3>
+  <div class="fila">
+    <input id="c-nombre" placeholder="Nombre" maxlength="40" style="flex:1">
+    <input id="c-color" type="color" value="#888888" style="width:4em;padding:.2em">
+    <label>Orden <input id="c-orden" type="number" min="0" max="127" value="0" style="width:5em"></label>
+  </div>
+  <div class="fila"><button id="c-cancelar">Cancelar</button><button id="c-ok" class="primario">Guardar</button></div>
+</dialog>
+
+<script src="/js/comun.js?v=__V__"></script>
+<script>
+let cats = [], editandoProd = null, editandoCat = null;
+
+async function cargar() {
+  cats = await api('/catalogo?todo=true');
+  $('#carta').innerHTML = cats.map(c => `
+    <div class="caja" style="margin-bottom:.8rem;border-left:6px solid ${esc(c.color)}">
+      <div class="cab-cat">
+        <h3>${esc(c.nombre)} ${c.activa ? '' : '<span class="estado">oculta</span>'}</h3>
+        <span>
+          <button data-editcat="${c.id}">Editar</button>
+          <button data-vercat="${c.id}">${c.activa ? 'Ocultar' : 'Mostrar'}</button>
+        </span>
+      </div>
+      <table>${c.productos.map(p => `<tr class="${p.activo ? '' : 'baja'}">
+        <td>${esc(p.nombre)}${p.alergenos ? `<br><small class="tenue">⚠ ${esc(p.alergenos)}</small>` : ''}</td>
+        <td>${esc(p.estacion)}</td>
+        <td class="num">${euro(p.precio_cent)}</td>
+        <td>${!p.activo ? '<span class="estado">baja</span>'
+              : p.disponible ? '<span class="estado lista">disponible</span>'
+              : '<span class="estado preparando">agotado</span>'}</td>
+        <td class="num">
+          <button data-edit="${p.id}">Editar</button>
+          ${p.activo ? `<button data-agotar="${p.id}" data-val="${p.disponible ? 0 : 1}">${p.disponible ? 'Agotado' : 'Reponer'}</button>
+                        <button data-baja="${p.id}" class="mal">Baja</button>`
+                     : `<button data-alta="${p.id}" class="ok">Reactivar</button>`}
+        </td></tr>`).join('') || '<tr><td class="tenue">Sin productos</td></tr>'}</table>
+    </div>`).join('');
+
+  const todos = cats.flatMap(c => c.productos);
+  const pulsar = (sel, fn) => $('#carta').querySelectorAll(sel).forEach(b => b.onclick = () => fn(b));
+  pulsar('[data-edit]', b => abrirProd(todos.find(p => p.id == b.dataset.edit)));
+  pulsar('[data-agotar]', async b => { await api('/productos/' + b.dataset.agotar, { method: 'PATCH', body: { disponible: b.dataset.val === '1' } }); cargar(); });
+  pulsar('[data-baja]', async b => { if (confirm('¿Quitar este producto de la carta?')) { await api('/productos/' + b.dataset.baja, { method: 'DELETE' }); cargar(); } });
+  pulsar('[data-alta]', async b => { await api('/productos/' + b.dataset.alta, { method: 'PATCH', body: { activo: true } }); cargar(); });
+  pulsar('[data-editcat]', b => abrirCat(cats.find(c => c.id == b.dataset.editcat)));
+  pulsar('[data-vercat]', async b => {
+    const c = cats.find(x => x.id == b.dataset.vercat);
+    await api('/categorias/' + c.id, { method: 'PATCH', body: { activa: !c.activa } }); cargar();
+  });
+}
+
+function abrirProd(p = null) {
+  editandoProd = p;
+  $('#p-titulo').textContent = p ? 'Editar ' + p.nombre : 'Nuevo producto';
+  $('#p-cat').innerHTML = cats.map(c => `<option value="${c.id}">${esc(c.nombre)}</option>`).join('');
+  $('#p-nombre').value = p?.nombre || '';
+  $('#p-precio').value = p ? (p.precio_cent / 100).toFixed(2) : '';
+  $('#p-cat').value = p?.categoria_id || cats[0]?.id;
+  $('#p-est').value = p?.estacion || 'plancha';
+  $('#p-alergenos').value = p?.alergenos || '';
+  $('#d-prod').showModal();
+}
+$('#b-producto').onclick = () => abrirProd();
+$('#p-cancelar').onclick = () => $('#d-prod').close();
+$('#p-ok').onclick = async () => {
+  const body = {
+    nombre: $('#p-nombre').value.trim(),
+    precio_cent: Math.round(parseFloat($('#p-precio').value || 0) * 100),
+    categoria_id: +$('#p-cat').value,
+    estacion: $('#p-est').value,
+    alergenos: $('#p-alergenos').value.trim() || null,
+  };
+  if (body.nombre.length < 2) return aviso('Falta el nombre', 'error');
+  if (!(body.precio_cent >= 0)) return aviso('Precio no válido', 'error');
+  try {
+    if (editandoProd) await api('/productos/' + editandoProd.id, { method: 'PATCH', body });
+    else await api('/productos', { method: 'POST', body });
+    $('#d-prod').close(); cargar(); aviso('Guardado', 'ok');
+  } catch (e) { aviso(e.message, 'error'); }
+};
+
+function abrirCat(c = null) {
+  editandoCat = c;
+  $('#c-titulo').textContent = c ? 'Editar ' + c.nombre : 'Nueva categoría';
+  $('#c-nombre').value = c?.nombre || '';
+  $('#c-color').value = c?.color || '#888888';
+  $('#c-orden').value = c?.orden ?? cats.length + 1;
+  $('#d-cat').showModal();
+}
+$('#b-categoria').onclick = () => abrirCat();
+$('#c-cancelar').onclick = () => $('#d-cat').close();
+$('#c-ok').onclick = async () => {
+  const body = { nombre: $('#c-nombre').value.trim(), color: $('#c-color').value, orden: +$('#c-orden').value };
+  if (body.nombre.length < 2) return aviso('Falta el nombre', 'error');
+  try {
+    if (editandoCat) await api('/categorias/' + editandoCat.id, { method: 'PATCH', body });
+    else await api('/categorias', { method: 'POST', body });
+    $('#d-cat').close(); cargar(); aviso('Guardado', 'ok');
+  } catch (e) { aviso(e.message, 'error'); }
+};
+
+conectarWS(ev => { if (ev.tipo === 'carta') cargar(); });
+cargar();
+</script>
+</body>
+</html>

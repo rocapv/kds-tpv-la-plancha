@@ -1,0 +1,16 @@
+[Unit]
+# MariaDB propia del usuario, para cuando no se tiene root en la máquina.
+# En una instalación normal se usa el MariaDB del sistema (deploy/00_crear_bd.sql)
+# y esta unidad no hace falta.
+Description=MariaDB de usuario para KDS+TPV
+Before=kds-tpv.service
+
+[Service]
+Type=simple
+ExecStart=/usr/sbin/mariadbd --defaults-file=%h/.local/share/kds-mariadb/my.cnf
+Restart=always
+RestartSec=3
+TimeoutStopSec=60
+
+[Install]
+WantedBy=default.target

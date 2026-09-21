@@ -29,6 +29,7 @@ La portada es el **menú principal**, con el trabajo pendiente de cada estación
 | Facturación | Cobros del día, emisión de facturas y consulta de las emitidas |
 | KDS (×4 + pase) | Pantallas de cocina por estación |
 | Informe | Cierre de caja del día |
+| Carta | Productos, precios, categorías, alérgenos y agotados |
 | Usuarios | Altas, bajas, cambio de rol y de PIN |
 | Ajustes | Datos fiscales del local, IVA y minutos de aviso del KDS |
 | API | Documentación OpenAPI generada sola |
@@ -52,7 +53,7 @@ que repetir la petición devuelve la misma factura en lugar de duplicarla.
 1. El camarero entra con su PIN, elige una mesa (o «para llevar») y añade productos. Un clic derecho o una pulsación larga permite añadir notas.
 2. Con **Enviar a cocina**, cada línea pasa a `enviada` y va a la pantalla de su estación.
 3. En cocina, **Empezar** la pasa a `preparando`, **Listo** a `lista` (el TPV recibe el aviso) y **Servido** a `servida`. Si se toca una línea, avanza solo esa.
-4. Se cobra en efectivo (calcula el cambio), con tarjeta o con Bizum, y aparece el ticket en pantalla, desde el que se puede emitir la factura.
+4. Se cobra entero, **dividido en partes iguales** o **por líneas**, y con varios métodos en el mismo pedido (mitad tarjeta, mitad efectivo). El pedido se cierra solo cuando lo pagado alcanza el total; mientras siga abierto, un pago se puede deshacer. Al cerrarse aparece el ticket en pantalla, desde el que se emite la factura.
 5. El **informe** muestra la facturación, la base imponible y el IVA, los productos más vendidos, las ventas por hora y el tiempo medio de cocina de cada estación.
 
 Las comandas se ponen en amarillo a los 8 minutos y en rojo, parpadeando, a los 15.
@@ -89,6 +90,24 @@ backend/simulador.py     generador de servicio para la demo
 frontend/                tpv, kds, informe (estáticos)
 deploy/                  SQL de alta, unit systemd, instalador
 ```
+
+## Cuentas divididas
+
+`pagos` admite varias filas por pedido y cada línea puede quedar enganchada al pago que la liquidó
+(`lineas_pedido.pago_id`), así que una línea no se cobra dos veces. El servidor rechaza pagar más de
+lo que queda pendiente y solo marca el pedido como cobrado cuando la suma de los pagos alcanza el
+total.
+
+## Carta editable
+
+La carta se mantiene desde la propia aplicación: crear y editar productos y categorías, cambiar
+precios, apuntar alérgenos y marcar **agotado** (sigue en la carta, pero el TPV no lo deja pedir) o
+dar de **baja** (desaparece de la carta; los pedidos antiguos lo conservan). Los cambios llegan a
+los TPV abiertos por WebSocket, sin recargar.
+
+## Mejoras pendientes
+
+En [docs/PENDIENTES.md](docs/PENDIENTES.md).
 
 ## Límites conocidos (mejoras futuras)
 

@@ -63,18 +63,45 @@
 </dialog>
 
 <dialog id="d-cobro">
-  <h3>Cobrar <span id="c-total"></span></h3>
+  <h3>Cobrar pedido <span id="c-pedido"></span></h3>
+  <div class="cobro-cifras">
+    <div><span class="tenue">Total</span><b id="c-total">—</b></div>
+    <div><span class="tenue">Pagado</span><b id="c-pagado">—</b></div>
+    <div><span class="tenue">Pendiente</span><b id="c-pendiente">—</b></div>
+  </div>
+
+  <div class="fila" id="c-modos">
+    <button data-modo="todo" class="primario">Todo lo pendiente</button>
+    <button data-modo="partes">Dividir en partes</button>
+    <button data-modo="lineas">Por líneas</button>
+  </div>
+
+  <div id="c-partes" hidden>
+    <label>Comensales <input id="c-n" type="number" min="2" max="20" value="2" style="width:5em"></label>
+    <span class="tenue">· cada parte: <b id="c-parte">—</b></span>
+  </div>
+
+  <div id="c-lineas" hidden class="lista-lineas"></div>
+
   <div class="fila">
+    <span class="tenue">A cobrar ahora:</span><b id="c-importe">—</b>
+  </div>
+
+  <div class="fila" id="c-metodos">
     <button data-m="efectivo" class="primario">Efectivo</button>
     <button data-m="tarjeta">Tarjeta</button>
     <button data-m="bizum">Bizum</button>
   </div>
+
   <div id="c-efectivo">
     <label>Entregado (€) <input id="c-entregado" type="number" step="0.01" min="0" style="width:8em"></label>
     <div class="fila" id="c-rapidos"></div>
     <p>Cambio: <b id="c-cambio">—</b></p>
   </div>
-  <div class="fila"><button id="c-cancelar">Cancelar</button><button id="c-ok" class="ok">Confirmar cobro</button></div>
+
+  <div id="c-registrados"></div>
+
+  <div class="fila"><button id="c-cancelar">Cerrar</button><button id="c-ok" class="ok">Registrar pago</button></div>
 </dialog>
 
 <dialog id="d-llevar">

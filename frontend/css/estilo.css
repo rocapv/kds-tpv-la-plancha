@@ -134,3 +134,18 @@ td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
 #ticket-impreso { display: none; }
 
 header.barra a { text-decoration: none; }
+
+/* ── Cobro dividido ── */
+.cobro-cifras { display: flex; gap: 1.5rem; margin: .8rem 0; }
+.cobro-cifras b { display: block; font-size: 1.4rem; }
+.lista-lineas { max-height: 12rem; overflow: auto; border: 1px solid var(--borde); border-radius: var(--r); padding: .3rem .6rem; }
+.linea-elegible { display: grid; grid-template-columns: 1.6em 1fr auto auto; gap: .5rem; align-items: center; padding: .35rem 0; border-bottom: 1px dashed var(--borde); cursor: pointer; }
+.linea-elegible.pagada { color: var(--tenue); }
+.pago-hecho { display: grid; grid-template-columns: 1fr auto 2em; gap: .5rem; align-items: center; padding: .3rem 0; border-bottom: 1px dashed var(--borde); }
+.pago-hecho button { padding: .1rem .4rem; }
+#c-registrados h4 { margin: .8rem 0 .3rem; color: var(--tenue); font-size: .85rem; text-transform: uppercase; }
+
+/* ── App de carta ── */
+.cab-cat { display: flex; justify-content: space-between; align-items: center; margin-bottom: .5rem; }
+tr.baja td { color: var(--tenue); text-decoration: line-through; }
+tr.baja td button { text-decoration: none; }

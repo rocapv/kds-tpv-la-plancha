@@ -91,7 +91,8 @@ function verCarta() {
   $('#cats').querySelectorAll('button').forEach(b => b.onclick = () => { catActiva = +b.dataset.cat; verCarta(); });
   const cat = catalogo.find(c => c.id === catActiva);
   $('#productos').innerHTML = cat.productos.map(p =>
-    `<button class="producto" data-p="${p.id}" style="border-left-color:${cat.color}">${esc(p.nombre)}<span>${euro(p.precio_cent)}</span></button>`).join('');
+    `<button class="producto" data-p="${p.id}" style="border-left-color:${cat.color}" ${p.disponible ? '' : 'disabled title="Agotado"'}>
+       ${esc(p.nombre)}<span>${p.disponible ? euro(p.precio_cent) : 'AGOTADO'}</span></button>`).join('');
   $('#productos').querySelectorAll('button').forEach(b => {
     b.onclick = () => anadir(+b.dataset.p);                       // clic = añadir directo
     b.oncontextmenu = e => { e.preventDefault(); pedirNota(+b.dataset.p); }; // clic derecho = con nota
@@ -151,6 +152,8 @@ function pintarTicket() {
   const pendientes = lineas.some(l => l.estado === 'pendiente');
   $('#b-enviar').disabled = !pendientes;
   $('#b-cobrar').disabled = !hay || pendientes || pedido.total_cent === 0;
+  if (hay && pedido.pagado_cent) $('#b-cobrar').textContent = 'Cobrar (faltan ' + euro(pedido.pendiente_cent) + ')';
+  else $('#b-cobrar').textContent = 'Cobrar';
   $('#b-documento').disabled = !hay || pedido.total_cent === 0;
   $('#b-anular').disabled = !hay;
 }
@@ -166,40 +169,131 @@ $('#b-anular').onclick = async () => {
   pedido = null; pintarTicket(); verMesas();
 };
 
-// ── Cobro ──
-$('#b-cobrar').onclick = () => {
-  $('#c-total').textContent = euro(pedido.total_cent);
-  $('#c-entregado').value = '';
-  $('#c-cambio').textContent = '—';
-  const t = pedido.total_cent;
-  const rapidos = [...new Set([t, Math.ceil(t / 500) * 500, Math.ceil(t / 1000) * 1000, Math.ceil(t / 2000) * 2000, 5000])].filter(x => x >= t).slice(0, 4);
-  $('#c-rapidos').innerHTML = rapidos.map(x => `<button data-e="${x}">${euro(x)}</button>`).join('');
-  $('#c-rapidos').querySelectorAll('button').forEach(b => b.onclick = () => { $('#c-entregado').value = (b.dataset.e / 100).toFixed(2); calcCambio(); });
+// ── Cobro: entero, dividido en partes o por líneas, y con varios métodos ──
+let modoCobro = 'todo', lineasElegidas = new Set();
+
+$('#b-cobrar').onclick = () => abrirCobro();
+
+async function abrirCobro() {
+  pedido = await api('/pedidos/' + pedido.id);
+  modoCobro = 'todo'; lineasElegidas.clear();
+  $('#c-pedido').textContent = '#' + pedido.id + (pedido.mesa ? ' · Mesa ' + pedido.mesa : '');
   elegirMetodo('efectivo');
+  pintarCobro();
   $('#d-cobro').showModal();
-};
+}
+
+function lineasPagables() {
+  return pedido.lineas.filter(l => l.estado !== 'anulada' && !l.pago_id);
+}
+
+function importeACobrar() {
+  if (modoCobro === 'partes') {
+    const n = Math.max(2, +$('#c-n').value || 2);
+    const parte = Math.floor(pedido.total_cent / n);
+    // la última parte absorbe los céntimos que no reparten exactos
+    return Math.min(parte, pedido.pendiente_cent) || pedido.pendiente_cent;
+  }
+  if (modoCobro === 'lineas') {
+    return pedido.lineas.filter(l => lineasElegidas.has(l.id))
+      .reduce((s, l) => s + l.cantidad * l.precio_cent, 0);
+  }
+  return pedido.pendiente_cent;
+}
+
+function pintarCobro() {
+  $('#c-total').textContent = euro(pedido.total_cent);
+  $('#c-pagado').textContent = euro(pedido.pagado_cent);
+  $('#c-pendiente').textContent = euro(pedido.pendiente_cent);
+  $('#c-modos').querySelectorAll('[data-modo]').forEach(b =>
+    b.className = b.dataset.modo === modoCobro ? 'primario' : '');
+  $('#c-partes').hidden = modoCobro !== 'partes';
+  $('#c-lineas').hidden = modoCobro !== 'lineas';
+
+  if (modoCobro === 'partes') {
+    const n = Math.max(2, +$('#c-n').value || 2);
+    $('#c-parte').textContent = euro(Math.floor(pedido.total_cent / n));
+  }
+  if (modoCobro === 'lineas') {
+    $('#c-lineas').innerHTML = pedido.lineas.filter(l => l.estado !== 'anulada').map(l => `
+      <label class="linea-elegible ${l.pago_id ? 'pagada' : ''}">
+        <input type="checkbox" data-l="${l.id}" ${l.pago_id ? 'disabled' : ''} ${lineasElegidas.has(l.id) ? 'checked' : ''}>
+        <span>${l.cantidad}× ${esc(l.producto)}</span>
+        <span class="num">${euro(l.cantidad * l.precio_cent)}</span>
+        ${l.pago_id ? '<span class="estado lista">pagada</span>' : ''}
+      </label>`).join('');
+    $('#c-lineas').querySelectorAll('[data-l]').forEach(ch => ch.onchange = () => {
+      ch.checked ? lineasElegidas.add(+ch.dataset.l) : lineasElegidas.delete(+ch.dataset.l);
+      pintarCobro();
+    });
+  }
+
+  const importe = importeACobrar();
+  $('#c-importe').textContent = euro(importe);
+  $('#c-ok').disabled = importe <= 0 || importe > pedido.pendiente_cent;
+
+  const rapidos = [...new Set([importe, Math.ceil(importe / 500) * 500, Math.ceil(importe / 1000) * 1000,
+                               Math.ceil(importe / 2000) * 2000, 5000])].filter(x => x >= importe).slice(0, 4);
+  $('#c-rapidos').innerHTML = rapidos.map(x => `<button data-e="${x}">${euro(x)}</button>`).join('');
+  $('#c-rapidos').querySelectorAll('button').forEach(b => b.onclick = () => {
+    $('#c-entregado').value = (b.dataset.e / 100).toFixed(2); calcCambio();
+  });
+  calcCambio();
+
+  $('#c-registrados').innerHTML = pedido.pagos.length
+    ? '<h4>Pagos registrados</h4>' + pedido.pagos.map(g => `
+        <div class="pago-hecho"><span>${esc(g.metodo)}${g.concepto ? ' · ' + esc(g.concepto) : ''}</span>
+          <span class="num">${euro(g.importe_cent)}</span>
+          <button data-deshacer="${g.id}" class="mal" title="Deshacer">✕</button></div>`).join('')
+    : '';
+  $('#c-registrados').querySelectorAll('[data-deshacer]').forEach(b => b.onclick = async () => {
+    pedido = await api(`/pedidos/${pedido.id}/pagos/${b.dataset.deshacer}`, { method: 'DELETE' });
+    lineasElegidas.clear(); pintarCobro(); pintarTicket();
+  });
+}
+
+$('#c-modos').querySelectorAll('[data-modo]').forEach(b => b.onclick = () => {
+  modoCobro = b.dataset.modo; lineasElegidas.clear(); pintarCobro();
+});
+$('#c-n').oninput = pintarCobro;
+
 function elegirMetodo(m) {
   metodoCobro = m;
-  $('#d-cobro').querySelectorAll('[data-m]').forEach(b => b.className = b.dataset.m === m ? 'primario' : '');
+  $('#c-metodos').querySelectorAll('[data-m]').forEach(b => b.className = b.dataset.m === m ? 'primario' : '');
   $('#c-efectivo').hidden = m !== 'efectivo';
 }
-$('#d-cobro').querySelectorAll('[data-m]').forEach(b => b.onclick = () => elegirMetodo(b.dataset.m));
+$('#c-metodos').querySelectorAll('[data-m]').forEach(b => b.onclick = () => elegirMetodo(b.dataset.m));
+
 function calcCambio() {
   const e = Math.round(parseFloat($('#c-entregado').value || 0) * 100);
-  $('#c-cambio').textContent = e >= pedido.total_cent ? euro(e - pedido.total_cent) : 'insuficiente';
+  const importe = importeACobrar();
+  $('#c-cambio').textContent = !e ? '—' : e >= importe ? euro(e - importe) : 'insuficiente';
 }
 $('#c-entregado').oninput = calcCambio;
 $('#c-cancelar').onclick = () => $('#d-cobro').close();
+
 $('#c-ok').onclick = async () => {
   const body = { metodo: metodoCobro };
-  if (metodoCobro === 'efectivo') body.entregado_cent = Math.round(parseFloat($('#c-entregado').value || 0) * 100);
+  if (modoCobro === 'lineas') body.lineas = [...lineasElegidas];
+  else if (modoCobro === 'partes') { body.importe_cent = importeACobrar(); body.concepto = 'parte'; }
+  if (metodoCobro === 'efectivo') {
+    const e = Math.round(parseFloat($('#c-entregado').value || 0) * 100);
+    if (e) body.entregado_cent = e;
+  }
   try {
-    const cerrado = await api(`/pedidos/${pedido.id}/cobrar`, { method: 'POST', body });
-    $('#d-cobro').close();
-    const pago = cerrado.pagos[0];
-    aviso(`Cobrado ${euro(pago.importe_cent)}${pago.cambio_cent ? ' · cambio ' + euro(pago.cambio_cent) : ''}`, 'ok');
-    verDocumento(cerrado.id);
-    pedido = null; pintarTicket(); verMesas();
+    const antes = pedido.id;
+    pedido = await api(`/pedidos/${pedido.id}/pagos`, { method: 'POST', body });
+    const ultimo = pedido.pagos[pedido.pagos.length - 1];
+    aviso(`Cobrado ${euro(ultimo.importe_cent)}${ultimo.cambio_cent ? ' · cambio ' + euro(ultimo.cambio_cent) : ''}`, 'ok');
+    if (pedido.estado === 'cobrado') {
+      $('#d-cobro').close();
+      verDocumento(antes);
+      pedido = null; pintarTicket(); verMesas();
+    } else {
+      lineasElegidas.clear();
+      $('#c-entregado').value = '';
+      pintarCobro(); pintarTicket();
+    }
   } catch (e) { aviso(e.message, 'error'); }
 };
 
@@ -213,6 +307,7 @@ $('#b-documento').onclick = () => verDocumento(pedido.id, pedido.estado === 'cob
 // ── Tiempo real ──
 conectarWS(async ev => {
   if (!empleado) return;
+  if (ev.tipo === 'carta') { catalogo = await api('/catalogo'); if (!$('#v-carta').hidden) verCarta(); }
   if (ev.tipo === 'listo') aviso(`Pedido #${ev.pedido_id}: hay platos listos en el pase`, 'ok');
   if (pedido && (ev.tipo === 'kds' || ev.tipo === 'listo' || ev.tipo === 'mesas')) {
     try { pedido = await api('/pedidos/' + pedido.id); if (pedido.estado !== 'abierto') pedido = null; } catch { pedido = null; }
