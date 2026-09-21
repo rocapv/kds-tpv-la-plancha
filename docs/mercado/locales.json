@@ -1,0 +1,4752 @@
+{
+ "aviso": "DATOS FICTICIOS. Locales, nombres, direcciones y cifras generados por sorteo para un trabajo académico del CFGS ASIR. No corresponden a ningún negocio real de València.",
+ "semilla": 2026,
+ "colores_tipo": {
+  "bar de barrio": "#c0844a",
+  "cafetería": "#d9b45b",
+  "hamburguesería": "#cf5f3b",
+  "arrocería": "#e67e22",
+  "pizzería": "#b5533f",
+  "asiático": "#5aa0b8",
+  "dark kitchen": "#8e6fc0",
+  "gastrobar": "#4f9d69",
+  "taberna": "#a8703c"
+ },
+ "locales": [
+  {
+   "id": 1,
+   "nombre": "Cantina Cresta Nou",
+   "tipo": "bar de barrio",
+   "barrio": "Pla del Real",
+   "lat": 39.48171,
+   "lon": -0.35882,
+   "inmueble": {
+    "m2_total": 68,
+    "m2_sala": 47,
+    "m2_cocina": 21,
+    "plantas": 1,
+    "terraza": false,
+    "mesas_terraza": 0,
+    "mesas_interior": 7,
+    "aforo": 42
+   },
+   "cocina": {
+    "estaciones": [
+     "plancha",
+     "barra"
+    ],
+    "pase": false,
+    "potencia_kw": 38.3,
+    "extraccion": "sin campana homologada",
+    "camara_frigorifica": true
+   },
+   "servicio": {
+    "comandas_punta": 33,
+    "ticket_medio": 10.0,
+    "para_llevar": false,
+    "plataformas": [
+     "Glovo"
+    ]
+   },
+   "hardware": {
+    "pantallas_cocina": 1,
+    "puestos_tpv": 2,
+    "tabletas_camarero": 0,
+    "impresoras": 2,
+    "red": "wifi",
+    "coste_implantacion": 2500
+   },
+   "encaje": 43,
+   "encaje_razon": "solo 3 terminales, el ahorro por licencia es modesto; trabaja con plataformas de reparto, donde nuestro agregador de pedidos ahorra una tableta por plataforma."
+  },
+  {
+   "id": 2,
+   "nombre": "Cantina Cresta",
+   "tipo": "bar de barrio",
+   "barrio": "L'Olivereta",
+   "lat": 39.46743,
+   "lon": -0.39601,
+   "inmueble": {
+    "m2_total": 100,
+    "m2_sala": 70,
+    "m2_cocina": 30,
+    "plantas": 1,
+    "terraza": false,
+    "mesas_terraza": 0,
+    "mesas_interior": 10,
+    "aforo": 54
+   },
+   "cocina": {
+    "estaciones": [
+     "plancha",
+     "barra",
+     "fríos"
+    ],
+    "pase": true,
+    "potencia_kw": 47.2,
+    "extraccion": "campana con recuperador",
+    "camara_frigorifica": true
+   },
+   "servicio": {
+    "comandas_punta": 50,
+    "ticket_medio": 12.27,
+    "para_llevar": true,
+    "plataformas": [
+     "Just Eat"
+    ]
+   },
+   "hardware": {
+    "pantallas_cocina": 3,
+    "puestos_tpv": 3,
+    "tabletas_camarero": 0,
+    "impresoras": 2,
+    "red": "wifi",
+    "coste_implantacion": 4030
+   },
+   "encaje": 86,
+   "encaje_razon": "3 pantallas y 3 TPV: con la competencia pagaría 6 licencias en vez de una; trabaja con plataformas de reparto, donde nuestro agregador de pedidos ahorra una tableta por plataforma; tiene pase, y la pantalla de pase es nuestra función más diferencial."
+  },
+  {
+   "id": 3,
+   "nombre": "Brasa Perolet & Co.",
+   "tipo": "hamburguesería",
+   "barrio": "Benicalap",
+   "lat": 39.49279,
+   "lon": -0.38475,
+   "inmueble": {
+    "m2_total": 187,
+    "m2_sala": 137,
+    "m2_cocina": 50,
+    "plantas": 1,
+    "terraza": false,
+    "mesas_terraza": 0,
+    "mesas_interior": 21,
+    "aforo": 90
+   },
+   "cocina": {
+    "estaciones": [
+     "plancha",
+     "freidora"
+    ],
+    "pase": false,
+    "potencia_kw": 86.7,
+    "extraccion": "campana mural",
+    "camara_frigorifica": true
+   },
+   "servicio": {
+    "comandas_punta": 87,
+    "ticket_medio": 13.42,
+    "para_llevar": false,
+    "plataformas": []
+   },
+   "hardware": {
+    "pantallas_cocina": 2,
+    "puestos_tpv": 2,
+    "tabletas_camarero": 1,
+    "impresoras": 1,
+    "red": "cableada",
+    "coste_implantacion": 3470
+   },
+   "encaje": 56,
+   "encaje_razon": "solo 4 terminales, el ahorro por licencia es modesto; 87 comandas en punta, volumen alto: el tiempo por plato se nota."
+  },
+  {
+   "id": 4,
+   "nombre": "Pizzería Gavinot & Co.",
+   "tipo": "pizzería",
+   "barrio": "L'Eixample",
+   "lat": 39.46551,
+   "lon": -0.36678,
+   "inmueble": {
+    "m2_total": 158,
+    "m2_sala": 116,
+    "m2_cocina": 42,
+    "plantas": 1,
+    "terraza": false,
+    "mesas_terraza": 0,
+    "mesas_interior": 18,
+    "aforo": 85
+   },
+   "cocina": {
+    "estaciones": [
+     "horno",
+     "fríos",
+     "postres"
+    ],
+    "pase": false,
+    "potencia_kw": 61.3,
+    "extraccion": "campana central",
+    "camara_frigorifica": true
+   },
+   "servicio": {
+    "comandas_punta": 84,
+    "ticket_medio": 18.04,
+    "para_llevar": true,
+    "plataformas": [
+     "Uber Eats"
+    ]
+   },
+   "hardware": {
+    "pantallas_cocina": 3,
+    "puestos_tpv": 2,
+    "tabletas_camarero": 1,
+    "impresoras": 2,
+    "red": "wifi",
+    "coste_implantacion": 3600
+   },
+   "encaje": 80,
+   "encaje_razon": "3 pantallas y 2 TPV: con la competencia pagaría 5 licencias en vez de una; 84 comandas en punta, volumen alto: el tiempo por plato se nota; trabaja con plataformas de reparto, donde nuestro agregador de pedidos ahorra una tableta por plataforma."
+  },
+  {
+   "id": 5,
+   "nombre": "Burger Garbí 21",
+   "tipo": "hamburguesería",
+   "barrio": "Benicalap",
+   "lat": 39.49566,
+   "lon": -0.38442,
+   "inmueble": {
+    "m2_total": 88,
+    "m2_sala": 61,
+    "m2_cocina": 27,
+    "plantas": 1,
+    "terraza": true,
+    "mesas_terraza": 15,
+    "mesas_interior": 9,
+    "aforo": 103
+   },
+   "cocina": {
+    "estaciones": [
+     "plancha",
+     "freidora",
+     "postres"
+    ],
+    "pase": false,
+    "potencia_kw": 43.5,
+    "extraccion": "sin campana homologada",
+    "camara_frigorifica": true
+   },
+   "servicio": {
+    "comandas_punta": 38,
+    "ticket_medio": 12.64,
+    "para_llevar": true,
+    "plataformas": [
+     "Uber Eats"
+    ]
+   },
+   "hardware": {
+    "pantallas_cocina": 2,
+    "puestos_tpv": 3,
+    "tabletas_camarero": 2,
+    "impresoras": 2,
+    "red": "wifi",
+    "coste_implantacion": 4130
+   },
+   "encaje": 62,
+   "encaje_razon": "2 pantallas y 3 TPV: con la competencia pagaría 5 licencias en vez de una; trabaja con plataformas de reparto, donde nuestro agregador de pedidos ahorra una tableta por plataforma."
+  },
+  {
+   "id": 6,
+   "nombre": "Cantina Xaloc de Baix",
+   "tipo": "bar de barrio",
+   "barrio": "Russafa",
+   "lat": 39.45765,
+   "lon": -0.37649,
+   "inmueble": {
+    "m2_total": 124,
+    "m2_sala": 84,
+    "m2_cocina": 40,
+    "plantas": 1,
+    "terraza": true,
+    "mesas_terraza": 15,
+    "mesas_interior": 13,
+    "aforo": 121
+   },
+   "cocina": {
+    "estaciones": [
+     "plancha",
+     "barra",
+     "freidora"
+    ],
+    "pase": false,
+    "potencia_kw": 72.6,
+    "extraccion": "campana central",
+    "camara_frigorifica": true
+   },
+   "servicio": {
+    "comandas_punta": 64,
+    "ticket_medio": 14.17,
+    "para_llevar": false,
+    "plataformas": [
+     "Just Eat"
+    ]
+   },
+   "hardware": {
+    "pantallas_cocina": 3,
+    "puestos_tpv": 3,
+    "tabletas_camarero": 2,
+    "impresoras": 2,
+    "red": "wifi",
+    "coste_implantacion": 4550
+   },
+   "encaje": 78,
+   "encaje_razon": "3 pantallas y 3 TPV: con la competencia pagaría 6 licencias en vez de una; trabaja con plataformas de reparto, donde nuestro agregador de pedidos ahorra una tableta por plataforma."
+  },
+  {
+   "id": 7,
+   "nombre": "Cafetería Voreta",
+   "tipo": "cafetería",
+   "barrio": "Campanar",
+   "lat": 39.48667,
+   "lon": -0.39036,
+   "inmueble": {
+    "m2_total": 119,
+    "m2_sala": 93,
+    "m2_cocina": 26,
+    "plantas": 1,
+    "terraza": true,
+    "mesas_terraza": 5,
+    "mesas_interior": 14,
+    "aforo": 84
+   },
+   "cocina": {
+    "estaciones": [
+     "barra",
+     "fríos",
+     "postres"
+    ],
+    "pase": true,
+    "potencia_kw": 51.1,
+    "extraccion": "campana central",
+    "camara_frigorifica": true
+   },
+   "servicio": {
+    "comandas_punta": 82,
+    "ticket_medio": 9.11,
+    "para_llevar": true,
+    "plataformas": [
+     "Just Eat"
+    ]
+   },
+   "hardware": {
+    "pantallas_cocina": 4,
+    "puestos_tpv": 4,
+    "tabletas_camarero": 1,
+    "impresoras": 2,
+    "red": "wifi",
+    "coste_implantacion": 5400
+   },
+   "encaje": 93,
+   "encaje_razon": "4 pantallas y 4 TPV: con la competencia pagaría 8 licencias en vez de una; 82 comandas en punta, volumen alto: el tiempo por plato se nota; trabaja con plataformas de reparto, donde nuestro agregador de pedidos ahorra una tableta por plataforma; tiene pase, y la pantalla de pase es nuestra función más diferencial."
+  },
+  {
+   "id": 8,
+   "nombre": "Cantina Garbí & Co.",
+   "tipo": "bar de barrio",
+   "barrio": "Benicalap",
+   "lat": 39.49229,
+   "lon": -0.38696,
+   "inmueble": {
+    "m2_total": 96,
+    "m2_sala": 65,
+    "m2_cocina": 31,
+    "plantas": 1,
+    "terraza": true,
+    "mesas_terraza": 10,
+    "mesas_interior": 10,
+    "aforo": 88
+   },
+   "cocina": {
+    "estaciones": [
+     "plancha",
+     "barra",
+     "freidora",
+     "postres"
+    ],
+    "pase": true,
+    "potencia_kw": 57.9,
+    "extraccion": "campana mural",
+    "camara_frigorifica": true
+   },
+   "servicio": {
+    "comandas_punta": 29,
+    "ticket_medio": 14.83,
+    "para_llevar": true,
+    "plataformas": [
+     "Just Eat",
+     "Glovo",
+     "Uber Eats"
+    ]
+   },
+   "hardware": {
+    "pantallas_cocina": 3,
+    "puestos_tpv": 4,
+    "tabletas_camarero": 1,
+    "impresoras": 2,
+    "red": "wifi",
+    "coste_implantacion": 4980
+   },
+   "encaje": 80,
+   "encaje_razon": "3 pantallas y 4 TPV: con la competencia pagaría 7 licencias en vez de una; 4 estaciones: el enrutado por estación evita que cocina trabaje con una comanda en papel; trabaja con plataformas de reparto, donde nuestro agregador de pedidos ahorra una tableta por plataforma; tiene pase, y la pantalla de pase es nuestra función más diferencial."
+  },
+  {
+   "id": 9,
+   "nombre": "Sushi Clauer",
+   "tipo": "asiático",
+   "barrio": "Russafa",
+   "lat": 39.4579,
+   "lon": -0.3757,
+   "inmueble": {
+    "m2_total": 212,
+    "m2_sala": 144,
+    "m2_cocina": 68,
+    "plantas": 1,
+    "terraza": true,
+    "mesas_terraza": 13,
+    "mesas_interior": 22,
+    "aforo": 152
+   },
+   "cocina": {
+    "estaciones": [
+     "wok",
+     "fríos",
+     "freidora"
+    ],
+    "pase": true,
+    "potencia_kw": 103.1,
+    "extraccion": "sin campana homologada",
+    "camara_frigorifica": true
+   },
+   "servicio": {
+    "comandas_punta": 116,
+    "ticket_medio": 19.82,
+    "para_llevar": true,
+    "plataformas": [
+     "Just Eat"
+    ]
+   },
+   "hardware": {
+    "pantallas_cocina": 4,
+    "puestos_tpv": 3,
+    "tabletas_camarero": 2,
+    "impresoras": 2,
+    "red": "cableada",
+    "coste_implantacion": 5860
+   },
+   "encaje": 93,
+   "encaje_razon": "4 pantallas y 3 TPV: con la competencia pagaría 7 licencias en vez de una; 116 comandas en punta, volumen alto: el tiempo por plato se nota; trabaja con plataformas de reparto, donde nuestro agregador de pedidos ahorra una tableta por plataforma; tiene pase, y la pantalla de pase es nuestra función más diferencial."
+  },
+  {
+   "id": 10,
+   "nombre": "Arrosseria Llumeta Vell",
+   "tipo": "arrocería",
+   "barrio": "Pla del Real",
+   "lat": 39.48078,
+   "lon": -0.35747,
+   "inmueble": {
+    "m2_total": 174,
+    "m2_sala": 137,
+    "m2_cocina": 37,
+    "plantas": 1,
+    "terraza": false,
+    "mesas_terraza": 0,
+    "mesas_interior": 21,
+    "aforo": 97
+   },
+   "cocina": {
+    "estaciones": [
+     "fuegos",
+     "fríos"
+    ],
+    "pase": false,
+    "potencia_kw": 68.2,
+    "extraccion": "campana mural",
+    "camara_frigorifica": true
+   },
+   "servicio": {
+    "comandas_punta": 69,
+    "ticket_medio": 35.8,
+    "para_llevar": false,
+    "plataformas": [
+     "Glovo",
+     "Just Eat"
+    ]
+   },
+   "hardware": {
+    "pantallas_cocina": 2,
+    "puestos_tpv": 2,
+    "tabletas_camarero": 1,
+    "impresoras": 2,
+    "red": "cableada",
+    "coste_implantacion": 3650
+   },
+   "encaje": 61,
+   "encaje_razon": "solo 4 terminales, el ahorro por licencia es modesto; trabaja con plataformas de reparto, donde nuestro agregador de pedidos ahorra una tableta por plataforma."
+  },
+  {
+   "id": 11,
+   "nombre": "Arrosseria Farolet 21",
+   "tipo": "arrocería",
+   "barrio": "Algirós",
+   "lat": 39.47799,
+   "lon": -0.34237,
+   "inmueble": {
+    "m2_total": 291,
+    "m2_sala": 213,
+    "m2_cocina": 78,
+    "plantas": 2,
+    "terraza": true,
+    "mesas_terraza": 7,
+    "mesas_interior": 33,
+    "aforo": 172
+   },
+   "cocina": {
+    "estaciones": [
+     "fuegos",
+     "fríos",
+     "freidora"
+    ],
+    "pase": true,
+    "potencia_kw": 137.6,
+    "extraccion": "campana con recuperador",
+    "camara_frigorifica": true
+   },
+   "servicio": {
+    "comandas_punta": 180,
+    "ticket_medio": 30.11,
+    "para_llevar": true,
+    "plataformas": [
+     "Uber Eats"
+    ]
+   },
+   "hardware": {
+    "pantallas_cocina": 4,
+    "puestos_tpv": 4,
+    "tabletas_camarero": 3,
+    "impresoras": 2,
+    "red": "cableada",
+    "coste_implantacion": 6950
+   },
+   "encaje": 93,
+   "encaje_razon": "4 pantallas y 4 TPV: con la competencia pagaría 8 licencias en vez de una; 180 comandas en punta, volumen alto: el tiempo por plato se nota; trabaja con plataformas de reparto, donde nuestro agregador de pedidos ahorra una tableta por plataforma; tiene pase, y la pantalla de pase es nuestra función más diferencial."
+  },
+  {
+   "id": 12,
+   "nombre": "Taula Fusta Nou",
+   "tipo": "gastrobar",
+   "barrio": "L'Olivereta",
+   "lat": 39.4679,
+   "lon": -0.40486,
+   "inmueble": {
+    "m2_total": 144,
+    "m2_sala": 113,
+    "m2_cocina": 31,
+    "plantas": 1,
+    "terraza": true,
+    "mesas_terraza": 4,
+    "mesas_interior": 17,
+    "aforo": 98
+   },
+   "cocina": {
+    "estaciones": [
+     "plancha",
+     "fríos",
+     "horno"
+    ],
+    "pase": false,
+    "potencia_kw": 56.7,
+    "extraccion": "campana mural",
+    "camara_frigorifica": false
+   },
+   "servicio": {
+    "comandas_punta": 64,
+    "ticket_medio": 27.61,
+    "para_llevar": true,
+    "plataformas": [
+     "Glovo",
+     "Uber Eats",
+     "Just Eat"
+    ]
+   },
+   "hardware": {
+    "pantallas_cocina": 3,
+    "puestos_tpv": 3,
+    "tabletas_camarero": 1,
+    "impresoras": 2,
+    "red": "wifi",
+    "coste_implantacion": 4290
+   },
+   "encaje": 78,
+   "encaje_razon": "3 pantallas y 3 TPV: con la competencia pagaría 6 licencias en vez de una; trabaja con plataformas de reparto, donde nuestro agregador de pedidos ahorra una tableta por plataforma."
+  },
+  {
+   "id": 13,
+   "nombre": "Cantina Bufanda Petit",
+   "tipo": "bar de barrio",
+   "barrio": "La Saïdia",
+   "lat": 39.48827,
+   "lon": -0.37719,
+   "inmueble": {
+    "m2_total": 97,
+    "m2_sala": 76,
+    "m2_cocina": 21,
+    "plantas": 1,
+    "terraza": false,
+    "mesas_terraza": 0,
+    "mesas_interior": 11,
+    "aforo": 51
+   },
+   "cocina": {
+    "estaciones": [
+     "plancha",
+     "barra",
+     "freidora",
+     "postres"
+    ],
+    "pase": false,
+    "potencia_kw": 34.9,
+    "extraccion": "campana mural",
+    "camara_frigorifica": false
+   },
+   "servicio": {
+    "comandas_punta": 34,
+    "ticket_medio": 14.57,
+    "para_llevar": true,
+    "plataformas": []
+   },
+   "hardware": {
+    "pantallas_cocina": 2,
+    "puestos_tpv": 3,
+    "tabletas_camarero": 0,
+    "impresoras": 2,
+    "red": "wifi",
+    "coste_implantacion": 3610
+   },
+   "encaje": 55,
+   "encaje_razon": "2 pantallas y 3 TPV: con la competencia pagaría 5 licencias en vez de una; 4 estaciones: el enrutado por estación evita que cocina trabaje con una comanda en papel."
+  },
+  {
+   "id": 14,
+   "nombre": "Forn Rellotge",
+   "tipo": "pizzería",
+   "barrio": "Jesús",
+   "lat": 39.4532,
+   "lon": -0.38422,
+   "inmueble": {
+    "m2_total": 171,
+    "m2_sala": 129,
+    "m2_cocina": 42,
+    "plantas": 1,
+    "terraza": true,
+    "mesas_terraza": 15,
+    "mesas_interior": 20,
+    "aforo": 152
+   },
+   "cocina": {
+    "estaciones": [
+     "horno",
+     "fríos",
+     "postres"
+    ],
+    "pase": true,
+    "potencia_kw": 78.0,
+    "extraccion": "sin campana homologada",
+    "camara_frigorifica": false
+   },
+   "servicio": {
+    "comandas_punta": 106,
+    "ticket_medio": 15.51,
+    "para_llevar": true,
+    "plataformas": [
+     "Uber Eats",
+     "Just Eat"
+    ]
+   },
+   "hardware": {
+    "pantallas_cocina": 4,
+    "puestos_tpv": 3,
+    "tabletas_camarero": 2,
+    "impresoras": 2,
+    "red": "cableada",
+    "coste_implantacion": 5860
+   },
+   "encaje": 93,
+   "encaje_razon": "4 pantallas y 3 TPV: con la competencia pagaría 7 licencias en vez de una; 106 comandas en punta, volumen alto: el tiempo por plato se nota; trabaja con plataformas de reparto, donde nuestro agregador de pedidos ahorra una tableta por plataforma; tiene pase, y la pantalla de pase es nuestra función más diferencial."
+  },
+  {
+   "id": 15,
+   "nombre": "Taverna Timó Nou",
+   "tipo": "taberna",
+   "barrio": "Benimaclet",
+   "lat": 39.48804,
+   "lon": -0.35602,
+   "inmueble": {
+    "m2_total": 138,
+    "m2_sala": 95,
+    "m2_cocina": 43,
+    "plantas": 1,
+    "terraza": false,
+    "mesas_terraza": 0,
+    "mesas_interior": 14,
+    "aforo": 66
+   },
+   "cocina": {
+    "estaciones": [
+     "plancha",
+     "barra",
+     "freidora",
+     "postres"
+    ],
+    "pase": false,
+    "potencia_kw": 77.6,
+    "extraccion": "campana central",
+    "camara_frigorifica": true
+   },
+   "servicio": {
+    "comandas_punta": 82,
+    "ticket_medio": 20.83,
+    "para_llevar": false,
+    "plataformas": [
+     "Uber Eats",
+     "Just Eat",
+     "Glovo"
+    ]
+   },
+   "hardware": {
+    "pantallas_cocina": 3,
+    "puestos_tpv": 2,
+    "tabletas_camarero": 1,
+    "impresoras": 2,
+    "red": "wifi",
+    "coste_implantacion": 3600
+   },
+   "encaje": 85,
+   "encaje_razon": "3 pantallas y 2 TPV: con la competencia pagaría 5 licencias en vez de una; 4 estaciones: el enrutado por estación evita que cocina trabaje con una comanda en papel; 82 comandas en punta, volumen alto: el tiempo por plato se nota; trabaja con plataformas de reparto, donde nuestro agregador de pedidos ahorra una tableta por plataforma."
+  },
+  {
+   "id": 16,
+   "nombre": "Gastrobar Pedrís del Sud",
+   "tipo": "gastrobar",
+   "barrio": "Poblats Marítims",
+   "lat": 39.45623,
+   "lon": -0.32663,
+   "inmueble": {
+    "m2_total": 260,
+    "m2_sala": 180,
+    "m2_cocina": 80,
+    "plantas": 1,
+    "terraza": false,
+    "mesas_terraza": 0,
+    "mesas_interior": 28,
+    "aforo": 122
+   },
+   "cocina": {
+    "estaciones": [
+     "plancha",
+     "fríos",
+     "horno",
+     "freidora",
+     "postres"
+    ],
+    "pase": false,
+    "potencia_kw": 155.4,
+    "extraccion": "sin campana homologada",
+    "camara_frigorifica": true
+   },
+   "servicio": {
+    "comandas_punta": 135,
+    "ticket_medio": 24.19,
+    "para_llevar": true,
+    "plataformas": [
+     "Uber Eats",
+     "Glovo",
+     "Just Eat"
+    ]
+   },
+   "hardware": {
+    "pantallas_cocina": 4,
+    "puestos_tpv": 3,
+    "tabletas_camarero": 2,
+    "impresoras": 2,
+    "red": "cableada",
+    "coste_implantacion": 5860
+   },
+   "encaje": 95,
+   "encaje_razon": "4 pantallas y 3 TPV: con la competencia pagaría 7 licencias en vez de una; 5 estaciones: el enrutado por estación evita que cocina trabaje con una comanda en papel; 135 comandas en punta, volumen alto: el tiempo por plato se nota; trabaja con plataformas de reparto, donde nuestro agregador de pedidos ahorra una tableta por plataforma."
+  },
+  {
+   "id": 17,
+   "nombre": "Gastrobar Fusta Nou",
+   "tipo": "gastrobar",
+   "barrio": "Jesús",
+   "lat": 39.45701,
+   "lon": -0.38044,
+   "inmueble": {
+    "m2_total": 217,
+    "m2_sala": 160,
+    "m2_cocina": 57,
+    "plantas": 1,
+    "terraza": false,
+    "mesas_terraza": 0,
+    "mesas_interior": 25,
+    "aforo": 108
+   },
+   "cocina": {
+    "estaciones": [
+     "plancha",
+     "fríos",
+     "horno",
+     "barra",
+     "postres"
+    ],
+    "pase": true,
+    "potencia_kw": 99.0,
+    "extraccion": "campana con recuperador",
+    "camara_frigorifica": true
+   },
+   "servicio": {
+    "comandas_punta": 117,
+    "ticket_medio": 42.47,
+    "para_llevar": true,
+    "plataformas": [
+     "Uber Eats"
+    ]
+   },
+   "hardware": {
+    "pantallas_cocina": 5,
+    "puestos_tpv": 4,
+    "tabletas_camarero": 2,
+    "impresoras": 2,
+    "red": "cableada",
+    "coste_implantacion": 7250
+   },
+   "encaje": 100,
+   "encaje_razon": "5 pantallas y 4 TPV: con la competencia pagaría 9 licencias en vez de una; 5 estaciones: el enrutado por estación evita que cocina trabaje con una comanda en papel; 117 comandas en punta, volumen alto: el tiempo por plato se nota; trabaja con plataformas de reparto, donde nuestro agregador de pedidos ahorra una tableta por plataforma; tiene pase, y la pantalla de pase es nuestra función más diferencial."
+  },
+  {
+   "id": 18,
+   "nombre": "Bar Sorollet Nou",
+   "tipo": "bar de barrio",
+   "barrio": "Camins al Grau",
+   "lat": 39.46551,
+   "lon": -0.34478,
+   "inmueble": {
+    "m2_total": 56,
+    "m2_sala": 39,
+    "m2_cocina": 17,
+    "plantas": 1,
+    "terraza": true,
+    "mesas_terraza": 9,
+    "mesas_interior": 6,
+    "aforo": 71
+   },
+   "cocina": {
+    "estaciones": [
+     "plancha",
+     "barra"
+    ],
+    "pase": false,
+    "potencia_kw": 28.7,
+    "extraccion": "campana mural",
+    "camara_frigorifica": true
+   },
+   "servicio": {
+    "comandas_punta": 27,
+    "ticket_medio": 10.48,
+    "para_llevar": false,
+    "plataformas": [
+     "Just Eat",
+     "Glovo"
+    ]
+   },
+   "hardware": {
+    "pantallas_cocina": 1,
+    "puestos_tpv": 2,
+    "tabletas_camarero": 1,
+    "impresoras": 2,
+    "red": "wifi",
+    "coste_implantacion": 2760
+   },
+   "encaje": 35,
+   "encaje_razon": "solo 3 terminales, el ahorro por licencia es modesto; trabaja con plataformas de reparto, donde nuestro agregador de pedidos ahorra una tableta por plataforma; cocina de 17 m²: poco sitio para montar más de una pantalla."
+  },
+  {
+   "id": 19,
+   "nombre": "Cafetería Boira",
+   "tipo": "cafetería",
+   "barrio": "L'Eixample",
+   "lat": 39.46493,
+   "lon": -0.36512,
+   "inmueble": {
+    "m2_total": 71,
+    "m2_sala": 58,
+    "m2_cocina": 13,
+    "plantas": 1,
+    "terraza": true,
+    "mesas_terraza": 4,
+    "mesas_interior": 9,
+    "aforo": 59
+   },
+   "cocina": {
+    "estaciones": [
+     "barra",
+     "fríos"
+    ],
+    "pase": false,
+    "potencia_kw": 24.2,
+    "extraccion": "sin campana homologada",
+    "camara_frigorifica": true
+   },
+   "servicio": {
+    "comandas_punta": 40,
+    "ticket_medio": 12.63,
+    "para_llevar": false,
+    "plataformas": [
+     "Just Eat"
+    ]
+   },
+   "hardware": {
+    "pantallas_cocina": 1,
+    "puestos_tpv": 2,
+    "tabletas_camarero": 1,
+    "impresoras": 2,
+    "red": "wifi",
+    "coste_implantacion": 2760
+   },
+   "encaje": 46,
+   "encaje_razon": "solo 3 terminales, el ahorro por licencia es modesto; trabaja con plataformas de reparto, donde nuestro agregador de pedidos ahorra una tableta por plataforma; cocina de 13 m²: poco sitio para montar más de una pantalla."
+  },
+  {
+   "id": 20,
+   "nombre": "Cuina Bufanda Nou",
+   "tipo": "dark kitchen",
+   "barrio": "Benimaclet",
+   "lat": 39.48785,
+   "lon": -0.354,
+   "inmueble": {
+    "m2_total": 78,
+    "m2_sala": 15,
+    "m2_cocina": 63,
+    "plantas": 1,
+    "terraza": false,
+    "mesas_terraza": 0,
+    "mesas_interior": 0,
+    "aforo": 0
+   },
+   "cocina": {
+    "estaciones": [
+     "plancha",
+     "freidora",
+     "horno",
+     "fríos",
+     "postres"
+    ],
+    "pase": false,
+    "potencia_kw": 115.2,
+    "extraccion": "sin campana homologada",
+    "camara_frigorifica": true
+   },
+   "servicio": {
+    "comandas_punta": 62,
+    "ticket_medio": 12.98,
+    "para_llevar": true,
+    "plataformas": [
+     "Glovo",
+     "Uber Eats",
+     "Just Eat"
+    ]
+   },
+   "hardware": {
+    "pantallas_cocina": 4,
+    "puestos_tpv": 2,
+    "tabletas_camarero": 0,
+    "impresoras": 2,
+    "red": "wifi",
+    "coste_implantacion": 3760
+   },
+   "encaje": 98,
+   "encaje_razon": "4 pantallas y 2 TPV: con la competencia pagaría 6 licencias en vez de una; 5 estaciones: el enrutado por estación evita que cocina trabaje con una comanda en papel; trabaja con plataformas de reparto, donde nuestro agregador de pedidos ahorra una tableta por plataforma; dark kitchen: el 100 % de las comandas entran ya en digital."
+  },
+  {
+   "id": 21,
+   "nombre": "Burger Cistella Nou",
+   "tipo": "hamburguesería",
+   "barrio": "Camins al Grau",
+   "lat": 39.4657,
+   "lon": -0.34814,
+   "inmueble": {
+    "m2_total": 112,
+    "m2_sala": 85,
+    "m2_cocina": 27,
+    "plantas": 1,
+    "terraza": true,
+    "mesas_terraza": 4,
+    "mesas_interior": 13,
+    "aforo": 79
+   },
+   "cocina": {
+    "estaciones": [
+     "plancha",
+     "freidora",
+     "horno",
+     "barra"
+    ],
+    "pase": true,
+    "potencia_kw": 45.7,
+    "extraccion": "campana central",
+    "camara_frigorifica": true
+   },
+   "servicio": {
+    "comandas_punta": 41,
+    "ticket_medio": 14.93,
+    "para_llevar": true,
+    "plataformas": [
+     "Uber Eats"
+    ]
+   },
+   "hardware": {
+    "pantallas_cocina": 3,
+    "puestos_tpv": 3,
+    "tabletas_camarero": 1,
+    "impresoras": 2,
+    "red": "wifi",
+    "coste_implantacion": 4290
+   },
+   "encaje": 91,
+   "encaje_razon": "3 pantallas y 3 TPV: con la competencia pagaría 6 licencias en vez de una; 4 estaciones: el enrutado por estación evita que cocina trabaje con una comanda en papel; trabaja con plataformas de reparto, donde nuestro agregador de pedidos ahorra una tableta por plataforma; tiene pase, y la pantalla de pase es nuestra función más diferencial."
+  },
+  {
+   "id": 22,
+   "nombre": "Pizzería Tarongina 21",
+   "tipo": "pizzería",
+   "barrio": "Quatre Carreres",
+   "lat": 39.44514,
+   "lon": -0.36126,
+   "inmueble": {
+    "m2_total": 206,
+    "m2_sala": 139,
+    "m2_cocina": 67,
+    "plantas": 1,
+    "terraza": false,
+    "mesas_terraza": 0,
+    "mesas_interior": 21,
+    "aforo": 98
+   },
+   "cocina": {
+    "estaciones": [
+     "horno",
+     "fríos"
+    ],
+    "pase": false,
+    "potencia_kw": 97.4,
+    "extraccion": "sin campana homologada",
+    "camara_frigorifica": true
+   },
+   "servicio": {
+    "comandas_punta": 59,
+    "ticket_medio": 19.15,
+    "para_llevar": true,
+    "plataformas": [
+     "Just Eat"
+    ]
+   },
+   "hardware": {
+    "pantallas_cocina": 1,
+    "puestos_tpv": 3,
+    "tabletas_camarero": 1,
+    "impresoras": 2,
+    "red": "cableada",
+    "coste_implantacion": 3920
+   },
+   "encaje": 61,
+   "encaje_razon": "solo 4 terminales, el ahorro por licencia es modesto; trabaja con plataformas de reparto, donde nuestro agregador de pedidos ahorra una tableta por plataforma."
+  },
+  {
+   "id": 23,
+   "nombre": "Cuina Garbí de Baix",
+   "tipo": "dark kitchen",
+   "barrio": "Benicalap",
+   "lat": 39.49596,
+   "lon": -0.38517,
+   "inmueble": {
+    "m2_total": 46,
+    "m2_sala": 14,
+    "m2_cocina": 32,
+    "plantas": 1,
+    "terraza": false,
+    "mesas_terraza": 0,
+    "mesas_interior": 0,
+    "aforo": 0
+   },
+   "cocina": {
+    "estaciones": [
+     "plancha",
+     "freidora",
+     "horno",
+     "fríos",
+     "postres"
+    ],
+    "pase": true,
+    "potencia_kw": 51.3,
+    "extraccion": "sin campana homologada",
+    "camara_frigorifica": true
+   },
+   "servicio": {
+    "comandas_punta": 59,
+    "ticket_medio": 11.71,
+    "para_llevar": true,
+    "plataformas": [
+     "Glovo",
+     "Uber Eats",
+     "Just Eat"
+    ]
+   },
+   "hardware": {
+    "pantallas_cocina": 4,
+    "puestos_tpv": 2,
+    "tabletas_camarero": 0,
+    "impresoras": 2,
+    "red": "wifi",
+    "coste_implantacion": 3760
+   },
+   "encaje": 100,
+   "encaje_razon": "4 pantallas y 2 TPV: con la competencia pagaría 6 licencias en vez de una; 5 estaciones: el enrutado por estación evita que cocina trabaje con una comanda en papel; trabaja con plataformas de reparto, donde nuestro agregador de pedidos ahorra una tableta por plataforma; tiene pase, y la pantalla de pase es nuestra función más diferencial; dark kitchen: el 100 % de las comandas entran ya en digital."
+  },
+  {
+   "id": 24,
+   "nombre": "Sushi Canyet Nou",
+   "tipo": "asiático",
+   "barrio": "Ciutat Vella",
+   "lat": 39.4714,
+   "lon": -0.3723,
+   "inmueble": {
+    "m2_total": 198,
+    "m2_sala": 156,
+    "m2_cocina": 42,
+    "plantas": 1,
+    "terraza": false,
+    "mesas_terraza": 0,
+    "mesas_interior": 24,
+    "aforo": 103
+   },
+   "cocina": {
+    "estaciones": [
+     "wok",
+     "fríos"
+    ],
+    "pase": false,
+    "potencia_kw": 63.7,
+    "extraccion": "campana con recuperador",
+    "camara_frigorifica": false
+   },
+   "servicio": {
+    "comandas_punta": 70,
+    "ticket_medio": 21.7,
+    "para_llevar": true,
+    "plataformas": []
+   },
+   "hardware": {
+    "pantallas_cocina": 2,
+    "puestos_tpv": 3,
+    "tabletas_camarero": 2,
+    "impresoras": 1,
+    "red": "cableada",
+    "coste_implantacion": 4560
+   },
+   "encaje": 63,
+   "encaje_razon": "2 pantallas y 3 TPV: con la competencia pagaría 5 licencias en vez de una; 70 comandas en punta, volumen alto: el tiempo por plato se nota."
+  },
+  {
+   "id": 25,
+   "nombre": "Cafè Embut de Baix",
+   "tipo": "cafetería",
+   "barrio": "Quatre Carreres",
+   "lat": 39.45128,
+   "lon": -0.36843,
+   "inmueble": {
+    "m2_total": 96,
+    "m2_sala": 66,
+    "m2_cocina": 30,
+    "plantas": 1,
+    "terraza": true,
+    "mesas_terraza": 10,
+    "mesas_interior": 10,
+    "aforo": 88
+   },
+   "cocina": {
+    "estaciones": [
+     "barra",
+     "fríos",
+     "freidora",
+     "postres"
+    ],
+    "pase": false,
+    "potencia_kw": 48.1,
+    "extraccion": "campana con recuperador",
+    "camara_frigorifica": true
+   },
+   "servicio": {
+    "comandas_punta": 51,
+    "ticket_medio": 8.43,
+    "para_llevar": false,
+    "plataformas": [
+     "Glovo"
+    ]
+   },
+   "hardware": {
+    "pantallas_cocina": 2,
+    "puestos_tpv": 3,
+    "tabletas_camarero": 1,
+    "impresoras": 2,
+    "red": "wifi",
+    "coste_implantacion": 3870
+   },
+   "encaje": 78,
+   "encaje_razon": "2 pantallas y 3 TPV: con la competencia pagaría 5 licencias en vez de una; 4 estaciones: el enrutado por estación evita que cocina trabaje con una comanda en papel; trabaja con plataformas de reparto, donde nuestro agregador de pedidos ahorra una tableta por plataforma."
+  },
+  {
+   "id": 26,
+   "nombre": "Wok Andana de Baix",
+   "tipo": "asiático",
+   "barrio": "Jesús",
+   "lat": 39.45987,
+   "lon": -0.38384,
+   "inmueble": {
+    "m2_total": 210,
+    "m2_sala": 140,
+    "m2_cocina": 70,
+    "plantas": 1,
+    "terraza": false,
+    "mesas_terraza": 0,
+    "mesas_interior": 21,
+    "aforo": 95
+   },
+   "cocina": {
+    "estaciones": [
+     "wok",
+     "fríos",
+     "horno"
+    ],
+    "pase": false,
+    "potencia_kw": 137.0,
+    "extraccion": "sin campana homologada",
+    "camara_frigorifica": true
+   },
+   "servicio": {
+    "comandas_punta": 120,
+    "ticket_medio": 27.71,
+    "para_llevar": true,
+    "plataformas": []
+   },
+   "hardware": {
+    "pantallas_cocina": 3,
+    "puestos_tpv": 3,
+    "tabletas_camarero": 1,
+    "impresoras": 1,
+    "red": "cableada",
+    "coste_implantacion": 4860
+   },
+   "encaje": 73,
+   "encaje_razon": "3 pantallas y 3 TPV: con la competencia pagaría 6 licencias en vez de una; 120 comandas en punta, volumen alto: el tiempo por plato se nota."
+  },
+  {
+   "id": 27,
+   "nombre": "Gastrobar Tramuntana Vell",
+   "tipo": "gastrobar",
+   "barrio": "Campanar",
+   "lat": 39.48311,
+   "lon": -0.39129,
+   "inmueble": {
+    "m2_total": 189,
+    "m2_sala": 132,
+    "m2_cocina": 57,
+    "plantas": 2,
+    "terraza": false,
+    "mesas_terraza": 0,
+    "mesas_interior": 20,
+    "aforo": 91
+   },
+   "cocina": {
+    "estaciones": [
+     "plancha",
+     "fríos",
+     "horno"
+    ],
+    "pase": false,
+    "potencia_kw": 87.6,
+    "extraccion": "campana central",
+    "camara_frigorifica": true
+   },
+   "servicio": {
+    "comandas_punta": 64,
+    "ticket_medio": 43.21,
+    "para_llevar": false,
+    "plataformas": []
+   },
+   "hardware": {
+    "pantallas_cocina": 3,
+    "puestos_tpv": 2,
+    "tabletas_camarero": 1,
+    "impresoras": 1,
+    "red": "cableada",
+    "coste_implantacion": 4030
+   },
+   "encaje": 61,
+   "encaje_razon": "3 pantallas y 2 TPV: con la competencia pagaría 5 licencias en vez de una."
+  },
+  {
+   "id": 28,
+   "nombre": "Cuina Manesa 21",
+   "tipo": "dark kitchen",
+   "barrio": "Patraix",
+   "lat": 39.45997,
+   "lon": -0.38937,
+   "inmueble": {
+    "m2_total": 90,
+    "m2_sala": 26,
+    "m2_cocina": 64,
+    "plantas": 1,
+    "terraza": false,
+    "mesas_terraza": 0,
+    "mesas_interior": 0,
+    "aforo": 0
+   },
+   "cocina": {
+    "estaciones": [
+     "plancha",
+     "freidora",
+     "horno"
+    ],
+    "pase": true,
+    "potencia_kw": 113.4,
+    "extraccion": "campana mural",
+    "camara_frigorifica": true
+   },
+   "servicio": {
+    "comandas_punta": 70,
+    "ticket_medio": 11.83,
+    "para_llevar": true,
+    "plataformas": [
+     "Glovo",
+     "Uber Eats",
+     "Just Eat"
+    ]
+   },
+   "hardware": {
+    "pantallas_cocina": 4,
+    "puestos_tpv": 2,
+    "tabletas_camarero": 0,
+    "impresoras": 2,
+    "red": "wifi",
+    "coste_implantacion": 3760
+   },
+   "encaje": 100,
+   "encaje_razon": "4 pantallas y 2 TPV: con la competencia pagaría 6 licencias en vez de una; 70 comandas en punta, volumen alto: el tiempo por plato se nota; trabaja con plataformas de reparto, donde nuestro agregador de pedidos ahorra una tableta por plataforma; tiene pase, y la pantalla de pase es nuestra función más diferencial; dark kitchen: el 100 % de las comandas entran ya en digital."
+  },
+  {
+   "id": 29,
+   "nombre": "Bar Rajola de Baix",
+   "tipo": "bar de barrio",
+   "barrio": "Quatre Carreres",
+   "lat": 39.44575,
+   "lon": -0.36488,
+   "inmueble": {
+    "m2_total": 115,
+    "m2_sala": 95,
+    "m2_cocina": 20,
+    "plantas": 1,
+    "terraza": true,
+    "mesas_terraza": 12,
+    "mesas_interior": 14,
+    "aforo": 114
+   },
+   "cocina": {
+    "estaciones": [
+     "plancha",
+     "barra",
+     "freidora",
+     "horno"
+    ],
+    "pase": true,
+    "potencia_kw": 38.6,
+    "extraccion": "campana central",
+    "camara_frigorifica": false
+   },
+   "servicio": {
+    "comandas_punta": 46,
+    "ticket_medio": 11.02,
+    "para_llevar": false,
+    "plataformas": []
+   },
+   "hardware": {
+    "pantallas_cocina": 3,
+    "puestos_tpv": 3,
+    "tabletas_camarero": 2,
+    "impresoras": 2,
+    "red": "wifi",
+    "coste_implantacion": 4550
+   },
+   "encaje": 79,
+   "encaje_razon": "3 pantallas y 3 TPV: con la competencia pagaría 6 licencias en vez de una; 4 estaciones: el enrutado por estación evita que cocina trabaje con una comanda en papel; tiene pase, y la pantalla de pase es nuestra función más diferencial."
+  },
+  {
+   "id": 30,
+   "nombre": "Taverna Llebeig del Sud",
+   "tipo": "taberna",
+   "barrio": "La Saïdia",
+   "lat": 39.48733,
+   "lon": -0.37541,
+   "inmueble": {
+    "m2_total": 101,
+    "m2_sala": 72,
+    "m2_cocina": 29,
+    "plantas": 1,
+    "terraza": false,
+    "mesas_terraza": 0,
+    "mesas_interior": 11,
+    "aforo": 57
+   },
+   "cocina": {
+    "estaciones": [
+     "plancha",
+     "barra"
+    ],
+    "pase": false,
+    "potencia_kw": 46.9,
+    "extraccion": "campana central",
+    "camara_frigorifica": true
+   },
+   "servicio": {
+    "comandas_punta": 33,
+    "ticket_medio": 21.29,
+    "para_llevar": false,
+    "plataformas": []
+   },
+   "hardware": {
+    "pantallas_cocina": 1,
+    "puestos_tpv": 2,
+    "tabletas_camarero": 0,
+    "impresoras": 2,
+    "red": "wifi",
+    "coste_implantacion": 2500
+   },
+   "encaje": 31,
+   "encaje_razon": "solo 3 terminales, el ahorro por licencia es modesto."
+  },
+  {
+   "id": 31,
+   "nombre": "Forn Regalèssia Petit",
+   "tipo": "pizzería",
+   "barrio": "Algirós",
+   "lat": 39.4803,
+   "lon": -0.33834,
+   "inmueble": {
+    "m2_total": 189,
+    "m2_sala": 155,
+    "m2_cocina": 34,
+    "plantas": 1,
+    "terraza": false,
+    "mesas_terraza": 0,
+    "mesas_interior": 24,
+    "aforo": 106
+   },
+   "cocina": {
+    "estaciones": [
+     "horno",
+     "fríos",
+     "freidora",
+     "postres"
+    ],
+    "pase": true,
+    "potencia_kw": 67.1,
+    "extraccion": "campana con recuperador",
+    "camara_frigorifica": true
+   },
+   "servicio": {
+    "comandas_punta": 77,
+    "ticket_medio": 21.73,
+    "para_llevar": false,
+    "plataformas": [
+     "Uber Eats"
+    ]
+   },
+   "hardware": {
+    "pantallas_cocina": 4,
+    "puestos_tpv": 2,
+    "tabletas_camarero": 2,
+    "impresoras": 2,
+    "red": "cableada",
+    "coste_implantacion": 5030
+   },
+   "encaje": 98,
+   "encaje_razon": "4 pantallas y 2 TPV: con la competencia pagaría 6 licencias en vez de una; 4 estaciones: el enrutado por estación evita que cocina trabaje con una comanda en papel; 77 comandas en punta, volumen alto: el tiempo por plato se nota; trabaja con plataformas de reparto, donde nuestro agregador de pedidos ahorra una tableta por plataforma; tiene pase, y la pantalla de pase es nuestra función más diferencial."
+  },
+  {
+   "id": 32,
+   "nombre": "Bar Pedrís",
+   "tipo": "bar de barrio",
+   "barrio": "L'Eixample",
+   "lat": 39.46596,
+   "lon": -0.36796,
+   "inmueble": {
+    "m2_total": 142,
+    "m2_sala": 115,
+    "m2_cocina": 27,
+    "plantas": 1,
+    "terraza": true,
+    "mesas_terraza": 11,
+    "mesas_interior": 17,
+    "aforo": 126
+   },
+   "cocina": {
+    "estaciones": [
+     "plancha",
+     "barra",
+     "postres"
+    ],
+    "pase": true,
+    "potencia_kw": 41.4,
+    "extraccion": "sin campana homologada",
+    "camara_frigorifica": true
+   },
+   "servicio": {
+    "comandas_punta": 68,
+    "ticket_medio": 14.81,
+    "para_llevar": false,
+    "plataformas": [
+     "Just Eat"
+    ]
+   },
+   "hardware": {
+    "pantallas_cocina": 4,
+    "puestos_tpv": 3,
+    "tabletas_camarero": 2,
+    "impresoras": 2,
+    "red": "wifi",
+    "coste_implantacion": 4970
+   },
+   "encaje": 86,
+   "encaje_razon": "4 pantallas y 3 TPV: con la competencia pagaría 7 licencias en vez de una; trabaja con plataformas de reparto, donde nuestro agregador de pedidos ahorra una tableta por plataforma; tiene pase, y la pantalla de pase es nuestra función más diferencial."
+  },
+  {
+   "id": 33,
+   "nombre": "Bar Escaleta del Sud",
+   "tipo": "bar de barrio",
+   "barrio": "Quatre Carreres",
+   "lat": 39.44561,
+   "lon": -0.37053,
+   "inmueble": {
+    "m2_total": 66,
+    "m2_sala": 53,
+    "m2_cocina": 13,
+    "plantas": 1,
+    "terraza": false,
+    "mesas_terraza": 0,
+    "mesas_interior": 8,
+    "aforo": 38
+   },
+   "cocina": {
+    "estaciones": [
+     "plancha",
+     "barra",
+     "fríos"
+    ],
+    "pase": true,
+    "potencia_kw": 28.7,
+    "extraccion": "campana con recuperador",
+    "camara_frigorifica": false
+   },
+   "servicio": {
+    "comandas_punta": 30,
+    "ticket_medio": 13.24,
+    "para_llevar": true,
+    "plataformas": [
+     "Just Eat"
+    ]
+   },
+   "hardware": {
+    "pantallas_cocina": 3,
+    "puestos_tpv": 3,
+    "tabletas_camarero": 0,
+    "impresoras": 2,
+    "red": "wifi",
+    "coste_implantacion": 4030
+   },
+   "encaje": 67,
+   "encaje_razon": "3 pantallas y 3 TPV: con la competencia pagaría 6 licencias en vez de una; trabaja con plataformas de reparto, donde nuestro agregador de pedidos ahorra una tableta por plataforma; tiene pase, y la pantalla de pase es nuestra función más diferencial; cocina de 13 m²: poco sitio para montar más de una pantalla."
+  },
+  {
+   "id": 34,
+   "nombre": "Arrosseria Tabalet",
+   "tipo": "arrocería",
+   "barrio": "Quatre Carreres",
+   "lat": 39.44903,
+   "lon": -0.36515,
+   "inmueble": {
+    "m2_total": 272,
+    "m2_sala": 216,
+    "m2_cocina": 56,
+    "plantas": 1,
+    "terraza": true,
+    "mesas_terraza": 4,
+    "mesas_interior": 33,
+    "aforo": 160
+   },
+   "cocina": {
+    "estaciones": [
+     "fuegos",
+     "fríos",
+     "horno"
+    ],
+    "pase": true,
+    "potencia_kw": 94.8,
+    "extraccion": "campana central",
+    "camara_frigorifica": true
+   },
+   "servicio": {
+    "comandas_punta": 183,
+    "ticket_medio": 30.59,
+    "para_llevar": false,
+    "plataformas": [
+     "Just Eat",
+     "Glovo",
+     "Uber Eats"
+    ]
+   },
+   "hardware": {
+    "pantallas_cocina": 4,
+    "puestos_tpv": 3,
+    "tabletas_camarero": 3,
+    "impresoras": 2,
+    "red": "cableada",
+    "coste_implantacion": 6120
+   },
+   "encaje": 93,
+   "encaje_razon": "4 pantallas y 3 TPV: con la competencia pagaría 7 licencias en vez de una; 183 comandas en punta, volumen alto: el tiempo por plato se nota; trabaja con plataformas de reparto, donde nuestro agregador de pedidos ahorra una tableta por plataforma; tiene pase, y la pantalla de pase es nuestra función más diferencial."
+  },
+  {
+   "id": 35,
+   "nombre": "Bodega Rajola",
+   "tipo": "taberna",
+   "barrio": "Ciutat Vella",
+   "lat": 39.47506,
+   "lon": -0.37414,
+   "inmueble": {
+    "m2_total": 130,
+    "m2_sala": 106,
+    "m2_cocina": 24,
+    "plantas": 1,
+    "terraza": true,
+    "mesas_terraza": 9,
+    "mesas_interior": 16,
+    "aforo": 107
+   },
+   "cocina": {
+    "estaciones": [
+     "plancha",
+     "barra"
+    ],
+    "pase": false,
+    "potencia_kw": 39.9,
+    "extraccion": "campana mural",
+    "camara_frigorifica": true
+   },
+   "servicio": {
+    "comandas_punta": 85,
+    "ticket_medio": 18.82,
+    "para_llevar": false,
+    "plataformas": []
+   },
+   "hardware": {
+    "pantallas_cocina": 2,
+    "puestos_tpv": 3,
+    "tabletas_camarero": 2,
+    "impresoras": 1,
+    "red": "wifi",
+    "coste_implantacion": 3950
+   },
+   "encaje": 63,
+   "encaje_razon": "2 pantallas y 3 TPV: con la competencia pagaría 5 licencias en vez de una; 85 comandas en punta, volumen alto: el tiempo por plato se nota."
+  },
+  {
+   "id": 36,
+   "nombre": "Bar Fusta Petit",
+   "tipo": "bar de barrio",
+   "barrio": "L'Eixample",
+   "lat": 39.46469,
+   "lon": -0.36642,
+   "inmueble": {
+    "m2_total": 140,
+    "m2_sala": 115,
+    "m2_cocina": 25,
+    "plantas": 1,
+    "terraza": false,
+    "mesas_terraza": 0,
+    "mesas_interior": 17,
+    "aforo": 81
+   },
+   "cocina": {
+    "estaciones": [
+     "plancha",
+     "barra"
+    ],
+    "pase": false,
+    "potencia_kw": 50.6,
+    "extraccion": "campana central",
+    "camara_frigorifica": true
+   },
+   "servicio": {
+    "comandas_punta": 100,
+    "ticket_medio": 9.42,
+    "para_llevar": true,
+    "plataformas": [
+     "Glovo",
+     "Uber Eats",
+     "Just Eat"
+    ]
+   },
+   "hardware": {
+    "pantallas_cocina": 2,
+    "puestos_tpv": 3,
+    "tabletas_camarero": 1,
+    "impresoras": 2,
+    "red": "wifi",
+    "coste_implantacion": 3870
+   },
+   "encaje": 75,
+   "encaje_razon": "2 pantallas y 3 TPV: con la competencia pagaría 5 licencias en vez de una; 100 comandas en punta, volumen alto: el tiempo por plato se nota; trabaja con plataformas de reparto, donde nuestro agregador de pedidos ahorra una tableta por plataforma."
+  },
+  {
+   "id": 37,
+   "nombre": "Pizzería Rajola de Baix",
+   "tipo": "pizzería",
+   "barrio": "Benicalap",
+   "lat": 39.49647,
+   "lon": -0.38929,
+   "inmueble": {
+    "m2_total": 219,
+    "m2_sala": 174,
+    "m2_cocina": 45,
+    "plantas": 1,
+    "terraza": false,
+    "mesas_terraza": 0,
+    "mesas_interior": 27,
+    "aforo": 117
+   },
+   "cocina": {
+    "estaciones": [
+     "horno",
+     "fríos",
+     "barra"
+    ],
+    "pase": true,
+    "potencia_kw": 76.9,
+    "extraccion": "campana central",
+    "camara_frigorifica": true
+   },
+   "servicio": {
+    "comandas_punta": 111,
+    "ticket_medio": 19.11,
+    "para_llevar": true,
+    "plataformas": [
+     "Glovo",
+     "Just Eat"
+    ]
+   },
+   "hardware": {
+    "pantallas_cocina": 4,
+    "puestos_tpv": 4,
+    "tabletas_camarero": 2,
+    "impresoras": 2,
+    "red": "cableada",
+    "coste_implantacion": 6690
+   },
+   "encaje": 93,
+   "encaje_razon": "4 pantallas y 4 TPV: con la competencia pagaría 8 licencias en vez de una; 111 comandas en punta, volumen alto: el tiempo por plato se nota; trabaja con plataformas de reparto, donde nuestro agregador de pedidos ahorra una tableta por plataforma; tiene pase, y la pantalla de pase es nuestra función más diferencial."
+  },
+  {
+   "id": 38,
+   "nombre": "Bar Rodolí",
+   "tipo": "bar de barrio",
+   "barrio": "Quatre Carreres",
+   "lat": 39.4488,
+   "lon": -0.35823,
+   "inmueble": {
+    "m2_total": 138,
+    "m2_sala": 110,
+    "m2_cocina": 28,
+    "plantas": 1,
+    "terraza": true,
+    "mesas_terraza": 8,
+    "mesas_interior": 17,
+    "aforo": 107
+   },
+   "cocina": {
+    "estaciones": [
+     "plancha",
+     "barra",
+     "horno"
+    ],
+    "pase": false,
+    "potencia_kw": 55.0,
+    "extraccion": "sin campana homologada",
+    "camara_frigorifica": false
+   },
+   "servicio": {
+    "comandas_punta": 55,
+    "ticket_medio": 16.19,
+    "para_llevar": true,
+    "plataformas": [
+     "Glovo",
+     "Just Eat"
+    ]
+   },
+   "hardware": {
+    "pantallas_cocina": 2,
+    "puestos_tpv": 4,
+    "tabletas_camarero": 2,
+    "impresoras": 2,
+    "red": "wifi",
+    "coste_implantacion": 4820
+   },
+   "encaje": 78,
+   "encaje_razon": "2 pantallas y 4 TPV: con la competencia pagaría 6 licencias en vez de una; trabaja con plataformas de reparto, donde nuestro agregador de pedidos ahorra una tableta por plataforma."
+  },
+  {
+   "id": 39,
+   "nombre": "Taverna Canyet & Co.",
+   "tipo": "taberna",
+   "barrio": "Benicalap",
+   "lat": 39.4944,
+   "lon": -0.38329,
+   "inmueble": {
+    "m2_total": 98,
+    "m2_sala": 73,
+    "m2_cocina": 25,
+    "plantas": 1,
+    "terraza": true,
+    "mesas_terraza": 14,
+    "mesas_interior": 11,
+    "aforo": 106
+   },
+   "cocina": {
+    "estaciones": [
+     "plancha",
+     "barra",
+     "horno",
+     "postres"
+    ],
+    "pase": true,
+    "potencia_kw": 47.5,
+    "extraccion": "campana central",
+    "camara_frigorifica": true
+   },
+   "servicio": {
+    "comandas_punta": 49,
+    "ticket_medio": 24.64,
+    "para_llevar": true,
+    "plataformas": [
+     "Glovo",
+     "Uber Eats",
+     "Just Eat"
+    ]
+   },
+   "hardware": {
+    "pantallas_cocina": 3,
+    "puestos_tpv": 4,
+    "tabletas_camarero": 2,
+    "impresoras": 2,
+    "red": "wifi",
+    "coste_implantacion": 5240
+   },
+   "encaje": 91,
+   "encaje_razon": "3 pantallas y 4 TPV: con la competencia pagaría 7 licencias en vez de una; 4 estaciones: el enrutado por estación evita que cocina trabaje con una comanda en papel; trabaja con plataformas de reparto, donde nuestro agregador de pedidos ahorra una tableta por plataforma; tiene pase, y la pantalla de pase es nuestra función más diferencial."
+  },
+  {
+   "id": 40,
+   "nombre": "Sushi Timó & Co.",
+   "tipo": "asiático",
+   "barrio": "Patraix",
+   "lat": 39.46325,
+   "lon": -0.39397,
+   "inmueble": {
+    "m2_total": 202,
+    "m2_sala": 162,
+    "m2_cocina": 40,
+    "plantas": 1,
+    "terraza": true,
+    "mesas_terraza": 12,
+    "mesas_interior": 25,
+    "aforo": 156
+   },
+   "cocina": {
+    "estaciones": [
+     "wok",
+     "fríos",
+     "horno",
+     "postres"
+    ],
+    "pase": true,
+    "potencia_kw": 72.6,
+    "extraccion": "campana mural",
+    "camara_frigorifica": true
+   },
+   "servicio": {
+    "comandas_punta": 79,
+    "ticket_medio": 17.18,
+    "para_llevar": true,
+    "plataformas": []
+   },
+   "hardware": {
+    "pantallas_cocina": 4,
+    "puestos_tpv": 4,
+    "tabletas_camarero": 3,
+    "impresoras": 1,
+    "red": "cableada",
+    "coste_implantacion": 6770
+   },
+   "encaje": 86,
+   "encaje_razon": "4 pantallas y 4 TPV: con la competencia pagaría 8 licencias en vez de una; 4 estaciones: el enrutado por estación evita que cocina trabaje con una comanda en papel; 79 comandas en punta, volumen alto: el tiempo por plato se nota; tiene pase, y la pantalla de pase es nuestra función más diferencial."
+  },
+  {
+   "id": 41,
+   "nombre": "Sushi Xaloc Petit",
+   "tipo": "asiático",
+   "barrio": "Jesús",
+   "lat": 39.45476,
+   "lon": -0.3826,
+   "inmueble": {
+    "m2_total": 185,
+    "m2_sala": 138,
+    "m2_cocina": 47,
+    "plantas": 1,
+    "terraza": false,
+    "mesas_terraza": 0,
+    "mesas_interior": 21,
+    "aforo": 91
+   },
+   "cocina": {
+    "estaciones": [
+     "wok",
+     "fríos",
+     "horno",
+     "barra"
+    ],
+    "pase": false,
+    "potencia_kw": 87.9,
+    "extraccion": "sin campana homologada",
+    "camara_frigorifica": true
+   },
+   "servicio": {
+    "comandas_punta": 105,
+    "ticket_medio": 18.56,
+    "para_llevar": false,
+    "plataformas": []
+   },
+   "hardware": {
+    "pantallas_cocina": 3,
+    "puestos_tpv": 3,
+    "tabletas_camarero": 1,
+    "impresoras": 2,
+    "red": "cableada",
+    "coste_implantacion": 5040
+   },
+   "encaje": 78,
+   "encaje_razon": "3 pantallas y 3 TPV: con la competencia pagaría 6 licencias en vez de una; 4 estaciones: el enrutado por estación evita que cocina trabaje con una comanda en papel; 105 comandas en punta, volumen alto: el tiempo por plato se nota."
+  },
+  {
+   "id": 42,
+   "nombre": "Cafetería Miraculós",
+   "tipo": "cafetería",
+   "barrio": "L'Eixample",
+   "lat": 39.46637,
+   "lon": -0.36507,
+   "inmueble": {
+    "m2_total": 93,
+    "m2_sala": 63,
+    "m2_cocina": 30,
+    "plantas": 1,
+    "terraza": true,
+    "mesas_terraza": 9,
+    "mesas_interior": 9,
+    "aforo": 82
+   },
+   "cocina": {
+    "estaciones": [
+     "barra",
+     "fríos",
+     "freidora",
+     "postres"
+    ],
+    "pase": true,
+    "potencia_kw": 45.4,
+    "extraccion": "campana central",
+    "camara_frigorifica": true
+   },
+   "servicio": {
+    "comandas_punta": 49,
+    "ticket_medio": 11.36,
+    "para_llevar": true,
+    "plataformas": [
+     "Just Eat"
+    ]
+   },
+   "hardware": {
+    "pantallas_cocina": 3,
+    "puestos_tpv": 3,
+    "tabletas_camarero": 1,
+    "impresoras": 2,
+    "red": "wifi",
+    "coste_implantacion": 4290
+   },
+   "encaje": 91,
+   "encaje_razon": "3 pantallas y 3 TPV: con la competencia pagaría 6 licencias en vez de una; 4 estaciones: el enrutado por estación evita que cocina trabaje con una comanda en papel; trabaja con plataformas de reparto, donde nuestro agregador de pedidos ahorra una tableta por plataforma; tiene pase, y la pantalla de pase es nuestra función más diferencial."
+  },
+  {
+   "id": 43,
+   "nombre": "Forn Rodolí Petit",
+   "tipo": "pizzería",
+   "barrio": "El Cabanyal",
+   "lat": 39.47,
+   "lon": -0.32538,
+   "inmueble": {
+    "m2_total": 156,
+    "m2_sala": 108,
+    "m2_cocina": 48,
+    "plantas": 1,
+    "terraza": true,
+    "mesas_terraza": 14,
+    "mesas_interior": 16,
+    "aforo": 134
+   },
+   "cocina": {
+    "estaciones": [
+     "horno",
+     "fríos"
+    ],
+    "pase": false,
+    "potencia_kw": 90.8,
+    "extraccion": "campana con recuperador",
+    "camara_frigorifica": true
+   },
+   "servicio": {
+    "comandas_punta": 62,
+    "ticket_medio": 17.28,
+    "para_llevar": true,
+    "plataformas": [
+     "Just Eat"
+    ]
+   },
+   "hardware": {
+    "pantallas_cocina": 2,
+    "puestos_tpv": 3,
+    "tabletas_camarero": 2,
+    "impresoras": 2,
+    "red": "wifi",
+    "coste_implantacion": 4130
+   },
+   "encaje": 68,
+   "encaje_razon": "2 pantallas y 3 TPV: con la competencia pagaría 5 licencias en vez de una; trabaja con plataformas de reparto, donde nuestro agregador de pedidos ahorra una tableta por plataforma."
+  },
+  {
+   "id": 44,
+   "nombre": "Gastrobar Tramús 21",
+   "tipo": "gastrobar",
+   "barrio": "Poblats Marítims",
+   "lat": 39.46069,
+   "lon": -0.325,
+   "inmueble": {
+    "m2_total": 263,
+    "m2_sala": 192,
+    "m2_cocina": 71,
+    "plantas": 1,
+    "terraza": true,
+    "mesas_terraza": 14,
+    "mesas_interior": 30,
+    "aforo": 182
+   },
+   "cocina": {
+    "estaciones": [
+     "plancha",
+     "fríos",
+     "horno",
+     "freidora",
+     "barra"
+    ],
+    "pase": true,
+    "potencia_kw": 140.2,
+    "extraccion": "campana central",
+    "camara_frigorifica": true
+   },
+   "servicio": {
+    "comandas_punta": 102,
+    "ticket_medio": 22.81,
+    "para_llevar": true,
+    "plataformas": []
+   },
+   "hardware": {
+    "pantallas_cocina": 5,
+    "puestos_tpv": 5,
+    "tabletas_camarero": 3,
+    "impresoras": 1,
+    "red": "cableada",
+    "coste_implantacion": 8160
+   },
+   "encaje": 91,
+   "encaje_razon": "5 pantallas y 5 TPV: con la competencia pagaría 10 licencias en vez de una; 5 estaciones: el enrutado por estación evita que cocina trabaje con una comanda en papel; 102 comandas en punta, volumen alto: el tiempo por plato se nota; tiene pase, y la pantalla de pase es nuestra función más diferencial."
+  },
+  {
+   "id": 45,
+   "nombre": "Bar Ventall",
+   "tipo": "bar de barrio",
+   "barrio": "Poblats Marítims",
+   "lat": 39.45872,
+   "lon": -0.32306,
+   "inmueble": {
+    "m2_total": 135,
+    "m2_sala": 109,
+    "m2_cocina": 26,
+    "plantas": 1,
+    "terraza": true,
+    "mesas_terraza": 7,
+    "mesas_interior": 17,
+    "aforo": 102
+   },
+   "cocina": {
+    "estaciones": [
+     "plancha",
+     "barra",
+     "freidora",
+     "horno",
+     "fríos",
+     "postres"
+    ],
+    "pase": false,
+    "potencia_kw": 40.8,
+    "extraccion": "campana mural",
+    "camara_frigorifica": true
+   },
+   "servicio": {
+    "comandas_punta": 57,
+    "ticket_medio": 16.18,
+    "para_llevar": false,
+    "plataformas": [
+     "Just Eat"
+    ]
+   },
+   "hardware": {
+    "pantallas_cocina": 3,
+    "puestos_tpv": 3,
+    "tabletas_camarero": 2,
+    "impresoras": 2,
+    "red": "wifi",
+    "coste_implantacion": 4550
+   },
+   "encaje": 93,
+   "encaje_razon": "3 pantallas y 3 TPV: con la competencia pagaría 6 licencias en vez de una; 6 estaciones: el enrutado por estación evita que cocina trabaje con una comanda en papel; trabaja con plataformas de reparto, donde nuestro agregador de pedidos ahorra una tableta por plataforma."
+  },
+  {
+   "id": 46,
+   "nombre": "Cafetería Alfabeguera",
+   "tipo": "cafetería",
+   "barrio": "Campanar",
+   "lat": 39.48255,
+   "lon": -0.38954,
+   "inmueble": {
+    "m2_total": 67,
+    "m2_sala": 46,
+    "m2_cocina": 21,
+    "plantas": 1,
+    "terraza": true,
+    "mesas_terraza": 9,
+    "mesas_interior": 7,
+    "aforo": 72
+   },
+   "cocina": {
+    "estaciones": [
+     "barra",
+     "fríos",
+     "freidora"
+    ],
+    "pase": false,
+    "potencia_kw": 37.8,
+    "extraccion": "campana mural",
+    "camara_frigorifica": true
+   },
+   "servicio": {
+    "comandas_punta": 27,
+    "ticket_medio": 6.79,
+    "para_llevar": true,
+    "plataformas": []
+   },
+   "hardware": {
+    "pantallas_cocina": 2,
+    "puestos_tpv": 3,
+    "tabletas_camarero": 1,
+    "impresoras": 2,
+    "red": "wifi",
+    "coste_implantacion": 3870
+   },
+   "encaje": 50,
+   "encaje_razon": "2 pantallas y 3 TPV: con la competencia pagaría 5 licencias en vez de una."
+  },
+  {
+   "id": 47,
+   "nombre": "Cafè Bambú Vell",
+   "tipo": "cafetería",
+   "barrio": "L'Eixample",
+   "lat": 39.46714,
+   "lon": -0.3666,
+   "inmueble": {
+    "m2_total": 99,
+    "m2_sala": 67,
+    "m2_cocina": 32,
+    "plantas": 1,
+    "terraza": true,
+    "mesas_terraza": 5,
+    "mesas_interior": 10,
+    "aforo": 70
+   },
+   "cocina": {
+    "estaciones": [
+     "barra",
+     "fríos",
+     "freidora"
+    ],
+    "pase": false,
+    "potencia_kw": 54.1,
+    "extraccion": "campana mural",
+    "camara_frigorifica": true
+   },
+   "servicio": {
+    "comandas_punta": 48,
+    "ticket_medio": 10.62,
+    "para_llevar": false,
+    "plataformas": [
+     "Uber Eats"
+    ]
+   },
+   "hardware": {
+    "pantallas_cocina": 2,
+    "puestos_tpv": 2,
+    "tabletas_camarero": 1,
+    "impresoras": 2,
+    "red": "wifi",
+    "coste_implantacion": 3180
+   },
+   "encaje": 66,
+   "encaje_razon": "solo 4 terminales, el ahorro por licencia es modesto; trabaja con plataformas de reparto, donde nuestro agregador de pedidos ahorra una tableta por plataforma."
+  },
+  {
+   "id": 48,
+   "nombre": "Cafè Espardenya",
+   "tipo": "cafetería",
+   "barrio": "Pla del Real",
+   "lat": 39.47709,
+   "lon": -0.36065,
+   "inmueble": {
+    "m2_total": 59,
+    "m2_sala": 44,
+    "m2_cocina": 15,
+    "plantas": 1,
+    "terraza": true,
+    "mesas_terraza": 10,
+    "mesas_interior": 6,
+    "aforo": 74
+   },
+   "cocina": {
+    "estaciones": [
+     "barra",
+     "fríos",
+     "postres"
+    ],
+    "pase": false,
+    "potencia_kw": 30.9,
+    "extraccion": "sin campana homologada",
+    "camara_frigorifica": true
+   },
+   "servicio": {
+    "comandas_punta": 32,
+    "ticket_medio": 8.47,
+    "para_llevar": true,
+    "plataformas": []
+   },
+   "hardware": {
+    "pantallas_cocina": 2,
+    "puestos_tpv": 3,
+    "tabletas_camarero": 1,
+    "impresoras": 2,
+    "red": "wifi",
+    "coste_implantacion": 3870
+   },
+   "encaje": 42,
+   "encaje_razon": "2 pantallas y 3 TPV: con la competencia pagaría 5 licencias en vez de una; cocina de 15 m²: poco sitio para montar más de una pantalla."
+  },
+  {
+   "id": 49,
+   "nombre": "Taula Gavinot & Co.",
+   "tipo": "gastrobar",
+   "barrio": "Quatre Carreres",
+   "lat": 39.45237,
+   "lon": -0.36181,
+   "inmueble": {
+    "m2_total": 283,
+    "m2_sala": 227,
+    "m2_cocina": 56,
+    "plantas": 2,
+    "terraza": true,
+    "mesas_terraza": 13,
+    "mesas_interior": 35,
+    "aforo": 205
+   },
+   "cocina": {
+    "estaciones": [
+     "plancha",
+     "fríos",
+     "horno"
+    ],
+    "pase": false,
+    "potencia_kw": 111.3,
+    "extraccion": "sin campana homologada",
+    "camara_frigorifica": true
+   },
+   "servicio": {
+    "comandas_punta": 161,
+    "ticket_medio": 31.31,
+    "para_llevar": false,
+    "plataformas": [
+     "Just Eat"
+    ]
+   },
+   "hardware": {
+    "pantallas_cocina": 3,
+    "puestos_tpv": 3,
+    "tabletas_camarero": 4,
+    "impresoras": 2,
+    "red": "cableada",
+    "coste_implantacion": 5820
+   },
+   "encaje": 85,
+   "encaje_razon": "3 pantallas y 3 TPV: con la competencia pagaría 6 licencias en vez de una; 161 comandas en punta, volumen alto: el tiempo por plato se nota; trabaja con plataformas de reparto, donde nuestro agregador de pedidos ahorra una tableta por plataforma."
+  },
+  {
+   "id": 50,
+   "nombre": "Cantina Pinzell",
+   "tipo": "bar de barrio",
+   "barrio": "La Saïdia",
+   "lat": 39.4858,
+   "lon": -0.37397,
+   "inmueble": {
+    "m2_total": 145,
+    "m2_sala": 113,
+    "m2_cocina": 32,
+    "plantas": 1,
+    "terraza": false,
+    "mesas_terraza": 0,
+    "mesas_interior": 17,
+    "aforo": 74
+   },
+   "cocina": {
+    "estaciones": [
+     "plancha",
+     "barra",
+     "freidora",
+     "horno",
+     "fríos",
+     "postres"
+    ],
+    "pase": false,
+    "potencia_kw": 60.2,
+    "extraccion": "campana mural",
+    "camara_frigorifica": true
+   },
+   "servicio": {
+    "comandas_punta": 50,
+    "ticket_medio": 11.06,
+    "para_llevar": true,
+    "plataformas": [
+     "Just Eat"
+    ]
+   },
+   "hardware": {
+    "pantallas_cocina": 3,
+    "puestos_tpv": 3,
+    "tabletas_camarero": 1,
+    "impresoras": 2,
+    "red": "wifi",
+    "coste_implantacion": 4290
+   },
+   "encaje": 93,
+   "encaje_razon": "3 pantallas y 3 TPV: con la competencia pagaría 6 licencias en vez de una; 6 estaciones: el enrutado por estación evita que cocina trabaje con una comanda en papel; trabaja con plataformas de reparto, donde nuestro agregador de pedidos ahorra una tableta por plataforma."
+  },
+  {
+   "id": 51,
+   "nombre": "Forn Cistella & Co.",
+   "tipo": "pizzería",
+   "barrio": "L'Eixample",
+   "lat": 39.4671,
+   "lon": -0.36506,
+   "inmueble": {
+    "m2_total": 154,
+    "m2_sala": 124,
+    "m2_cocina": 30,
+    "plantas": 1,
+    "terraza": false,
+    "mesas_terraza": 0,
+    "mesas_interior": 19,
+    "aforo": 85
+   },
+   "cocina": {
+    "estaciones": [
+     "horno",
+     "fríos",
+     "freidora"
+    ],
+    "pase": false,
+    "potencia_kw": 46.0,
+    "extraccion": "sin campana homologada",
+    "camara_frigorifica": true
+   },
+   "servicio": {
+    "comandas_punta": 80,
+    "ticket_medio": 22.17,
+    "para_llevar": false,
+    "plataformas": [
+     "Uber Eats"
+    ]
+   },
+   "hardware": {
+    "pantallas_cocina": 3,
+    "puestos_tpv": 2,
+    "tabletas_camarero": 1,
+    "impresoras": 2,
+    "red": "wifi",
+    "coste_implantacion": 3600
+   },
+   "encaje": 80,
+   "encaje_razon": "3 pantallas y 2 TPV: con la competencia pagaría 5 licencias en vez de una; 80 comandas en punta, volumen alto: el tiempo por plato se nota; trabaja con plataformas de reparto, donde nuestro agregador de pedidos ahorra una tableta por plataforma."
+  },
+  {
+   "id": 52,
+   "nombre": "Bar Manesa & Co.",
+   "tipo": "bar de barrio",
+   "barrio": "El Cabanyal",
+   "lat": 39.46615,
+   "lon": -0.32865,
+   "inmueble": {
+    "m2_total": 136,
+    "m2_sala": 92,
+    "m2_cocina": 44,
+    "plantas": 1,
+    "terraza": true,
+    "mesas_terraza": 12,
+    "mesas_interior": 14,
+    "aforo": 116
+   },
+   "cocina": {
+    "estaciones": [
+     "plancha",
+     "barra",
+     "horno"
+    ],
+    "pase": true,
+    "potencia_kw": 79.5,
+    "extraccion": "campana central",
+    "camara_frigorifica": true
+   },
+   "servicio": {
+    "comandas_punta": 52,
+    "ticket_medio": 16.03,
+    "para_llevar": false,
+    "plataformas": [
+     "Glovo"
+    ]
+   },
+   "hardware": {
+    "pantallas_cocina": 3,
+    "puestos_tpv": 3,
+    "tabletas_camarero": 2,
+    "impresoras": 2,
+    "red": "wifi",
+    "coste_implantacion": 4550
+   },
+   "encaje": 86,
+   "encaje_razon": "3 pantallas y 3 TPV: con la competencia pagaría 6 licencias en vez de una; trabaja con plataformas de reparto, donde nuestro agregador de pedidos ahorra una tableta por plataforma; tiene pase, y la pantalla de pase es nuestra función más diferencial."
+  },
+  {
+   "id": 53,
+   "nombre": "Arrosseria Cresol & Co.",
+   "tipo": "arrocería",
+   "barrio": "Campanar",
+   "lat": 39.48064,
+   "lon": -0.39825,
+   "inmueble": {
+    "m2_total": 325,
+    "m2_sala": 231,
+    "m2_cocina": 94,
+    "plantas": 2,
+    "terraza": true,
+    "mesas_terraza": 4,
+    "mesas_interior": 36,
+    "aforo": 172
+   },
+   "cocina": {
+    "estaciones": [
+     "fuegos",
+     "fríos",
+     "freidora",
+     "barra"
+    ],
+    "pase": true,
+    "potencia_kw": 167.1,
+    "extraccion": "campana con recuperador",
+    "camara_frigorifica": true
+   },
+   "servicio": {
+    "comandas_punta": 123,
+    "ticket_medio": 29.38,
+    "para_llevar": true,
+    "plataformas": [
+     "Glovo",
+     "Just Eat"
+    ]
+   },
+   "hardware": {
+    "pantallas_cocina": 4,
+    "puestos_tpv": 5,
+    "tabletas_camarero": 3,
+    "impresoras": 2,
+    "red": "cableada",
+    "coste_implantacion": 7780
+   },
+   "encaje": 98,
+   "encaje_razon": "4 pantallas y 5 TPV: con la competencia pagaría 9 licencias en vez de una; 4 estaciones: el enrutado por estación evita que cocina trabaje con una comanda en papel; 123 comandas en punta, volumen alto: el tiempo por plato se nota; trabaja con plataformas de reparto, donde nuestro agregador de pedidos ahorra una tableta por plataforma; tiene pase, y la pantalla de pase es nuestra función más diferencial."
+  },
+  {
+   "id": 54,
+   "nombre": "Arrosseria Timó & Co.",
+   "tipo": "arrocería",
+   "barrio": "Campanar",
+   "lat": 39.48037,
+   "lon": -0.39786,
+   "inmueble": {
+    "m2_total": 184,
+    "m2_sala": 131,
+    "m2_cocina": 53,
+    "plantas": 1,
+    "terraza": true,
+    "mesas_terraza": 12,
+    "mesas_interior": 20,
+    "aforo": 139
+   },
+   "cocina": {
+    "estaciones": [
+     "fuegos",
+     "fríos",
+     "freidora"
+    ],
+    "pase": false,
+    "potencia_kw": 93.7,
+    "extraccion": "campana con recuperador",
+    "camara_frigorifica": true
+   },
+   "servicio": {
+    "comandas_punta": 107,
+    "ticket_medio": 25.03,
+    "para_llevar": false,
+    "plataformas": []
+   },
+   "hardware": {
+    "pantallas_cocina": 3,
+    "puestos_tpv": 2,
+    "tabletas_camarero": 2,
+    "impresoras": 1,
+    "red": "cableada",
+    "coste_implantacion": 4290
+   },
+   "encaje": 68,
+   "encaje_razon": "3 pantallas y 2 TPV: con la competencia pagaría 5 licencias en vez de una; 107 comandas en punta, volumen alto: el tiempo por plato se nota."
+  },
+  {
+   "id": 55,
+   "nombre": "Pizzería Fusta 21",
+   "tipo": "pizzería",
+   "barrio": "El Cabanyal",
+   "lat": 39.47117,
+   "lon": -0.32863,
+   "inmueble": {
+    "m2_total": 196,
+    "m2_sala": 149,
+    "m2_cocina": 47,
+    "plantas": 1,
+    "terraza": false,
+    "mesas_terraza": 0,
+    "mesas_interior": 23,
+    "aforo": 99
+   },
+   "cocina": {
+    "estaciones": [
+     "horno",
+     "fríos",
+     "freidora",
+     "barra"
+    ],
+    "pase": false,
+    "potencia_kw": 69.8,
+    "extraccion": "campana con recuperador",
+    "camara_frigorifica": true
+   },
+   "servicio": {
+    "comandas_punta": 74,
+    "ticket_medio": 23.36,
+    "para_llevar": false,
+    "plataformas": []
+   },
+   "hardware": {
+    "pantallas_cocina": 3,
+    "puestos_tpv": 3,
+    "tabletas_camarero": 1,
+    "impresoras": 2,
+    "red": "cableada",
+    "coste_implantacion": 5040
+   },
+   "encaje": 78,
+   "encaje_razon": "3 pantallas y 3 TPV: con la competencia pagaría 6 licencias en vez de una; 4 estaciones: el enrutado por estación evita que cocina trabaje con una comanda en papel; 74 comandas en punta, volumen alto: el tiempo por plato se nota."
+  },
+  {
+   "id": 56,
+   "nombre": "Cantina Sargantana Nou",
+   "tipo": "bar de barrio",
+   "barrio": "Algirós",
+   "lat": 39.47858,
+   "lon": -0.33863,
+   "inmueble": {
+    "m2_total": 56,
+    "m2_sala": 46,
+    "m2_cocina": 10,
+    "plantas": 1,
+    "terraza": true,
+    "mesas_terraza": 3,
+    "mesas_interior": 7,
+    "aforo": 51
+   },
+   "cocina": {
+    "estaciones": [
+     "plancha",
+     "barra",
+     "freidora"
+    ],
+    "pase": true,
+    "potencia_kw": 21.8,
+    "extraccion": "campana central",
+    "camara_frigorifica": true
+   },
+   "servicio": {
+    "comandas_punta": 38,
+    "ticket_medio": 14.18,
+    "para_llevar": true,
+    "plataformas": [
+     "Uber Eats",
+     "Just Eat",
+     "Glovo"
+    ]
+   },
+   "hardware": {
+    "pantallas_cocina": 3,
+    "puestos_tpv": 3,
+    "tabletas_camarero": 0,
+    "impresoras": 2,
+    "red": "wifi",
+    "coste_implantacion": 4030
+   },
+   "encaje": 67,
+   "encaje_razon": "3 pantallas y 3 TPV: con la competencia pagaría 6 licencias en vez de una; trabaja con plataformas de reparto, donde nuestro agregador de pedidos ahorra una tableta por plataforma; tiene pase, y la pantalla de pase es nuestra función más diferencial; cocina de 10 m²: poco sitio para montar más de una pantalla."
+  },
+  {
+   "id": 57,
+   "nombre": "Gastrobar Sargantana Nou",
+   "tipo": "gastrobar",
+   "barrio": "Algirós",
+   "lat": 39.47779,
+   "lon": -0.34546,
+   "inmueble": {
+    "m2_total": 282,
+    "m2_sala": 208,
+    "m2_cocina": 74,
+    "plantas": 1,
+    "terraza": false,
+    "mesas_terraza": 0,
+    "mesas_interior": 32,
+    "aforo": 135
+   },
+   "cocina": {
+    "estaciones": [
+     "plancha",
+     "fríos",
+     "horno"
+    ],
+    "pase": true,
+    "potencia_kw": 143.3,
+    "extraccion": "campana mural",
+    "camara_frigorifica": true
+   },
+   "servicio": {
+    "comandas_punta": 93,
+    "ticket_medio": 25.79,
+    "para_llevar": false,
+    "plataformas": [
+     "Glovo"
+    ]
+   },
+   "hardware": {
+    "pantallas_cocina": 4,
+    "puestos_tpv": 2,
+    "tabletas_camarero": 2,
+    "impresoras": 2,
+    "red": "cableada",
+    "coste_implantacion": 5030
+   },
+   "encaje": 93,
+   "encaje_razon": "4 pantallas y 2 TPV: con la competencia pagaría 6 licencias en vez de una; 93 comandas en punta, volumen alto: el tiempo por plato se nota; trabaja con plataformas de reparto, donde nuestro agregador de pedidos ahorra una tableta por plataforma; tiene pase, y la pantalla de pase es nuestra función más diferencial."
+  },
+  {
+   "id": 58,
+   "nombre": "Bodega Andana de Baix",
+   "tipo": "taberna",
+   "barrio": "L'Olivereta",
+   "lat": 39.46582,
+   "lon": -0.4012,
+   "inmueble": {
+    "m2_total": 137,
+    "m2_sala": 108,
+    "m2_cocina": 29,
+    "plantas": 1,
+    "terraza": false,
+    "mesas_terraza": 0,
+    "mesas_interior": 16,
+    "aforo": 77
+   },
+   "cocina": {
+    "estaciones": [
+     "plancha",
+     "barra",
+     "horno",
+     "fríos"
+    ],
+    "pase": true,
+    "potencia_kw": 46.2,
+    "extraccion": "campana central",
+    "camara_frigorifica": true
+   },
+   "servicio": {
+    "comandas_punta": 80,
+    "ticket_medio": 15.92,
+    "para_llevar": true,
+    "plataformas": [
+     "Uber Eats"
+    ]
+   },
+   "hardware": {
+    "pantallas_cocina": 4,
+    "puestos_tpv": 3,
+    "tabletas_camarero": 1,
+    "impresoras": 2,
+    "red": "wifi",
+    "coste_implantacion": 4710
+   },
+   "encaje": 98,
+   "encaje_razon": "4 pantallas y 3 TPV: con la competencia pagaría 7 licencias en vez de una; 4 estaciones: el enrutado por estación evita que cocina trabaje con una comanda en papel; 80 comandas en punta, volumen alto: el tiempo por plato se nota; trabaja con plataformas de reparto, donde nuestro agregador de pedidos ahorra una tableta por plataforma; tiene pase, y la pantalla de pase es nuestra función más diferencial."
+  },
+  {
+   "id": 59,
+   "nombre": "Burger Embut del Sud",
+   "tipo": "hamburguesería",
+   "barrio": "Benimaclet",
+   "lat": 39.48538,
+   "lon": -0.35336,
+   "inmueble": {
+    "m2_total": 135,
+    "m2_sala": 98,
+    "m2_cocina": 37,
+    "plantas": 1,
+    "terraza": false,
+    "mesas_terraza": 0,
+    "mesas_interior": 15,
+    "aforo": 73
+   },
+   "cocina": {
+    "estaciones": [
+     "plancha",
+     "freidora",
+     "horno",
+     "fríos"
+    ],
+    "pase": false,
+    "potencia_kw": 72.0,
+    "extraccion": "campana con recuperador",
+    "camara_frigorifica": true
+   },
+   "servicio": {
+    "comandas_punta": 83,
+    "ticket_medio": 19.4,
+    "para_llevar": true,
+    "plataformas": [
+     "Glovo"
+    ]
+   },
+   "hardware": {
+    "pantallas_cocina": 3,
+    "puestos_tpv": 2,
+    "tabletas_camarero": 1,
+    "impresoras": 2,
+    "red": "wifi",
+    "coste_implantacion": 3600
+   },
+   "encaje": 85,
+   "encaje_razon": "3 pantallas y 2 TPV: con la competencia pagaría 5 licencias en vez de una; 4 estaciones: el enrutado por estación evita que cocina trabaje con una comanda en papel; 83 comandas en punta, volumen alto: el tiempo por plato se nota; trabaja con plataformas de reparto, donde nuestro agregador de pedidos ahorra una tableta por plataforma."
+  },
+  {
+   "id": 60,
+   "nombre": "Gastrobar Perolet Vell",
+   "tipo": "gastrobar",
+   "barrio": "La Saïdia",
+   "lat": 39.4858,
+   "lon": -0.37545,
+   "inmueble": {
+    "m2_total": 190,
+    "m2_sala": 130,
+    "m2_cocina": 60,
+    "plantas": 1,
+    "terraza": false,
+    "mesas_terraza": 0,
+    "mesas_interior": 20,
+    "aforo": 87
+   },
+   "cocina": {
+    "estaciones": [
+     "plancha",
+     "fríos",
+     "horno",
+     "barra"
+    ],
+    "pase": true,
+    "potencia_kw": 109.0,
+    "extraccion": "campana mural",
+    "camara_frigorifica": true
+   },
+   "servicio": {
+    "comandas_punta": 112,
+    "ticket_medio": 35.29,
+    "para_llevar": false,
+    "plataformas": [
+     "Glovo"
+    ]
+   },
+   "hardware": {
+    "pantallas_cocina": 4,
+    "puestos_tpv": 3,
+    "tabletas_camarero": 1,
+    "impresoras": 2,
+    "red": "cableada",
+    "coste_implantacion": 5600
+   },
+   "encaje": 98,
+   "encaje_razon": "4 pantallas y 3 TPV: con la competencia pagaría 7 licencias en vez de una; 4 estaciones: el enrutado por estación evita que cocina trabaje con una comanda en papel; 112 comandas en punta, volumen alto: el tiempo por plato se nota; trabaja con plataformas de reparto, donde nuestro agregador de pedidos ahorra una tableta por plataforma; tiene pase, y la pantalla de pase es nuestra función más diferencial."
+  },
+  {
+   "id": 61,
+   "nombre": "Cantina Xaloc Vell",
+   "tipo": "bar de barrio",
+   "barrio": "El Cabanyal",
+   "lat": 39.46722,
+   "lon": -0.32883,
+   "inmueble": {
+    "m2_total": 96,
+    "m2_sala": 67,
+    "m2_cocina": 29,
+    "plantas": 1,
+    "terraza": false,
+    "mesas_terraza": 0,
+    "mesas_interior": 10,
+    "aforo": 49
+   },
+   "cocina": {
+    "estaciones": [
+     "plancha",
+     "barra",
+     "freidora",
+     "fríos",
+     "postres"
+    ],
+    "pase": true,
+    "potencia_kw": 58.5,
+    "extraccion": "sin campana homologada",
+    "camara_frigorifica": true
+   },
+   "servicio": {
+    "comandas_punta": 59,
+    "ticket_medio": 15.76,
+    "para_llevar": false,
+    "plataformas": []
+   },
+   "hardware": {
+    "pantallas_cocina": 4,
+    "puestos_tpv": 2,
+    "tabletas_camarero": 0,
+    "impresoras": 2,
+    "red": "wifi",
+    "coste_implantacion": 3760
+   },
+   "encaje": 84,
+   "encaje_razon": "4 pantallas y 2 TPV: con la competencia pagaría 6 licencias en vez de una; 5 estaciones: el enrutado por estación evita que cocina trabaje con una comanda en papel; tiene pase, y la pantalla de pase es nuestra función más diferencial."
+  },
+  {
+   "id": 62,
+   "nombre": "Cuina Voreta",
+   "tipo": "dark kitchen",
+   "barrio": "Camins al Grau",
+   "lat": 39.46406,
+   "lon": -0.3487,
+   "inmueble": {
+    "m2_total": 56,
+    "m2_sala": 12,
+    "m2_cocina": 44,
+    "plantas": 1,
+    "terraza": false,
+    "mesas_terraza": 0,
+    "mesas_interior": 0,
+    "aforo": 0
+   },
+   "cocina": {
+    "estaciones": [
+     "plancha",
+     "freidora",
+     "barra"
+    ],
+    "pase": true,
+    "potencia_kw": 85.6,
+    "extraccion": "campana mural",
+    "camara_frigorifica": true
+   },
+   "servicio": {
+    "comandas_punta": 38,
+    "ticket_medio": 11.19,
+    "para_llevar": true,
+    "plataformas": [
+     "Glovo",
+     "Uber Eats",
+     "Just Eat"
+    ]
+   },
+   "hardware": {
+    "pantallas_cocina": 3,
+    "puestos_tpv": 3,
+    "tabletas_camarero": 0,
+    "impresoras": 2,
+    "red": "wifi",
+    "coste_implantacion": 4030
+   },
+   "encaje": 85,
+   "encaje_razon": "3 pantallas y 3 TPV: con la competencia pagaría 6 licencias en vez de una; trabaja con plataformas de reparto, donde nuestro agregador de pedidos ahorra una tableta por plataforma; tiene pase, y la pantalla de pase es nuestra función más diferencial; dark kitchen: el 100 % de las comandas entran ya en digital."
+  },
+  {
+   "id": 63,
+   "nombre": "Forn Escaleta del Sud",
+   "tipo": "pizzería",
+   "barrio": "Ciutat Vella",
+   "lat": 39.47399,
+   "lon": -0.38244,
+   "inmueble": {
+    "m2_total": 119,
+    "m2_sala": 89,
+    "m2_cocina": 30,
+    "plantas": 1,
+    "terraza": false,
+    "mesas_terraza": 0,
+    "mesas_interior": 13,
+    "aforo": 58
+   },
+   "cocina": {
+    "estaciones": [
+     "horno",
+     "fríos",
+     "barra",
+     "postres"
+    ],
+    "pase": true,
+    "potencia_kw": 53.3,
+    "extraccion": "sin campana homologada",
+    "camara_frigorifica": true
+   },
+   "servicio": {
+    "comandas_punta": 65,
+    "ticket_medio": 14.06,
+    "para_llevar": true,
+    "plataformas": [
+     "Uber Eats",
+     "Glovo",
+     "Just Eat"
+    ]
+   },
+   "hardware": {
+    "pantallas_cocina": 4,
+    "puestos_tpv": 3,
+    "tabletas_camarero": 1,
+    "impresoras": 2,
+    "red": "wifi",
+    "coste_implantacion": 4710
+   },
+   "encaje": 91,
+   "encaje_razon": "4 pantallas y 3 TPV: con la competencia pagaría 7 licencias en vez de una; 4 estaciones: el enrutado por estación evita que cocina trabaje con una comanda en papel; trabaja con plataformas de reparto, donde nuestro agregador de pedidos ahorra una tableta por plataforma; tiene pase, y la pantalla de pase es nuestra función más diferencial."
+  },
+  {
+   "id": 64,
+   "nombre": "Cafè Xaloc 21",
+   "tipo": "cafetería",
+   "barrio": "Benimaclet",
+   "lat": 39.48303,
+   "lon": -0.36074,
+   "inmueble": {
+    "m2_total": 120,
+    "m2_sala": 94,
+    "m2_cocina": 26,
+    "plantas": 1,
+    "terraza": true,
+    "mesas_terraza": 16,
+    "mesas_interior": 14,
+    "aforo": 130
+   },
+   "cocina": {
+    "estaciones": [
+     "barra",
+     "fríos",
+     "freidora",
+     "horno"
+    ],
+    "pase": true,
+    "potencia_kw": 45.0,
+    "extraccion": "sin campana homologada",
+    "camara_frigorifica": false
+   },
+   "servicio": {
+    "comandas_punta": 78,
+    "ticket_medio": 9.94,
+    "para_llevar": true,
+    "plataformas": [
+     "Glovo"
+    ]
+   },
+   "hardware": {
+    "pantallas_cocina": 4,
+    "puestos_tpv": 4,
+    "tabletas_camarero": 2,
+    "impresoras": 2,
+    "red": "wifi",
+    "coste_implantacion": 5660
+   },
+   "encaje": 98,
+   "encaje_razon": "4 pantallas y 4 TPV: con la competencia pagaría 8 licencias en vez de una; 4 estaciones: el enrutado por estación evita que cocina trabaje con una comanda en papel; 78 comandas en punta, volumen alto: el tiempo por plato se nota; trabaja con plataformas de reparto, donde nuestro agregador de pedidos ahorra una tableta por plataforma; tiene pase, y la pantalla de pase es nuestra función más diferencial."
+  },
+  {
+   "id": 65,
+   "nombre": "Brasa Terrat",
+   "tipo": "hamburguesería",
+   "barrio": "Pla del Real",
+   "lat": 39.48023,
+   "lon": -0.35774,
+   "inmueble": {
+    "m2_total": 195,
+    "m2_sala": 146,
+    "m2_cocina": 49,
+    "plantas": 1,
+    "terraza": false,
+    "mesas_terraza": 0,
+    "mesas_interior": 22,
+    "aforo": 96
+   },
+   "cocina": {
+    "estaciones": [
+     "plancha",
+     "freidora",
+     "barra"
+    ],
+    "pase": true,
+    "potencia_kw": 94.7,
+    "extraccion": "campana central",
+    "camara_frigorifica": true
+   },
+   "servicio": {
+    "comandas_punta": 65,
+    "ticket_medio": 13.29,
+    "para_llevar": true,
+    "plataformas": []
+   },
+   "hardware": {
+    "pantallas_cocina": 4,
+    "puestos_tpv": 4,
+    "tabletas_camarero": 1,
+    "impresoras": 1,
+    "red": "cableada",
+    "coste_implantacion": 6250
+   },
+   "encaje": 74,
+   "encaje_razon": "4 pantallas y 4 TPV: con la competencia pagaría 8 licencias en vez de una; tiene pase, y la pantalla de pase es nuestra función más diferencial."
+  },
+  {
+   "id": 66,
+   "nombre": "Burger Rellotge Petit",
+   "tipo": "hamburguesería",
+   "barrio": "Ciutat Vella",
+   "lat": 39.47122,
+   "lon": -0.37658,
+   "inmueble": {
+    "m2_total": 107,
+    "m2_sala": 73,
+    "m2_cocina": 34,
+    "plantas": 1,
+    "terraza": false,
+    "mesas_terraza": 0,
+    "mesas_interior": 11,
+    "aforo": 50
+   },
+   "cocina": {
+    "estaciones": [
+     "plancha",
+     "freidora",
+     "barra",
+     "postres"
+    ],
+    "pase": false,
+    "potencia_kw": 51.3,
+    "extraccion": "sin campana homologada",
+    "camara_frigorifica": false
+   },
+   "servicio": {
+    "comandas_punta": 38,
+    "ticket_medio": 15.3,
+    "para_llevar": true,
+    "plataformas": [
+     "Just Eat"
+    ]
+   },
+   "hardware": {
+    "pantallas_cocina": 2,
+    "puestos_tpv": 3,
+    "tabletas_camarero": 0,
+    "impresoras": 2,
+    "red": "wifi",
+    "coste_implantacion": 3610
+   },
+   "encaje": 67,
+   "encaje_razon": "2 pantallas y 3 TPV: con la competencia pagaría 5 licencias en vez de una; 4 estaciones: el enrutado por estación evita que cocina trabaje con una comanda en papel; trabaja con plataformas de reparto, donde nuestro agregador de pedidos ahorra una tableta por plataforma."
+  },
+  {
+   "id": 67,
+   "nombre": "Burger Tabalet",
+   "tipo": "hamburguesería",
+   "barrio": "L'Olivereta",
+   "lat": 39.46884,
+   "lon": -0.40418,
+   "inmueble": {
+    "m2_total": 148,
+    "m2_sala": 119,
+    "m2_cocina": 29,
+    "plantas": 1,
+    "terraza": false,
+    "mesas_terraza": 0,
+    "mesas_interior": 18,
+    "aforo": 80
+   },
+   "cocina": {
+    "estaciones": [
+     "plancha",
+     "freidora",
+     "fríos"
+    ],
+    "pase": true,
+    "potencia_kw": 45.9,
+    "extraccion": "campana central",
+    "camara_frigorifica": true
+   },
+   "servicio": {
+    "comandas_punta": 107,
+    "ticket_medio": 20.59,
+    "para_llevar": false,
+    "plataformas": []
+   },
+   "hardware": {
+    "pantallas_cocina": 4,
+    "puestos_tpv": 1,
+    "tabletas_camarero": 1,
+    "impresoras": 1,
+    "red": "wifi",
+    "coste_implantacion": 3150
+   },
+   "encaje": 76,
+   "encaje_razon": "4 pantallas y 1 TPV: con la competencia pagaría 5 licencias en vez de una; 107 comandas en punta, volumen alto: el tiempo por plato se nota; tiene pase, y la pantalla de pase es nuestra función más diferencial."
+  },
+  {
+   "id": 68,
+   "nombre": "Wok Carnestoltes",
+   "tipo": "asiático",
+   "barrio": "Jesús",
+   "lat": 39.45408,
+   "lon": -0.38845,
+   "inmueble": {
+    "m2_total": 155,
+    "m2_sala": 124,
+    "m2_cocina": 31,
+    "plantas": 1,
+    "terraza": true,
+    "mesas_terraza": 6,
+    "mesas_interior": 19,
+    "aforo": 113
+   },
+   "cocina": {
+    "estaciones": [
+     "wok",
+     "fríos",
+     "horno"
+    ],
+    "pase": false,
+    "potencia_kw": 52.5,
+    "extraccion": "sin campana homologada",
+    "camara_frigorifica": true
+   },
+   "servicio": {
+    "comandas_punta": 113,
+    "ticket_medio": 15.68,
+    "para_llevar": false,
+    "plataformas": [
+     "Just Eat",
+     "Uber Eats"
+    ]
+   },
+   "hardware": {
+    "pantallas_cocina": 3,
+    "puestos_tpv": 2,
+    "tabletas_camarero": 2,
+    "impresoras": 2,
+    "red": "wifi",
+    "coste_implantacion": 3860
+   },
+   "encaje": 80,
+   "encaje_razon": "3 pantallas y 2 TPV: con la competencia pagaría 5 licencias en vez de una; 113 comandas en punta, volumen alto: el tiempo por plato se nota; trabaja con plataformas de reparto, donde nuestro agregador de pedidos ahorra una tableta por plataforma."
+  },
+  {
+   "id": 69,
+   "nombre": "Cafè Tramuntana de Baix",
+   "tipo": "cafetería",
+   "barrio": "Rascanya",
+   "lat": 39.49637,
+   "lon": -0.36945,
+   "inmueble": {
+    "m2_total": 68,
+    "m2_sala": 54,
+    "m2_cocina": 14,
+    "plantas": 1,
+    "terraza": true,
+    "mesas_terraza": 5,
+    "mesas_interior": 8,
+    "aforo": 63
+   },
+   "cocina": {
+    "estaciones": [
+     "barra",
+     "fríos"
+    ],
+    "pase": false,
+    "potencia_kw": 28.9,
+    "extraccion": "campana central",
+    "camara_frigorifica": false
+   },
+   "servicio": {
+    "comandas_punta": 34,
+    "ticket_medio": 13.53,
+    "para_llevar": false,
+    "plataformas": [
+     "Uber Eats"
+    ]
+   },
+   "hardware": {
+    "pantallas_cocina": 1,
+    "puestos_tpv": 2,
+    "tabletas_camarero": 1,
+    "impresoras": 2,
+    "red": "wifi",
+    "coste_implantacion": 2760
+   },
+   "encaje": 35,
+   "encaje_razon": "solo 3 terminales, el ahorro por licencia es modesto; trabaja con plataformas de reparto, donde nuestro agregador de pedidos ahorra una tableta por plataforma; cocina de 14 m²: poco sitio para montar más de una pantalla."
+  },
+  {
+   "id": 70,
+   "nombre": "Bar Sorollet del Sud",
+   "tipo": "bar de barrio",
+   "barrio": "Camins al Grau",
+   "lat": 39.46903,
+   "lon": -0.35108,
+   "inmueble": {
+    "m2_total": 79,
+    "m2_sala": 59,
+    "m2_cocina": 20,
+    "plantas": 1,
+    "terraza": true,
+    "mesas_terraza": 3,
+    "mesas_interior": 9,
+    "aforo": 61
+   },
+   "cocina": {
+    "estaciones": [
+     "plancha",
+     "barra",
+     "freidora",
+     "horno",
+     "fríos"
+    ],
+    "pase": false,
+    "potencia_kw": 37.7,
+    "extraccion": "campana con recuperador",
+    "camara_frigorifica": true
+   },
+   "servicio": {
+    "comandas_punta": 31,
+    "ticket_medio": 13.42,
+    "para_llevar": false,
+    "plataformas": [
+     "Uber Eats"
+    ]
+   },
+   "hardware": {
+    "pantallas_cocina": 3,
+    "puestos_tpv": 2,
+    "tabletas_camarero": 1,
+    "impresoras": 2,
+    "red": "wifi",
+    "coste_implantacion": 3600
+   },
+   "encaje": 72,
+   "encaje_razon": "3 pantallas y 2 TPV: con la competencia pagaría 5 licencias en vez de una; 5 estaciones: el enrutado por estación evita que cocina trabaje con una comanda en papel; trabaja con plataformas de reparto, donde nuestro agregador de pedidos ahorra una tableta por plataforma."
+  },
+  {
+   "id": 71,
+   "nombre": "Taula Calaix de Baix",
+   "tipo": "gastrobar",
+   "barrio": "Poblats Marítims",
+   "lat": 39.45407,
+   "lon": -0.32569,
+   "inmueble": {
+    "m2_total": 325,
+    "m2_sala": 264,
+    "m2_cocina": 61,
+    "plantas": 1,
+    "terraza": true,
+    "mesas_terraza": 14,
+    "mesas_interior": 41,
+    "aforo": 227
+   },
+   "cocina": {
+    "estaciones": [
+     "plancha",
+     "fríos",
+     "horno"
+    ],
+    "pase": true,
+    "potencia_kw": 109.0,
+    "extraccion": "campana central",
+    "camara_frigorifica": true
+   },
+   "servicio": {
+    "comandas_punta": 227,
+    "ticket_medio": 27.89,
+    "para_llevar": false,
+    "plataformas": []
+   },
+   "hardware": {
+    "pantallas_cocina": 4,
+    "puestos_tpv": 4,
+    "tabletas_camarero": 4,
+    "impresoras": 1,
+    "red": "cableada",
+    "coste_implantacion": 7030
+   },
+   "encaje": 81,
+   "encaje_razon": "4 pantallas y 4 TPV: con la competencia pagaría 8 licencias en vez de una; 227 comandas en punta, volumen alto: el tiempo por plato se nota; tiene pase, y la pantalla de pase es nuestra función más diferencial."
+  },
+  {
+   "id": 72,
+   "nombre": "Burger Timó de Baix",
+   "tipo": "hamburguesería",
+   "barrio": "L'Eixample",
+   "lat": 39.46793,
+   "lon": -0.36215,
+   "inmueble": {
+    "m2_total": 84,
+    "m2_sala": 59,
+    "m2_cocina": 25,
+    "plantas": 1,
+    "terraza": true,
+    "mesas_terraza": 6,
+    "mesas_interior": 9,
+    "aforo": 67
+   },
+   "cocina": {
+    "estaciones": [
+     "plancha",
+     "freidora",
+     "fríos"
+    ],
+    "pase": true,
+    "potencia_kw": 42.9,
+    "extraccion": "campana central",
+    "camara_frigorifica": true
+   },
+   "servicio": {
+    "comandas_punta": 49,
+    "ticket_medio": 12.02,
+    "para_llevar": false,
+    "plataformas": []
+   },
+   "hardware": {
+    "pantallas_cocina": 3,
+    "puestos_tpv": 1,
+    "tabletas_camarero": 1,
+    "impresoras": 1,
+    "red": "wifi",
+    "coste_implantacion": 2730
+   },
+   "encaje": 62,
+   "encaje_razon": "solo 4 terminales, el ahorro por licencia es modesto; tiene pase, y la pantalla de pase es nuestra función más diferencial."
+  },
+  {
+   "id": 73,
+   "nombre": "Gastrobar Tramús de Baix",
+   "tipo": "gastrobar",
+   "barrio": "L'Olivereta",
+   "lat": 39.47075,
+   "lon": -0.39773,
+   "inmueble": {
+    "m2_total": 174,
+    "m2_sala": 135,
+    "m2_cocina": 39,
+    "plantas": 1,
+    "terraza": false,
+    "mesas_terraza": 0,
+    "mesas_interior": 21,
+    "aforo": 98
+   },
+   "cocina": {
+    "estaciones": [
+     "plancha",
+     "fríos",
+     "horno",
+     "freidora",
+     "barra"
+    ],
+    "pase": false,
+    "potencia_kw": 58.5,
+    "extraccion": "campana central",
+    "camara_frigorifica": true
+   },
+   "servicio": {
+    "comandas_punta": 67,
+    "ticket_medio": 24.96,
+    "para_llevar": false,
+    "plataformas": []
+   },
+   "hardware": {
+    "pantallas_cocina": 4,
+    "puestos_tpv": 3,
+    "tabletas_camarero": 1,
+    "impresoras": 2,
+    "red": "cableada",
+    "coste_implantacion": 5600
+   },
+   "encaje": 76,
+   "encaje_razon": "4 pantallas y 3 TPV: con la competencia pagaría 7 licencias en vez de una; 5 estaciones: el enrutado por estación evita que cocina trabaje con una comanda en papel."
+  },
+  {
+   "id": 74,
+   "nombre": "Gastrobar Llumeta",
+   "tipo": "gastrobar",
+   "barrio": "Camins al Grau",
+   "lat": 39.46564,
+   "lon": -0.34428,
+   "inmueble": {
+    "m2_total": 322,
+    "m2_sala": 237,
+    "m2_cocina": 85,
+    "plantas": 2,
+    "terraza": true,
+    "mesas_terraza": 3,
+    "mesas_interior": 37,
+    "aforo": 166
+   },
+   "cocina": {
+    "estaciones": [
+     "plancha",
+     "fríos",
+     "horno",
+     "postres"
+    ],
+    "pase": true,
+    "potencia_kw": 152.3,
+    "extraccion": "campana con recuperador",
+    "camara_frigorifica": true
+   },
+   "servicio": {
+    "comandas_punta": 133,
+    "ticket_medio": 41.66,
+    "para_llevar": true,
+    "plataformas": []
+   },
+   "hardware": {
+    "pantallas_cocina": 4,
+    "puestos_tpv": 4,
+    "tabletas_camarero": 3,
+    "impresoras": 1,
+    "red": "cableada",
+    "coste_implantacion": 6770
+   },
+   "encaje": 86,
+   "encaje_razon": "4 pantallas y 4 TPV: con la competencia pagaría 8 licencias en vez de una; 4 estaciones: el enrutado por estación evita que cocina trabaje con una comanda en papel; 133 comandas en punta, volumen alto: el tiempo por plato se nota; tiene pase, y la pantalla de pase es nuestra función más diferencial."
+  },
+  {
+   "id": 75,
+   "nombre": "Forn Andana Vell",
+   "tipo": "pizzería",
+   "barrio": "Benicalap",
+   "lat": 39.49217,
+   "lon": -0.38268,
+   "inmueble": {
+    "m2_total": 193,
+    "m2_sala": 146,
+    "m2_cocina": 47,
+    "plantas": 1,
+    "terraza": true,
+    "mesas_terraza": 16,
+    "mesas_interior": 22,
+    "aforo": 165
+   },
+   "cocina": {
+    "estaciones": [
+     "horno",
+     "fríos",
+     "freidora"
+    ],
+    "pase": true,
+    "potencia_kw": 77.4,
+    "extraccion": "campana mural",
+    "camara_frigorifica": true
+   },
+   "servicio": {
+    "comandas_punta": 89,
+    "ticket_medio": 23.43,
+    "para_llevar": true,
+    "plataformas": [
+     "Glovo"
+    ]
+   },
+   "hardware": {
+    "pantallas_cocina": 4,
+    "puestos_tpv": 4,
+    "tabletas_camarero": 3,
+    "impresoras": 2,
+    "red": "cableada",
+    "coste_implantacion": 6950
+   },
+   "encaje": 93,
+   "encaje_razon": "4 pantallas y 4 TPV: con la competencia pagaría 8 licencias en vez de una; 89 comandas en punta, volumen alto: el tiempo por plato se nota; trabaja con plataformas de reparto, donde nuestro agregador de pedidos ahorra una tableta por plataforma; tiene pase, y la pantalla de pase es nuestra función más diferencial."
+  },
+  {
+   "id": 76,
+   "nombre": "Fideus Espardenya",
+   "tipo": "asiático",
+   "barrio": "Extramurs",
+   "lat": 39.46942,
+   "lon": -0.38781,
+   "inmueble": {
+    "m2_total": 122,
+    "m2_sala": 93,
+    "m2_cocina": 29,
+    "plantas": 1,
+    "terraza": false,
+    "mesas_terraza": 0,
+    "mesas_interior": 14,
+    "aforo": 69
+   },
+   "cocina": {
+    "estaciones": [
+     "wok",
+     "fríos",
+     "freidora"
+    ],
+    "pase": true,
+    "potencia_kw": 49.9,
+    "extraccion": "campana con recuperador",
+    "camara_frigorifica": true
+   },
+   "servicio": {
+    "comandas_punta": 41,
+    "ticket_medio": 17.42,
+    "para_llevar": true,
+    "plataformas": [
+     "Uber Eats"
+    ]
+   },
+   "hardware": {
+    "pantallas_cocina": 3,
+    "puestos_tpv": 2,
+    "tabletas_camarero": 1,
+    "impresoras": 2,
+    "red": "wifi",
+    "coste_implantacion": 3600
+   },
+   "encaje": 81,
+   "encaje_razon": "3 pantallas y 2 TPV: con la competencia pagaría 5 licencias en vez de una; trabaja con plataformas de reparto, donde nuestro agregador de pedidos ahorra una tableta por plataforma; tiene pase, y la pantalla de pase es nuestra función más diferencial."
+  },
+  {
+   "id": 77,
+   "nombre": "Cuina Canut 21",
+   "tipo": "dark kitchen",
+   "barrio": "Camins al Grau",
+   "lat": 39.47192,
+   "lon": -0.3429,
+   "inmueble": {
+    "m2_total": 106,
+    "m2_sala": 27,
+    "m2_cocina": 79,
+    "plantas": 1,
+    "terraza": false,
+    "mesas_terraza": 0,
+    "mesas_interior": 0,
+    "aforo": 0
+   },
+   "cocina": {
+    "estaciones": [
+     "plancha",
+     "freidora"
+    ],
+    "pase": false,
+    "potencia_kw": 124.8,
+    "extraccion": "campana mural",
+    "camara_frigorifica": true
+   },
+   "servicio": {
+    "comandas_punta": 38,
+    "ticket_medio": 16.95,
+    "para_llevar": true,
+    "plataformas": [
+     "Glovo",
+     "Uber Eats",
+     "Just Eat"
+    ]
+   },
+   "hardware": {
+    "pantallas_cocina": 1,
+    "puestos_tpv": 2,
+    "tabletas_camarero": 0,
+    "impresoras": 2,
+    "red": "wifi",
+    "coste_implantacion": 2500
+   },
+   "encaje": 53,
+   "encaje_razon": "solo 3 terminales, el ahorro por licencia es modesto; trabaja con plataformas de reparto, donde nuestro agregador de pedidos ahorra una tableta por plataforma; dark kitchen: el 100 % de las comandas entran ya en digital."
+  },
+  {
+   "id": 78,
+   "nombre": "Bar Muntaner",
+   "tipo": "bar de barrio",
+   "barrio": "Patraix",
+   "lat": 39.45924,
+   "lon": -0.39274,
+   "inmueble": {
+    "m2_total": 111,
+    "m2_sala": 84,
+    "m2_cocina": 27,
+    "plantas": 1,
+    "terraza": true,
+    "mesas_terraza": 14,
+    "mesas_interior": 13,
+    "aforo": 121
+   },
+   "cocina": {
+    "estaciones": [
+     "plancha",
+     "barra",
+     "freidora",
+     "horno"
+    ],
+    "pase": false,
+    "potencia_kw": 46.9,
+    "extraccion": "campana mural",
+    "camara_frigorifica": true
+   },
+   "servicio": {
+    "comandas_punta": 67,
+    "ticket_medio": 16.31,
+    "para_llevar": true,
+    "plataformas": []
+   },
+   "hardware": {
+    "pantallas_cocina": 3,
+    "puestos_tpv": 4,
+    "tabletas_camarero": 2,
+    "impresoras": 2,
+    "red": "wifi",
+    "coste_implantacion": 5240
+   },
+   "encaje": 71,
+   "encaje_razon": "3 pantallas y 4 TPV: con la competencia pagaría 7 licencias en vez de una; 4 estaciones: el enrutado por estación evita que cocina trabaje con una comanda en papel."
+  },
+  {
+   "id": 79,
+   "nombre": "Pizzería Rajola del Sud",
+   "tipo": "pizzería",
+   "barrio": "La Saïdia",
+   "lat": 39.48876,
+   "lon": -0.37855,
+   "inmueble": {
+    "m2_total": 213,
+    "m2_sala": 166,
+    "m2_cocina": 47,
+    "plantas": 1,
+    "terraza": true,
+    "mesas_terraza": 10,
+    "mesas_interior": 25,
+    "aforo": 146
+   },
+   "cocina": {
+    "estaciones": [
+     "horno",
+     "fríos"
+    ],
+    "pase": false,
+    "potencia_kw": 75.2,
+    "extraccion": "campana con recuperador",
+    "camara_frigorifica": true
+   },
+   "servicio": {
+    "comandas_punta": 137,
+    "ticket_medio": 21.54,
+    "para_llevar": true,
+    "plataformas": [
+     "Uber Eats"
+    ]
+   },
+   "hardware": {
+    "pantallas_cocina": 2,
+    "puestos_tpv": 3,
+    "tabletas_camarero": 2,
+    "impresoras": 2,
+    "red": "cableada",
+    "coste_implantacion": 4740
+   },
+   "encaje": 75,
+   "encaje_razon": "2 pantallas y 3 TPV: con la competencia pagaría 5 licencias en vez de una; 137 comandas en punta, volumen alto: el tiempo por plato se nota; trabaja con plataformas de reparto, donde nuestro agregador de pedidos ahorra una tableta por plataforma."
+  },
+  {
+   "id": 80,
+   "nombre": "Bar Tramús",
+   "tipo": "bar de barrio",
+   "barrio": "Benicalap",
+   "lat": 39.49632,
+   "lon": -0.38552,
+   "inmueble": {
+    "m2_total": 75,
+    "m2_sala": 61,
+    "m2_cocina": 14,
+    "plantas": 1,
+    "terraza": true,
+    "mesas_terraza": 8,
+    "mesas_interior": 9,
+    "aforo": 77
+   },
+   "cocina": {
+    "estaciones": [
+     "plancha",
+     "barra",
+     "fríos"
+    ],
+    "pase": false,
+    "potencia_kw": 30.7,
+    "extraccion": "sin campana homologada",
+    "camara_frigorifica": true
+   },
+   "servicio": {
+    "comandas_punta": 43,
+    "ticket_medio": 16.76,
+    "para_llevar": true,
+    "plataformas": [
+     "Just Eat",
+     "Glovo"
+    ]
+   },
+   "hardware": {
+    "pantallas_cocina": 2,
+    "puestos_tpv": 3,
+    "tabletas_camarero": 1,
+    "impresoras": 2,
+    "red": "wifi",
+    "coste_implantacion": 3870
+   },
+   "encaje": 65,
+   "encaje_razon": "2 pantallas y 3 TPV: con la competencia pagaría 5 licencias en vez de una; trabaja con plataformas de reparto, donde nuestro agregador de pedidos ahorra una tableta por plataforma; cocina de 14 m²: poco sitio para montar más de una pantalla."
+  },
+  {
+   "id": 81,
+   "nombre": "Cantina Llebeig",
+   "tipo": "bar de barrio",
+   "barrio": "La Saïdia",
+   "lat": 39.48723,
+   "lon": -0.3749,
+   "inmueble": {
+    "m2_total": 130,
+    "m2_sala": 104,
+    "m2_cocina": 26,
+    "plantas": 1,
+    "terraza": false,
+    "mesas_terraza": 0,
+    "mesas_interior": 16,
+    "aforo": 77
+   },
+   "cocina": {
+    "estaciones": [
+     "plancha",
+     "barra",
+     "horno",
+     "fríos"
+    ],
+    "pase": true,
+    "potencia_kw": 47.6,
+    "extraccion": "sin campana homologada",
+    "camara_frigorifica": true
+   },
+   "servicio": {
+    "comandas_punta": 78,
+    "ticket_medio": 17.04,
+    "para_llevar": false,
+    "plataformas": [
+     "Just Eat",
+     "Uber Eats",
+     "Glovo"
+    ]
+   },
+   "hardware": {
+    "pantallas_cocina": 4,
+    "puestos_tpv": 2,
+    "tabletas_camarero": 1,
+    "impresoras": 2,
+    "red": "wifi",
+    "coste_implantacion": 4020
+   },
+   "encaje": 98,
+   "encaje_razon": "4 pantallas y 2 TPV: con la competencia pagaría 6 licencias en vez de una; 4 estaciones: el enrutado por estación evita que cocina trabaje con una comanda en papel; 78 comandas en punta, volumen alto: el tiempo por plato se nota; trabaja con plataformas de reparto, donde nuestro agregador de pedidos ahorra una tableta por plataforma; tiene pase, y la pantalla de pase es nuestra función más diferencial."
+  },
+  {
+   "id": 82,
+   "nombre": "Arrosseria Canut 21",
+   "tipo": "arrocería",
+   "barrio": "Patraix",
+   "lat": 39.46135,
+   "lon": -0.38943,
+   "inmueble": {
+    "m2_total": 246,
+    "m2_sala": 180,
+    "m2_cocina": 66,
+    "plantas": 1,
+    "terraza": true,
+    "mesas_terraza": 4,
+    "mesas_interior": 28,
+    "aforo": 140
+   },
+   "cocina": {
+    "estaciones": [
+     "fuegos",
+     "fríos",
+     "freidora",
+     "horno"
+    ],
+    "pase": false,
+    "potencia_kw": 126.8,
+    "extraccion": "campana con recuperador",
+    "camara_frigorifica": true
+   },
+   "servicio": {
+    "comandas_punta": 167,
+    "ticket_medio": 25.49,
+    "para_llevar": true,
+    "plataformas": [
+     "Uber Eats",
+     "Just Eat"
+    ]
+   },
+   "hardware": {
+    "pantallas_cocina": 3,
+    "puestos_tpv": 3,
+    "tabletas_camarero": 2,
+    "impresoras": 2,
+    "red": "cableada",
+    "coste_implantacion": 5300
+   },
+   "encaje": 90,
+   "encaje_razon": "3 pantallas y 3 TPV: con la competencia pagaría 6 licencias en vez de una; 4 estaciones: el enrutado por estación evita que cocina trabaje con una comanda en papel; 167 comandas en punta, volumen alto: el tiempo por plato se nota; trabaja con plataformas de reparto, donde nuestro agregador de pedidos ahorra una tableta por plataforma."
+  },
+  {
+   "id": 83,
+   "nombre": "Taverna Llumeta del Sud",
+   "tipo": "taberna",
+   "barrio": "L'Eixample",
+   "lat": 39.46571,
+   "lon": -0.36409,
+   "inmueble": {
+    "m2_total": 60,
+    "m2_sala": 49,
+    "m2_cocina": 11,
+    "plantas": 1,
+    "terraza": false,
+    "mesas_terraza": 0,
+    "mesas_interior": 7,
+    "aforo": 42
+   },
+   "cocina": {
+    "estaciones": [
+     "plancha",
+     "barra",
+     "freidora"
+    ],
+    "pase": true,
+    "potencia_kw": 23.9,
+    "extraccion": "campana mural",
+    "camara_frigorifica": false
+   },
+   "servicio": {
+    "comandas_punta": 27,
+    "ticket_medio": 12.55,
+    "para_llevar": false,
+    "plataformas": []
+   },
+   "hardware": {
+    "pantallas_cocina": 3,
+    "puestos_tpv": 2,
+    "tabletas_camarero": 0,
+    "impresoras": 1,
+    "red": "wifi",
+    "coste_implantacion": 3160
+   },
+   "encaje": 50,
+   "encaje_razon": "3 pantallas y 2 TPV: con la competencia pagaría 5 licencias en vez de una; tiene pase, y la pantalla de pase es nuestra función más diferencial; cocina de 11 m²: poco sitio para montar más de una pantalla."
+  },
+  {
+   "id": 84,
+   "nombre": "Taula Cudol Nou",
+   "tipo": "gastrobar",
+   "barrio": "Pla del Real",
+   "lat": 39.48037,
+   "lon": -0.36343,
+   "inmueble": {
+    "m2_total": 204,
+    "m2_sala": 141,
+    "m2_cocina": 63,
+    "plantas": 1,
+    "terraza": false,
+    "mesas_terraza": 0,
+    "mesas_interior": 22,
+    "aforo": 100
+   },
+   "cocina": {
+    "estaciones": [
+     "plancha",
+     "fríos",
+     "horno",
+     "freidora",
+     "postres"
+    ],
+    "pase": true,
+    "potencia_kw": 114.7,
+    "extraccion": "campana con recuperador",
+    "camara_frigorifica": true
+   },
+   "servicio": {
+    "comandas_punta": 128,
+    "ticket_medio": 46.41,
+    "para_llevar": true,
+    "plataformas": []
+   },
+   "hardware": {
+    "pantallas_cocina": 5,
+    "puestos_tpv": 3,
+    "tabletas_camarero": 1,
+    "impresoras": 1,
+    "red": "cableada",
+    "coste_implantacion": 5980
+   },
+   "encaje": 91,
+   "encaje_razon": "5 pantallas y 3 TPV: con la competencia pagaría 8 licencias en vez de una; 5 estaciones: el enrutado por estación evita que cocina trabaje con una comanda en papel; 128 comandas en punta, volumen alto: el tiempo por plato se nota; tiene pase, y la pantalla de pase es nuestra función más diferencial."
+  },
+  {
+   "id": 85,
+   "nombre": "Gastrobar Sorollet Vell",
+   "tipo": "gastrobar",
+   "barrio": "Poblats Marítims",
+   "lat": 39.45968,
+   "lon": -0.33053,
+   "inmueble": {
+    "m2_total": 281,
+    "m2_sala": 202,
+    "m2_cocina": 79,
+    "plantas": 2,
+    "terraza": false,
+    "mesas_terraza": 0,
+    "mesas_interior": 31,
+    "aforo": 132
+   },
+   "cocina": {
+    "estaciones": [
+     "plancha",
+     "fríos",
+     "horno"
+    ],
+    "pase": false,
+    "potencia_kw": 138.4,
+    "extraccion": "campana central",
+    "camara_frigorifica": false
+   },
+   "servicio": {
+    "comandas_punta": 170,
+    "ticket_medio": 36.3,
+    "para_llevar": true,
+    "plataformas": [
+     "Glovo",
+     "Uber Eats",
+     "Just Eat"
+    ]
+   },
+   "hardware": {
+    "pantallas_cocina": 3,
+    "puestos_tpv": 3,
+    "tabletas_camarero": 2,
+    "impresoras": 2,
+    "red": "cableada",
+    "coste_implantacion": 5300
+   },
+   "encaje": 85,
+   "encaje_razon": "3 pantallas y 3 TPV: con la competencia pagaría 6 licencias en vez de una; 170 comandas en punta, volumen alto: el tiempo por plato se nota; trabaja con plataformas de reparto, donde nuestro agregador de pedidos ahorra una tableta por plataforma."
+  },
+  {
+   "id": 86,
+   "nombre": "Cantina Rodolí Nou",
+   "tipo": "bar de barrio",
+   "barrio": "Benicalap",
+   "lat": 39.49438,
+   "lon": -0.38785,
+   "inmueble": {
+    "m2_total": 103,
+    "m2_sala": 74,
+    "m2_cocina": 29,
+    "plantas": 1,
+    "terraza": false,
+    "mesas_terraza": 0,
+    "mesas_interior": 11,
+    "aforo": 55
+   },
+   "cocina": {
+    "estaciones": [
+     "plancha",
+     "barra",
+     "horno"
+    ],
+    "pase": true,
+    "potencia_kw": 47.8,
+    "extraccion": "campana con recuperador",
+    "camara_frigorifica": true
+   },
+   "servicio": {
+    "comandas_punta": 56,
+    "ticket_medio": 9.1,
+    "para_llevar": false,
+    "plataformas": [
+     "Just Eat",
+     "Glovo"
+    ]
+   },
+   "hardware": {
+    "pantallas_cocina": 3,
+    "puestos_tpv": 2,
+    "tabletas_camarero": 0,
+    "impresoras": 2,
+    "red": "wifi",
+    "coste_implantacion": 3340
+   },
+   "encaje": 81,
+   "encaje_razon": "3 pantallas y 2 TPV: con la competencia pagaría 5 licencias en vez de una; trabaja con plataformas de reparto, donde nuestro agregador de pedidos ahorra una tableta por plataforma; tiene pase, y la pantalla de pase es nuestra función más diferencial."
+  },
+  {
+   "id": 87,
+   "nombre": "Burger Terrat Petit",
+   "tipo": "hamburguesería",
+   "barrio": "Poblats Marítims",
+   "lat": 39.46123,
+   "lon": -0.32551,
+   "inmueble": {
+    "m2_total": 115,
+    "m2_sala": 81,
+    "m2_cocina": 34,
+    "plantas": 1,
+    "terraza": true,
+    "mesas_terraza": 7,
+    "mesas_interior": 12,
+    "aforo": 87
+   },
+   "cocina": {
+    "estaciones": [
+     "plancha",
+     "freidora"
+    ],
+    "pase": false,
+    "potencia_kw": 58.3,
+    "extraccion": "campana central",
+    "camara_frigorifica": true
+   },
+   "servicio": {
+    "comandas_punta": 58,
+    "ticket_medio": 15.99,
+    "para_llevar": true,
+    "plataformas": [
+     "Uber Eats"
+    ]
+   },
+   "hardware": {
+    "pantallas_cocina": 1,
+    "puestos_tpv": 3,
+    "tabletas_camarero": 1,
+    "impresoras": 2,
+    "red": "wifi",
+    "coste_implantacion": 3450
+   },
+   "encaje": 61,
+   "encaje_razon": "solo 4 terminales, el ahorro por licencia es modesto; trabaja con plataformas de reparto, donde nuestro agregador de pedidos ahorra una tableta por plataforma."
+  },
+  {
+   "id": 88,
+   "nombre": "Fideus Canut",
+   "tipo": "asiático",
+   "barrio": "Patraix",
+   "lat": 39.4619,
+   "lon": -0.39514,
+   "inmueble": {
+    "m2_total": 218,
+    "m2_sala": 156,
+    "m2_cocina": 62,
+    "plantas": 1,
+    "terraza": false,
+    "mesas_terraza": 0,
+    "mesas_interior": 24,
+    "aforo": 105
+   },
+   "cocina": {
+    "estaciones": [
+     "wok",
+     "fríos",
+     "freidora"
+    ],
+    "pase": true,
+    "potencia_kw": 89.3,
+    "extraccion": "campana con recuperador",
+    "camara_frigorifica": true
+   },
+   "servicio": {
+    "comandas_punta": 101,
+    "ticket_medio": 16.72,
+    "para_llevar": false,
+    "plataformas": [
+     "Just Eat",
+     "Uber Eats"
+    ]
+   },
+   "hardware": {
+    "pantallas_cocina": 4,
+    "puestos_tpv": 2,
+    "tabletas_camarero": 2,
+    "impresoras": 2,
+    "red": "cableada",
+    "coste_implantacion": 5030
+   },
+   "encaje": 93,
+   "encaje_razon": "4 pantallas y 2 TPV: con la competencia pagaría 6 licencias en vez de una; 101 comandas en punta, volumen alto: el tiempo por plato se nota; trabaja con plataformas de reparto, donde nuestro agregador de pedidos ahorra una tableta por plataforma; tiene pase, y la pantalla de pase es nuestra función más diferencial."
+  },
+  {
+   "id": 89,
+   "nombre": "Arrosseria Falzia",
+   "tipo": "arrocería",
+   "barrio": "Jesús",
+   "lat": 39.45819,
+   "lon": -0.38141,
+   "inmueble": {
+    "m2_total": 189,
+    "m2_sala": 153,
+    "m2_cocina": 36,
+    "plantas": 1,
+    "terraza": true,
+    "mesas_terraza": 4,
+    "mesas_interior": 23,
+    "aforo": 117
+   },
+   "cocina": {
+    "estaciones": [
+     "fuegos",
+     "fríos",
+     "barra"
+    ],
+    "pase": true,
+    "potencia_kw": 65.8,
+    "extraccion": "sin campana homologada",
+    "camara_frigorifica": false
+   },
+   "servicio": {
+    "comandas_punta": 72,
+    "ticket_medio": 29.68,
+    "para_llevar": false,
+    "plataformas": [
+     "Uber Eats",
+     "Just Eat",
+     "Glovo"
+    ]
+   },
+   "hardware": {
+    "pantallas_cocina": 4,
+    "puestos_tpv": 3,
+    "tabletas_camarero": 2,
+    "impresoras": 2,
+    "red": "cableada",
+    "coste_implantacion": 5860
+   },
+   "encaje": 93,
+   "encaje_razon": "4 pantallas y 3 TPV: con la competencia pagaría 7 licencias en vez de una; 72 comandas en punta, volumen alto: el tiempo por plato se nota; trabaja con plataformas de reparto, donde nuestro agregador de pedidos ahorra una tableta por plataforma; tiene pase, y la pantalla de pase es nuestra función más diferencial."
+  },
+  {
+   "id": 90,
+   "nombre": "Wok Miraculós Nou",
+   "tipo": "asiático",
+   "barrio": "Poblats Marítims",
+   "lat": 39.45644,
+   "lon": -0.32769,
+   "inmueble": {
+    "m2_total": 206,
+    "m2_sala": 165,
+    "m2_cocina": 41,
+    "plantas": 1,
+    "terraza": false,
+    "mesas_terraza": 0,
+    "mesas_interior": 25,
+    "aforo": 112
+   },
+   "cocina": {
+    "estaciones": [
+     "wok",
+     "fríos",
+     "freidora",
+     "horno",
+     "barra"
+    ],
+    "pase": false,
+    "potencia_kw": 64.0,
+    "extraccion": "campana con recuperador",
+    "camara_frigorifica": true
+   },
+   "servicio": {
+    "comandas_punta": 80,
+    "ticket_medio": 27.78,
+    "para_llevar": false,
+    "plataformas": []
+   },
+   "hardware": {
+    "pantallas_cocina": 4,
+    "puestos_tpv": 3,
+    "tabletas_camarero": 2,
+    "impresoras": 2,
+    "red": "cableada",
+    "coste_implantacion": 5860
+   },
+   "encaje": 83,
+   "encaje_razon": "4 pantallas y 3 TPV: con la competencia pagaría 7 licencias en vez de una; 5 estaciones: el enrutado por estación evita que cocina trabaje con una comanda en papel; 80 comandas en punta, volumen alto: el tiempo por plato se nota."
+  },
+  {
+   "id": 91,
+   "nombre": "Taula Terrat 21",
+   "tipo": "gastrobar",
+   "barrio": "Rascanya",
+   "lat": 39.49534,
+   "lon": -0.36196,
+   "inmueble": {
+    "m2_total": 233,
+    "m2_sala": 172,
+    "m2_cocina": 61,
+    "plantas": 2,
+    "terraza": false,
+    "mesas_terraza": 0,
+    "mesas_interior": 26,
+    "aforo": 118
+   },
+   "cocina": {
+    "estaciones": [
+     "plancha",
+     "fríos",
+     "horno",
+     "barra"
+    ],
+    "pase": false,
+    "potencia_kw": 113.4,
+    "extraccion": "campana mural",
+    "camara_frigorifica": true
+   },
+   "servicio": {
+    "comandas_punta": 110,
+    "ticket_medio": 44.59,
+    "para_llevar": false,
+    "plataformas": [
+     "Uber Eats"
+    ]
+   },
+   "hardware": {
+    "pantallas_cocina": 3,
+    "puestos_tpv": 3,
+    "tabletas_camarero": 2,
+    "impresoras": 2,
+    "red": "cableada",
+    "coste_implantacion": 5300
+   },
+   "encaje": 90,
+   "encaje_razon": "3 pantallas y 3 TPV: con la competencia pagaría 6 licencias en vez de una; 4 estaciones: el enrutado por estación evita que cocina trabaje con una comanda en papel; 110 comandas en punta, volumen alto: el tiempo por plato se nota; trabaja con plataformas de reparto, donde nuestro agregador de pedidos ahorra una tableta por plataforma."
+  },
+  {
+   "id": 92,
+   "nombre": "Bar Clauer Vell",
+   "tipo": "bar de barrio",
+   "barrio": "Poblats Marítims",
+   "lat": 39.45623,
+   "lon": -0.32538,
+   "inmueble": {
+    "m2_total": 137,
+    "m2_sala": 101,
+    "m2_cocina": 36,
+    "plantas": 1,
+    "terraza": false,
+    "mesas_terraza": 0,
+    "mesas_interior": 15,
+    "aforo": 72
+   },
+   "cocina": {
+    "estaciones": [
+     "plancha",
+     "barra"
+    ],
+    "pase": false,
+    "potencia_kw": 56.7,
+    "extraccion": "sin campana homologada",
+    "camara_frigorifica": false
+   },
+   "servicio": {
+    "comandas_punta": 54,
+    "ticket_medio": 11.74,
+    "para_llevar": true,
+    "plataformas": []
+   },
+   "hardware": {
+    "pantallas_cocina": 1,
+    "puestos_tpv": 3,
+    "tabletas_camarero": 1,
+    "impresoras": 2,
+    "red": "wifi",
+    "coste_implantacion": 3450
+   },
+   "encaje": 49,
+   "encaje_razon": "solo 4 terminales, el ahorro por licencia es modesto."
+  },
+  {
+   "id": 93,
+   "nombre": "Casa Bufanda & Co.",
+   "tipo": "arrocería",
+   "barrio": "Algirós",
+   "lat": 39.47685,
+   "lon": -0.34522,
+   "inmueble": {
+    "m2_total": 330,
+    "m2_sala": 261,
+    "m2_cocina": 69,
+    "plantas": 2,
+    "terraza": true,
+    "mesas_terraza": 12,
+    "mesas_interior": 40,
+    "aforo": 216
+   },
+   "cocina": {
+    "estaciones": [
+     "fuegos",
+     "fríos",
+     "barra",
+     "postres"
+    ],
+    "pase": true,
+    "potencia_kw": 109.9,
+    "extraccion": "campana mural",
+    "camara_frigorifica": true
+   },
+   "servicio": {
+    "comandas_punta": 174,
+    "ticket_medio": 34.64,
+    "para_llevar": false,
+    "plataformas": [
+     "Just Eat"
+    ]
+   },
+   "hardware": {
+    "pantallas_cocina": 4,
+    "puestos_tpv": 4,
+    "tabletas_camarero": 4,
+    "impresoras": 2,
+    "red": "cableada",
+    "coste_implantacion": 7210
+   },
+   "encaje": 98,
+   "encaje_razon": "4 pantallas y 4 TPV: con la competencia pagaría 8 licencias en vez de una; 4 estaciones: el enrutado por estación evita que cocina trabaje con una comanda en papel; 174 comandas en punta, volumen alto: el tiempo por plato se nota; trabaja con plataformas de reparto, donde nuestro agregador de pedidos ahorra una tableta por plataforma; tiene pase, y la pantalla de pase es nuestra función más diferencial."
+  },
+  {
+   "id": 94,
+   "nombre": "Pizzería Rellotge Petit",
+   "tipo": "pizzería",
+   "barrio": "Russafa",
+   "lat": 39.45778,
+   "lon": -0.3716,
+   "inmueble": {
+    "m2_total": 178,
+    "m2_sala": 130,
+    "m2_cocina": 48,
+    "plantas": 1,
+    "terraza": false,
+    "mesas_terraza": 0,
+    "mesas_interior": 20,
+    "aforo": 89
+   },
+   "cocina": {
+    "estaciones": [
+     "horno",
+     "fríos",
+     "postres"
+    ],
+    "pase": true,
+    "potencia_kw": 94.9,
+    "extraccion": "campana con recuperador",
+    "camara_frigorifica": true
+   },
+   "servicio": {
+    "comandas_punta": 63,
+    "ticket_medio": 21.04,
+    "para_llevar": true,
+    "plataformas": []
+   },
+   "hardware": {
+    "pantallas_cocina": 4,
+    "puestos_tpv": 3,
+    "tabletas_camarero": 1,
+    "impresoras": 1,
+    "red": "cableada",
+    "coste_implantacion": 5420
+   },
+   "encaje": 74,
+   "encaje_razon": "4 pantallas y 3 TPV: con la competencia pagaría 7 licencias en vez de una; tiene pase, y la pantalla de pase es nuestra función más diferencial."
+  },
+  {
+   "id": 95,
+   "nombre": "Bar Cresol",
+   "tipo": "bar de barrio",
+   "barrio": "Pla del Real",
+   "lat": 39.47872,
+   "lon": -0.36077,
+   "inmueble": {
+    "m2_total": 116,
+    "m2_sala": 81,
+    "m2_cocina": 35,
+    "plantas": 1,
+    "terraza": false,
+    "mesas_terraza": 0,
+    "mesas_interior": 12,
+    "aforo": 58
+   },
+   "cocina": {
+    "estaciones": [
+     "plancha",
+     "barra",
+     "horno",
+     "postres"
+    ],
+    "pase": true,
+    "potencia_kw": 70.6,
+    "extraccion": "campana con recuperador",
+    "camara_frigorifica": true
+   },
+   "servicio": {
+    "comandas_punta": 71,
+    "ticket_medio": 17.47,
+    "para_llevar": false,
+    "plataformas": [
+     "Uber Eats"
+    ]
+   },
+   "hardware": {
+    "pantallas_cocina": 4,
+    "puestos_tpv": 2,
+    "tabletas_camarero": 1,
+    "impresoras": 2,
+    "red": "wifi",
+    "coste_implantacion": 4020
+   },
+   "encaje": 98,
+   "encaje_razon": "4 pantallas y 2 TPV: con la competencia pagaría 6 licencias en vez de una; 4 estaciones: el enrutado por estación evita que cocina trabaje con una comanda en papel; 71 comandas en punta, volumen alto: el tiempo por plato se nota; trabaja con plataformas de reparto, donde nuestro agregador de pedidos ahorra una tableta por plataforma; tiene pase, y la pantalla de pase es nuestra función más diferencial."
+  },
+  {
+   "id": 96,
+   "nombre": "Fideus Fusta Petit",
+   "tipo": "asiático",
+   "barrio": "L'Olivereta",
+   "lat": 39.46676,
+   "lon": -0.39722,
+   "inmueble": {
+    "m2_total": 83,
+    "m2_sala": 65,
+    "m2_cocina": 18,
+    "plantas": 1,
+    "terraza": false,
+    "mesas_terraza": 0,
+    "mesas_interior": 10,
+    "aforo": 52
+   },
+   "cocina": {
+    "estaciones": [
+     "wok",
+     "fríos",
+     "freidora",
+     "barra"
+    ],
+    "pase": false,
+    "potencia_kw": 36.8,
+    "extraccion": "campana con recuperador",
+    "camara_frigorifica": false
+   },
+   "servicio": {
+    "comandas_punta": 34,
+    "ticket_medio": 22.07,
+    "para_llevar": false,
+    "plataformas": [
+     "Glovo",
+     "Just Eat"
+    ]
+   },
+   "hardware": {
+    "pantallas_cocina": 2,
+    "puestos_tpv": 2,
+    "tabletas_camarero": 0,
+    "impresoras": 2,
+    "red": "wifi",
+    "coste_implantacion": 2920
+   },
+   "encaje": 60,
+   "encaje_razon": "solo 4 terminales, el ahorro por licencia es modesto; 4 estaciones: el enrutado por estación evita que cocina trabaje con una comanda en papel; trabaja con plataformas de reparto, donde nuestro agregador de pedidos ahorra una tableta por plataforma."
+  },
+  {
+   "id": 97,
+   "nombre": "Taverna Miraculós 21",
+   "tipo": "taberna",
+   "barrio": "Benicalap",
+   "lat": 39.49198,
+   "lon": -0.38246,
+   "inmueble": {
+    "m2_total": 92,
+    "m2_sala": 75,
+    "m2_cocina": 17,
+    "plantas": 1,
+    "terraza": false,
+    "mesas_terraza": 0,
+    "mesas_interior": 11,
+    "aforo": 58
+   },
+   "cocina": {
+    "estaciones": [
+     "plancha",
+     "barra",
+     "horno",
+     "postres"
+    ],
+    "pase": true,
+    "potencia_kw": 33.7,
+    "extraccion": "campana central",
+    "camara_frigorifica": true
+   },
+   "servicio": {
+    "comandas_punta": 56,
+    "ticket_medio": 15.88,
+    "para_llevar": true,
+    "plataformas": [
+     "Glovo"
+    ]
+   },
+   "hardware": {
+    "pantallas_cocina": 3,
+    "puestos_tpv": 3,
+    "tabletas_camarero": 0,
+    "impresoras": 2,
+    "red": "wifi",
+    "coste_implantacion": 4030
+   },
+   "encaje": 83,
+   "encaje_razon": "3 pantallas y 3 TPV: con la competencia pagaría 6 licencias en vez de una; 4 estaciones: el enrutado por estación evita que cocina trabaje con una comanda en papel; trabaja con plataformas de reparto, donde nuestro agregador de pedidos ahorra una tableta por plataforma; tiene pase, y la pantalla de pase es nuestra función más diferencial; cocina de 17 m²: poco sitio para montar más de una pantalla."
+  },
+  {
+   "id": 98,
+   "nombre": "Bar Alfabeguera",
+   "tipo": "bar de barrio",
+   "barrio": "Quatre Carreres",
+   "lat": 39.45049,
+   "lon": -0.36698,
+   "inmueble": {
+    "m2_total": 150,
+    "m2_sala": 109,
+    "m2_cocina": 41,
+    "plantas": 1,
+    "terraza": true,
+    "mesas_terraza": 10,
+    "mesas_interior": 17,
+    "aforo": 115
+   },
+   "cocina": {
+    "estaciones": [
+     "plancha",
+     "barra",
+     "freidora",
+     "fríos"
+    ],
+    "pase": true,
+    "potencia_kw": 76.8,
+    "extraccion": "campana con recuperador",
+    "camara_frigorifica": true
+   },
+   "servicio": {
+    "comandas_punta": 65,
+    "ticket_medio": 9.84,
+    "para_llevar": false,
+    "plataformas": [
+     "Glovo",
+     "Just Eat"
+    ]
+   },
+   "hardware": {
+    "pantallas_cocina": 4,
+    "puestos_tpv": 3,
+    "tabletas_camarero": 2,
+    "impresoras": 2,
+    "red": "wifi",
+    "coste_implantacion": 4970
+   },
+   "encaje": 91,
+   "encaje_razon": "4 pantallas y 3 TPV: con la competencia pagaría 7 licencias en vez de una; 4 estaciones: el enrutado por estación evita que cocina trabaje con una comanda en papel; trabaja con plataformas de reparto, donde nuestro agregador de pedidos ahorra una tableta por plataforma; tiene pase, y la pantalla de pase es nuestra función más diferencial."
+  },
+  {
+   "id": 99,
+   "nombre": "Burger Espardenya de Baix",
+   "tipo": "hamburguesería",
+   "barrio": "Jesús",
+   "lat": 39.45877,
+   "lon": -0.38673,
+   "inmueble": {
+    "m2_total": 173,
+    "m2_sala": 116,
+    "m2_cocina": 57,
+    "plantas": 1,
+    "terraza": true,
+    "mesas_terraza": 5,
+    "mesas_interior": 18,
+    "aforo": 100
+   },
+   "cocina": {
+    "estaciones": [
+     "plancha",
+     "freidora",
+     "horno",
+     "fríos"
+    ],
+    "pase": true,
+    "potencia_kw": 105.6,
+    "extraccion": "campana central",
+    "camara_frigorifica": true
+   },
+   "servicio": {
+    "comandas_punta": 70,
+    "ticket_medio": 18.13,
+    "para_llevar": true,
+    "plataformas": [
+     "Just Eat",
+     "Glovo"
+    ]
+   },
+   "hardware": {
+    "pantallas_cocina": 4,
+    "puestos_tpv": 3,
+    "tabletas_camarero": 1,
+    "impresoras": 2,
+    "red": "cableada",
+    "coste_implantacion": 5600
+   },
+   "encaje": 98,
+   "encaje_razon": "4 pantallas y 3 TPV: con la competencia pagaría 7 licencias en vez de una; 4 estaciones: el enrutado por estación evita que cocina trabaje con una comanda en papel; 70 comandas en punta, volumen alto: el tiempo por plato se nota; trabaja con plataformas de reparto, donde nuestro agregador de pedidos ahorra una tableta por plataforma; tiene pase, y la pantalla de pase es nuestra función más diferencial."
+  },
+  {
+   "id": 100,
+   "nombre": "Obrador Carnestoltes Nou",
+   "tipo": "dark kitchen",
+   "barrio": "Algirós",
+   "lat": 39.474,
+   "lon": -0.33808,
+   "inmueble": {
+    "m2_total": 45,
+    "m2_sala": 9,
+    "m2_cocina": 36,
+    "plantas": 1,
+    "terraza": false,
+    "mesas_terraza": 0,
+    "mesas_interior": 0,
+    "aforo": 0
+   },
+   "cocina": {
+    "estaciones": [
+     "plancha",
+     "freidora",
+     "horno",
+     "barra"
+    ],
+    "pase": true,
+    "potencia_kw": 70.6,
+    "extraccion": "campana con recuperador",
+    "camara_frigorifica": true
+   },
+   "servicio": {
+    "comandas_punta": 49,
+    "ticket_medio": 13.55,
+    "para_llevar": true,
+    "plataformas": [
+     "Glovo",
+     "Uber Eats",
+     "Just Eat"
+    ]
+   },
+   "hardware": {
+    "pantallas_cocina": 3,
+    "puestos_tpv": 3,
+    "tabletas_camarero": 0,
+    "impresoras": 2,
+    "red": "wifi",
+    "coste_implantacion": 4030
+   },
+   "encaje": 100,
+   "encaje_razon": "3 pantallas y 3 TPV: con la competencia pagaría 6 licencias en vez de una; 4 estaciones: el enrutado por estación evita que cocina trabaje con una comanda en papel; trabaja con plataformas de reparto, donde nuestro agregador de pedidos ahorra una tableta por plataforma; tiene pase, y la pantalla de pase es nuestra función más diferencial; dark kitchen: el 100 % de las comandas entran ya en digital."
+  }
+ ]
+}
