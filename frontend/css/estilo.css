@@ -85,6 +85,8 @@ dialog .fila { display: flex; gap: .5rem; margin: .8rem 0; flex-wrap: wrap; }
 .comanda li .est { margin-left: auto; font-size: .7rem; text-transform: uppercase; color: var(--tenue); }
 .comanda .bump { width: 100%; border-radius: 0; border: 0; border-top: 1px solid var(--borde); padding: .9rem; font-weight: 800; font-size: 1.05rem; }
 .vacio { grid-column: 1 / -1; text-align: center; padding: 20vh 0; color: var(--tenue); font-size: 1.5rem; }
+.estaciones { display: flex; gap: .3rem; }
+.estaciones a { text-decoration: none; }
 .estaciones button.activa { background: var(--acento); color: #111; }
 
 /* ── Informe ── */

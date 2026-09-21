@@ -217,7 +217,16 @@ function imprimir(p = pedido) {
     linea, 'Gracias por su visita'.padStart(26),
   ].join('\n');
   $('#ticket-impreso').textContent = txt;
-  window.print();
+  // Los TPV imprimen en una ventana propia: no depende del CSS de impresion de la pagina
+  // y deja el ticket a la vista aunque no haya impresora configurada.
+  const v = window.open('', 'ticket', 'width=380,height=640');
+  if (!v) { window.print(); return; }   // si el navegador bloquea la ventana, imprimimos la pagina
+  v.document.write('<!doctype html><meta charset="utf-8"><title>Ticket ' + p.id +
+    '</title><style>@page{size:72mm auto;margin:3mm}body{font:12px/1.35 monospace;white-space:pre}</style>' +
+    '<body>' + txt.replace(/[&<>]/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[ch])));
+  v.document.close();
+  v.focus();
+  v.print();            // abre el dialogo de impresion del sistema
 }
 $('#b-imprimir').onclick = () => imprimir();
 

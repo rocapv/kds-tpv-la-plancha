@@ -341,6 +341,15 @@ def informe(fecha: str | None = None):
 
 
 # ─────────────── Frontend estático ───────────────
+@app.middleware("http")
+async def sin_cache(request, call_next):
+    """El navegador debe revalidar siempre: en clase se edita el front y se recarga."""
+    resp = await call_next(request)
+    if not request.url.path.startswith("/api"):
+        resp.headers["Cache-Control"] = "no-cache, must-revalidate"
+    return resp
+
+
 @app.get("/")
 def raiz():
     return RedirectResponse("/index.html")
