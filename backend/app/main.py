@@ -26,21 +26,30 @@ ESTACIONES = ("plancha", "freidora", "frios", "barra")
 class Hub:
     def __init__(self):
         self.clientes: set[WebSocket] = set()
+        self.publicos: set[WebSocket] = set()   # pantallas de sala, sin sesión
 
-    async def entrar(self, ws: WebSocket):
+    async def entrar(self, ws: WebSocket, publico: bool = False):
         await ws.accept()
-        self.clientes.add(ws)
+        (self.publicos if publico else self.clientes).add(ws)
 
     def salir(self, ws: WebSocket):
         self.clientes.discard(ws)
+        self.publicos.discard(ws)
 
-    async def emitir(self, tipo: str, **datos):
+    async def _enviar(self, destinos: set[WebSocket], tipo: str, datos: dict):
         msg = json.dumps({"tipo": tipo, **datos}, default=str)
-        for ws in list(self.clientes):
+        for ws in list(destinos):
             try:
                 await ws.send_text(msg)
             except Exception:
                 self.salir(ws)
+
+    async def emitir(self, tipo: str, **datos):
+        await self._enviar(self.clientes, tipo, datos)
+
+    async def emitir_publico(self, tipo: str, **datos):
+        """Aviso a las pantallas sin sesión: nunca lleva datos, solo 'vuelve a mirar'."""
+        await self._enviar(self.publicos, tipo, datos)
 
 
 hub = Hub()
@@ -55,6 +64,17 @@ async def ws_endpoint(ws: WebSocket, token: str | None = None):
     try:
         while True:
             await ws.receive_text()  # ping del cliente; no esperamos órdenes por aquí
+    except WebSocketDisconnect:
+        hub.salir(ws)
+
+
+@app.websocket("/ws/publico")
+async def ws_publico(ws: WebSocket):
+    """Pantalla de recogida: cuelga en la sala, sin PIN. Solo recibe el aviso 'recogida'."""
+    await hub.entrar(ws, publico=True)
+    try:
+        while True:
+            await ws.receive_text()
     except WebSocketDisconnect:
         hub.salir(ws)
 
@@ -147,6 +167,23 @@ class NuevoPago(BaseModel):
     concepto: str | None = Field(None, max_length=60)
 
 
+class AperturaCaja(BaseModel):
+    fondo_cent: int = Field(ge=0)
+
+
+class MovimientoCaja(BaseModel):
+    tipo: str
+    importe_cent: int = Field(gt=0)
+    motivo: str = Field(max_length=80)
+
+
+class CierreCaja(BaseModel):
+    contado_cent: int = Field(ge=0)
+    retirada_cent: int = Field(0, ge=0)
+    recuento: dict[str, int] | None = None      # desglose por billetes y monedas
+    notas: str | None = Field(None, max_length=200)
+
+
 class Ajuste(BaseModel):
     valor: str = Field(max_length=200)
 
@@ -158,7 +195,7 @@ def pedido_completo(pid: int):
               JOIN empleados e ON e.id=p.empleado_id WHERE p.id=%s""", (pid,))
     if not p:
         raise HTTPException(404, "Pedido no encontrado")
-    p["lineas"] = q("""SELECT l.*, pr.nombre AS producto FROM lineas_pedido l
+    p["lineas"] = q("""SELECT l.*, pr.nombre AS producto, pr.alergenos FROM lineas_pedido l
                        JOIN productos pr ON pr.id=l.producto_id
                        WHERE l.pedido_id=%s ORDER BY l.id""", (pid,))
     p["total_cent"] = sum(l["cantidad"] * l["precio_cent"] for l in p["lineas"] if l["estado"] != "anulada")
@@ -290,6 +327,7 @@ async def quitar_linea(pid: int, lid: int, u: dict = Depends(exige("camarero", "
     else:  # ya está en cocina: se anula y cocina lo ve
         q("UPDATE lineas_pedido SET estado='anulada' WHERE id=%s", (lid,))
         await hub.emitir("kds")
+        await hub.emitir_publico("recogida")
     await hub.emitir("mesas")
     return pedido_completo(pid)
 
@@ -302,6 +340,7 @@ async def enviar_a_cocina(pid: int, u: dict = Depends(exige("camarero", "encarga
                            WHERE pedido_id=%s AND estado='pendiente'""", (pid,))
     if n:
         await hub.emitir("kds", pedido_id=pid, nuevas=n)
+        await hub.emitir_publico("recogida")
     return pedido_completo(pid)
 
 
@@ -329,6 +368,7 @@ async def cobrar(pid: int, d: Cobro, u: dict = Depends(exige("camarero", "encarg
         cur.execute("UPDATE pedidos SET estado='cobrado', cerrado_en=NOW() WHERE id=%s", (pid,))
     await hub.emitir("mesas")
     await hub.emitir("kds")
+    await hub.emitir_publico("recogida")
     return pedido_completo(pid)
 
 
@@ -339,6 +379,7 @@ async def anular(pid: int, u: dict = Depends(exige("camarero", "encargado"))):
     q("UPDATE pedidos SET estado='anulado', cerrado_en=NOW() WHERE id=%s", (pid,))
     await hub.emitir("mesas")
     await hub.emitir("kds")
+    await hub.emitir_publico("recogida")
     return {"ok": True}
 
 
@@ -351,7 +392,7 @@ def kds(estacion: str | None = None, u: dict = Depends(usuario)):
     filtro = "AND l.estacion=%s" if estacion else ""
     args = (estacion,) if estacion else ()
     filas = q(f"""SELECT l.id, l.pedido_id, l.cantidad, l.notas, l.estacion, l.estado,
-                         l.enviada_en, l.lista_en, pr.nombre AS producto,
+                         l.enviada_en, l.lista_en, pr.nombre AS producto, pr.alergenos,
                          p.tipo, p.cliente, m.nombre AS mesa, e.nombre AS camarero
                   FROM lineas_pedido l
                   JOIN pedidos p   ON p.id=l.pedido_id
@@ -386,6 +427,7 @@ async def cambiar_estado_linea(lid: int, d: CambioEstado, u: dict = Depends(exig
     q("UPDATE lineas_pedido SET estado=%s, lista_en=IF(%s='lista', NOW(), lista_en) WHERE id=%s",
       (nuevo, nuevo, lid))
     await hub.emitir("kds", pedido_id=l["pedido_id"])
+    await hub.emitir_publico("recogida")
     if nuevo == "lista":
         await hub.emitir("listo", pedido_id=l["pedido_id"], linea_id=lid)
     return {"id": lid, "estado": nuevo}
@@ -407,9 +449,41 @@ async def avanzar_pedido(pid: int, estacion: str | None = None, u: dict = Depend
     q(f"UPDATE lineas_pedido SET estado=%s, lista_en=IF(%s='lista', NOW(), lista_en) WHERE id IN ({marcas})",
       (nuevo, nuevo, *ids))
     await hub.emitir("kds", pedido_id=pid)
+    await hub.emitir_publico("recogida")
     if nuevo == "lista":
         await hub.emitir("listo", pedido_id=pid)
     return {"pedido_id": pid, "estado": nuevo, "lineas": len(ids)}
+
+
+# ─────────────── Pantalla de recogida (pública, sala) ───────────────
+@app.get("/api/recogida")
+def recogida():
+    """Números de los pedidos «para llevar», sin sesión: cuelga en la sala a la vista.
+
+    No devuelve nombres ni importes; solo el número del pedido y cuánto lleva esperando.
+    Un pedido desaparece de la pantalla cuando cocina lo marca «servido» (entregado).
+    """
+    filas = q("""SELECT l.pedido_id, l.estado, l.enviada_en, l.lista_en
+                 FROM lineas_pedido l JOIN pedidos p ON p.id=l.pedido_id
+                 WHERE p.tipo='llevar' AND p.estado <> 'anulado'
+                   AND l.estado IN ('enviada','preparando','lista')
+                 ORDER BY l.pedido_id""")
+    pedidos = {}
+    for f in filas:
+        d = pedidos.setdefault(f["pedido_id"], {"numero": f["pedido_id"], "estados": set(),
+                                                "desde": f["enviada_en"], "lista_en": f["lista_en"]})
+        d["estados"].add(f["estado"])
+        d["desde"] = min(d["desde"], f["enviada_en"])
+        d["lista_en"] = max(filter(None, (d["lista_en"], f["lista_en"])), default=None)
+    listos, preparando = [], []
+    for d in pedidos.values():
+        destino = listos if d.pop("estados") == {"lista"} else preparando
+        destino.append(d)
+    listos.sort(key=lambda d: d["lista_en"] or d["desde"], reverse=True)
+    preparando.sort(key=lambda d: d["desde"])
+    aj = ajustes_dict()
+    return {"ahora": datetime.now(), "local": aj.get("local_nombre", "La Plancha"),
+            "listos": listos, "preparando": preparando}
 
 
 # ─────────────── Informes (encargado) ───────────────
@@ -484,7 +558,9 @@ async def editar_producto(prid: int, d: CambioProducto, u: dict = Depends(exige(
         raise HTTPException(404, "Producto no encontrado")
     if d.estacion and d.estacion not in ESTACIONES:
         raise HTTPException(422, "Estación desconocida")
-    campos = {k: v for k, v in d.model_dump().items() if v is not None}
+    enviados = d.model_dump(exclude_unset=True)
+    # alergenos es el unico campo que se puede vaciar: un null explicito lo borra.
+    campos = {k: v for k, v in enviados.items() if v is not None or k == "alergenos"}
     if campos:
         sets = ", ".join(f"{k}=%s" for k in campos)
         q(f"UPDATE productos SET {sets} WHERE id=%s", (*campos.values(), prid))
@@ -727,6 +803,192 @@ def documento_pedido(pid: int, u: dict = Depends(exige("camarero", "encargado"))
     return {"pedido": p, "local": ajustes_dict(), "iva_pct": iva_pct,
             "base_cent": base, "iva_cent": p["total_cent"] - base,
             "factura": factura_completa(f["id"]) if f else None}
+
+
+# ─────────────── Arqueo de caja y cierre Z (encargado) ───────────────
+# El informe dice lo que se ha vendido; el arqueo dice si el dinero está.
+#   esperado   = fondo + ventas en efectivo + entradas - salidas
+#   diferencia = contado - esperado   (negativo = falta dinero en el cajón)
+DENOMINACIONES = (50000, 20000, 10000, 5000, 2000, 1000, 500, 200, 100, 50, 20, 10, 5, 2, 1)
+
+
+def _hoy() -> str:
+    return datetime.now().strftime("%Y-%m-%d")
+
+
+def ventas_del_dia(dia: str) -> dict:
+    """Lo que dicen los cobros de ese día, repartidos por método de pago."""
+    por_metodo = q("""SELECT metodo, COUNT(*) AS pagos, SUM(importe_cent) AS total_cent
+                      FROM pagos WHERE DATE(pagado_en)=%s GROUP BY metodo ORDER BY metodo""", (dia,))
+    efectivo = sum(int(m["total_cent"]) for m in por_metodo if m["metodo"] == "efectivo")
+    total = sum(int(m["total_cent"]) for m in por_metodo)
+    tickets = q1("SELECT COUNT(*) AS n FROM pedidos WHERE estado='cobrado' AND DATE(cerrado_en)=%s",
+                 (dia,))["n"]
+    facturas = q1("""SELECT COUNT(*) AS emitidas,
+                            MIN(CONCAT(serie, ejercicio, '/', LPAD(numero,5,'0'))) AS primera,
+                            MAX(CONCAT(serie, ejercicio, '/', LPAD(numero,5,'0'))) AS ultima
+                     FROM facturas WHERE DATE(emitida_en)=%s""", (dia,))
+    anulados = q1("SELECT COUNT(*) AS n FROM pedidos WHERE estado='anulado' AND DATE(cerrado_en)=%s",
+                  (dia,))["n"]
+    iva_pct = int(ajustes_dict().get("iva_pct", 10))
+    base = round(total / (1 + iva_pct / 100))
+    return {"por_metodo": por_metodo, "ventas_efectivo_cent": efectivo, "ventas_total_cent": total,
+            "tickets": tickets, "facturas": facturas, "anulados": anulados, "iva_pct": iva_pct,
+            "base_cent": base, "iva_cent": total - base}
+
+
+def arqueo_dia(dia: str):
+    a = q1("""SELECT a.*, ea.nombre AS abierto_por_nombre, ec.nombre AS cerrado_por_nombre
+              FROM arqueos a JOIN empleados ea ON ea.id=a.abierto_por
+              LEFT JOIN empleados ec ON ec.id=a.cerrado_por WHERE a.fecha=%s""", (dia,))
+    if a and a["estado"] == "cerrado":
+        a["numero_z"] = f"Z{a['z_ejercicio']}/{a['z_numero']:05d}"
+        a["recuento"] = json.loads(a["recuento"]) if a["recuento"] else None
+        a["fondo_siguiente_cent"] = int(a["contado_cent"]) - int(a["retirada_cent"] or 0)
+    return a
+
+
+def estado_caja(dia: str) -> dict:
+    """Foto de la caja de un día: lo vendido, lo movido a mano y lo que debería haber."""
+    a = arqueo_dia(dia)
+    v = ventas_del_dia(dia)
+    movimientos, entradas, salidas = [], 0, 0
+    if a:
+        movimientos = q("""SELECT mc.*, e.nombre AS empleado FROM movimientos_caja mc
+                           JOIN empleados e ON e.id=mc.empleado_id
+                           WHERE mc.arqueo_id=%s ORDER BY mc.id""", (a["id"],))
+        entradas = sum(int(m["importe_cent"]) for m in movimientos if m["tipo"] == "entrada")
+        salidas = sum(int(m["importe_cent"]) for m in movimientos if m["tipo"] == "salida")
+    fondo = int(a["fondo_cent"]) if a else 0
+    esperado = fondo + v["ventas_efectivo_cent"] + entradas - salidas
+    if a and a["estado"] == "cerrado":
+        esperado = int(a["esperado_cent"])          # el cierre Z congela las cifras
+    abiertos = q("""SELECT p.id, p.tipo, p.cliente, m.nombre AS mesa, v.total_cent
+                    FROM pedidos p JOIN v_totales_pedido v ON v.pedido_id=p.id
+                    LEFT JOIN mesas m ON m.id=p.mesa_id
+                    WHERE p.estado='abierto' ORDER BY p.id""") if dia == _hoy() else []
+    return {"fecha": dia, "arqueo": a, "movimientos": movimientos,
+            "entradas_cent": entradas, "salidas_cent": salidas,
+            "fondo_cent": fondo, "esperado_cent": esperado,
+            "fondo_sugerido_cent": int(ajustes_dict().get("fondo_caja_cent", 15000)),
+            "pedidos_abiertos": abiertos, "denominaciones": list(DENOMINACIONES),
+            "local": ajustes_dict(), **v}
+
+
+@app.get("/api/arqueo")
+def ver_caja(fecha: str | None = None, u: dict = Depends(exige("camarero", "encargado"))):
+    return estado_caja(fecha or _hoy())
+
+
+@app.post("/api/arqueo/apertura", status_code=201)
+async def abrir_caja(d: AperturaCaja, u: dict = Depends(exige("encargado"))):
+    """Declara el fondo de cambio con el que empieza el servicio."""
+    dia = _hoy()
+    if arqueo_dia(dia):
+        raise HTTPException(409, "La caja de hoy ya está abierta")
+    q("INSERT INTO arqueos (fecha, fondo_cent, abierto_por) VALUES (%s,%s,%s)",
+      (dia, d.fondo_cent, u["id"]))
+    await hub.emitir("caja")
+    return estado_caja(dia)
+
+
+@app.post("/api/arqueo/movimientos", status_code=201)
+async def anotar_movimiento(d: MovimientoCaja, u: dict = Depends(exige("camarero", "encargado"))):
+    """Efectivo que entra o sale del cajón sin ser una venta (proveedor, cambio, banco)."""
+    if d.tipo not in ("entrada", "salida"):
+        raise HTTPException(422, "El movimiento es 'entrada' o 'salida'")
+    a = arqueo_dia(_hoy())
+    if not a:
+        raise HTTPException(409, "No hay caja abierta: ábrela declarando el fondo")
+    if a["estado"] == "cerrado":
+        raise HTTPException(409, "La caja del día ya está cerrada")
+    q("""INSERT INTO movimientos_caja (arqueo_id, tipo, importe_cent, motivo, empleado_id)
+         VALUES (%s,%s,%s,%s,%s)""", (a["id"], d.tipo, d.importe_cent, d.motivo.strip(), u["id"]))
+    await hub.emitir("caja")
+    return estado_caja(_hoy())
+
+
+@app.delete("/api/arqueo/movimientos/{mid}")
+async def borrar_movimiento(mid: int, u: dict = Depends(exige("encargado"))):
+    m = q1("""SELECT mc.id, a.estado FROM movimientos_caja mc JOIN arqueos a ON a.id=mc.arqueo_id
+              WHERE mc.id=%s""", (mid,))
+    if not m:
+        raise HTTPException(404, "Movimiento no encontrado")
+    if m["estado"] == "cerrado":
+        raise HTTPException(409, "La caja de ese día ya está cerrada")
+    q("DELETE FROM movimientos_caja WHERE id=%s", (mid,))
+    await hub.emitir("caja")
+    return estado_caja(_hoy())
+
+
+@app.post("/api/arqueo/cierre")
+async def cerrar_caja(d: CierreCaja, forzar: bool = False, u: dict = Depends(exige("encargado"))):
+    """Cierre Z: cuenta el cajón, calcula el descuadre y firma el día. No tiene vuelta atrás."""
+    dia = _hoy()
+    est = estado_caja(dia)
+    a = est["arqueo"]
+    if not a:
+        raise HTTPException(409, "No hay caja abierta hoy")
+    if a["estado"] == "cerrado":
+        raise HTTPException(409, f"La caja de hoy ya se cerró ({a['numero_z']})")
+    if est["pedidos_abiertos"] and not forzar:
+        ids = ", ".join("#" + str(p["id"]) for p in est["pedidos_abiertos"])
+        raise HTTPException(409, f"Hay pedidos sin cobrar ({ids}): cóbralos o anúlalos antes de cerrar")
+    if d.recuento:
+        suma = sum(int(valor) * int(n) for valor, n in d.recuento.items())
+        if suma != d.contado_cent:
+            raise HTTPException(422, f"El recuento suma {suma / 100:.2f} € y el efectivo contado es "
+                                     f"{d.contado_cent / 100:.2f} €")
+    if d.retirada_cent > d.contado_cent:
+        raise HTTPException(422, "No se puede retirar más efectivo del que hay en el cajón")
+    ejercicio = datetime.now().year
+    with conn() as c, c.cursor() as cur:
+        cur.execute("SELECT COALESCE(MAX(z_numero), 0) + 1 AS n FROM arqueos WHERE z_ejercicio=%s FOR UPDATE",
+                    (ejercicio,))
+        numero = cur.fetchone()["n"]
+        cur.execute("""UPDATE arqueos SET estado='cerrado', z_ejercicio=%s, z_numero=%s,
+                         contado_cent=%s, esperado_cent=%s, diferencia_cent=%s,
+                         ventas_efectivo_cent=%s, ventas_total_cent=%s, tickets=%s,
+                         retirada_cent=%s, recuento=%s, notas=%s, cerrado_por=%s, cerrado_en=NOW()
+                       WHERE id=%s AND estado='abierto'""",
+                    (ejercicio, numero, d.contado_cent, est["esperado_cent"],
+                     d.contado_cent - est["esperado_cent"], est["ventas_efectivo_cent"],
+                     est["ventas_total_cent"], est["tickets"], d.retirada_cent,
+                     json.dumps(d.recuento) if d.recuento else None,
+                     (d.notas or "").strip() or None, u["id"], a["id"]))
+        if cur.rowcount != 1:
+            raise HTTPException(409, "La caja se ha cerrado desde otra pantalla")
+    await hub.emitir("caja")
+    return estado_caja(dia)
+
+
+@app.get("/api/arqueos")
+def listar_arqueos(desde: str | None = None, hasta: str | None = None,
+                   u: dict = Depends(exige("encargado"))):
+    """Histórico de cierres: para ver si el descuadre es un día suelto o una costumbre."""
+    donde, args = [], []
+    if desde:
+        donde.append("a.fecha >= %s")
+        args.append(desde)
+    if hasta:
+        donde.append("a.fecha <= %s")
+        args.append(hasta)
+    filtro = ("WHERE " + " AND ".join(donde)) if donde else ""
+    return q(f"""SELECT a.id, a.fecha, a.estado, a.fondo_cent, a.contado_cent, a.esperado_cent,
+                        a.diferencia_cent, a.ventas_total_cent, a.tickets, a.retirada_cent,
+                        a.cerrado_en, ec.nombre AS cerrado_por_nombre,
+                        CASE WHEN a.z_numero IS NULL THEN NULL
+                             ELSE CONCAT('Z', a.z_ejercicio, '/', LPAD(a.z_numero, 5, '0')) END AS numero_z
+                 FROM arqueos a LEFT JOIN empleados ec ON ec.id=a.cerrado_por
+                 {filtro} ORDER BY a.fecha DESC LIMIT 60""", args)
+
+
+@app.get("/api/arqueo/{aid}")
+def ver_arqueo(aid: int, u: dict = Depends(exige("encargado"))):
+    a = q1("SELECT fecha FROM arqueos WHERE id=%s", (aid,))
+    if not a:
+        raise HTTPException(404, "Arqueo no encontrado")
+    return estado_caja(a["fecha"].strftime("%Y-%m-%d"))
 
 
 # ─────────────── Frontend estático ───────────────

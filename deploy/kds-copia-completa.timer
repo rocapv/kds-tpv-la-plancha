@@ -1,0 +1,10 @@
+[Unit]
+Description=KDS+TPV: copia completa semanal (lunes de madrugada, local cerrado)
+
+[Timer]
+OnCalendar=Mon *-*-* 05:30:00
+Persistent=true
+RandomizedDelaySec=300
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,6 @@
+[Unit]
+Description=KDS+TPV: prueba de restauracion de la copia
+
+[Service]
+Type=oneshot
+ExecStart=%h/proyectos/kds_tpv/deploy/restaurar.sh probar

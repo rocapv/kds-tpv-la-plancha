@@ -1,0 +1,175 @@
+ MANUAL INTEGRAL: EL PROYECTO
+
+INTERMODULAR EN FP
+
+Guía del Estudiante para la Excelencia Profesional, la Autonomía y la Innovación
+
+INTRODUCCIÓN: ¿POR QUÉ ESTA GUÍA?
+
+En el entorno laboral actual, no basta con ser un buen técnico; es necesario ser un profesional
+capaz de gestionar información, trabajar bajo presión en equipo y comunicar ideas con
+impacto. Esta guía, alineada con la LOMLOE, te proporciona las herramientas para que tu
+proyecto intermodular no sea solo un trabajo de clase, sino tu primera experiencia real de
+éxito profesional.
+
+ BLOQUE 1: ORGANIZACIÓN Y GESTIÓN AVANZADA
+
+DEL TRABAJO
+
+Competencias: Personal, social y de aprender a aprender (CPSAA) | Competencia
+Emprendedora (CE).
+
+La organización es el cimiento de cualquier proyecto. Un error común en FP es "empezar a
+escribir" sin haber planificado. Aquí aprenderás a gestionar el recurso más escaso: el tiempo.
+
+1.1. Metodologías de Gestión de Proyectos (Desarrollo Profundo)
+
+Existen tres enfoques principales que debes dominar según la naturaleza de tu proyecto:
+
+  Metodología en Cascada (Waterfall):
+        Concepto: El proyecto avanza de forma lineal. No puedes pasar a la "Fase de
+           Redacción" si no has terminado la "Fase de Investigación".
+        Uso: Ideal para proyectos con requisitos rígidos y poco margen de cambio.
+        Ventaja: Control total sobre cada fase.
+
+  Metodologías Ágiles (Agile - Scrum/Kanban):
+        Concepto: El proyecto se divide en piezas pequeñas. Se trabaja en ciclos cortos
+           llamados Sprints.
+        Herramienta: El Tablero Kanban. Se divide en: Backlog (ideas), To Do (tareas para
+           esta semana), Doing (en proceso) y Done (terminado).
+        Ventaja: Permite detectar errores rápidamente y adaptarse si el profesor pide
+           cambios.
+  Método de la Cadena Crítica (CCPM):
+        Concepto: Se basa en identificar las tareas que "mandan" en el tiempo. Si una de
+           estas tareas se retrasa, todo el proyecto se retrasa.
+        El Buffer: En lugar de dar fechas límite generosas a cada tarea, se crea un "colchón
+           de tiempo" único al final del proyecto para imprevistos.
+
+1.2. Psicología de Equipo y Roles Profesionales
+
+Un grupo no es un equipo. Un equipo es un conjunto de personas con roles complementarios.
+
+  Roles de Belbin: Descubrirás si eres un Cerebro (ideas creativas), un Coordinador
+      (gestión), un Implementador (acción técnica) o un Finalizador (control de calidad y
+      ortografía).
+
+  Eneagrama: Utilizaremos este sistema para que entiendas tu "personalidad laboral".
+      ¿Eres el perfeccionista, el entusiasta o el mediador? Entender esto evita conflictos
+      innecesarios.
+
+  Las 5C: Basaremos nuestro trabajo en la Complementariedad, Comunicación,
+      Coordinación, Confianza y Compromiso.
+
+  El Compromiso de Actividad: Cada grupo redactará un "contrato laboral interno"
+      donde se especifican las consecuencias de no trabajar o de faltar a las reuniones. Se
+      firma por todos los miembros.
+
+ BLOQUE 2: BÚSQUEDA Y SELECCIÓN DE
+
+INFORMACIÓN FIABLE
+
+Competencia: Competencia Digital (CD).
+
+El "copia y pega" de Google es el mayor enemigo de la calidad. Aprenderás a ser un "curador
+de contenidos".
+
+2.1. Estrategias de Búsqueda Científica
+
+  Uso de Bases de Datos: Aprenderás a usar Google Scholar, Dialnet y Scopus. Estas
+      fuentes garantizan que la información ha sido revisada por expertos.
+
+  Operadores Booleanos: Uso de "AND", "OR" y "NOT" para filtrar resultados y no perder
+      tiempo entre miles de páginas irrelevantes.
+
+  Evaluación Crítica (Criterio CRAAP): Analizaremos la Currencia (actualidad),
+      Relevancia, Autoridad (quién lo escribe), Accuracy (precisión) y Propósito de la fuente.
+ BLOQUE 3: REDACCIÓN TÉCNICA Y ELABORACIÓN
+
+Competencia: Comunicación Lingüística (CCL).
+
+3.1. Estructura Profesional del Documento
+
+ 1. Portada: Título impactante, autores y ciclo.
+ 2. Índice Automático: Siempre actualizado.
+ 3. Introducción: El "por qué" del proyecto.
+ 4. Objetivos SMART: Deben ser Específicos, Medibles, Alcanzables, Relevantes y con un
+
+      Tiempo definido.
+ 5. Desarrollo: El cuerpo técnico del trabajo.
+ 6. Estudio de Viabilidad: ¿Es económicamente posible? ¿Es técnicamente viable?
+ 7. KPIs (Indicadores de Éxito): ¿Cómo mediremos que el proyecto ha funcionado? (Ej:
+
+      reducción de costes en un 10%, aumento de eficiencia...).
+
+ BLOQUE 4: NORMAS APA (7ª ED.) Y FORMATO
+
+PROFESIONAL
+
+La imagen de tu trabajo es tu imagen profesional. Seguiremos los estándares internacionales
+de la APA. Competencia: Competencia Digital (CD) | Rigor Académico.
+
+4.1. Configuración Técnica del Documento
+
+  Fuentes permitidas: * Sans Serif: Arial 11, Calibri 11 o Lucida Sans Unicode 10.
+        Serif: Times New Roman 12 o Georgia 11.
+
+  Márgenes: 2,54 cm (1 pulgada) en todos los lados.
+  Interlineado: Doble espacio (2.0) para facilitar la corrección del profesorado.
+  Alineación: Izquierda (sin justificar) con sangría de 1,27 cm en la primera línea de cada
+
+      párrafo.
+
+4.2. Citación y Honestidad Académica
+
+  Citas en el texto: (Apellido, año). Si es textual, se añade la página (p. 23)
+
+      1. Rodríguez (2016) plantea que "la evidencia de conflicto de intereses en este caso es imposible de pasar por alto" (p. 437).
+      2. "Algunos mercados son lugares físicos donde se reúnen compradores y vendedores, y donde un subastador o un
+
+             corredor ayudan a determinar los precios" (Parkin, 2018, p. 56).
+
+  Evitar el Plagio: Es recomendable utilizar la técnica del Parafraseo, que consiste en
+      explicar la idea de un experto con tus propias palabras, dándole crédito siempre.
+
+ BLOQUE 5: PRESENTACIÓN ORAL Y DEFENSA DEL
+PROYECTO
+
+Competencia: Comunicación Lingüística (CCL) | Iniciativa y Espíritu Emprendedor.
+
+5.1. Comunicación y Storytelling
+
+  Estructura del discurso: No leas las diapositivas. Crea una narrativa: Problema
+   Solución Beneficios.
+
+  Diseño Visual: Menos es más. Uso de imágenes potentes, pocos textos y herramientas
+      como Canva o Prezi.
+
+5.2. El Factor Humano: Kinésica y Psicología
+
+  Lenguaje No Verbal: Posición de las manos, contacto visual con el tribunal y dominio del
+      espacio.
+
+  Efecto Halo y Vestimenta: La importancia de la imagen personal y la psicología del
+      color para transmitir seguridad y profesionalidad.
+
+  Control del Estrés: Técnicas de PNL (Programación Neurolingüística) y respiración
+      consciente para convertir los nervios en energía comunicativa.
+
+ CRONOGRAMA DE TRABAJO
+
+Para cumplir con los plazos, la Unidad de Programación se divide en:
+
+ 1. Constitución de equipos, roles de Belbin y elección del tema.
+ 2. Búsqueda bibliográfica y diseño del índice.
+ 3. Desarrollo del cuerpo técnico y aplicación de normas APA.
+ 4. Revisión de KPIs, maquetación final y simulacros de defensa oral.
+
+ EVALUACIÓN Y RÚBRICA
+
+Se evaluará mediante una rúbrica que pondera:
+
+  Rigor Formal (25%): Cumplimiento exacto de APA (fuente, tamaño, citas).
+  Calidad Técnica (40%): Profundidad del desarrollo y viabilidad.
+  Trabajo en Equipo (15%): Evidencias del tablero Kanban y compromiso.
+  Defensa Oral (20%): Claridad, seguridad y calidad visual.
+

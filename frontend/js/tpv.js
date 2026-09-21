@@ -60,8 +60,10 @@ function verCarta() {
   $('#cats').querySelectorAll('button').forEach(b => b.onclick = () => { catActiva = +b.dataset.cat; verCarta(); });
   const cat = catalogo.find(c => c.id === catActiva);
   $('#productos').innerHTML = cat.productos.map(p =>
-    `<button class="producto" data-p="${p.id}" style="border-left-color:${cat.color}" ${p.disponible ? '' : 'disabled title="Agotado"'}>
-       ${esc(p.nombre)}<span>${p.disponible ? euro(p.precio_cent) : 'AGOTADO'}</span></button>`).join('');
+    `<button class="producto" data-p="${p.id}" style="border-left-color:${cat.color}"
+              ${p.disponible ? '' : 'disabled'} title="${p.disponible ? '' : 'Agotado. '}${p.alergenos ? 'Alérgenos: ' + esc(p.alergenos) : 'Sin alérgenos declarados'}">
+       ${esc(p.nombre)}${p.alergenos ? `<span class="alerg">⚠ ${esc(p.alergenos)}</span>` : ''}
+       <span>${p.disponible ? euro(p.precio_cent) : 'AGOTADO'}</span></button>`).join('');
   $('#productos').querySelectorAll('button').forEach(b => {
     b.onclick = () => anadir(+b.dataset.p);                       // clic = añadir directo
     b.oncontextmenu = e => { e.preventDefault(); pedirNota(+b.dataset.p); }; // clic derecho = con nota
@@ -76,7 +78,11 @@ function buscarProducto(id) {
 }
 function pedirNota(id) {
   productoElegido = id;
-  $('#n-titulo').textContent = buscarProducto(id).nombre;
+  const pr = buscarProducto(id);
+  $('#n-titulo').textContent = pr.nombre;
+  const av = $('#n-alergenos');
+  av.textContent = pr.alergenos ? '⚠ Alérgenos: ' + pr.alergenos : '';
+  av.hidden = !pr.alergenos;
   $('#n-texto').value = '';
   $('#n-cant').value = 1;
   $('#d-nota').showModal();
@@ -111,6 +117,7 @@ function pintarTicket() {
       <span>${esc(l.producto)} <span class="estado ${l.estado}">${l.estado}</span></span>
       <span>${euro(l.cantidad * l.precio_cent)}</span>
       ${l.estado === 'anulada' || l.estado === 'servida' ? '<span></span>' : `<button data-borrar="${l.id}" title="Quitar">✕</button>`}
+      ${l.alergenos ? `<span class="alerg">⚠ ${esc(l.alergenos)}</span>` : ''}
       ${l.notas ? `<span class="nota">${esc(l.notas)}</span>` : ''}
     </div>`).join('') || '<p class="tenue">Sin productos</p>';
   $('#lineas').querySelectorAll('[data-borrar]').forEach(b => b.onclick = async () => {

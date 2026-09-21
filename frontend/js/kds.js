@@ -34,7 +34,7 @@ async function cargar() {
       <header><span>${c.tipo === 'llevar' ? '🛍 ' + esc(c.cliente || 'Llevar') : 'Mesa ' + esc(c.mesa)}</span><span class="t">0:00</span></header>
       <div class="meta">#${c.pedido_id} · ${esc(c.camarero)}</div>
       <ul>${c.lineas.map(l => `<li class="${l.estado}" data-linea="${l.id}">
-          <b>${l.cantidad}×</b><span>${esc(l.producto)}${l.notas ? `<span class="nota">⚠ ${esc(l.notas)}</span>` : ''}</span>
+          <b>${l.cantidad}×</b><span>${esc(l.producto)}${l.alergenos ? `<span class="alerg">⚠ ${esc(l.alergenos)}</span>` : ''}${l.notas ? `<span class="nota">⚠ ${esc(l.notas)}</span>` : ''}</span>
           <span class="est">${estacion ? '' : l.estacion + ' · '}${l.estado}</span></li>`).join('')}</ul>
       <button class="bump ${todasListas ? 'ok' : 'primario'}" data-pedido="${c.pedido_id}">${accion}</button>
     </article>`;

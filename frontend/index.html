@@ -22,6 +22,7 @@
     <div class="apps">
       <a class="app" href="/tpv.html"><span class="ico">🧾</span><b>TPV</b><small>Mesas, comandas y cobro</small></a>
       <a class="app" href="/facturas.html"><span class="ico">📑</span><b>Facturación</b><small>Tickets y facturas emitidas</small></a>
+      <a class="app" href="/recogida.html" target="_blank"><span class="ico">📣</span><b>Recogida</b><small id="n-recogida">Pantalla de cliente (sin PIN)</small></a>
     </div>
   </section>
   <section>
@@ -32,6 +33,7 @@
       <a class="app" href="/kds.html?estacion=frios"><span class="ico">🥗</span><b>Fríos</b><small id="n-frios">—</small></a>
       <a class="app" href="/kds.html?estacion=barra"><span class="ico">🥤</span><b>Barra</b><small id="n-barra">—</small></a>
       <a class="app" href="/kds.html"><span class="ico">🔔</span><b>Pase</b><small id="n-pase">—</small></a>
+      <a class="app" href="/recogida.html"><span class="ico">📣</span><b>Recogida</b><small id="n-recogida">—</small></a>
     </div>
   </section>
   <section>
@@ -59,6 +61,10 @@ async function refrescar() {
     for (const [e, n] of Object.entries(porEstacion))
       $('#n-' + e).textContent = n ? `${n} en marcha` : 'sin trabajo';
     $('#n-pase').textContent = kds.comandas.length ? `${kds.comandas.length} comandas` : 'sin comandas';
+    const llevar = kds.comandas.filter(c => c.tipo === 'llevar').length;
+    $('#n-recogida').textContent = llevar ? `${llevar} para llevar` : 'pantalla de sala';
+    const rec = await api('/recogida');
+    $('#n-recogida').textContent = rec.listos.length ? `${rec.listos.length} listos para recoger` : 'sin pedidos listos';
     $('#estado-servicio').textContent = `${inf.tickets} tickets · ${euro(inf.total_cent)} hoy`;
   } catch (e) { $('#estado-servicio').textContent = 'sin conexión con el servidor'; }
 }

@@ -1,0 +1,22 @@
+       PRESENTACION IDEA DE PROYECTO
+
+El presente proyecto intermodular, desarrollado durante el primer curso del Grado
+Superior de Informática, tiene como objetivo la creación y análisis de una empresa
+ficticia dedicada a la reparación de equipos informáticos y a la protección de software.
+La empresa, denominada
+"gradosuperiorasirreparacionesordeandoressupremolliriamanises S.L.", centra su
+actividad en ofrecer soluciones técnicas fiables tanto a particulares como a pequeñas
+empresas.
+
+A lo largo del proyecto se van a diseñar los procesos esenciales de la compañía,
+incluyendo la atención al cliente, el diagnóstico y reparación de ordenadores, la
+implementación de medidas de seguridad informática y la gestión interna de recursos.
+Asimismo, se han aplicado los conocimientos adquiridos en los distintos módulos del
+ciclo formativo para simular el funcionamiento real de una empresa tecnológica
+moderna.
+
+Este proyecto permite integrar de manera práctica las competencias desarrolladas
+durante el curso, fomentando la toma de decisiones, la resolución de problemas y el
+trabajo coordinado entre áreas, reflejando así una visión global del sector informático
+profesional.
+

@@ -1,0 +1,6 @@
+[Unit]
+Description=KDS+TPV: copia de seguridad completa
+
+[Service]
+Type=oneshot
+ExecStart=%h/proyectos/kds_tpv/deploy/copia.sh completa

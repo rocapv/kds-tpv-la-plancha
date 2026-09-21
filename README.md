@@ -32,6 +32,7 @@ La portada es el **menú principal**, con el trabajo pendiente de cada estación
 | Informe | Cierre de caja del día |
 | Carta | Productos, precios, categorías, alérgenos y agotados |
 | Usuarios | Altas, bajas, cambio de rol y de PIN |
+| Recogida | Pantalla de sala con los números «para llevar» listos (pública, sin PIN) |
 | Ajustes | Datos fiscales del local, IVA y minutos de aviso del KDS |
 | API | Documentación OpenAPI generada sola |
 
@@ -58,6 +59,17 @@ que repetir la petición devuelve la misma factura en lugar de duplicarla.
 5. El **informe** muestra la facturación, la base imponible y el IVA, los productos más vendidos, las ventas por hora y el tiempo medio de cocina de cada estación.
 
 Las comandas se ponen en amarillo a los 8 minutos y en rojo, parpadeando, a los 15.
+
+## Pantalla de recogida
+
+`recogida.html` se cuelga en la sala para los pedidos **para llevar**: dos columnas, «Listos» y «En
+preparación», con el número del pedido en grande y el tiempo de espera. Un número pasa a «Listos»
+en cuanto cocina marca la comanda como lista, y desaparece al marcarla como servida (entregada).
+
+Es la única pantalla sin PIN, porque la ve el cliente. Para que no filtre nada usa una API y un
+WebSocket propios (`GET /api/recogida` y `/ws/publico`) que solo devuelven números y tiempos: ni
+nombres, ni productos, ni importes. El aviso del WebSocket público no lleva datos, solo dice
+«vuelve a mirar», y cada 30 segundos se refresca igualmente por si se perdió algún aviso.
 
 ## Seguridad
 
@@ -138,6 +150,49 @@ La carta se mantiene desde la propia aplicación: crear y editar productos y cat
 precios, apuntar alérgenos y marcar **agotado** (sigue en la carta, pero el TPV no lo deja pedir) o
 dar de **baja** (desaparece de la carta; los pedidos antiguos lo conservan). Los cambios llegan a
 los TPV abiertos por WebSocket, sin recargar.
+
+## Alérgenos
+
+Lo que el encargado apunta en la carta viaja con el producto hasta donde hace falta: el botón del
+TPV lo lleva debajo del nombre, el diálogo de la nota lo repite antes de confirmar la comanda, cada
+línea del ticket lo arrastra y la pantalla de cocina lo enseña en rojo junto al plato. Vaciar el
+campo en la carta lo borra de verdad (un `null` explícito), para que nadie sirva con un dato viejo.
+
+## Copias de seguridad
+
+Completa semanal + **incremental por binlogs** cada hora de servicio, con poda automática a
+cuatro semanas. El incremental no repite la base entera: guarda solo el registro binario de lo
+que ha cambiado, así que un día de servicio ocupa kilobytes y permite recuperar hasta el último
+minuto antes del fallo.
+
+```bash
+deploy/copia.sh completa       # volcado íntegro y punto de partida
+deploy/copia.sh incremental    # binlogs nuevos desde la última completa
+deploy/copia.sh estado         # qué hay guardado y cuándo se probó por última vez
+deploy/restaurar.sh probar     # restaura en kds_tpv_prueba y compara filas e importes
+```
+
+`restaurar.sh probar` corre solo cada semana con un temporizador: compara tabla por tabla y, además,
+el total cobrado. Una copia que nunca se ha restaurado no es una copia, es un fichero.
+
+| Temporizador | Cuándo |
+|---|---|
+| `kds-copia-completa.timer` | lunes 05:30 |
+| `kds-copia-incremental.timer` | cada hora, de 09:00 a 23:55 |
+| `kds-copia-prueba.timer` | lunes 06:15 |
+
+## Pruebas y despliegue
+
+31 pruebas con `pytest` sobre una base de datos de pruebas que se crea y se destruye sola, nunca
+contra la real. Cubren lo que debe funcionar y, sobre todo, lo que debe fallar: cobros, cuentas
+divididas, numeración de facturas, estados de cocina, permisos por rol y congelación de precios.
+
+```bash
+cd backend && .venv/bin/python -m pytest      # las pruebas
+bash deploy/desplegar.sh                      # copia → pruebas → reinicio → comprobación
+```
+
+Si una prueba falla, el despliegue se aborta y el servicio sigue con la versión anterior.
 
 ## Mejoras pendientes
 

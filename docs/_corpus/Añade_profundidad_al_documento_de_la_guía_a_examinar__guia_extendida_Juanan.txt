@@ -1,0 +1,85 @@
+1. Ampliación de Metodologías de Gestión (Bloque 1)
+
+Más allá de conocer los conceptos, la excelencia profesional radica en la
+implementación técnica de las herramientas:
+
+    · Gestión del Tablero Kanban: Para una gestión avanzada, no basta con las
+         columnas básicas. Se recomienda añadir una columna de "Review/Testing"
+         antes de "Done" para asegurar que cada tarea pase por el control de calidad del
+         "Finalizador".
+
+    · Eventos Scrum: Si se opta por metodologías ágiles, el equipo debe realizar un
+         "Daily Stand-up" (reunión de 5-10 minutos) para comunicar qué se hizo ayer,
+         qué se hará hoy y qué bloqueos existen, reforzando la competencia de
+         comunicación y coordinación.
+
+    · Software Recomendado: Para la aplicación real de estas metodologías, se
+         sugiere el uso de herramientas como Trello o Asana para Kanban, y
+         GanttProject para visualizar la Cadena Crítica.
+
+2. Profundización en la Búsqueda de Información (Bloque 2)
+
+Para evitar el "copia y pega" y demostrar rigor académico (Competencia Digital):
+
+    · Tesauros y Palabras Clave: Antes de usar operadores booleanos, es
+         fundamental definir un listado de palabras clave basadas en tesauros
+         profesionales del sector para asegurar que los términos de búsqueda sean
+         técnicamente precisos.
+
+    · Gestores Bibliográficos: Para facilitar el cumplimiento de las Normas APA, se
+         recomienda el uso de Zotero o Mendeley. Estas herramientas permiten
+         capturar fuentes directamente de las bases de datos (Google Scholar, Dialnet) y
+         generar la bibliografía automáticamente con rigor formal.
+
+3. Fortalecimiento de la Estructura Técnica (Bloque 3)
+
+Un documento de alto nivel debe incluir análisis estratégicos que demuestren
+capacidad de gestión:
+
+    · Análisis DAFO/CAME: En la introducción o estudio de viabilidad, incluir una
+         matriz DAFO (Debilidades, Amenazas, Fortalezas y Oportunidades) y su
+         posterior estrategia CAME (Corregir, Afrontar, Mantener y Explotar) para
+         justificar las decisiones del proyecto.
+
+    · Desglose de Objetivos SMART: Cada objetivo debe estar vinculado
+         directamente a un KPI específico. Por ejemplo, si el objetivo es "Aumentar la
+         eficiencia", el KPI debe ser "Reducción del tiempo de ejecución en un 15%
+         mediante la automatización de procesos".
+
+4. Excelencia en Formato y Honestidad (Bloque 4)
+
+Para asegurar el 25% de la nota en "Rigor Formal":
+
+    · Niveles de Encabezados APA: Utilizar la jerarquía oficial de APA 7ª ed. (Nivel 1:
+         Centrado y Negrita; Nivel 2: Alineado a la izquierda y Negrita) para organizar el
+         "Desarrollo" de forma profesional.
+
+    · Citas de Citación Secundaria: Si se encuentra una idea de un autor dentro de
+         otro texto, se debe citar como: (Autor original, año, como se citó en Autor del
+         texto leído, año), demostrando un dominio avanzado de la norma.
+
+5. Estrategias de Defensa de Alto Impacto (Bloque 5)
+
+La defensa oral es la "venta" del proyecto y supone el 20% de la calificación:
+
+    · Técnica del Gancho (Hook): Iniciar la presentación con una pregunta retórica,
+         un dato estadístico impactante o una breve anécdota (Storytelling) que conecte
+         el problema con la audiencia desde el primer minuto.
+
+    · Regla 10-20-30 de Guy Kawasaki: Para el diseño visual en Canva o Prezi, se
+         sugiere no superar las 10 diapositivas, que la presentación dure 20 minutos y
+         usar un tamaño de fuente no inferior a 30 puntos para garantizar la legibilidad y
+         el "menos es más".
+
+    · Preparación del Turno de Preguntas: El equipo debe anticipar al menos 5
+         preguntas difíciles del tribunal y preparar respuestas estructuradas, lo que
+         demuestra previsión y seguridad (Efecto Halo).
+
+6. Evidencias para la Evaluación (Rúbrica)
+
+Para maximizar los puntos en "Trabajo en Equipo" (15%):
+
+    · Anexo de Actas de Reunión: Incluir como anexo un registro de cada reunión
+         realizada, indicando asistentes, temas tratados y acuerdos alcanzados,
+         vinculado siempre al "Contrato Laboral Interno" firmado por el grupo.
+
