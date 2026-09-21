@@ -103,13 +103,13 @@ def guis_de(rol_operativo: str | None, rol_real: str, gui: str | None) -> list[s
     # protocolo — quien tiene delante a alguien con una reacción no está para permisos.
     permitidas = {"index.html", "plano.html", "alergenos.html"}
     if rol_operativo == "camarero":
-        permitidas |= {"tpv.html", "facturas.html"}
+        permitidas |= {"tpv.html", "facturas.html", "sala.html"}
     elif rol_operativo == "cocina":
         permitidas |= {"kds.html", "recogida.html"}
     if rol_real == "encargado":
         permitidas |= {"usuarios.html", "carta.html", "ajustes.html", "informe.html",
                        "arqueo.html", "facturas.html", "tpv.html", "kds.html", "recogida.html",
-                       "plano.html", "alergenos.html"}
+                       "plano.html", "alergenos.html", "sala.html"}
     if gui:
         permitidas.add(gui.split("?")[0])
     return sorted(permitidas)

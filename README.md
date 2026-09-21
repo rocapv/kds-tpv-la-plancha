@@ -173,6 +173,29 @@ TPV lo lleva debajo del nombre, el diálogo de la nota lo repite antes de confir
 línea del ticket lo arrastra y la pantalla de cocina lo enseña en rojo junto al plato. Vaciar el
 campo en la carta lo borra de verdad (un `null` explícito), para que nadie sirva con un dato viejo.
 
+## La sala mientras ocurre
+
+El KDS mide la cocina y el arqueo mide el dinero al cerrar. Faltaba lo que vive el cliente, y
+resulta que casi todo estaba ya fechado en la base de datos: solo hacía falta un dato que nadie
+apuntaba, **cuántos se sientan en la mesa**, que ahora se marca en el TPV con un toque.
+
+**Sala en vivo** (`sala.html`) enseña ocupación —mesas, comensales y media por mesa— y, sobre todo,
+**quién está esperando**. Las alertas no miran el reloj del plato sino el del cliente:
+
+| Aviso | Salta cuando |
+|---|---|
+| Sin tomar nota | la mesa lleva sentada más de 6 min y nadie le ha pedido la comanda |
+| Listo en el pase | hay platos listos que nadie recoge desde hace 5 min |
+| Cuenta sin cobrar | todo está servido y la cuenta sigue abierta desde hace 8 min |
+
+Los tres umbrales se ajustan en Ajustes, porque una cantina de menú y un local de sobremesa larga
+no esperan lo mismo. Un plato puede salir en seis minutos y el cliente llevar veinte esperando: eso
+es justo lo que esta pantalla saca a la luz.
+
+**Tiempos de la visita** (en el informe): sentarse → tomar nota → cocina → comer y pagar, más las
+cinco visitas más lentas del día con su camarero. Sale de marcas de tiempo que ya existían; no hubo
+que registrar nada nuevo.
+
 ## En el móvil
 
 Dos pantallas están pensadas para el teléfono, no adaptadas a él:

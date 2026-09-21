@@ -410,6 +410,24 @@ configuración de nginx como frontal TLS, con HSTS y las cabeceras que el WebSoc
 
 ---
 
+## 4.8. Medir al cliente, no solo al plato
+
+Los seis análisis de competencia (apartado 2.2 y anexo) coinciden en medir el tiempo de cocina. Uno
+de ellos, Kibsi, lo hace de otra forma: cronometra la visita entera con cámaras. La idea es buena y
+la implementación, innecesaria para nosotros: **cuatro de los tramos que ellos deducen por vídeo
+están ya fechados en nuestra base de datos** —abrir la mesa, enviar a cocina, el último plato listo
+y el cobro—. Lo único que faltaba era el número de comensales, que ahora se marca en el TPV.
+
+De ahí salen dos piezas que no costaron desarrollo, sino consulta:
+
+- **Sala en vivo**: ocupación y avisos por espera del cliente (sin tomar nota, plato listo sin
+  recoger, cuenta sin cobrar), con umbrales configurables.
+- **Tiempos de la visita** en el informe: cuánto tarda cada tramo y cuáles fueron las visitas más
+  lentas del día.
+
+Es un ejemplo de lo que este proyecto ha buscado desde el principio: antes de añadir tecnología,
+mirar si el dato ya estaba.
+
 ## 5. Evaluación del proyecto
 
 Los KPI del apartado 3.3 se han medido sobre el sistema desplegado, con un simulador que reproduce

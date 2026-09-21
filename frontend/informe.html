@@ -23,6 +23,14 @@
       <h3 style="margin-top:1rem">Tiempo medio de cocina</h3><table id="cocina"></table></div>
   </section>
   <section class="caja" style="margin-top:.8rem"><h3>Ventas por hora</h3><table id="horas"></table></section>
+
+  <section class="caja" style="margin-top:.8rem">
+    <h3>Tiempos de la visita</h3>
+    <p class="tenue">Medir solo la cocina engaña: un plato de seis minutos no salva una mesa que
+      esperó veinte a que le tomaran nota. Estos tramos salen de marcas de tiempo que ya existían.</p>
+    <div class="tiempos" id="tramos"></div>
+    <table id="lentas" style="margin-top:.8rem"></table>
+  </section>
 </main>
 <script src="/js/comun.js?v=__V__"></script>
 <script src="/js/sesion.js?v=__V__"></script>
@@ -45,8 +53,24 @@ async function cargar() {
     <td class="num" style="width:7em">${euro(h.total_cent)}</td></tr>`).join('') || '<tr><td class="tenue">Sin ventas</td></tr>';
 }
 exigirSesion(['encargado']).then(() => {
-  conectarWS(ev => { if (ev.tipo === 'mesas') cargar(); });
-  cargar();
+  async function cargarTiempos() {
+  const d = await api('/informe/tiempos?fecha=' + $('#fecha').value);
+  const t = d.tramos || {};
+  const minutos = s => s == null ? '—' : `${Math.floor(s / 60)}:${String(Math.round(s % 60)).padStart(2, '0')}`;
+  $('#tramos').innerHTML = [
+    ['Sentarse → tomar nota', t.seg_nota, 'lo que tarda alguien en atenderles'],
+    ['Cocina', t.seg_cocina, 'de enviar a cocina al último plato listo'],
+    ['Comer y pagar', t.seg_mesa, 'del último plato listo al cobro'],
+    ['Visita completa', t.seg_visita, `${t.visitas || 0} visitas${t.comensales_medios ? ' · ' + t.comensales_medios + ' pax de media' : ''}`],
+  ].map(([k, v, pie]) => `<div class="tramo"><small>${k}</small><b>${minutos(v)}</b><small>${pie}</small></div>`).join('');
+  $('#lentas').innerHTML = '<tr><th>Las más lentas</th><th>Camarero</th><th class="num">Duración</th><th class="num">Importe</th></tr>' +
+    d.mas_lentas.map(m => `<tr><td>${esc(m.mesa || 'Llevar')} · #${m.id}</td><td>${esc(m.camarero)}</td>
+      <td class="num">${m.minutos} min</td><td class="num">${euro(m.total_cent)}</td></tr>`).join('');
+}
+const cargarTodo = () => { cargar(); cargarTiempos().catch(() => {}); };
+$('#fecha').onchange = cargarTodo;
+conectarWS(ev => { if (ev.tipo === 'mesas') cargarTodo(); });
+  cargarTodo();
 });
 </script>
 </body>

@@ -496,3 +496,34 @@ body.cliente[data-tema="claro"] .chip.ambar { color: #8a5406; }
 .plato .chips { display: inline-flex; gap: .25rem; margin-top: .2rem; }
 
 body.cliente { background: var(--fondo); color: var(--texto); }   /* explicito: el tema se aplica al body */
+
+/* ═══ Sala en vivo ═══ */
+/* El color dice qué le pasa a la mesa AHORA, no si está ocupada: una mesa esperando la
+   cuenta y otra con la comida en marcha no son lo mismo para quien lleva el servicio. */
+.sala { max-width: 1200px; margin: 0 auto; padding: 1rem; }
+.avisos { margin: .8rem 0; }
+.aviso-sala { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem;
+  padding: .6rem .8rem; border-radius: var(--r); margin-bottom: .45rem;
+  background: var(--panel2); border-left: 5px solid var(--tenue); }
+.aviso-sala.sin_nota { border-left-color: var(--mal); background: #c0392b22; }
+.aviso-sala.pase     { border-left-color: var(--aviso); background: #d6891022; }
+.aviso-sala.cuenta   { border-left-color: var(--acento); background: #e67e2222; }
+.mesa-sala { position: relative; display: flex; flex-direction: column; gap: .15rem; padding: .6rem;
+  min-height: 84px; border-radius: var(--r); background: var(--panel); border: 1px solid var(--borde);
+  border-top: 4px solid var(--borde); }
+.mesa-sala b { font-size: 1.15rem; }
+.mesa-sala small { color: var(--tenue); font-size: .8rem; }
+.mesa-sala .pie { margin-top: auto; font-size: .78rem; color: var(--tenue); }
+.mesa-sala .importe { position: absolute; top: .5rem; right: .6rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+.mesa-sala.libre        { opacity: .55; }
+.mesa-sala.sin-pedir    { border-top-color: var(--mal); }
+.mesa-sala.nota         { border-top-color: #2471a3; }
+.mesa-sala.cocina       { border-top-color: var(--aviso); }
+.mesa-sala.pase         { border-top-color: var(--ok); }
+.mesa-sala.cuenta       { border-top-color: var(--acento); }
+.tiempos { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: .6rem; }
+.tramo { background: var(--panel2); border-radius: var(--r); padding: .7rem; }
+.tramo b { display: block; font-size: 1.5rem; margin: .2rem 0; }
+.tramo small { color: var(--tenue); }
+.comensales { display: flex; align-items: center; gap: .4rem; margin-top: .5rem; flex-wrap: wrap; }
+.comensales button { min-width: 2.2rem; min-height: 2.2rem; padding: .1rem .5rem; }

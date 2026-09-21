@@ -123,6 +123,7 @@ class Login(BaseModel):
 
 class NuevoPedido(BaseModel):
     tipo: str = "sala"
+    comensales: int | None = Field(None, ge=1, le=30)
     mesa_id: int | None = None
     cliente: str | None = None
 
@@ -365,8 +366,10 @@ async def crear_pedido(d: NuevoPedido, u: dict = Depends(exige("camarero", "enca
         if ya:
             return pedido_completo(ya["id"])
     with conn() as c, c.cursor() as cur:
-        cur.execute("INSERT INTO pedidos (tipo, mesa_id, empleado_id, cliente) VALUES (%s,%s,%s,%s)",
-                    (d.tipo, d.mesa_id if d.tipo == "sala" else None, u["id"], d.cliente))
+        cur.execute("""INSERT INTO pedidos (tipo, mesa_id, comensales, empleado_id, cliente)
+                       VALUES (%s,%s,%s,%s,%s)""",
+                    (d.tipo, d.mesa_id if d.tipo == "sala" else None, d.comensales,
+                     u["id"], d.cliente))
         pid = cur.lastrowid
     await hub.emitir("mesas")
     return pedido_completo(pid)
@@ -1779,6 +1782,143 @@ async def mandar_simulacion(accion: str, ritmo: float | None = None,
 async def parar_simulacion():
     if simulacion.tarea:
         simulacion.tarea.cancel()
+
+
+# ─────────────── La sala mientras ocurre ───────────────
+# Tres cosas que el sistema ya sabía pero no contaba: cuánta gente hay dentro, quién lleva
+# esperando y cuánto dura cada tramo de la visita. No hace falta ninguna cámara: todo esto
+# está fechado en la base de datos desde el primer día.
+class Comensales(BaseModel):
+    comensales: int = Field(ge=1, le=30)
+
+
+@app.patch("/api/pedidos/{pid}/comensales")
+async def poner_comensales(pid: int, d: Comensales, u: dict = Depends(exige("camarero", "encargado"))):
+    exigir_abierto(pid)
+    q("UPDATE pedidos SET comensales=%s WHERE id=%s", (d.comensales, pid))
+    await hub.emitir("mesas")
+    return pedido_completo(pid)
+
+
+def _minutos(clave: str, por_defecto: int) -> int:
+    try:
+        return int(ajustes_dict().get(clave, por_defecto))
+    except ValueError:
+        return por_defecto
+
+
+@app.get("/api/sala")
+def sala(u: dict = Depends(exige("camarero", "encargado"))):
+    """Foto del servicio ahora mismo: ocupación y quién lleva esperando.
+
+    Las alertas no miran el reloj del plato, sino el del cliente: una mesa a la que nadie ha
+    tomado nota, una cuenta que nadie cobra o un plato listo que nadie recoge. Un plato puede
+    salir en seis minutos y el cliente llevar veinte esperando; eso es lo que aquí se ve.
+    """
+    espera_nota = _minutos("sala_espera_nota", 6)
+    espera_cuenta = _minutos("sala_espera_cuenta", 8)
+    espera_pase = _minutos("sala_espera_pase", 5)
+
+    mesas = q("""SELECT m.id, m.nombre, m.zona, m.plazas,
+                        p.id AS pedido_id, p.abierto_en, p.comensales, e.nombre AS camarero,
+                        v.total_cent,
+                        TIMESTAMPDIFF(MINUTE, p.abierto_en, NOW()) AS minutos
+                 FROM mesas m
+                 LEFT JOIN pedidos p ON p.mesa_id=m.id AND p.estado='abierto'
+                 LEFT JOIN empleados e ON e.id=p.empleado_id
+                 LEFT JOIN v_totales_pedido v ON v.pedido_id=p.id
+                 ORDER BY m.zona, m.id""")
+
+    estados = {}
+    for f in q("""SELECT l.pedido_id, l.estado, COUNT(*) n,
+                         MAX(TIMESTAMPDIFF(MINUTE, l.lista_en, NOW())) AS min_listo
+                  FROM lineas_pedido l JOIN pedidos p ON p.id=l.pedido_id
+                  WHERE p.estado='abierto' AND l.estado<>'anulada'
+                  GROUP BY l.pedido_id, l.estado"""):
+        estados.setdefault(f["pedido_id"], {})[f["estado"]] = f
+
+    alertas, ocupadas, comensales = [], 0, 0
+    for m in mesas:
+        if not m["pedido_id"]:
+            m["estado"] = "libre"
+            continue
+        ocupadas += 1
+        comensales += m["comensales"] or 0
+        por_estado = estados.get(m["pedido_id"], {})
+        m["lineas"] = {k: v["n"] for k, v in por_estado.items()}
+        if not por_estado:
+            m["estado"] = "sin_pedir"
+            if m["minutos"] >= espera_nota:
+                alertas.append({"tipo": "sin_nota", "mesa": m["nombre"], "pedido_id": m["pedido_id"],
+                                "minutos": m["minutos"],
+                                "texto": f"Mesa {m['nombre']}: {m['minutos']} min sentados y nadie les ha tomado nota"})
+        elif set(por_estado) <= {"servida"}:
+            m["estado"] = "esperando_cuenta"
+            if m["minutos"] >= espera_cuenta:
+                alertas.append({"tipo": "cuenta", "mesa": m["nombre"], "pedido_id": m["pedido_id"],
+                                "minutos": m["minutos"], "importe_cent": m["total_cent"],
+                                "texto": f"Mesa {m['nombre']}: todo servido y la cuenta sin cobrar"})
+        elif "lista" in por_estado:
+            m["estado"] = "pase"
+            espera = por_estado["lista"].get("min_listo") or 0
+            if espera >= espera_pase:
+                alertas.append({"tipo": "pase", "mesa": m["nombre"], "pedido_id": m["pedido_id"],
+                                "minutos": espera,
+                                "texto": f"Mesa {m['nombre']}: hay {por_estado['lista']['n']} plato(s) listos desde hace {espera} min"})
+        elif "pendiente" in por_estado:
+            m["estado"] = "tomando_nota"
+        else:
+            m["estado"] = "en_cocina"
+
+    alertas.sort(key=lambda a: a["minutos"], reverse=True)
+    llevar = q("""SELECT COUNT(*) n FROM pedidos WHERE estado='abierto' AND tipo='llevar'""")[0]["n"]
+    return {
+        "ahora": datetime.now(),
+        "mesas": mesas,
+        "libres": len(mesas) - ocupadas,
+        "ocupadas": ocupadas,
+        "comensales": comensales,
+        "por_mesa": round(comensales / ocupadas, 1) if ocupadas and comensales else None,
+        "para_llevar": llevar,
+        "alertas": alertas,
+        "umbrales": {"nota": espera_nota, "cuenta": espera_cuenta, "pase": espera_pase},
+    }
+
+
+@app.get("/api/informe/tiempos")
+def informe_tiempos(fecha: str | None = None, u: dict = Depends(exige("encargado"))):
+    """Cuánto dura cada tramo de la visita, con las marcas de tiempo que ya existen.
+
+    abrir mesa → tomar nota → cocina → recoger del pase → cobrar. Medir solo la cocina engaña:
+    un plato de seis minutos no salva una mesa que esperó veinte a que la atendieran.
+    """
+    dia = fecha or datetime.now().strftime("%Y-%m-%d")
+    tramos = q1("""SELECT
+        COUNT(DISTINCT p.id) AS visitas,
+        ROUND(AVG(TIMESTAMPDIFF(SECOND, p.abierto_en, l.primera))) AS seg_nota,
+        ROUND(AVG(TIMESTAMPDIFF(SECOND, l.primera, l.ultima_lista))) AS seg_cocina,
+        ROUND(AVG(TIMESTAMPDIFF(SECOND, l.ultima_lista, p.cerrado_en))) AS seg_mesa,
+        ROUND(AVG(TIMESTAMPDIFF(SECOND, p.abierto_en, p.cerrado_en))) AS seg_visita,
+        ROUND(AVG(p.comensales), 1) AS comensales_medios
+      FROM pedidos p
+      JOIN (SELECT pedido_id, MIN(enviada_en) AS primera, MAX(lista_en) AS ultima_lista
+            FROM lineas_pedido WHERE estado<>'anulada' GROUP BY pedido_id) l ON l.pedido_id=p.id
+      WHERE p.estado='cobrado' AND DATE(p.cerrado_en)=%s AND l.primera IS NOT NULL""", (dia,))
+
+    por_franja = q("""SELECT HOUR(p.abierto_en) AS hora, COUNT(*) AS visitas,
+                             ROUND(AVG(TIMESTAMPDIFF(SECOND, p.abierto_en, p.cerrado_en))/60) AS min_visita
+                      FROM pedidos p WHERE p.estado='cobrado' AND DATE(p.cerrado_en)=%s
+                      GROUP BY hora ORDER BY hora""", (dia,))
+
+    lentas = q("""SELECT p.id, m.nombre AS mesa, e.nombre AS camarero,
+                         TIMESTAMPDIFF(MINUTE, p.abierto_en, p.cerrado_en) AS minutos,
+                         v.total_cent
+                  FROM pedidos p LEFT JOIN mesas m ON m.id=p.mesa_id
+                  JOIN empleados e ON e.id=p.empleado_id
+                  JOIN v_totales_pedido v ON v.pedido_id=p.id
+                  WHERE p.estado='cobrado' AND DATE(p.cerrado_en)=%s
+                  ORDER BY minutos DESC LIMIT 5""", (dia,))
+    return {"fecha": dia, "tramos": tramos, "por_franja": por_franja, "mas_lentas": lentas}
 
 
 # ─────────────── Cliente (sin sesión, solo desde la LAN del local) ───────────────

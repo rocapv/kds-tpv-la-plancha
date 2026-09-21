@@ -187,6 +187,7 @@ function pintarTicket() {
     pedido = await api(`/pedidos/${pedido.id}/lineas/${b.dataset.borrar}`, { method: 'DELETE' });
     pintarTicket();
   });
+  pintarComensales();
   $('#t-total').textContent = euro(hay ? pedido.total_cent : 0);
   const pendientes = lineas.some(l => l.estado === 'pendiente');
   $('#b-enviar').disabled = !pendientes;
@@ -195,6 +196,25 @@ function pintarTicket() {
   else $('#b-cobrar').textContent = 'Cobrar';
   $('#b-documento').disabled = !hay || pedido.total_cent === 0;
   $('#b-anular').disabled = !hay;
+}
+
+// Cuántos se sientan en la mesa. Nadie lo apuntaba, y sin ese dato la sala no puede decir
+// cuánta gente hay dentro ni cuánto gasta cada comensal.
+function pintarComensales() {
+  const caja = $('#comensales');
+  if (!caja) return;
+  const hay = pedido && pedido.tipo === 'sala';
+  caja.hidden = !hay;
+  if (!hay) return;
+  $('#b-comensales').innerHTML = [1, 2, 3, 4, 5, 6, 8].map(n =>
+    `<button data-pax="${n}" class="${pedido.comensales === n ? 'primario' : ''}">${n}</button>`).join('');
+  $('#b-comensales').querySelectorAll('[data-pax]').forEach(b => b.onclick = async () => {
+    try {
+      pedido = await api(`/pedidos/${pedido.id}/comensales`, { method: 'PATCH',
+                                                              body: { comensales: +b.dataset.pax } });
+      pintarTicket();
+    } catch (e) { aviso(e.message, 'error'); }
+  });
 }
 
 $('#b-enviar').onclick = async () => {

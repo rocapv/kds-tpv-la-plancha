@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sala · Cantina Vesta-9</title>
+<link rel="stylesheet" href="/css/estilo.css?v=__V__">
+</head>
+<body>
+<header class="barra">
+  <a href="/"><button>◀ Menú</button></a>
+  <h1>Sala en vivo</h1>
+  <span class="hueco"></span>
+  <span id="resumen" class="tenue"></span>
+  <span id="reloj"></span>
+  <span id="conexion" class="conexion"></span>
+</header>
+
+<main class="sala">
+  <section class="kpis" id="kpis"></section>
+
+  <section class="caja avisos" id="avisos-caja">
+    <h3>Quién está esperando</h3>
+    <p class="tenue">No mide el plato, mide al cliente: mesas sin atender, cuentas sin cobrar y platos listos que nadie recoge.</p>
+    <div id="avisos"></div>
+  </section>
+
+  <section id="zonas"></section>
+</main>
+
+<script src="/js/comun.js?v=__V__"></script>
+<script src="/js/sesion.js?v=__V__"></script>
+<script>
+const COLOR = {
+  libre: 'libre', sin_pedir: 'sin-pedir', tomando_nota: 'nota',
+  en_cocina: 'cocina', pase: 'pase', esperando_cuenta: 'cuenta',
+};
+const TEXTO = {
+  libre: 'libre', sin_pedir: 'sentados, sin pedir', tomando_nota: 'tomando nota',
+  en_cocina: 'en cocina', pase: 'listo en el pase', esperando_cuenta: 'esperando la cuenta',
+};
+
+async function cargar() {
+  const s = await api('/sala');
+  $('#resumen').textContent = `${s.ocupadas} ocupadas · ${s.libres} libres`;
+
+  $('#kpis').innerHTML = [
+    ['Mesas ocupadas', `${s.ocupadas} <small class="tenue">de ${s.ocupadas + s.libres}</small>`],
+    ['Comensales', s.comensales || '—'],
+    ['Por mesa', s.por_mesa ?? '—'],
+    ['Para llevar', s.para_llevar],
+    ['Avisos', s.alertas.length],
+  ].map(([k, v]) => `<div class="kpi"><span class="tenue">${k}</span><b>${v}</b></div>`).join('');
+
+  $('#avisos').innerHTML = s.alertas.map(a => `
+    <div class="aviso-sala ${esc(a.tipo)}">
+      <b>${esc(a.texto)}</b>
+      <span class="tenue">${a.minutos} min${a.importe_cent ? ' · ' + euro(a.importe_cent) : ''}</span>
+    </div>`).join('') ||
+    `<p class="tenue">Nadie lleva esperando más de la cuenta (avisos a los ${s.umbrales.nota},
+     ${s.umbrales.pase} y ${s.umbrales.cuenta} min). Ajustables en Ajustes.</p>`;
+
+  const zonas = {};
+  s.mesas.forEach(m => (zonas[m.zona] ??= []).push(m));
+  $('#zonas').innerHTML = Object.entries(zonas).map(([zona, mesas]) => `
+    <div class="zona"><h3>${esc(zona)}</h3><div class="mesas">
+      ${mesas.map(m => `
+        <div class="mesa-sala ${COLOR[m.estado]}" title="${esc(TEXTO[m.estado])}">
+          <b>${esc(m.nombre)}</b>
+          <small>${esc(TEXTO[m.estado])}</small>
+          ${m.pedido_id ? `<span class="pie">${m.minutos} min${m.comensales ? ' · ' + m.comensales + ' pax' : ''}</span>` : `<span class="pie">${m.plazas} plazas</span>`}
+          ${m.total_cent ? `<span class="importe">${euro(m.total_cent)}</span>` : ''}
+        </div>`).join('')}
+    </div></div>`).join('');
+}
+
+setInterval(() => $('#reloj').textContent = new Date().toLocaleTimeString('es-ES'), 1000);
+exigirSesion(['camarero', 'encargado']).then(() => {
+  conectarWS(ev => { if (['mesas', 'kds', 'listo', 'reconectado'].includes(ev.tipo)) cargar(); });
+  cargar();
+  setInterval(cargar, 30000);      // los minutos de espera corren aunque no pase nada
+});
+</script>
+</body>
+</html>
