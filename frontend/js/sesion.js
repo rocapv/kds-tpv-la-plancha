@@ -46,6 +46,15 @@ async function exigirSesion(roles = []) {
         // buscar el de otra persona; se le devuelve al menú, que ya solo enseña lo suyo.
         return alMenu(yo, `Esta pantalla es para ${roles.join(' o ')}; ${yo.nombre} trabaja de ${rolEfectivo(yo) || 'nada'}${yo.puesto_nombre ? ' en ' + yo.puesto_nombre : ''}.`);
       } catch (e) {
+        // Sin servidor no se puede comprobar la sesión... pero tampoco se puede teclear el PIN,
+        // que lo valida el servidor. Borrarla dejaría al camarero fuera justo cuando más falta
+        // le hace la pantalla, así que se conserva y se reintenta. Solo un rechazo de verdad
+        // (401: token caducado o cerrado por el encargado) cierra la sesión.
+        if (e.red || e.estado === 503) {
+          aviso('Sin conexión con el servidor: sigues con la sesión abierta en esta pantalla', 'error');
+          await new Promise(r => setTimeout(r, 4000));
+          continue;
+        }
         borrarSesion();
       }
     }

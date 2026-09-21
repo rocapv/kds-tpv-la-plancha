@@ -400,7 +400,7 @@ un día entero ocupa kilobytes y se puede recuperar hasta el último minuto ante
 semana, un temporizador restaura la copia en una base de pruebas y compara tabla por tabla y el
 total cobrado: si algo no cuadra, queda registrado como fallo.
 
-**Pruebas y despliegue.** 50 pruebas automáticas con `pytest` sobre una base de datos que se crea y
+**Pruebas y despliegue.** 62 pruebas automáticas con `pytest` sobre una base de datos que se crea y
 se destruye sola. El despliegue las ejecuta antes de reiniciar: si fallan, el servicio se queda con
 la versión anterior. La secuencia es copia → pruebas → reinicio → comprobación de salud.
 
@@ -428,6 +428,54 @@ De ahí salen dos piezas que no costaron desarrollo, sino consulta:
 Es un ejemplo de lo que este proyecto ha buscado desde el principio: antes de añadir tecnología,
 mirar si el dato ya estaba.
 
+## 4.9. Modo sin red: el servicio no se para porque se caiga el wifi
+
+En un local el wifi se cae, y se cae en hora punta. Hasta ahora eso dejaba al camarero sin poder
+ni tomar nota. El TPV pasa a funcionar sin servidor con una regla clara:
+
+> **Sin red se toma nota; con red se cobra.**
+
+Lo que se puede hacer a ciegas es abrir mesa, añadir y quitar líneas, apuntar comensales y mandar
+la comanda a cocina (que saldrá cuando vuelva la red). Lo que **no**: cobrar, facturar ni arquear.
+No es una limitación técnica sino legal y contable: la numeración de tickets y facturas es
+correlativa y la asigna el servidor (RD 1619/2012 y Ley 11/2021); dos tabletas desconectadas
+emitirían el mismo número.
+
+**Cómo funciona** (`frontend/js/sinred.js`, `frontend/sw.js`):
+
+1. Mientras hay servidor, la tableta guarda en IndexedDB copia de lo que necesita para trabajar a
+   ciegas: carta, mesas, empleado de la sesión y los pedidos abiertos.
+2. Al caer la red, cada acción del camarero se aplica sobre esa copia —con identificadores
+   **negativos**, que no pueden confundirse con los del servidor— y se encola.
+3. Un trabajador de servicio (*service worker*) guarda el HTML, el CSS y el JS del TPV, para que la
+   pantalla se pueda **abrir** aunque no haya servidor. Estrategia *primero la red*: la copia solo
+   sale cuando la red falla. Nada de `/api` se guarda nunca: una respuesta vieja de la API sería un
+   precio o una mesa mintiendo.
+4. Al volver la red, la cola se reenvía en orden traduciendo los identificadores locales por los de
+   verdad. Lo que el servidor rechace (mesa ya cobrada, producto agotado) no se reintenta sin fin:
+   se descarta y **se dice en pantalla**, que es lo que permite arreglarlo a mano.
+
+**El problema de verdad no es perder la comanda, es duplicarla.** Si la petición llegó al servidor
+y lo que se perdió fue la respuesta, el reenvío crearía un pedido gemelo: dos platos en cocina y
+dos cobros en la caja. Se resuelve con **idempotencia** (`backend/sql/16_idempotencia.sql`): cada
+acción lleva una clave que el cliente inventa **una vez** —no por intento— y el servidor guarda la
+respuesta que dio la primera vez. Repetir devuelve esa misma respuesta sin ejecutar nada. Es el
+mecanismo de las pasarelas de pago (`Idempotency-Key`). Solo se guardan las respuestas buenas: un
+«esa mesa ya está cobrada» no se congela, porque si la situación cambia merece respuesta nueva.
+
+**Verificación** (`deploy/qa_sinred.py`, navegador real contra el servidor): con la red cortada se
+abre mesa, se apuntan dos productos y se mandan a cocina; el botón de cobrar queda bloqueado; se
+**recarga la tableta sin red** y la pantalla vuelve a abrirse con lo apuntado intacto; al restaurar
+la red la cola se vacía sola y la comprobación contra la API encuentra **un** pedido con dos líneas
+en cocina, no dos. Ocho pruebas automáticas más (`backend/pruebas/test_sinred.py`) cubren la
+idempotencia: reenviar no duplica, sin clave sí duplica, la respuesta repetida es idéntica a la
+primera, un rechazo no se guarda y la clave no salta los permisos.
+
+**Límites conocidos y asumidos**: empezar el turno exige red (el PIN lo valida el servidor); la
+carta que se ve sin red es la de la última conexión, aunque el precio final siempre lo pone el
+servidor al reenviar; y el certificado debe estar confiado en la tableta, porque si no el navegador
+no registra el trabajador de servicio y se pierde el aguante a la recarga.
+
 ## 5. Evaluación del proyecto
 
 Los KPI del apartado 3.3 se han medido sobre el sistema desplegado, con un simulador que reproduce
@@ -441,10 +489,10 @@ un servicio completo usando únicamente la API pública —es decir, probando el
 | O2 · Aviso de retraso | 8 / 15 min | Correcto; umbrales configurables |
 | O3 · Descuadre de caja | 0 € | 0 €; cobro dividido y mixto cuadran con el total |
 | O4 · Documentos sin impresora | 100 % | 100 %; ticket y factura en pantalla |
-| O5 · Recuperación tras corte | 0 acciones | Verificado: tras reiniciar el servidor, los tres servicios levantaron solos |
+| O5 · Recuperación tras corte | 0 acciones | Verificado: tras reiniciar el servidor, los tres servicios levantaron solos; y con el wifi cortado el TPV sigue tomando nota y reenvía al volver (apartado 4.9) |
 | O6 · Tráfico en claro | 0 | 0; el 8090 redirige y el WebSocket exige token |
 | O7 · Copia restaurable | Restauración probada | Verificada: 8 tablas y el total cobrado coinciden |
-| O8 · Regresiones en producción | 0 | 50 pruebas automáticas bloquean el despliegue si fallan |
+| O8 · Regresiones en producción | 0 | 62 pruebas automáticas bloquean el despliegue si fallan |
 
 Pruebas de comportamiento ante el error, todas comprobadas contra la API:
 
@@ -599,9 +647,14 @@ Real Decreto 499/2024, de 21 de mayo, por el que se establecen los títulos de f
 ```
 backend/app/      main.py (API), auth.py (sesiones y roles), db.py, redirector.py
 backend/sql/      01_schema · 02_seed · 03_facturacion · 04_carta_y_pagos · 05_sesiones · 06_arqueo
+                  · 07…15 (tema, puestos, estaciones, escalafones, carta, plano, sala)
+                  · 16_idempotencia (modo sin red)
+backend/pruebas/  test_api.py · test_arqueo.py · test_sinred.py (62 pruebas)
 backend/          simulador.py (servicio simulado para la demo)
 frontend/         menú, tpv, kds, facturas, carta, usuarios, ajustes, informe, arqueo, recogida
+                  js/sinred.js y sw.js (modo sin red del TPV)
 deploy/           instalar.sh, certificado.sh, entregar.sh, units de systemd, nginx.conf
+                  qa.py (QA por roles) y qa_sinred.py (QA del modo sin red)
 docs/             esta memoria y PENDIENTES.md
 ```
 

@@ -65,12 +65,23 @@ function prepararMovil() {
 }
 
 // ── Mesas ──
+// Cómo se lee cada estado en el plano. El texto va en la propia mesa: un color sin leyenda
+// obliga a recordar, y en hora punta nadie recuerda.
+const SERVICIO = {
+  libre: '', ocupada: 'abierta', sin_pedir: 'sin pedir', tomando_nota: 'tomando nota',
+  en_cocina: 'en cocina', pase: 'listo en el pase', esperando_cuenta: 'esperando cuenta',
+};
+
 async function verMesas() {
   $('#v-mesas').hidden = false;
   $('#v-carta').hidden = true;
-  let mesas, abiertos;
+  let mesas, abiertos, estados = {};
   try {
     [mesas, abiertos] = await Promise.all([api('/mesas'), api('/pedidos')]);
+    // Una mesa ocupada no dice nada: lo que el camarero necesita saber de un vistazo es si
+    // están sin pedir, si hay algo listo en el pase o si llevan rato esperando la cuenta.
+    const sala = await api('/sala').catch(() => null);
+    if (sala) sala.mesas.forEach(m => estados[m.id] = m);
   } catch (e) {
     // Si el servidor dice que no, hay que decirlo: una sala vacía se lee como «no hay mesas»
     // y el camarero se queda mirando la pantalla sin saber que es su puesto.
@@ -84,8 +95,19 @@ async function verMesas() {
   let html = '';
   for (const [zona, lista] of Object.entries(zonas)) {
     html += `<div class="zona"><h3>${esc(zonaNombre(zona))}</h3><div class="mesas">` +
-      lista.map(m => `<button class="mesa ${m.pedido_id ? 'ocupada' : ''}" data-mesa="${m.id}">
-        ${esc(m.nombre)}<small>${m.pedido_id ? euro(m.total_cent || 0) + ' · ' + minutosDesde(m.abierto_en) + ' min' : m.plazas + ' pax'}</small></button>`).join('') +
+      lista.map(m => {
+        const e = estados[m.id] || {};
+        const servicio = m.pedido_id ? (e.estado || 'ocupada') : 'libre';
+        const pie = m.pedido_id
+          ? `${euro(m.total_cent || 0)} · ${minutosDesde(m.abierto_en)} min`
+          : `${m.plazas} pax`;
+        return `<button class="mesa ${m.pedido_id ? 'ocupada' : ''} ${m.pedido_id < 0 ? 'sin-red' : ''} srv-${servicio}" data-mesa="${m.id}"
+                        title="${esc(SERVICIO[servicio] || '')}">
+          ${esc(m.nombre)}
+          ${m.pedido_id ? `<em class="srv">${esc(SERVICIO[servicio] || '')}</em>` : ''}
+          <small>${pie}${e.comensales ? ' · ' + e.comensales + ' pax' : ''}</small>
+        </button>`;
+      }).join('') +
       `</div></div>`;
   }
   const llevar = abiertos.filter(p => p.tipo === 'llevar');
@@ -172,7 +194,11 @@ async function anadir(productoId, cantidad = 1, notas = null) {
 function pintarTicket() {
   const hay = !!pedido;
   $('#t-titulo').textContent = !hay ? 'Selecciona una mesa' : pedido.tipo === 'llevar' ? `Llevar #${pedido.id} · ${pedido.cliente || ''}` : `Mesa ${pedido.mesa}`;
-  $('#t-sub').textContent = hay ? `Pedido #${pedido.id} · ${pedido.camarero}` : '';
+  // Un pedido con id negativo se abrió sin red: solo existe en esta tableta hasta que vuelva.
+  const soloAqui = hay && pedido.id < 0;
+  $('#t-sub').textContent = hay
+    ? (soloAqui ? `Sin enviar al servidor · ${pedido.camarero}` : `Pedido #${pedido.id} · ${pedido.camarero}`)
+    : '';
   const lineas = hay ? pedido.lineas : [];
   $('#lineas').innerHTML = lineas.map(l => `
     <div class="linea">
@@ -191,10 +217,14 @@ function pintarTicket() {
   $('#t-total').textContent = euro(hay ? pedido.total_cent : 0);
   const pendientes = lineas.some(l => l.estado === 'pendiente');
   $('#b-enviar').disabled = !pendientes;
-  $('#b-cobrar').disabled = !hay || pendientes || pedido.total_cent === 0;
+  // Sin servidor no se cobra: la numeración de tickets y facturas es suya, y dos tabletas
+  // desconectadas emitirían el mismo número. Se toma nota ahora y se cobra al volver la red.
+  const sinServidor = typeof sinRed === 'object' && (!sinRed.hayRed() || soloAqui);
+  $('#b-cobrar').disabled = !hay || pendientes || pedido.total_cent === 0 || sinServidor;
+  $('#b-cobrar').title = sinServidor ? 'Sin conexión: se podrá cobrar cuando vuelva la red' : '';
   if (hay && pedido.pagado_cent) $('#b-cobrar').textContent = 'Cobrar (faltan ' + euro(pedido.pendiente_cent) + ')';
   else $('#b-cobrar').textContent = 'Cobrar';
-  $('#b-documento').disabled = !hay || pedido.total_cent === 0;
+  $('#b-documento').disabled = !hay || pedido.total_cent === 0 || sinServidor;
   $('#b-anular').disabled = !hay;
 }
 
@@ -374,6 +404,15 @@ conectarWS(async ev => {
     pintarTicket();
   }
   if (!$('#v-mesas').hidden && (ev.tipo === 'mesas' || ev.tipo === 'reconectado')) verMesas();
+});
+
+// Al volver la red, `sinred.js` reenvía lo apuntado y los identificadores locales mueren:
+// se vuelve a las mesas para trabajar ya con los del servidor.
+window.addEventListener('sinred-sincronizado', async () => {
+  catalogo = await api('/catalogo').catch(() => catalogo);
+  if (pedido && pedido.id < 0) { pedido = null; pintarTicket(); }
+  if (!$('#v-mesas').hidden) verMesas(); else verCarta();
+  cargarSolicitudes();
 });
 
 entrar().then(() => { cargarSolicitudes(); prepararMovil(); });

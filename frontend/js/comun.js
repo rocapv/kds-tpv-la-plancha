@@ -3,15 +3,29 @@ const euro = c => (c / 100).toLocaleString('es-ES', { style: 'currency', currenc
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
 
-async function api(ruta, opciones = {}) {
+// Llamada directa al servidor. `opciones.clave` es la clave de idempotencia: repetir una
+// petición con la misma clave NO repite el trabajo, devuelve la respuesta de la primera vez.
+// Por eso el TPV sin red puede reenviar sin miedo lo que apuntó mientras estaba caído.
+async function apiRed(ruta, opciones = {}) {
   const cabeceras = { 'Content-Type': 'application/json' };
   const t = typeof tokenActual === 'function' ? tokenActual() : null;
   if (t) cabeceras.Authorization = 'Bearer ' + t;
-  const r = await fetch('/api' + ruta, {
-    headers: cabeceras,
-    ...opciones,
-    body: opciones.body ? JSON.stringify(opciones.body) : undefined,
-  });
+  if (opciones.clave) cabeceras['Idempotency-Key'] = opciones.clave;
+  let r;
+  try {
+    r = await fetch('/api' + ruta, {
+      headers: cabeceras,
+      ...opciones,
+      body: opciones.body ? JSON.stringify(opciones.body) : undefined,
+    });
+  } catch (fallo) {
+    // fetch solo falla así cuando no se ha llegado al servidor: wifi caído, servidor apagado.
+    // Se marca para que quien sepa trabajar sin red (el TPV) lo distinga de un error suyo.
+    const error = new Error('No hay conexión con el servidor');
+    error.red = true;
+    error.causa = fallo;
+    throw error;
+  }
   const datos = await r.json().catch(() => ({}));
   if (!r.ok) {
     const error = new Error(datos.detail?.[0]?.msg || datos.detail || r.statusText);
@@ -20,6 +34,12 @@ async function api(ruta, opciones = {}) {
     throw error;
   }
   return datos;
+}
+
+// Punto por el que pasan TODAS las pantallas. Si la pantalla ha cargado `sinred.js` (hoy solo
+// el TPV), es él quien decide si la petición va al servidor o se apunta para luego.
+async function api(ruta, opciones = {}) {
+  return typeof sinRed === 'object' ? sinRed.llamar(ruta, opciones) : apiRed(ruta, opciones);
 }
 
 // WebSocket con reconexión automática; muestra el estado en #conexion

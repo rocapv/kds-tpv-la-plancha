@@ -146,10 +146,13 @@ backend/.venv/bin/python backend/simulador.py --rapido
 ```
 backend/app/main.py      API REST + WebSocket
 backend/app/db.py        conexión MariaDB
-backend/sql/             esquema y datos de ejemplo
+backend/sql/             esquema, datos de ejemplo y ampliaciones (01…16)
+backend/pruebas/         pytest (API, arqueo y modo sin red)
 backend/simulador.py     generador de servicio para la demo
 frontend/                tpv, kds, informe (estáticos)
-deploy/                  SQL de alta, unit systemd, instalador
+frontend/js/sinred.js    modo sin red del TPV: cola en IndexedDB y reenvío
+frontend/sw.js           copia del TPV para poder abrirlo sin servidor
+deploy/                  SQL de alta, unit systemd, instalador, QA
 ```
 
 ## Cuentas divididas
@@ -244,10 +247,10 @@ el total cobrado. Una copia que nunca se ha restaurado no es una copia, es un fi
 
 ## Pruebas y despliegue
 
-50 pruebas con `pytest` sobre una base de datos de pruebas que se crea y se destruye sola, nunca
+62 pruebas con `pytest` sobre una base de datos de pruebas que se crea y se destruye sola, nunca
 contra la real. Cubren lo que debe funcionar y, sobre todo, lo que debe fallar: cobros, cuentas
-divididas, numeración de facturas, estados de cocina, permisos por rol, congelación de precios y
-el arqueo de caja con su cierre Z.
+divididas, numeración de facturas, estados de cocina, permisos por rol, congelación de precios,
+el arqueo de caja con su cierre Z y el reenvío de lo apuntado sin red (que no duplique nada).
 
 ```bash
 cd backend && .venv/bin/python -m pytest      # las pruebas
@@ -351,6 +354,30 @@ persona que el encargado haya puesto en el plano. Además, la caja cobra un tick
 segundos pase lo que pase, para que el informe y el arqueo se muevan durante la demo. El **reset**
 borra solo lo que la simulación creó.
 
+## Sin red: se sigue tomando nota
+
+Si se cae el wifi, el TPV no se para. **Sin red se toma nota; con red se cobra.**
+
+- Se puede: abrir mesa, añadir y quitar líneas, comensales y mandar la comanda a cocina (saldrá
+  al volver la red). Una barra amarilla lo dice mientras dure el corte.
+- No se puede: cobrar, facturar ni arquear. La numeración de tickets y facturas es del servidor;
+  dos tabletas desconectadas emitirían el mismo número.
+- La pantalla se abre aunque no haya servidor (`frontend/sw.js` guarda HTML, CSS y JS del TPV) y
+  lo apuntado aguanta recargas y cierres del navegador (IndexedDB).
+- Al volver la red se reenvía solo, en orden. **Nada se duplica**: cada acción lleva una clave de
+  idempotencia (`Idempotency-Key`) y el servidor, si la ve repetida, devuelve la respuesta que ya
+  dio en vez de volver a ejecutarla (`backend/sql/16_idempotencia.sql`).
+- Lo que el servidor rechace al reenviar (mesa ya cobrada, producto agotado) se descarta y se
+  **dice en pantalla**, con su motivo.
+
+```bash
+python deploy/qa_sinred.py --url https://192.168.1.105:8443   # corta la red de verdad y comprueba
+```
+
+Dos condiciones: **el certificado tiene que estar confiado en la tableta** (si no, el navegador no
+registra el trabajador de servicio y el TPV solo aguanta el corte con la pantalla ya abierta) y
+**empezar el turno exige red**, porque el PIN lo valida el servidor.
+
 ## Mejoras pendientes
 
 En [docs/PENDIENTES.md](docs/PENDIENTES.md).
@@ -360,3 +387,5 @@ En [docs/PENDIENTES.md](docs/PENDIENTES.md).
 - El certificado es autofirmado: vale para la LAN del aula, no para Internet.
 - El PIN de 4 cifras es cómodo en barra pero débil; no hay límite de intentos ni segundo factor.
 - No hay control de stock ni facturación Verifactu.
+- Sin red la carta que se ve es la de la última conexión; el precio definitivo lo pone el
+  servidor al reenviar la comanda.

@@ -527,3 +527,28 @@ body.cliente { background: var(--fondo); color: var(--texto); }   /* explicito: 
 .tramo small { color: var(--tenue); }
 .comensales { display: flex; align-items: center; gap: .4rem; margin-top: .5rem; flex-wrap: wrap; }
 .comensales button { min-width: 2.2rem; min-height: 2.2rem; padding: .1rem .5rem; }
+
+/* Estado de servicio en el plano de mesas del TPV: el borde dice por dónde va la mesa. */
+.mesa .srv { display: block; font-size: .72rem; font-style: normal; color: var(--tenue); line-height: 1.1; }
+.mesa.srv-sin_pedir       { border-color: var(--mal); }
+.mesa.srv-sin_pedir .srv  { color: #ff9e93; }
+.mesa.srv-tomando_nota    { border-color: #2471a3; }
+.mesa.srv-en_cocina       { border-color: var(--aviso); }
+.mesa.srv-pase            { border-color: var(--ok); }
+.mesa.srv-pase .srv       { color: #a9f5c4; }
+.mesa.srv-esperando_cuenta{ border-color: var(--acento); }
+.mesa.srv-esperando_cuenta .srv { color: #ffd9b3; }
+
+/* Aviso de «sin red» del TPV. Va pegado abajo y ocupa todo el ancho porque no es un detalle:
+   mientras esté puesto, la comanda vive en la tableta y no en el servidor. */
+#sinred {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 60;
+  padding: .55rem .9rem; text-align: center; font-weight: 600; font-size: .92rem;
+  border-top: 2px solid var(--borde); color: #111;
+}
+#sinred.caido    { background: var(--aviso); }
+#sinred.enviando { background: #2471a3; color: var(--texto); }
+#sinred.bien     { background: var(--ok); color: var(--texto); }
+#sinred.problema { background: var(--mal); color: var(--texto); }
+/* Una comanda que solo existe en esta tableta se ve distinta: rayada y con su rótulo. */
+.mesa.sin-red, .linea.sin-red { background-image: repeating-linear-gradient(45deg, #ffffff0d 0 8px, transparent 8px 16px); }

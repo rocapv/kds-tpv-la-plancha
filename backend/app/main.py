@@ -2109,6 +2109,60 @@ async def rechazar_solicitud(sid: int, u: dict = Depends(exige("camarero", "enca
 
 
 # ─────────────── Frontend estático ───────────────
+# ─────────────── Idempotencia: el mismo acto, una sola vez ───────────────
+# Este middleware se declara ANTES que el de la LAN a propósito: en FastAPI el último que se
+# añade envuelve a los anteriores, así que declarándolo aquí queda por DENTRO de la guarda de
+# red y nunca contesta a nadie de fuera con una respuesta guardada.
+def _dias_idempotencia() -> int:
+    fila = q1("SELECT valor FROM ajustes WHERE clave='idempotencia_dias'")
+    try:
+        return max(1, int(fila["valor"])) if fila else 3
+    except ValueError:
+        return 3
+
+
+@app.middleware("http")
+async def idempotencia(request: Request, call_next):
+    """Repetir una petición con la misma clave devuelve la respuesta de la primera vez.
+
+    Lo necesita el TPV sin red: al reconectar reenvía lo que apuntó el camarero, y no puede
+    saber si la petición de antes llegó a ejecutarse o se perdió con la respuesta. La clave la
+    inventa el cliente UNA vez por acción (no por intento), así que reenviar es gratis.
+
+    Solo se guardan las respuestas buenas (2xx). Un 409 «esa mesa ya está cobrada» no se guarda:
+    si la situación cambia, la segunda vez merece respuesta nueva.
+    """
+    clave = request.headers.get("Idempotency-Key")
+    if not clave or request.method not in ("POST", "PATCH", "PUT", "DELETE"):
+        return await call_next(request)
+    if len(clave) > 64:
+        return JSONResponse({"detail": "Clave de idempotencia demasiado larga"}, status_code=422)
+
+    previa = q1("SELECT estado, respuesta FROM idempotencia WHERE clave=%s", (clave,))
+    if previa:
+        return Response(previa["respuesta"], status_code=previa["estado"],
+                        media_type="application/json", headers={"X-Idempotencia": "repetida"})
+
+    resp = await call_next(request)
+    cuerpo = b"".join([trozo async for trozo in resp.body_iterator])
+    if 200 <= resp.status_code < 300 and len(cuerpo) <= 1_000_000:
+        cabecera = request.headers.get("authorization", "")
+        quien = usuario_de_token(cabecera[7:]) if cabecera.lower().startswith("bearer ") else None
+        try:
+            q("""INSERT IGNORE INTO idempotencia (clave, ruta, empleado_id, estado, respuesta)
+                 VALUES (%s,%s,%s,%s,%s)""",
+              (clave, f"{request.method} {request.url.path}"[:160],
+               quien["id"] if quien else None, resp.status_code, cuerpo.decode("utf-8", "replace")))
+            q("DELETE FROM idempotencia WHERE creada_en < NOW() - INTERVAL %s DAY", (_dias_idempotencia(),))
+        except Exception:
+            # Que no se pueda anotar la clave no es motivo para negarle la comanda al camarero:
+            # el trabajo ya está hecho y la respuesta es buena. Lo que se pierde es la red de
+            # seguridad contra un reenvío, y eso es preferible a un 500 con la cocina esperando.
+            pass
+    return Response(cuerpo, status_code=resp.status_code, headers=dict(resp.headers),
+                    media_type=resp.media_type)
+
+
 # ─────────────── Solo LAN ───────────────
 # El sistema es de un local: no tiene por qué contestar a nadie de fuera. Dos capas:
 #   1) el servicio escucha solo en la IP de la red local (ver kds-tpv.service);
