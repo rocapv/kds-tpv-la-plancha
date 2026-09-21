@@ -16,7 +16,7 @@ Proyecto Intermodular 1 · 1º ASIR. Sistema de punto de venta (TPV) para sala y
 
 - **Backend:** Python 3.12, FastAPI y PyMySQL. Expone una API REST y un WebSocket `/ws` que avisa a todas las pantallas cuando hay cambios.
 - **Base de datos:** MariaDB. Los importes se guardan en céntimos (enteros) y el precio se congela en cada línea en el momento de la venta. El IVA es el 10 % de hostelería, incluido en el precio.
-- **Frontend:** HTML, CSS y JavaScript sin frameworks, pensado para pantallas táctiles. El TPV imprime tickets de 80 mm con `window.print()`.
+- **Frontend:** HTML, CSS y JavaScript sin frameworks, pensado para pantallas táctiles. El ticket y la factura se ven en la propia pantalla.
 - **Sistema:** servicio `systemd --user` con reinicio automático, en Linux Mint 22.3.
 
 ## Aplicaciones
@@ -52,7 +52,7 @@ que repetir la petición devuelve la misma factura en lugar de duplicarla.
 1. El camarero entra con su PIN, elige una mesa (o «para llevar») y añade productos. Un clic derecho o una pulsación larga permite añadir notas.
 2. Con **Enviar a cocina**, cada línea pasa a `enviada` y va a la pantalla de su estación.
 3. En cocina, **Empezar** la pasa a `preparando`, **Listo** a `lista` (el TPV recibe el aviso) y **Servido** a `servida`. Si se toca una línea, avanza solo esa.
-4. Se cobra en efectivo (calcula el cambio), con tarjeta o con Bizum, y se imprime el ticket simplificado.
+4. Se cobra en efectivo (calcula el cambio), con tarjeta o con Bizum, y aparece el ticket en pantalla, desde el que se puede emitir la factura.
 5. El **informe** muestra la facturación, la base imponible y el IVA, los productos más vendidos, las ventas por hora y el tiempo medio de cocina de cada estación.
 
 Las comandas se ponen en amarillo a los 8 minutos y en rojo, parpadeando, a los 15.
