@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Alérgenos y protocolo · Cantina Vesta-9</title>
+<link rel="stylesheet" href="/css/estilo.css?v=__V__">
+</head>
+<body>
+<header class="barra">
+  <a href="/"><button>◀ Menú</button></a>
+  <h1>Alérgenos y protocolo</h1>
+  <span class="hueco"></span>
+  <input id="buscar" placeholder="Buscar alérgeno o ingrediente" style="width:18em">
+  <span id="conexion" class="conexion"></span>
+</header>
+
+<main class="informe">
+  <div class="caja aviso-general">
+    <h2>Si alguien reacciona</h2>
+    <p id="general"></p>
+  </div>
+  <div id="lista"></div>
+  <p class="tenue">Los catorce de declaración obligatoria (Reglamento UE 1169/2011). El protocolo
+  es una guía de sala: no sustituye a la atención sanitaria, y ante la duda se llama al 112.</p>
+</main>
+
+<script src="/js/comun.js?v=__V__"></script>
+<script src="/js/sesion.js?v=__V__"></script>
+<script>
+let TODOS = [];
+
+function pintar() {
+  const texto = $('#buscar').value.trim().toLowerCase();
+  const vistos = TODOS.filter(a => !texto
+    || a.nombre.toLowerCase().includes(texto) || a.presente_en.toLowerCase().includes(texto));
+  $('#lista').innerHTML = vistos.map(a => `
+    <div class="caja ficha-alergeno ${esc(a.gravedad)}">
+      <h3>${esc(a.icono)} ${esc(a.nombre)}
+        <span class="estado ${a.gravedad === 'muy_grave' ? 'critica' : ''}">${esc(a.gravedad.replace('_', ' '))}</span></h3>
+      <p class="tenue">${esc(a.presente_en)}</p>
+      <p><b>Qué hacer:</b> ${esc(a.protocolo)}</p>
+    </div>`).join('') || '<p class="tenue">Nada con ese nombre.</p>';
+}
+
+$('#buscar').oninput = pintar;
+
+exigirSesion(['camarero', 'cocina', 'encargado']).then(async () => {
+  const p = await api('/protocolo');
+  $('#general').textContent = p.general;
+  TODOS = p.alergenos;
+  pintar();
+});
+</script>
+</body>
+</html>

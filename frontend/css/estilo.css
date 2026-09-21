@@ -307,3 +307,17 @@ body.recogida { overflow: hidden; }
 .pin .por-clave { margin-top: 1rem; font-size: .9rem; }
 .pin .por-clave summary { cursor: pointer; color: var(--tenue); }
 .pin .por-clave .fila { margin-top: .5rem; }
+
+/* Ficha de producto: alergenos como chips, con la gravedad a la vista */
+.alergenos-ficha { border: 1px solid var(--borde); border-radius: var(--r); padding: .4rem .6rem; margin: .4rem 0; }
+.alergenos-ficha legend { font-size: .85rem; color: var(--tenue); }
+.chip-alerg { display: inline-flex; align-items: center; gap: .25rem; border: 1px solid var(--borde);
+              border-radius: 999px; padding: .1rem .55rem; margin: .15rem; font-size: .8rem; cursor: pointer; }
+.chip-alerg.muy_grave { border-color: var(--alerg); }
+.chip-alerg.grave { border-color: var(--aviso); }
+/* Pantalla de alergenos y protocolo */
+.aviso-general { border-left: 6px solid var(--alerg); }
+.ficha-alergeno { margin-bottom: .6rem; border-left: 6px solid var(--borde); }
+.ficha-alergeno.muy_grave { border-left-color: var(--alerg); }
+.ficha-alergeno.grave { border-left-color: var(--aviso); }
+.ficha-alergeno h3 { display: flex; gap: .6rem; align-items: center; }

@@ -39,10 +39,15 @@ def clave_correcta(clave: str, guardada: str | None) -> bool:
 
 
 def escalafon_de(clave: str | None) -> dict:
-    """Nivel y permisos de gestión del escalafón. Si la fila no existe, lo más bajo posible."""
+    """Nivel y permisos de gestión del escalafón.
+
+    OJO con el sentido de la escala: **a menor número, más mando** (1 = administrador). Se
+    numera así para que la empresa pueda crecer por abajo —que es por donde crece— sin
+    renumerar lo de arriba. Si la fila no existe, se supone lo más bajo posible.
+    """
     e = q1("SELECT * FROM escalafones WHERE clave=%s", (clave,)) if clave else None
     return e or {"clave": clave or "base", "nombre": clave or "Empleado base",
-                 "nivel": 1, "gestion": 0, "plus_pct": 0}
+                 "nivel": 99, "gestion": 0, "plus_pct": 0}
 
 
 def _horas_sesion() -> int:
@@ -169,12 +174,15 @@ def exige(*roles: str):
     return guardia
 
 
-def exige_nivel(minimo: int, para: str = "esto"):
+GERENCIA, ADMINISTRACION = 2, 1          # niveles; a menor número, más mando
+
+
+def exige_nivel(tope: int, para: str = "Esto"):
     """Para lo que solo toca el escalafón alto: sueldos, escalafones, crear gerentes.
-    gerente = 4, administrador = 5."""
+    `tope` es el número MÁXIMO admitido: 2 = gerente para arriba, 1 = solo administración."""
     def guardia(u: dict = Depends(usuario)) -> dict:
-        if u["nivel"] < minimo:
-            raise HTTPException(403, f"{para} es de {'administrador' if minimo >= 5 else 'gerente'} "
+        if u["nivel"] > tope:
+            raise HTTPException(403, f"{para} es de {'administración' if tope <= 1 else 'gerencia'} "
                                      f"para arriba; tú eres {u['escalafon_nombre']}")
         return u
     return guardia

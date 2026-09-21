@@ -15,18 +15,20 @@ SET NAMES utf8mb4;
 CREATE TABLE IF NOT EXISTS escalafones (
   clave       VARCHAR(20) PRIMARY KEY,
   nombre      VARCHAR(40)      NOT NULL,
-  nivel       TINYINT UNSIGNED NOT NULL,              -- a mayor nivel, más mando
+  nivel       TINYINT UNSIGNED NOT NULL,              -- a MENOR numero, MAS mando (1 = admin)
   plus_pct    DECIMAL(4,1)     NOT NULL DEFAULT 0,    -- sobre el sueldo del junior
   gestion     BOOLEAN          NOT NULL DEFAULT FALSE,-- ¿entra en carta/usuarios/ajustes/informes?
   descripcion VARCHAR(160)     NOT NULL DEFAULT ''
 ) ENGINE=InnoDB;
 
+-- A MENOR numero, MAS mando: 1 es la administracion. Se numera asi para que la empresa pueda
+-- crecer por abajo (6, 7, 8...) sin renumerar lo de arriba.
 INSERT INTO escalafones (clave, nombre, nivel, plus_pct, gestion, descripcion) VALUES
- ('base_junior', 'Empleado base junior', 1, 0.0, FALSE, 'Primer año en la empresa.'),
- ('base',        'Empleado base',        2, 5.0, FALSE, 'Mismo trabajo que el junior, 5 % más de sueldo.'),
+ ('admin',       'Administrador',        1, 60.0, TRUE, 'Administra el sistema y crea gerentes.'),
+ ('gerente',     'Gerente',              2, 45.0, TRUE, 'El encargado que manda; toca escalafones y sueldos.'),
  ('encargado',   'Encargado',            3, 25.0, TRUE, 'Manager de turno: gestiona carta, usuarios, ajustes e informes.'),
- ('gerente',     'Gerente',              4, 45.0, TRUE, 'El encargado que manda; toca escalafones y sueldos.'),
- ('admin',       'Administrador',        5, 60.0, TRUE, 'Administra el sistema y crea gerentes.')
+ ('base',        'Empleado base',        4, 5.0, FALSE, 'Mismo trabajo que el junior, 5 % más de sueldo.'),
+ ('base_junior', 'Empleado base junior', 5, 0.0, FALSE, 'Primer año en la empresa.')
 ON DUPLICATE KEY UPDATE nombre=VALUES(nombre), nivel=VALUES(nivel), plus_pct=VALUES(plus_pct),
   gestion=VALUES(gestion), descripcion=VALUES(descripcion);
 

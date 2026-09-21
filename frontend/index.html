@@ -25,9 +25,9 @@
       <a class="app" href="/recogida.html" target="_blank"><span class="ico">📣</span><b>Recogida</b><small id="n-recogida">Pantalla de cliente (sin PIN)</small></a>
     </div>
   </section>
-  <section>
+  <section data-dinamica>
     <h2>Cocina de la estación</h2>
-    <div class="apps" id="apps-cocina"></div>
+    <div class="apps" id="apps-cocina" data-dinamica></div>
   </section>
   <section>
     <h2>Gestión</h2>
@@ -36,6 +36,7 @@
       <a class="app" href="/arqueo.html"><span class="ico">💶</span><b>Arqueo</b><small id="n-caja">Caja, descuadre y cierre Z</small></a>
       <a class="app" href="/carta.html"><span class="ico">📖</span><b>Carta</b><small>Productos, precios y agotados</small></a>
       <a class="app" href="/usuarios.html"><span class="ico">👥</span><b>Usuarios</b><small>Altas, bajas y PIN</small></a>
+      <a class="app" href="/alergenos.html"><span class="ico">A</span><b>Alergenos</b><small>Listado y protocolo de actuacion</small></a>
       <a class="app" href="/ajustes.html"><span class="ico">⚙️</span><b>Ajustes</b><small>Datos de la cantina e IVA</small></a>
       <a class="app" href="/docs"><span class="ico">🧩</span><b>API</b><small>Documentación OpenAPI</small></a>
     </div>
@@ -58,9 +59,11 @@ function filtrarApps() {
     if (pagina === 'docs') { if (yo.rol !== 'encargado') a.remove(); return; }
     if (pagina && yo.guis?.length && !yo.guis.includes(pagina)) a.remove();
   });
-  // Una sección sin tarjetas no pinta nada: fuera el título suelto.
+  // Una sección sin tarjetas no pinta nada: fuera el título suelto. Las que se rellenan
+  // por su cuenta (cocina) se saltan esta poda: cuando esto corre aún están vacías.
   document.querySelectorAll('.menu section').forEach(sec => {
-    if (!sec.querySelector('.app')) sec.remove();
+    const dinamica = sec.hasAttribute('data-dinamica') || sec.querySelector('[data-dinamica]');
+    if (!dinamica && !sec.querySelector('.app')) sec.remove();
   });
 }
 

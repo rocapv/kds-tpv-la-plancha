@@ -11,7 +11,7 @@ from datetime import datetime
 from pathlib import Path
 
 from fastapi import Depends, FastAPI, Header, HTTPException, Request, WebSocket, WebSocketDisconnect
-from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
@@ -174,7 +174,10 @@ class NuevoProducto(BaseModel):
     nombre: str = Field(min_length=2, max_length=60)
     precio_cent: int = Field(ge=0, le=100000)
     estacion: str
-    alergenos: str | None = Field(None, max_length=120)
+    alergenos: str | None = Field(None, max_length=120)      # texto libre (se recalcula)
+    alergenos_claves: list[str] | None = None                # catálogo: lo que manda
+    inventario_id: int | None = None
+    foto: str | None = Field(None, max_length=200)
     orden: int = Field(0, ge=0, le=127)
 
 
@@ -184,6 +187,9 @@ class CambioProducto(BaseModel):
     precio_cent: int | None = Field(None, ge=0, le=100000)
     estacion: str | None = None
     alergenos: str | None = Field(None, max_length=120)
+    alergenos_claves: list[str] | None = None
+    inventario_id: int | None = None
+    foto: str | None = Field(None, max_length=200)
     orden: int | None = Field(None, ge=0, le=127)
     activo: bool | None = None
     disponible: bool | None = None
@@ -308,6 +314,12 @@ def catalogo(todo: bool = False, u: dict = Depends(usuario)):
     """La carta. Con todo=true incluye bajas y agotados (lo usa la app de carta)."""
     cats = q("SELECT * FROM categorias" + ("" if todo else " WHERE activa") + " ORDER BY orden, id")
     prods = q("SELECT * FROM productos" + ("" if todo else " WHERE activo") + " ORDER BY categoria_id, orden, id")
+    marcados = {}
+    for f in q("SELECT producto_id, alergeno FROM producto_alergenos"):
+        marcados.setdefault(f["producto_id"], []).append(f["alergeno"])
+    for p in prods:
+        p["alergenos_claves"] = marcados.get(p["id"], [])
+        p["foto_url"] = p.get("foto") or f"/api/productos/{p['id']}/foto.svg"
     for c in cats:
         c["productos"] = [p for p in prods if p["categoria_id"] == c["id"]]
     return cats
@@ -647,8 +659,12 @@ async def crear_producto(d: NuevoProducto, u: dict = Depends(exige("encargado"))
                        VALUES (%s,%s,%s,%s,%s,%s)""",
                     (d.categoria_id, d.nombre.strip(), d.precio_cent, d.estacion, d.alergenos, d.orden))
         pid = cur.lastrowid
+    sincronizar_alergenos(pid, d.alergenos_claves)
+    if d.inventario_id or d.foto:
+        q("UPDATE productos SET inventario_id=%s, foto=%s WHERE id=%s",
+          (d.inventario_id, d.foto, pid))
     await hub.emitir("carta")
-    return q1("SELECT * FROM productos WHERE id=%s", (pid,))
+    return {**q1("SELECT * FROM productos WHERE id=%s", (pid,)), "alergenos_claves": alergenos_de(pid)}
 
 
 @app.patch("/api/productos/{prid}")
@@ -658,13 +674,16 @@ async def editar_producto(prid: int, d: CambioProducto, u: dict = Depends(exige(
     if d.estacion and d.estacion not in estaciones_validas():
         raise HTTPException(422, "Estación desconocida")
     enviados = d.model_dump(exclude_unset=True)
+    claves = enviados.pop("alergenos_claves", None)
     # alergenos es el unico campo que se puede vaciar: un null explicito lo borra.
     campos = {k: v for k, v in enviados.items() if v is not None or k == "alergenos"}
     if campos:
         sets = ", ".join(f"{k}=%s" for k in campos)
         q(f"UPDATE productos SET {sets} WHERE id=%s", (*campos.values(), prid))
+    sincronizar_alergenos(prid, claves)
     await hub.emitir("carta")
-    return q1("SELECT * FROM productos WHERE id=%s", (prid,))
+    return {**q1("SELECT * FROM productos WHERE id=%s", (prid,)),
+            "alergenos_claves": alergenos_de(prid)}
 
 
 @app.delete("/api/productos/{prid}")
@@ -802,21 +821,22 @@ def listar_empleados(todos: bool = False, u: dict = Depends(exige("encargado")))
     return q(f"""SELECT {CAMPOS_EMPLEADO} FROM empleados e
                  LEFT JOIN escalafones es ON es.clave = e.escalafon
                  {'' if todos else 'WHERE e.activo'}
-                 ORDER BY es.nivel DESC, e.nombre""")
+                 ORDER BY es.nivel, e.nombre""")
 
 
 def exigir_mando_sobre(u: dict, escalafon: str | None, verbo: str):
-    """Nadie reparte galones por encima del suyo: para poner a alguien en un escalafón hay que
-    estar por encima de ese escalafón, y los de gestión solo los mueve gerencia."""
+    """Nadie reparte galones por encima del suyo. Recordatorio de la escala: **a menor número,
+    más mando** (1 = administrador), así que «estar por encima» es tener un número MENOR."""
     if not escalafon:
         return
     destino = q1("SELECT nivel, nombre FROM escalafones WHERE clave=%s", (escalafon,))
     if not destino:
         raise HTTPException(422, "Ese escalafón no existe")
-    if int(destino["nivel"]) >= 3 and u["nivel"] < 4:
+    nivel = int(destino["nivel"])
+    if nivel <= 3 and u["nivel"] > 2:            # tocar gestión es cosa de gerencia
         raise HTTPException(403, f"{verbo} un {destino['nombre']} es cosa del gerente o del "
                                  f"administrador; tú eres {u['escalafon_nombre']}")
-    if int(destino["nivel"]) >= u["nivel"] and u["nivel"] < 5:
+    if nivel <= u["nivel"] and u["nivel"] > 1:   # ni a tu mismo escalafón ni por encima
         raise HTTPException(403, f"No puedes {verbo.lower()} a alguien de tu mismo escalafón o "
                                  "por encima")
 
@@ -876,7 +896,7 @@ def regenerar_contrasena(eid: int, u: dict = Depends(exige("encargado"))):
 
 
 @app.get("/api/nomina")
-def nomina(u: dict = Depends(exige_nivel(4, "La nómina"))):
+def nomina(u: dict = Depends(exige_nivel(2, "La nómina"))):
     """Lo que cobra cada escalafón sobre el sueldo del junior. El junior es el primer año:
     el 5 % del empleado base se ve aquí, no en un papel aparte."""
     base = int(ajustes_dict().get("sueldo_junior_cent", "120000"))
@@ -1193,6 +1213,164 @@ def ver_arqueo(aid: int, u: dict = Depends(exige("encargado"))):
     if not a:
         raise HTTPException(404, "Arqueo no encontrado")
     return estado_caja(a["fecha"].strftime("%Y-%m-%d"))
+
+
+# ─────────────── Alérgenos, protocolo, inventario y fotos ───────────────
+class NuevoAlergeno(BaseModel):
+    clave: str = Field(pattern=r"^[a-z0-9_]{2,20}$")
+    nombre: str = Field(min_length=2, max_length=40)
+    icono: str = Field("⚠", max_length=8)
+    gravedad: str = "grave"
+    presente_en: str = Field("", max_length=200)
+    protocolo: str = Field(min_length=10)
+    orden: int = Field(0, ge=0, le=127)
+
+
+class CambioAlergeno(BaseModel):
+    nombre: str | None = Field(None, min_length=2, max_length=40)
+    icono: str | None = Field(None, max_length=8)
+    gravedad: str | None = None
+    presente_en: str | None = Field(None, max_length=200)
+    protocolo: str | None = Field(None, min_length=10)
+    orden: int | None = Field(None, ge=0, le=127)
+
+
+GRAVEDADES = ("leve", "grave", "muy_grave")
+
+
+@app.get("/api/alergenos")
+def listar_alergenos(u: dict = Depends(usuario)):
+    """El catálogo entero, con su protocolo. Lo puede leer cualquiera con sesión: el camarero
+    que tiene delante a alguien con una reacción no está para pedir permisos."""
+    return q("SELECT * FROM alergenos ORDER BY orden, nombre")
+
+
+@app.get("/api/protocolo")
+def protocolo(u: dict = Depends(usuario)):
+    return {"general": ajustes_dict().get("protocolo_general", ""),
+            "alergenos": q("SELECT * FROM alergenos ORDER BY orden, nombre")}
+
+
+@app.post("/api/alergenos", status_code=201)
+async def crear_alergeno(d: NuevoAlergeno, u: dict = Depends(exige("encargado"))):
+    if d.gravedad not in GRAVEDADES:
+        raise HTTPException(422, "Gravedad no válida")
+    if q1("SELECT clave FROM alergenos WHERE clave=%s", (d.clave,)):
+        raise HTTPException(409, "Ya existe ese alérgeno")
+    q("""INSERT INTO alergenos (clave, nombre, icono, gravedad, presente_en, protocolo, orden)
+         VALUES (%s,%s,%s,%s,%s,%s,%s)""",
+      (d.clave, d.nombre.strip(), d.icono, d.gravedad, d.presente_en, d.protocolo, d.orden))
+    await hub.emitir("carta")
+    return q1("SELECT * FROM alergenos WHERE clave=%s", (d.clave,))
+
+
+@app.patch("/api/alergenos/{clave}")
+async def editar_alergeno(clave: str, d: CambioAlergeno, u: dict = Depends(exige("encargado"))):
+    if not q1("SELECT clave FROM alergenos WHERE clave=%s", (clave,)):
+        raise HTTPException(404, "Alérgeno no encontrado")
+    if d.gravedad and d.gravedad not in GRAVEDADES:
+        raise HTTPException(422, "Gravedad no válida")
+    campos = {k: v for k, v in d.model_dump(exclude_unset=True).items() if v is not None}
+    if campos:
+        q(f"UPDATE alergenos SET {', '.join(f'{k}=%s' for k in campos)} WHERE clave=%s",
+          (*campos.values(), clave))
+    await hub.emitir("carta")
+    return q1("SELECT * FROM alergenos WHERE clave=%s", (clave,))
+
+
+@app.get("/api/inventario")
+def buscar_inventario(buscar: str | None = None, u: dict = Depends(usuario)):
+    """Búsqueda para el autocompletado de la carta. Desde tres caracteres, que es cuando la
+    consulta empieza a decir algo; con menos se devuelve el principio del catálogo."""
+    if buscar and len(buscar.strip()) >= 3:
+        patron = f"%{buscar.strip()}%"
+        return q("""SELECT * FROM inventario WHERE activo AND (nombre LIKE %s OR sku LIKE %s)
+                    ORDER BY nombre LIMIT 25""", (patron, patron))
+    return q("SELECT * FROM inventario WHERE activo ORDER BY nombre LIMIT 25")
+
+
+def sincronizar_alergenos(pid: int, claves: list[str] | None) -> None:
+    """La tabla N:M manda; el campo de texto del producto se regenera a partir de ella para que
+    el TPV y la cocina, que leen texto, no se enteren del cambio."""
+    if claves is None:
+        return
+    validas = {a["clave"]: a["nombre"] for a in q("SELECT clave, nombre FROM alergenos")}
+    malas = [c for c in claves if c not in validas]
+    if malas:
+        raise HTTPException(422, f"Alérgeno desconocido: {', '.join(malas)}")
+    q("DELETE FROM producto_alergenos WHERE producto_id=%s", (pid,))
+    for c in claves:
+        q("INSERT INTO producto_alergenos (producto_id, alergeno) VALUES (%s,%s)", (pid, c))
+    texto = ", ".join(validas[c] for c in claves) or None
+    q("UPDATE productos SET alergenos=%s WHERE id=%s", (texto[:120] if texto else None, pid))
+
+
+def alergenos_de(pid: int) -> list[str]:
+    return [f["alergeno"] for f in
+            q("SELECT alergeno FROM producto_alergenos WHERE producto_id=%s", (pid,))]
+
+
+def precio_sugerido(coste_cent: int) -> int:
+    """Precio de carta a partir del coste: x3,2 (escandallo de barra) y redondeo a los 95
+    céntimos de siempre, que es como se ponen los precios en una carta de verdad."""
+    bruto = max(150, int(coste_cent * 3.2))
+    return ((bruto + 99) // 100) * 100 - 5
+
+
+@app.post("/api/carta/precios")
+async def generar_precios(todos: bool = False, u: dict = Depends(exige("encargado"))):
+    """Pone precio a la carta de un golpe. Por defecto solo a lo que está a cero; con
+    `todos=true` recalcula la carta entera desde el coste del inventario."""
+    filas = q("""SELECT p.id, p.precio_cent, i.coste_cent
+                 FROM productos p LEFT JOIN inventario i ON i.id = p.inventario_id
+                 WHERE p.activo""" + ("" if todos else " AND p.precio_cent = 0"))
+    tocados = 0
+    for f in filas:
+        coste = f["coste_cent"] or 0
+        nuevo = precio_sugerido(coste) if coste else max(295, f["precio_cent"] or 295)
+        if nuevo != f["precio_cent"]:
+            q("UPDATE productos SET precio_cent=%s WHERE id=%s", (nuevo, f["id"]))
+            tocados += 1
+    await hub.emitir("carta")
+    return {"revisados": len(filas), "cambiados": tocados}
+
+
+# Colores estables por nombre: el mismo plato sale siempre con la misma pinta.
+def _tono(semilla: int, base: int) -> str:
+    return f"hsl({(semilla * 47 + base) % 360} 65% 55%)"
+
+
+@app.get("/api/productos/{prid}/foto.svg")
+def foto_producto(prid: int):
+    """Foto generada: si nadie ha subido una, el sistema dibuja el plato. Es comida de una
+    cantina minera, así que un cuenco con formas raras es más honrado que una foto de stock."""
+    pr = q1("SELECT id, nombre FROM productos WHERE id=%s", (prid,))
+    if not pr:
+        raise HTTPException(404, "Producto no encontrado")
+    semilla = sum(ord(c) for c in pr["nombre"])
+    trozos = []
+    for i in range(3 + semilla % 4):
+        cx = 60 + (semilla * (i + 3) % 80)
+        cy = 95 + (semilla * (i + 7) % 35)
+        r = 12 + (semilla * (i + 2) % 16)
+        trozos.append(f'<circle cx="{cx}" cy="{cy}" r="{r}" fill="{_tono(semilla, i * 60)}" '
+                      f'opacity="0.9"/>')
+    svg = f"""<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 160" width="200" height="160">
+  <rect width="200" height="160" fill="#1e2127"/>
+  <ellipse cx="100" cy="115" rx="86" ry="34" fill="#2b2f36"/>
+  <ellipse cx="100" cy="110" rx="74" ry="27" fill="{_tono(semilla, 200)}" opacity="0.25"/>
+  {''.join(trozos)}
+  <path d="M30 60 Q100 20 170 60" stroke="{_tono(semilla, 120)}" stroke-width="5" fill="none"
+        opacity="0.6"/>
+  <text x="100" y="150" text-anchor="middle" font-family="sans-serif" font-size="12"
+        fill="#9aa3b2">{esc_xml(pr['nombre'])}</text>
+</svg>"""
+    return Response(content=svg, media_type="image/svg+xml",
+                    headers={"Cache-Control": "public, max-age=3600"})
+
+
+def esc_xml(t: str) -> str:
+    return (t.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;"))[:28]
 
 
 # ─────────────── Secciones de cocina y pantallas de KDS ───────────────

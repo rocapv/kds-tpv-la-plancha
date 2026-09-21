@@ -32,6 +32,11 @@ class Simulacion:
         self.ritmo = 1.0                # 1.0 = ritmo de servicio real; <1 = más deprisa
         self.tarea_caja: asyncio.Task | None = None
         self.segundos_caja = 10         # la caja suena cada 10 s pase lo que pase
+        # Un bot por área, no un único simulador global: el de la placa térmica solo saca
+        # plancha, el del comedor solo atiende sus mesas. Es lo que pasa en un servicio real
+        # y además prueba que los permisos por puesto funcionan.
+        self.bots: dict[str, dict] = {}         # clave de área → ficha del bot
+        self.tareas_bot: list[asyncio.Task] = []
 
     # ── rastro en disco ──
     def _leer_rastro(self) -> list[int]:
@@ -49,7 +54,8 @@ class Simulacion:
 
     def resumen(self) -> dict:
         return {"estado": self.estado, "pedidos": len(self.creados),
-                "cobrados": self.cobrados, "ritmo": self.ritmo}
+                "cobrados": self.cobrados, "ritmo": self.ritmo,
+                "bots": sorted(self.bots.values(), key=lambda b: (b["tipo"], b["area"]))}
 
     # ── mandos ──
     def _podar_rastro(self) -> None:
@@ -73,6 +79,7 @@ class Simulacion:
             self.estado = "corriendo"
         if not self.tarea or self.tarea.done():
             self.tarea = asyncio.create_task(self._servicio())
+        self._levantar_bots()
         if not self.tarea_caja or self.tarea_caja.done():
             self.tarea_caja = asyncio.create_task(self._caja())
         await hub.emitir("simulacion", **self.resumen())
@@ -94,6 +101,10 @@ class Simulacion:
             if getattr(self, t):
                 getattr(self, t).cancel()
                 setattr(self, t, None)
+        for t in self.tareas_bot:
+            t.cancel()
+        self.tareas_bot = []
+        self.bots = {}
         ids = list(self.creados)
         if ids:
             marcas = ",".join(["%s"] * len(ids))
@@ -110,6 +121,87 @@ class Simulacion:
         await hub.emitir("simulacion", **self.resumen())
         await hub.emitir("kds")
         return {**self.resumen(), "borrados": borrados}
+
+    # ── un bot por área ────────────────────────────────────────────────────
+    def _quien_esta_en(self, puesto: str) -> dict | None:
+        """La persona que el encargado ha puesto en ese puesto del plano. Si no hay nadie, el
+        bot trabaja igual, pero con la primera persona del rol que corresponda: la demo no se
+        para porque el plano esté vacío."""
+        from .db import q1
+        return q1("""SELECT id, nombre, rol FROM empleados
+                     WHERE activo AND puesto=%s ORDER BY id LIMIT 1""", (puesto,))
+
+    def _levantar_bots(self):
+        """Mira el plano y las secciones de cocina y pone un bot en cada área con trabajo."""
+        from .db import q
+        if self.tareas_bot:
+            return                                  # ya están levantados
+        sala = q("""SELECT clave, nombre FROM puestos
+                    WHERE rol_operativo='camarero' ORDER BY orden""")
+        cocina = q("SELECT clave, nombre FROM estaciones WHERE activa ORDER BY orden")
+        suplente_sala = self._quien("camarero")
+        suplente_cocina = self._quien("cocina")
+        for p in sala:
+            quien = self._quien_esta_en(p["clave"]) or suplente_sala
+            if not quien:
+                continue
+            self.bots[f"sala:{p['clave']}"] = {
+                "tipo": "sala", "area": p["nombre"], "clave": p["clave"],
+                "empleado": quien["nombre"], "pedidos": 0, "cobros": 0, "ultimo": None}
+            self.tareas_bot.append(asyncio.create_task(self._bot_sala(p, quien)))
+        for e in cocina:
+            quien = self._quien_esta_en(e["clave"]) or suplente_cocina
+            if not quien:
+                continue
+            self.bots[f"cocina:{e['clave']}"] = {
+                "tipo": "cocina", "area": e["nombre"], "clave": e["clave"],
+                "empleado": quien["nombre"], "avances": 0, "ultimo": None}
+            self.tareas_bot.append(asyncio.create_task(self._bot_cocina(e, quien)))
+
+    async def _espera(self, minimo: float, maximo: float) -> bool:
+        """Duerme lo suyo y dice si hay que seguir trabajando (False = simulación parada)."""
+        await asyncio.sleep(random.uniform(minimo, maximo) * self.ritmo)
+        return self.estado == "corriendo"
+
+    async def _bot_sala(self, puesto: dict, quien: dict):
+        """Camarero de un área: sienta gente en SUS mesas y manda la comanda a cocina."""
+        from . import main as api
+        ficha = self.bots[f"sala:{puesto['clave']}"]
+        try:
+            while True:
+                if not await self._espera(8, 22):
+                    continue
+                try:
+                    pid = await self._nuevo_pedido(quien, zona_puesto=puesto["clave"])
+                    if pid:
+                        ficha["pedidos"] += 1
+                        ficha["ultimo"] = f"comanda #{pid}"
+                except Exception as e:
+                    ficha["ultimo"] = f"error: {e}"
+        except asyncio.CancelledError:
+            raise
+
+    async def _bot_cocina(self, estacion: dict, quien: dict):
+        """Cocinero de una sección: solo toca las líneas de SU sección, como en la vida real."""
+        from . import main as api
+        ficha = self.bots[f"cocina:{estacion['clave']}"]
+        try:
+            while True:
+                if not await self._espera(4, 10):
+                    continue
+                try:
+                    datos = api.kds(estacion["clave"], None, quien)
+                    mias = [c for c in datos["comandas"] if c["pedido_id"] in self.creados]
+                    if not mias:
+                        continue
+                    elegida = mias[0]                     # la más antigua: el pase manda
+                    await api.avanzar_pedido(elegida["pedido_id"], estacion["clave"], None, quien)
+                    ficha["avances"] += 1
+                    ficha["ultimo"] = f"#{elegida['pedido_id']}"
+                except Exception as e:
+                    ficha["ultimo"] = f"error: {e}"
+        except asyncio.CancelledError:
+            raise
 
     # ── la caja: un ticket cada diez segundos, pase lo que pase ──
     async def _caja(self):
@@ -177,21 +269,8 @@ class Simulacion:
                     continue
                 reloj = asyncio.get_event_loop().time()
 
-                # 1) entra un cliente
-                if random.random() < 0.5:
-                    pedido = await self._nuevo_pedido(camarero)
-                    if pedido:
-                        abiertos.append((pedido, reloj + random.uniform(120, 300) * self.ritmo))
-
-                # 2) la cocina avanza una de las comandas más antiguas.
-                # Solo toca las suyas: si hay una comanda de verdad en el pase, la simulación
-                # no se la come.
-                comandas = [c for c in api.kds(None, cocina)["comandas"]
-                            if c["pedido_id"] in self.creados]
-                if comandas:
-                    elegida = random.choice(comandas[:4])
-                    await api.avanzar_pedido(elegida["pedido_id"], None, cocina)
-
+                # El trabajo de sala y de cocina lo hacen los bots de cada área
+                # (_bot_sala / _bot_cocina); aquí solo queda la caja.
                 # 3) la caja cobra lo que ya se ha servido
                 for pid, cuando in list(abiertos):
                     if reloj < cuando:
@@ -217,7 +296,7 @@ class Simulacion:
             self.estado = "parado"
             await hub.emitir("simulacion", **{**self.resumen(), "error": str(e)})
 
-    async def _nuevo_pedido(self, camarero: dict) -> int | None:
+    async def _nuevo_pedido(self, camarero: dict, zona_puesto: str | None = None) -> int | None:
         from . import main as api
         # Se agrupa por estación y no por el nombre de la categoría: la carta se puede
         # renombrar entera desde la aplicación (o desde el decorado) sin romper la demo.
@@ -228,7 +307,11 @@ class Simulacion:
                     carta.setdefault(pr["estacion"], []).append(pr)
         if not carta.get("plancha"):
             return None
+        # Cada puesto de sala atiende su zona: el del mirador no sienta gente en el comedor.
+        zonas = {"comedor": "sala", "mirador": "terraza", "atraque": "barra"}
         libres = [m for m in api.mesas(camarero) if not m["pedido_id"]]
+        if zona_puesto in zonas:
+            libres = [m for m in libres if m["zona"] == zonas[zona_puesto]] or libres
         if libres and random.random() > 0.25:
             mesa = random.choice(libres)
             ped = await api.crear_pedido(api.NuevoPedido(tipo="sala", mesa_id=mesa["id"]), camarero)

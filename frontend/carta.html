@@ -12,6 +12,7 @@
   <h1>Carta</h1>
   <span class="hueco"></span>
   <button id="b-categoria">Nueva categoría</button>
+  <button id="b-precios" title="Poner precio a lo que esta a cero, calculado desde el inventario">Generar precios</button>
   <button id="b-producto" class="primario">Nuevo producto</button>
   <span id="conexion" class="conexion"></span>
 </header>
@@ -30,7 +31,22 @@
     <select id="p-est" title="Seccion de cocina a la que se manda el producto (se gestionan en Ajustes)"></select>
     <a href="/ajustes.html" title="Dar de alta secciones de cocina"><button type="button">+ secciones</button></a>
   </div>
-  <div class="fila"><input id="p-alergenos" placeholder="Alérgenos (gluten, lactosa…)" maxlength="120" style="flex:1"></div>
+  <div class="fila">
+    <input id="p-inv" placeholder="Articulo de inventario (escribe 3 letras)" list="l-inv" style="flex:1"
+           autocomplete="off">
+    <datalist id="l-inv"></datalist>
+    <span id="p-coste" class="tenue"></span>
+    <button id="p-sugerir" type="button" title="Precio de carta a partir del coste">Precio sugerido</button>
+  </div>
+  <fieldset class="alergenos-ficha">
+    <legend>Alergenos <a href="/alergenos.html" target="_blank" class="tenue">(ver protocolo)</a></legend>
+    <div id="p-alergenos"></div>
+  </fieldset>
+  <div class="fila">
+    <img id="p-foto" alt="" width="120" height="96"
+         style="border-radius:var(--r);background:var(--panel2)">
+    <input id="p-foto-url" placeholder="URL de la foto (vacio = la dibuja el sistema)" maxlength="200" style="flex:1">
+  </div>
   <div class="fila"><button id="p-cancelar">Cancelar</button><button id="p-ok" class="primario">Guardar</button></div>
 </dialog>
 
@@ -51,6 +67,51 @@ let cats = [], editandoProd = null, editandoCat = null;
 
 // Las secciones de cocina son datos, no una lista fija: se cargan una vez y se reusan.
 let SECCIONES = [];
+let ALERGENOS = [], INVENTARIO = [], invElegido = null;
+
+async function cargarAlergenos() {
+  ALERGENOS = await api('/alergenos');
+  $('#p-alergenos').innerHTML = ALERGENOS.map(a => `
+    <label class="chip-alerg ${esc(a.gravedad)}" title="${esc(a.presente_en)}">
+      <input type="checkbox" data-al="${esc(a.clave)}"> ${esc(a.icono)} ${esc(a.nombre)}</label>`).join('');
+}
+const iconoAlergeno = clave => ALERGENOS.find(a => a.clave === clave)?.icono || '!';
+
+// Inventario: desde tres caracteres se lanza la consulta al servidor (no antes: con dos letras
+// la lista no dice nada y son viajes de ida y vuelta para nada).
+const etiquetaInv = i => `${i.sku} · ${i.nombre}`;
+let tecleando;
+$('#p-inv').oninput = () => {
+  clearTimeout(tecleando);
+  const texto = $('#p-inv').value.trim();
+  invElegido = INVENTARIO.find(i => etiquetaInv(i) === texto) || null;
+  pintarCoste();
+  if (texto.length < 3) return;
+  tecleando = setTimeout(async () => {
+    INVENTARIO = await api('/inventario?buscar=' + encodeURIComponent(texto));
+    $('#l-inv').innerHTML = INVENTARIO.map(i => `<option value="${esc(etiquetaInv(i))}">`).join('');
+    invElegido = INVENTARIO.find(i => etiquetaInv(i) === texto) || invElegido;
+    pintarCoste();
+    if (invElegido && !$('#p-nombre').value.trim()) $('#p-nombre').value = invElegido.nombre;
+  }, 220);
+};
+function pintarCoste() {
+  $('#p-coste').textContent = invElegido ? `coste ${euro(invElegido.coste_cent)}/${invElegido.unidad}` : '';
+}
+// Escandallo de barra: coste x3,2 y a los 95 céntimos, como se ponen los precios de verdad.
+$('#p-sugerir').onclick = () => {
+  const coste = invElegido?.coste_cent || 0;
+  if (!coste) return aviso('Elige primero un articulo de inventario', 'info');
+  const bruto = Math.max(150, Math.round(coste * 3.2));
+  $('#p-precio').value = ((Math.ceil(bruto / 100) * 100 - 5) / 100).toFixed(2);
+};
+$('#b-precios').onclick = async () => {
+  if (!confirm('Poner precio a los productos que esten a cero, calculado desde su inventario?')) return;
+  const r = await api('/carta/precios', { method: 'POST' });
+  aviso(`${r.cambiados} de ${r.revisados} productos con precio nuevo`, 'ok');
+  cargar();
+};
+
 async function cargarSecciones() {
   SECCIONES = await api('/estaciones');
   $('#p-est').innerHTML = SECCIONES.map(e =>
@@ -70,7 +131,10 @@ async function cargar() {
         </span>
       </div>
       <table>${c.productos.map(p => `<tr class="${p.activo ? '' : 'baja'}">
-        <td>${esc(p.nombre)}${p.alergenos ? `<br><small class="tenue">⚠ ${esc(p.alergenos)}</small>` : ''}</td>
+        <td><img src="${esc(p.foto_url)}" alt="" width="52" height="42" loading="lazy"
+                 style="border-radius:6px;vertical-align:middle;margin-right:.5em">
+            ${esc(p.nombre)}
+            ${p.alergenos ? `<br><small class="alerg">${(p.alergenos_claves || []).map(c => esc(iconoAlergeno(c))).join(' ')} ${esc(p.alergenos)}</small>` : ''}</td>
         <td>${esc(nombreSeccion(p.estacion))}</td>
         <td class="num">${euro(p.precio_cent)}</td>
         <td>${!p.activo ? '<span class="estado">baja</span>'
@@ -105,6 +169,16 @@ function abrirProd(p = null) {
   $('#p-precio').value = p ? (p.precio_cent / 100).toFixed(2) : '';
   $('#p-cat').value = p?.categoria_id || cats[0]?.id;
   $('#p-est').value = p?.estacion || SECCIONES[0]?.clave || '';
+  document.querySelectorAll('[data-al]').forEach(c => c.checked = (p?.alergenos_claves || []).includes(c.dataset.al));
+  $('#p-foto-url').value = p?.foto || '';
+  $('#p-foto').src = p ? (p.foto_url || `/api/productos/${p.id}/foto.svg`) : '';
+  invElegido = null; $('#p-inv').value = ''; pintarCoste();
+  if (p?.inventario_id) {
+    api('/inventario').then(lista => {
+      invElegido = lista.find(i => i.id === p.inventario_id) || null;
+      if (invElegido) { $('#p-inv').value = etiquetaInv(invElegido); pintarCoste(); }
+    });
+  }
   $('#p-alergenos').value = p?.alergenos || '';
   $('#d-prod').showModal();
 }
@@ -116,7 +190,9 @@ $('#p-ok').onclick = async () => {
     precio_cent: Math.round(parseFloat($('#p-precio').value || 0) * 100),
     categoria_id: +$('#p-cat').value,
     estacion: $('#p-est').value,
-    alergenos: $('#p-alergenos').value.trim() || null,
+    alergenos_claves: [...document.querySelectorAll('[data-al]:checked')].map(c => c.dataset.al),
+    inventario_id: invElegido?.id || null,
+    foto: $('#p-foto-url').value.trim() || null,
   };
   if (body.nombre.length < 2) return aviso('Falta el nombre', 'error');
   if (!(body.precio_cent >= 0)) return aviso('Precio no válido', 'error');
@@ -148,7 +224,7 @@ $('#c-ok').onclick = async () => {
 };
 
 exigirSesion(['encargado']).then(async () => {
-  await cargarSecciones();
+  await Promise.all([cargarSecciones(), cargarAlergenos()]);
   conectarWS(ev => { if (ev.tipo === 'carta') cargar(); });
   cargar();
 });

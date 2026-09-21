@@ -216,8 +216,13 @@ function mandosSimulacion(yo) {
       b.classList.toggle('activo', (b.dataset.sim === 'play' && s.estado === 'corriendo')
                                 || (b.dataset.sim === 'pause' && s.estado === 'pausado'));
     });
-    caja.querySelector('.sim-estado').textContent =
-      s.estado === 'parado' ? '' : `${s.estado} · ${s.pedidos} pedidos, ${s.cobrados} cobrados`;
+    const bots = s.bots || [];
+    caja.querySelector('.sim-estado').textContent = s.estado === 'parado' ? ''
+      : `${s.estado} · ${bots.length} bots · ${s.pedidos} pedidos, ${s.cobrados} cobrados`;
+    // El detalle de quién está haciendo qué, sin ocupar sitio en la barra.
+    caja.querySelector('.sim-estado').title = bots.map(b => b.tipo === 'sala'
+      ? `${b.area}: ${b.empleado} · ${b.pedidos} comandas`
+      : `${b.area}: ${b.empleado} · ${b.avances} pases`).join(String.fromCharCode(10)) || 'Sin bots en marcha';
   };
 
   caja.querySelectorAll('[data-sim]').forEach(b => b.onclick = async () => {
