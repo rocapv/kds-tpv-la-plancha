@@ -321,3 +321,30 @@ body.recogida { overflow: hidden; }
 .ficha-alergeno.muy_grave { border-left-color: var(--alerg); }
 .ficha-alergeno.grave { border-left-color: var(--aviso); }
 .ficha-alergeno h3 { display: flex; gap: .6rem; align-items: center; }
+
+/* Plano del local en 2D (plano.html) */
+.lienzo { position: relative; width: 100%; aspect-ratio: 1 / 1; max-height: 78vh; margin: 0 auto;
+          background: var(--panel2) repeating-linear-gradient(0deg, transparent 0 39px, rgba(255,255,255,.03) 39px 40px),
+                      repeating-linear-gradient(90deg, transparent 0 39px, rgba(255,255,255,.03) 39px 40px);
+          border-radius: var(--r); overflow: hidden; touch-action: none; }
+.lienzo .pieza { position: absolute; box-sizing: border-box; border-radius: 4px;
+                 display: flex; align-items: center; justify-content: center; text-align: center;
+                 font-size: .75rem; color: var(--texto); }
+.lienzo .pieza .rotulo { pointer-events: none; display: block; line-height: 1.1; }
+.lienzo .pieza .rotulo small { display: block; color: var(--tenue); font-size: .68rem; }
+.lienzo .zona { border: 2px dashed var(--tinte); background: color-mix(in srgb, var(--tinte) 12%, transparent);
+                align-items: flex-start; justify-content: flex-start; padding: .2rem .35rem; }
+.lienzo .muro { background: var(--tinte); border-radius: 2px; }
+.lienzo .puerta { background: repeating-linear-gradient(45deg, var(--tinte) 0 6px, transparent 6px 12px); }
+.lienzo .mesa { background: var(--tinte); border: 2px solid var(--borde); }
+.lienzo .mesa.redonda { border-radius: 50%; }
+.lienzo .mesa.ocupada { border-color: var(--mal); box-shadow: 0 0 0 2px var(--mal) inset; }
+.lienzo .equipo, .lienzo .barra { background: color-mix(in srgb, var(--tinte) 35%, var(--panel));
+                                  border: 2px solid var(--tinte); }
+.lienzo .pieza.elegida { outline: 2px solid var(--acento); outline-offset: 2px; z-index: 9; }
+.lienzo .tirador { position: absolute; right: -5px; bottom: -5px; width: 12px; height: 12px;
+                   background: var(--acento); border-radius: 3px; cursor: nwse-resize; }
+.lienzo .ficha-plano { position: absolute; transform: translate(-50%, -50%); z-index: 8;
+                       background: var(--acento); color: #fff; border-radius: 999px;
+                       padding: .1rem .45rem; font-size: .7rem; font-weight: 700; }
+.paleta { flex-wrap: wrap; margin-bottom: .5rem; }

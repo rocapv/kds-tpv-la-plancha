@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Plano del local · Cantina Vesta-9</title>
+<link rel="stylesheet" href="/css/estilo.css?v=__V__">
+</head>
+<body>
+<header class="barra">
+  <a href="/"><button>◀ Menú</button></a>
+  <h1>Plano del local</h1>
+  <span class="hueco"></span>
+  <button id="b-editar" class="primario" hidden>Editar plano</button>
+  <button id="b-generar" hidden title="Dibuja un local de partida y reparte las mesas">Regenerar</button>
+  <span id="conexion" class="conexion"></span>
+</header>
+
+<main class="informe">
+  <div id="paleta" class="fila paleta" hidden>
+    <span class="tenue">Añadir:</span>
+    <button data-add="muro">Muro</button>
+    <button data-add="puerta">Puerta</button>
+    <button data-add="zona">Zona</button>
+    <button data-add="mesa">Mesa</button>
+    <button data-add="barra">Barra</button>
+    <button data-add="equipo">Equipo de cocina</button>
+    <span class="hueco"></span>
+    <button id="b-borrar" class="mal">Quitar la pieza elegida</button>
+  </div>
+
+  <div class="caja">
+    <div id="lienzo" class="lienzo"></div>
+  </div>
+  <p id="sin-colocar" class="tenue"></p>
+  <p class="tenue">Vista desde arriba. En modo edición se arrastra cada pieza y se estira por la
+  esquina; <b>Supr</b> quita la elegida. Lo que ocupa sitio —mesas, barra y equipos— no se puede
+  soltar dentro de un muro: lo comprueba el servidor, no el navegador. Las mesas van enlazadas a
+  la tabla <code>mesas</code>, así que una mesa ocupada se ve en rojo aquí y en el TPV.</p>
+</main>
+
+<script src="/js/comun.js?v=__V__"></script>
+<script src="/js/sesion.js?v=__V__"></script>
+<script src="/js/plano.js?v=__V__"></script>
+<script>
+exigirSesion(['camarero', 'cocina', 'encargado']).then(async (yo) => {
+  PUEDE_EDITAR = !!yo.gestion;
+  $('#b-editar').hidden = !PUEDE_EDITAR;
+  $('#b-generar').hidden = !PUEDE_EDITAR;
+  $('#b-editar').onclick = () => modoEdicion(!EDITANDO);
+  $('#b-borrar').onclick = borrarSeleccionado;
+  $('#b-generar').onclick = async () => {
+    if (!confirm('Regenerar el plano de cero? Se pierde la colocacion actual.')) return;
+    await api('/plano/generar', { method: 'POST' });
+    aviso('Plano regenerado', 'ok');
+    cargarPlano();
+  };
+  document.querySelectorAll('[data-add]').forEach(b => b.onclick = () => anadir(b.dataset.add));
+  conectarWS(ev => { if (['plano', 'mesas', 'plantilla', 'reconectado'].includes(ev.tipo)) cargarPlano(); });
+  cargarPlano();
+});
+</script>
+</body>
+</html>

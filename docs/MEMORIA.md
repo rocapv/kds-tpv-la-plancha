@@ -118,6 +118,13 @@ escenario para el papel y el mejor para un KDS.
 | Cuiner / TPV genérico Android | Cuota baja o gratuito con publicidad | 0–20 €/mes | Datos fuera del local; funciones limitadas |
 | **La Plancha (este proyecto)** | Software propio | Coste de implantación | Requiere quien lo mantenga |
 
+Se ha estudiado además una demostración real de un KDS comercial (STARPOS) integrado en un TPV
+Windows: tres columnas por estado, despacho por producto o por comanda y filtro por fechas. El
+análisis completo, con el método de captura y las diferencias encontradas, está en
+[docs/ANALISIS_KDS_COMPETENCIA.md](ANALISIS_KDS_COMPETENCIA.md). Dos conclusiones de ahí: su KDS
+vive dentro del TPV —hace falta un equipo Windows con el punto de venta para ver las comandas— y
+su contador de tiempo sube sin avisar (en su propia demostración se ve una comanda con 360 min).
+
 La conclusión del análisis es clara: el mercado está cubierto en funcionalidad, pero cobra **por
 terminal**. Un local que quiere cuatro pantallas de cocina paga cuatro veces. La propuesta de valor
 de este proyecto no es hacer algo que no exista, sino que el número de pantallas deje de ser una

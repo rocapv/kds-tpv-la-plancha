@@ -272,6 +272,38 @@ WebSocket. Dos cautelas: **la gestión** (carta, usuarios, ajustes, informes, ar
 gobierna lo que se **hace**, no lo que se **mira** (los contadores del menú siguen siendo de lectura
 para cualquier sesión válida).
 
+## Plano del local en 2D
+
+`plano.html` dibuja el local visto desde arriba: muros, puertas, zonas (comedor, mirador,
+atraque, cocina, oficina, recogida), las mesas —enlazadas a la tabla `mesas`, así que una mesa
+ocupada se ve en rojo— y los equipos de cocina, cada uno atado a su sección. Encima se pintan las
+fichas del personal que esté colocado en el plano de puestos.
+
+De encargado para arriba hay modo edición: se arrastra cada pieza, se estira por la esquina y se
+quita con **Supr**; «Regenerar» vuelve a dibujar un local de partida y reparte las mesas por su
+zona. **La regla del muro la aplica el servidor**: lo que ocupa sitio —mesas, barra y equipos— no
+se puede guardar dentro de una pared, y si se intenta, la pieza vuelve a su sitio.
+
+## Escalafones y contraseñas
+
+La posición en la empresa (`escalafones`) es distinta del puesto de cocina y del rol del turno:
+`1 Administrador · 2 Gerente · 3 Encargado · 4 Empleado base · 5 Empleado base junior`. **A menor
+número, más mando**, para que la plantilla pueda crecer por abajo (6, 7, 8…) sin renumerar nada.
+El junior es el primer año; el base cobra un 5 % más.
+
+Quien entra en la gestión lo decide la bandera `gestion` del escalafón, no el rol. La nómina y el
+reparto de escalafones son de gerencia. Cada empleado tiene número (la PK), nombre y apellidos,
+PIN de cuatro cifras para las pantallas y **contraseña** para entrar por número de empleado; la
+contraseña se guarda con pbkdf2-sha256 y sal, y solo se enseña en claro al generarla.
+
+## Simulación con bots por área
+
+Los mandos **▶ ⏸ ⟲** de la barra levantan **un bot por área**: uno en cada puesto de sala, que
+solo sienta gente en su zona, y uno en cada sección de cocina, que solo avanza sus líneas — con la
+persona que el encargado haya puesto en el plano. Además, la caja cobra un ticket cada diez
+segundos pase lo que pase, para que el informe y el arqueo se muevan durante la demo. El **reset**
+borra solo lo que la simulación creó.
+
 ## Mejoras pendientes
 
 En [docs/PENDIENTES.md](docs/PENDIENTES.md).

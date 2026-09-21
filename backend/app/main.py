@@ -1487,6 +1487,174 @@ async def quitar_pantalla(clave: str, u: dict = Depends(exige("encargado"))):
     return {"borrada": True}
 
 
+# ─────────────── Plano del local en 2D (editable) ───────────────
+TIPOS_PLANO = ("muro", "zona", "mesa", "equipo", "puerta", "barra")
+
+
+class ElementoPlano(BaseModel):
+    tipo: str
+    nombre: str = Field("", max_length=40)
+    mesa_id: int | None = None
+    puesto: str | None = Field(None, max_length=20)
+    x: int = Field(0, ge=0, le=1000)
+    y: int = Field(0, ge=0, le=1000)
+    ancho: int = Field(60, ge=4, le=1000)
+    alto: int = Field(60, ge=4, le=1000)
+    forma: str = "rect"
+    icono: str = Field("", max_length=8)
+    color: str = Field("#3a3f49", max_length=7)
+    z: int = Field(1, ge=0, le=20)
+
+
+class CambioElemento(BaseModel):
+    nombre: str | None = Field(None, max_length=40)
+    mesa_id: int | None = None
+    puesto: str | None = Field(None, max_length=20)
+    x: int | None = Field(None, ge=0, le=1000)
+    y: int | None = Field(None, ge=0, le=1000)
+    ancho: int | None = Field(None, ge=4, le=1000)
+    alto: int | None = Field(None, ge=4, le=1000)
+    forma: str | None = None
+    icono: str | None = Field(None, max_length=8)
+    color: str | None = Field(None, max_length=7)
+
+
+def _se_pisan(a: dict, b: dict) -> bool:
+    return (a["x"] < b["x"] + b["ancho"] and a["x"] + a["ancho"] > b["x"]
+            and a["y"] < b["y"] + b["alto"] and a["y"] + a["alto"] > b["y"])
+
+
+def comprobar_sitio(elem: dict, excluir: int | None = None) -> None:
+    """Lo que ocupa sitio físico (mesas, equipos, barra) no puede quedar dentro de un muro.
+    Es la regla que pidió el encargado: no se coloca una silla en mitad de un tabique."""
+    if elem["tipo"] in ("muro", "zona", "puerta"):
+        return
+    for muro in q("SELECT * FROM plano_elementos WHERE tipo='muro'"):
+        if excluir and muro["id"] == excluir:
+            continue
+        if _se_pisan(elem, muro):
+            raise HTTPException(422, f"Ahí hay un muro ({muro['nombre'] or 'sin nombre'}): "
+                                     "eso no se puede colocar dentro de la pared")
+
+
+@app.get("/api/plano")
+def ver_plano(u: dict = Depends(usuario)):
+    """El plano entero, con las mesas enlazadas y su estado de ocupación."""
+    elementos = q("SELECT * FROM plano_elementos ORDER BY z, id")
+    ocupadas = {m["mesa_id"]: m for m in q("""SELECT p.mesa_id, p.id AS pedido_id, p.abierto_en
+                                              FROM pedidos p WHERE p.estado='abierto' AND p.mesa_id IS NOT NULL""")}
+    mesas = {m["id"]: m for m in q("SELECT * FROM mesas")}
+    for e in elementos:
+        if e["tipo"] == "mesa" and e["mesa_id"] in mesas:
+            m = mesas[e["mesa_id"]]
+            e["mesa"] = {"nombre": m["nombre"], "zona": m["zona"], "plazas": m["plazas"],
+                         "pedido_id": (ocupadas.get(m["id"]) or {}).get("pedido_id")}
+    return {"elementos": elementos,
+            "mesas_sin_colocar": [m for m in mesas.values()
+                                  if m["id"] not in {e["mesa_id"] for e in elementos}]}
+
+
+@app.post("/api/plano/elementos", status_code=201)
+async def crear_elemento(d: ElementoPlano, u: dict = Depends(exige("encargado"))):
+    if d.tipo not in TIPOS_PLANO:
+        raise HTTPException(422, "Tipo de elemento desconocido")
+    comprobar_sitio(d.model_dump())
+    with conn() as c, c.cursor() as cur:
+        cur.execute("""INSERT INTO plano_elementos
+                       (tipo, nombre, mesa_id, puesto, x, y, ancho, alto, forma, icono, color, z)
+                       VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
+                    (d.tipo, d.nombre, d.mesa_id, d.puesto, d.x, d.y, d.ancho, d.alto,
+                     d.forma, d.icono, d.color, d.z))
+        eid = cur.lastrowid
+    await hub.emitir("plano")
+    return q1("SELECT * FROM plano_elementos WHERE id=%s", (eid,))
+
+
+@app.patch("/api/plano/elementos/{eid}")
+async def mover_elemento(eid: int, d: CambioElemento, u: dict = Depends(exige("encargado"))):
+    actual = q1("SELECT * FROM plano_elementos WHERE id=%s", (eid,))
+    if not actual:
+        raise HTTPException(404, "Elemento no encontrado")
+    campos = {k: v for k, v in d.model_dump(exclude_unset=True).items() if v is not None}
+    comprobar_sitio({**actual, **campos}, excluir=eid)
+    if campos:
+        q(f"UPDATE plano_elementos SET {', '.join(f'{k}=%s' for k in campos)} WHERE id=%s",
+          (*campos.values(), eid))
+    await hub.emitir("plano")
+    return q1("SELECT * FROM plano_elementos WHERE id=%s", (eid,))
+
+
+@app.delete("/api/plano/elementos/{eid}")
+async def borrar_elemento(eid: int, u: dict = Depends(exige("encargado"))):
+    q("DELETE FROM plano_elementos WHERE id=%s", (eid,))
+    await hub.emitir("plano")
+    return {"ok": True}
+
+
+@app.post("/api/plano/generar")
+async def generar_plano(u: dict = Depends(exige("encargado"))):
+    """Dibuja un local entero de partida y reparte dentro las mesas que ya existen.
+
+    Es el plano de un local de verdad leído desde arriba: fachada con su puerta, comedor a la
+    izquierda, mirador acristalado abajo, atraque (barra) en el centro, cocina al fondo a la
+    derecha con sus equipos, y el paso entre sala y cocina. A partir de aquí se arrastra.
+    """
+    q("DELETE FROM plano_elementos")
+    muro = "#4a5160"
+    piezas = [
+        # perímetro
+        ("muro", "Fachada norte", None, None, 10, 10, 980, 14, "rect", "", muro, 0),
+        ("muro", "Fachada sur", None, None, 10, 976, 980, 14, "rect", "", muro, 0),
+        ("muro", "Muro oeste", None, None, 10, 10, 14, 980, "rect", "", muro, 0),
+        ("muro", "Muro este", None, None, 976, 10, 14, 980, "rect", "", muro, 0),
+        # tabique de cocina y su paso
+        ("muro", "Tabique de cocina", None, None, 620, 24, 14, 470, "rect", "", muro, 0),
+        ("puerta", "Paso a cocina", None, None, 620, 494, 14, 120, "rect", "↔", "#f1c40f", 1),
+        ("puerta", "Entrada", None, None, 120, 976, 120, 14, "rect", "⇕", "#f1c40f", 1),
+        # zonas
+        ("zona", "Comedor presurizado", None, "comedor", 24, 24, 380, 470, "rect", "", "#2471a3", 0),
+        ("zona", "Mirador de la fractura", None, "mirador", 24, 510, 380, 460, "rect", "", "#1f618d", 0),
+        ("zona", "Atraque", None, "atraque", 420, 24, 190, 946, "rect", "", "#5499c7", 0),
+        ("zona", "Cocina", None, None, 640, 24, 336, 700, "rect", "", "#7d6608", 0),
+        ("zona", "Oficina", None, "oficina", 640, 740, 160, 230, "rect", "", "#566573", 0),
+        ("zona", "Recogida", None, "recogida", 812, 740, 164, 230, "rect", "", "#b9770e", 0),
+        # mobiliario fijo
+        ("barra", "Barra", None, "caja", 440, 60, 150, 300, "rect", "▤", "#117864", 2),
+        # equipos de cocina, cada uno atado a su sección
+        ("equipo", "Placa térmica", None, "plancha", 660, 60, 140, 110, "rect", "🍔", "#c0392b", 2),
+        ("equipo", "Fritura", None, "freidora", 820, 60, 140, 110, "rect", "🍟", "#d68910", 2),
+        ("equipo", "Cámara fría", None, "frios", 660, 200, 140, 110, "rect", "🥗", "#8e44ad", 2),
+        ("equipo", "Barra de oxígeno", None, "barra", 820, 200, 140, 110, "rect", "🥤", "#229954", 2),
+        ("equipo", "Pase", None, "pase", 660, 340, 300, 90, "rect", "🔔", "#7d6608", 2),
+        ("equipo", "Lavado", None, None, 660, 450, 140, 100, "rect", "🚿", "#34495e", 2),
+        ("equipo", "Cámara de despensa", None, None, 820, 450, 140, 100, "rect", "📦", "#34495e", 2),
+    ]
+    with conn() as c, c.cursor() as cur:
+        cur.executemany("""INSERT INTO plano_elementos
+            (tipo, nombre, mesa_id, puesto, x, y, ancho, alto, forma, icono, color, z)
+            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""", piezas)
+        # Las mesas de verdad, repartidas dentro de la zona que les toca por su `zona`.
+        cajas = {"sala": (60, 70, 330, 400), "terraza": (60, 560, 330, 380), "barra": (455, 400, 120, 520)}
+        contador = {k: 0 for k in cajas}
+        for m in q("SELECT * FROM mesas ORDER BY zona, id"):
+            x0, y0, anchura, altura = cajas.get(m["zona"], cajas["sala"])
+            i = contador.get(m["zona"], 0)
+            contador[m["zona"]] = i + 1
+            columnas = max(1, anchura // 120)
+            cx = x0 + (i % columnas) * 120
+            cy = y0 + (i // columnas) * 120
+            cy = min(cy, y0 + max(0, altura - 90))
+            cur.execute("""INSERT INTO plano_elementos
+                (tipo, nombre, mesa_id, puesto, x, y, ancho, alto, forma, icono, color, z)
+                VALUES ('mesa',%s,%s,NULL,%s,%s,%s,%s,%s,'',%s,3)""",
+                        (m["nombre"], m["id"], cx, cy, 86, 86,
+                         "circ" if m["zona"] != "barra" else "rect",
+                         "#2b2f36"))
+        c.commit()
+    await hub.emitir("plano")
+    return ver_plano(u)
+
+
 # ─────────────── Plano de la cantina: quién está dónde ───────────────
 class Destino(BaseModel):
     puesto: str | None = None                       # None = quitar del plano
