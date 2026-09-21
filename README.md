@@ -17,7 +17,8 @@ Proyecto Intermodular 1 · 1º ASIR. Sistema de punto de venta (TPV) para sala y
 - **Backend:** Python 3.12, FastAPI y PyMySQL. Expone una API REST y un WebSocket `/ws` que avisa a todas las pantallas cuando hay cambios.
 - **Base de datos:** MariaDB. Los importes se guardan en céntimos (enteros) y el precio se congela en cada línea en el momento de la venta. El IVA es el 10 % de hostelería, incluido en el precio.
 - **Frontend:** HTML, CSS y JavaScript sin frameworks, pensado para pantallas táctiles. El ticket y la factura se ven en la propia pantalla.
-- **Sistema:** servicio `systemd --user` con reinicio automático, en Linux Mint 22.3.
+- **Seguridad:** sesiones con token (el PIN solo viaja al entrar), roles comprobados en el servidor y **HTTPS** en todo el tráfico, incluido el WebSocket.
+- **Sistema:** tres servicios `systemd --user` con reinicio automático, en Linux Mint 22.3.
 
 ## Aplicaciones
 
@@ -58,18 +59,51 @@ que repetir la petición devuelve la misma factura en lugar de duplicarla.
 
 Las comandas se ponen en amarillo a los 8 minutos y en rojo, parpadeando, a los 15.
 
+## Seguridad
+
+**Sesiones.** `POST /api/login` es el único sitio por donde pasa el PIN: devuelve un token que se
+guarda en la tabla `sesiones` (así un reinicio del servicio no echa a nadie a media comanda) y que
+viaja en `Authorization: Bearer …` en cada petición. El WebSocket también lo exige y cierra con el
+código 4401 si no vale. Las sesiones caducan a las 12 h (ajustable en Ajustes) y el encargado puede
+ver y cerrar las sesiones abiertas.
+
+**Roles, comprobados en el servidor** (no en el navegador):
+
+| Rol | Puede |
+|---|---|
+| camarero | mesas, pedidos, cobros, facturas y documentos |
+| cocina | pantallas KDS y avance de comandas |
+| encargado | todo lo anterior + usuarios, carta, ajustes e informes |
+
+Cada pantalla pide el PIN si no hay sesión, y avisa si el rol no es el que toca.
+
+**HTTPS.** El tráfico va cifrado en el puerto **8443**; el 8090 solo devuelve un 301 hacia él, para
+que ninguna pantalla vieja siga tecleando PIN sobre HTTP. En el aula el TLS lo termina el propio
+uvicorn, porque no hay root para instalar nginx; `deploy/nginx-kds-tpv.conf` deja la configuración
+de nginx lista (con las cabeceras del WebSocket y HSTS) para la máquina donde sí se tenga.
+El certificado es autofirmado (`deploy/certificado.sh`, con la IP en `subjectAltName`), así que la
+primera vez el navegador avisa: es lo esperado en una demo de aula.
+
 ## Instalación (Mint)
 
 ```bash
 sudo mariadb < deploy/00_crear_bd.sql   # una vez: crea la BD y da permisos
-sudo loginctl enable-linger roca        # una vez: el servicio sigue vivo sin sesión abierta
-bash deploy/instalar.sh                 # venv, esquema, datos de ejemplo y servicio
+sudo loginctl enable-linger roca        # una vez: los servicios siguen vivos sin sesión abierta
+bash deploy/instalar.sh                 # venv, BD, certificado y servicios
 bash deploy/instalar.sh --reset-bd      # vuelve a los datos de ejemplo
 ```
 
+Servicios que quedan instalados:
+
+| Unidad | Qué hace |
+|---|---|
+| `kds-tpv.service` | la aplicación, HTTPS en el 8443 |
+| `kds-tpv-http.service` | 301 del 8090 al 8443 |
+| `kds-mariadb.service` | solo si no hay root: MariaDB del usuario |
+
 ## Demo
 
-- Portada: `http://<ip-mint>:8090/`
+- Portada: `https://<ip-mint>:8443/` (el 8090 redirige)
 - PIN de prueba: Laura `1111`, Marc `2222` (camareros), Pau `9999` (encargado).
 - Servicio simulado:
 
@@ -111,6 +145,6 @@ En [docs/PENDIENTES.md](docs/PENDIENTES.md).
 
 ## Límites conocidos (mejoras futuras)
 
-- El PIN identifica al empleado, pero la API no exige token. Es aceptable en una LAN cerrada, no en Internet.
-- No hay HTTPS. En producción iría detrás de nginx con TLS.
+- El certificado es autofirmado: vale para la LAN del aula, no para Internet.
+- El PIN de 4 cifras es cómodo en barra pero débil; no hay límite de intentos ni segundo factor.
 - No hay control de stock ni facturación Verifactu.

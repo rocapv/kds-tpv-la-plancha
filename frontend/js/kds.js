@@ -63,5 +63,7 @@ function temporizadores() {
 }
 setInterval(temporizadores, 1000);
 
-conectarWS(ev => { if (['kds', 'listo', 'reconectado'].includes(ev.tipo)) cargar(); });
-cargar();
+exigirSesion(['cocina', 'encargado']).then(() => {
+  conectarWS(ev => { if (['kds', 'listo', 'reconectado'].includes(ev.tipo)) cargar(); });
+  cargar();
+});

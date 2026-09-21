@@ -47,6 +47,7 @@
 </main>
 
 <script src="/js/comun.js?v=__V__"></script>
+<script src="/js/sesion.js?v=__V__"></script>
 <script>
 async function refrescar() {
   try {
@@ -62,8 +63,10 @@ async function refrescar() {
   } catch (e) { $('#estado-servicio').textContent = 'sin conexión con el servidor'; }
 }
 setInterval(() => $('#reloj').textContent = new Date().toLocaleTimeString('es-ES'), 1000);
-conectarWS(() => refrescar());
-refrescar();
+exigirSesion(['camarero', 'cocina', 'encargado']).then(() => {
+  conectarWS(() => refrescar());
+  refrescar();
+});
 </script>
 </body>
 </html>

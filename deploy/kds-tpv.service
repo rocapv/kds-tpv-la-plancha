@@ -1,12 +1,16 @@
 [Unit]
-Description=KDS + TPV La Plancha (FastAPI)
+Description=KDS + TPV La Plancha (FastAPI, HTTPS)
 After=network-online.target
+Requires=kds-mariadb.service
+After=kds-mariadb.service
 
 [Service]
 WorkingDirectory=@DIR@/backend
 Environment=KDS_DB_USER=roca
 Environment=KDS_DB_SOCKET=/run/mysqld/mysqld.sock
-ExecStart=@DIR@/backend/.venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8090
+ExecStart=@DIR@/backend/.venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8443 \
+  --ssl-keyfile %h/.local/share/kds-tpv/certs/key.pem \
+  --ssl-certfile %h/.local/share/kds-tpv/certs/cert.pem
 Restart=always
 RestartSec=3
 

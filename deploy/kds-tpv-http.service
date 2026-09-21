@@ -1,0 +1,14 @@
+[Unit]
+Description=KDS + TPV: redirección de HTTP a HTTPS
+After=network-online.target
+
+[Service]
+WorkingDirectory=@DIR@/backend
+# Este proceso NO sirve la aplicación: solo responde 301 hacia https://<host>:8443
+Environment=KDS_SOLO_REDIRECCION=8443
+ExecStart=@DIR@/backend/.venv/bin/uvicorn app.redirector:app --host 0.0.0.0 --port 8090
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=default.target

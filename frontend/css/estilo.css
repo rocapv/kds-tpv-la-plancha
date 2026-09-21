@@ -149,3 +149,6 @@ header.barra a { text-decoration: none; }
 .cab-cat { display: flex; justify-content: space-between; align-items: center; margin-bottom: .5rem; }
 tr.baja td { color: var(--tenue); text-decoration: line-through; }
 tr.baja td button { text-decoration: none; }
+
+.pin .pantalla.mal { color: var(--mal); animation: parpadeo .3s 2; }
+.pin .pantalla { letter-spacing: .5em; }

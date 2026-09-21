@@ -29,6 +29,7 @@
 </main>
 
 <script src="/js/comun.js?v=__V__"></script>
+<script src="/js/sesion.js?v=__V__"></script>
 <script src="/js/documento.js?v=__V__"></script>
 <script>
 $('#fecha').value = new Date().toLocaleDateString('sv');
@@ -69,8 +70,10 @@ async function cargar() {
   const total = facturas.reduce((s, f) => s + f.total_cent, 0);
   $('#resumen').textContent = `${facturas.length} facturas · ${euro(total)}`;
 }
-conectarWS(ev => { if (ev.tipo === 'mesas') cargar(); });
-cargar();
+exigirSesion(['camarero', 'encargado']).then(() => {
+  conectarWS(ev => { if (ev.tipo === 'mesas') cargar(); });
+  cargar();
+});
 </script>
 </body>
 </html>

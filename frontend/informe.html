@@ -24,6 +24,7 @@
   <section class="caja" style="margin-top:.8rem"><h3>Ventas por hora</h3><table id="horas"></table></section>
 </main>
 <script src="/js/comun.js?v=__V__"></script>
+<script src="/js/sesion.js?v=__V__"></script>
 <script>
 $('#fecha').value = new Date().toLocaleDateString('sv');
 $('#fecha').onchange = cargar;
@@ -42,8 +43,10 @@ async function cargar() {
     <td><div class="barra-h" style="width:${(h.total_cent / max * 100).toFixed(1)}%"></div></td>
     <td class="num" style="width:7em">${euro(h.total_cent)}</td></tr>`).join('') || '<tr><td class="tenue">Sin ventas</td></tr>';
 }
-conectarWS(ev => { if (ev.tipo === 'mesas') cargar(); });
-cargar();
+exigirSesion(['encargado']).then(() => {
+  conectarWS(ev => { if (ev.tipo === 'mesas') cargar(); });
+  cargar();
+});
 </script>
 </body>
 </html>

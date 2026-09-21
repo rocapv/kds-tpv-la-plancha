@@ -33,6 +33,7 @@
 </dialog>
 
 <script src="/js/comun.js?v=__V__"></script>
+<script src="/js/sesion.js?v=__V__"></script>
 <script>
 let editando = null;
 async function cargar() {
@@ -83,8 +84,10 @@ $('#u-ok').onclick = async () => {
     aviso('Guardado', 'ok');
   } catch (e) { aviso(e.message, 'error'); }
 };
-conectarWS(() => {});
-cargar();
+exigirSesion(['encargado']).then(() => {
+  conectarWS(() => {});
+  cargar();
+});
 </script>
 </body>
 </html>

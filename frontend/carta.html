@@ -47,6 +47,7 @@
 </dialog>
 
 <script src="/js/comun.js?v=__V__"></script>
+<script src="/js/sesion.js?v=__V__"></script>
 <script>
 let cats = [], editandoProd = null, editandoCat = null;
 
@@ -139,8 +140,10 @@ $('#c-ok').onclick = async () => {
   } catch (e) { aviso(e.message, 'error'); }
 };
 
-conectarWS(ev => { if (ev.tipo === 'carta') cargar(); });
-cargar();
+exigirSesion(['encargado']).then(() => {
+  conectarWS(ev => { if (ev.tipo === 'carta') cargar(); });
+  cargar();
+});
 </script>
 </body>
 </html>

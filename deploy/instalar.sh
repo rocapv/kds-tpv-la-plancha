@@ -14,11 +14,23 @@ if [ "${1:-}" = "--reset-bd" ] || ! mariadb kds_tpv -e "SELECT 1 FROM empleados 
   mariadb kds_tpv < sql/01_schema.sql
   mariadb kds_tpv < sql/02_seed.sql
 fi
+# Ampliaciones: se pueden aplicar sobre una BD ya en uso
+for ampliacion in sql/0[3-9]_*.sql; do
+  echo "· Aplicando $(basename "$ampliacion")"
+  mariadb kds_tpv < "$ampliacion" || true
+done
+
+echo "· Certificado TLS"
+bash "$DIR/deploy/certificado.sh"
 
 mkdir -p ~/.config/systemd/user
-sed "s#@DIR@#$DIR#g" "$DIR/deploy/kds-tpv.service" > ~/.config/systemd/user/kds-tpv.service
+for u in kds-tpv kds-tpv-http; do
+  sed "s#@DIR@#$DIR#g" "$DIR/deploy/$u.service" > ~/.config/systemd/user/$u.service
+done
 systemctl --user daemon-reload
-systemctl --user enable --now kds-tpv.service
-systemctl --user restart kds-tpv.service
-sleep 2
-curl -fsS http://localhost:8090/api/salud && echo && echo "OK · http://$(hostname -I | awk '{print $1}'):8090/"
+systemctl --user enable --now kds-tpv.service kds-tpv-http.service
+systemctl --user restart kds-tpv.service kds-tpv-http.service
+sleep 3
+IP="$(hostname -I | awk '{print $1}')"
+curl -fsSk https://localhost:8443/api/salud && echo
+echo "OK · https://$IP:8443/   (el puerto 8090 redirige aquí)"

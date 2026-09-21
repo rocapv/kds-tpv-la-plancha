@@ -1,19 +1,10 @@
 # Mejoras pendientes
 
-De las diez propuestas el 21/09/2026, están hechas la **7** (carta editable) y la **4** (dividir
-cuenta y pago mixto). Las ocho restantes quedan aquí, ordenadas por lo que aportan al proyecto.
+De las diez propuestas el 21/09/2026 están hechas la **7** (carta editable), la **4** (dividir
+cuenta y pago mixto), la **1** (sesiones con token y roles) y la **2** (HTTPS). Las seis restantes
+quedan aquí, ordenadas por lo que aportan al proyecto.
 
 ## Administración de sistemas (lo que más peso tiene en el ciclo)
-
-### 1. Sesión con token y roles comprobados en el servidor
-Hoy el PIN identifica al empleado, pero la API no exige nada: cualquiera en la LAN puede llamarla.
-Un token corto por turno, guardado en el navegador, y el rol comprobado en cada endpoint. Usuarios,
-Carta y Ajustes deberían quedar solo para el rol `encargado`.
-
-### 2. HTTPS con nginx delante
-Sin TLS los PIN viajan en claro por la red del local. Un nginx con certificado propio termina el
-TLS, sirve los estáticos y deja un único puerto abierto. Encaja con Planificació i Administració de
-Xarxes.
 
 ### 6. Copia de seguridad automática de MariaDB
 `mariadb-dump` diario con un `systemd timer`, retención de una semana y comprobación de que la copia

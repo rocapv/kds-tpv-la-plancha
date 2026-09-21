@@ -9,11 +9,12 @@ import json
 from datetime import datetime
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi import Depends, FastAPI, Header, HTTPException, Request, WebSocket, WebSocketDisconnect
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
+from .auth import abrir_sesion, cerrar_sesion, exige, usuario, usuario_de_token
 from .db import conn, q, q1
 
 app = FastAPI(title="KDS + TPV · La Plancha", version="1.0")
@@ -46,7 +47,10 @@ hub = Hub()
 
 
 @app.websocket("/ws")
-async def ws_endpoint(ws: WebSocket):
+async def ws_endpoint(ws: WebSocket, token: str | None = None):
+    if not usuario_de_token(token):
+        await ws.close(code=4401)      # 4401: sesión no válida
+        return
     await hub.entrar(ws)
     try:
         while True:
@@ -61,7 +65,6 @@ class Login(BaseModel):
 
 
 class NuevoPedido(BaseModel):
-    empleado_id: int
     tipo: str = "sala"
     mesa_id: int | None = None
     cliente: str | None = None
@@ -181,15 +184,38 @@ def salud():
 
 
 @app.post("/api/login")
-def login(d: Login):
-    e = q1("SELECT id, nombre, rol FROM empleados WHERE pin=%s AND activo", (d.pin,))
-    if not e:
-        raise HTTPException(401, "PIN incorrecto")
-    return e
+def login(d: Login, user_agent: str | None = Header(None)):
+    """Único sitio donde viaja el PIN. Devuelve el token de la sesión."""
+    return abrir_sesion(d.pin, user_agent)
+
+
+@app.post("/api/logout")
+def logout(u: dict = Depends(usuario)):
+    cerrar_sesion(u["token"])
+    return {"ok": True}
+
+
+@app.get("/api/yo")
+def yo(u: dict = Depends(usuario)):
+    return {"id": u["id"], "nombre": u["nombre"], "rol": u["rol"], "caduca_en": u["caduca_en"]}
+
+
+@app.get("/api/sesiones")
+def sesiones_abiertas(u: dict = Depends(exige("encargado"))):
+    return q("""SELECT s.token, s.creada_en, s.ultimo_uso, s.caduca_en, s.agente,
+                       e.nombre, e.rol
+                FROM sesiones s JOIN empleados e ON e.id=s.empleado_id
+                WHERE s.caduca_en > NOW() ORDER BY s.ultimo_uso DESC""")
+
+
+@app.delete("/api/sesiones/{token}")
+def cerrar_otra_sesion(token: str, u: dict = Depends(exige("encargado"))):
+    cerrar_sesion(token)
+    return {"ok": True}
 
 
 @app.get("/api/catalogo")
-def catalogo(todo: bool = False):
+def catalogo(todo: bool = False, u: dict = Depends(usuario)):
     """La carta. Con todo=true incluye bajas y agotados (lo usa la app de carta)."""
     cats = q("SELECT * FROM categorias" + ("" if todo else " WHERE activa") + " ORDER BY orden, id")
     prods = q("SELECT * FROM productos" + ("" if todo else " WHERE activo") + " ORDER BY categoria_id, orden, id")
@@ -199,7 +225,7 @@ def catalogo(todo: bool = False):
 
 
 @app.get("/api/mesas")
-def mesas():
+def mesas(u: dict = Depends(exige("camarero", "encargado"))):
     return q("""SELECT m.*, p.id AS pedido_id, p.abierto_en, v.total_cent
                 FROM mesas m
                 LEFT JOIN pedidos p ON p.mesa_id=m.id AND p.estado='abierto'
@@ -209,7 +235,7 @@ def mesas():
 
 # ─────────────── Pedidos (TPV) ───────────────
 @app.get("/api/pedidos")
-def pedidos_abiertos():
+def pedidos_abiertos(u: dict = Depends(exige("camarero", "encargado"))):
     return q("""SELECT p.id, p.tipo, p.cliente, p.abierto_en, m.nombre AS mesa, v.total_cent
                 FROM pedidos p LEFT JOIN mesas m ON m.id=p.mesa_id
                 JOIN v_totales_pedido v ON v.pedido_id=p.id
@@ -217,7 +243,7 @@ def pedidos_abiertos():
 
 
 @app.post("/api/pedidos")
-async def crear_pedido(d: NuevoPedido):
+async def crear_pedido(d: NuevoPedido, u: dict = Depends(exige("camarero", "encargado"))):
     if d.tipo == "sala":
         if not d.mesa_id:
             raise HTTPException(422, "Falta la mesa")
@@ -226,19 +252,19 @@ async def crear_pedido(d: NuevoPedido):
             return pedido_completo(ya["id"])
     with conn() as c, c.cursor() as cur:
         cur.execute("INSERT INTO pedidos (tipo, mesa_id, empleado_id, cliente) VALUES (%s,%s,%s,%s)",
-                    (d.tipo, d.mesa_id if d.tipo == "sala" else None, d.empleado_id, d.cliente))
+                    (d.tipo, d.mesa_id if d.tipo == "sala" else None, u["id"], d.cliente))
         pid = cur.lastrowid
     await hub.emitir("mesas")
     return pedido_completo(pid)
 
 
 @app.get("/api/pedidos/{pid}")
-def ver_pedido(pid: int):
+def ver_pedido(pid: int, u: dict = Depends(usuario)):
     return pedido_completo(pid)
 
 
 @app.post("/api/pedidos/{pid}/lineas")
-async def anadir_linea(pid: int, d: NuevaLinea):
+async def anadir_linea(pid: int, d: NuevaLinea, u: dict = Depends(exige("camarero", "encargado"))):
     exigir_abierto(pid)
     pr = q1("SELECT nombre, precio_cent, estacion, disponible FROM productos WHERE id=%s AND activo",
             (d.producto_id,))
@@ -254,7 +280,7 @@ async def anadir_linea(pid: int, d: NuevaLinea):
 
 
 @app.delete("/api/pedidos/{pid}/lineas/{lid}")
-async def quitar_linea(pid: int, lid: int):
+async def quitar_linea(pid: int, lid: int, u: dict = Depends(exige("camarero", "encargado"))):
     exigir_abierto(pid)
     l = q1("SELECT estado FROM lineas_pedido WHERE id=%s AND pedido_id=%s", (lid, pid))
     if not l:
@@ -269,7 +295,7 @@ async def quitar_linea(pid: int, lid: int):
 
 
 @app.post("/api/pedidos/{pid}/enviar")
-async def enviar_a_cocina(pid: int):
+async def enviar_a_cocina(pid: int, u: dict = Depends(exige("camarero", "encargado"))):
     exigir_abierto(pid)
     with conn() as c, c.cursor() as cur:
         n = cur.execute("""UPDATE lineas_pedido SET estado='enviada', enviada_en=NOW()
@@ -280,7 +306,7 @@ async def enviar_a_cocina(pid: int):
 
 
 @app.post("/api/pedidos/{pid}/cobrar")
-async def cobrar(pid: int, d: Cobro):
+async def cobrar(pid: int, d: Cobro, u: dict = Depends(exige("camarero", "encargado"))):
     exigir_abierto(pid)
     if d.metodo not in ("efectivo", "tarjeta", "bizum"):
         raise HTTPException(422, "Método de pago no válido")
@@ -307,7 +333,7 @@ async def cobrar(pid: int, d: Cobro):
 
 
 @app.post("/api/pedidos/{pid}/anular")
-async def anular(pid: int):
+async def anular(pid: int, u: dict = Depends(exige("camarero", "encargado"))):
     exigir_abierto(pid)
     q("UPDATE lineas_pedido SET estado='anulada' WHERE pedido_id=%s AND estado NOT IN ('servida')", (pid,))
     q("UPDATE pedidos SET estado='anulado', cerrado_en=NOW() WHERE id=%s", (pid,))
@@ -318,7 +344,7 @@ async def anular(pid: int):
 
 # ─────────────── KDS (cocina) ───────────────
 @app.get("/api/kds")
-def kds(estacion: str | None = None):
+def kds(estacion: str | None = None, u: dict = Depends(usuario)):
     """Comandas activas agrupadas por pedido. Sin estación = vista de pase (todas)."""
     if estacion and estacion not in ESTACIONES:
         raise HTTPException(422, "Estación desconocida")
@@ -350,7 +376,7 @@ SIGUIENTE = {"enviada": "preparando", "preparando": "lista", "lista": "servida"}
 
 
 @app.patch("/api/lineas/{lid}")
-async def cambiar_estado_linea(lid: int, d: CambioEstado):
+async def cambiar_estado_linea(lid: int, d: CambioEstado, u: dict = Depends(exige("cocina", "encargado"))):
     l = q1("SELECT estado, pedido_id FROM lineas_pedido WHERE id=%s", (lid,))
     if not l:
         raise HTTPException(404, "Línea no encontrada")
@@ -366,7 +392,7 @@ async def cambiar_estado_linea(lid: int, d: CambioEstado):
 
 
 @app.post("/api/kds/pedido/{pid}/avanzar")
-async def avanzar_pedido(pid: int, estacion: str | None = None):
+async def avanzar_pedido(pid: int, estacion: str | None = None, u: dict = Depends(exige("cocina", "encargado"))):
     """Botón 'bump': avanza todas las líneas del pedido (de esa estación) un paso."""
     filtro = "AND estacion=%s" if estacion else ""
     args = (pid, estacion) if estacion else (pid,)
@@ -388,7 +414,7 @@ async def avanzar_pedido(pid: int, estacion: str | None = None):
 
 # ─────────────── Informes (encargado) ───────────────
 @app.get("/api/informe")
-def informe(fecha: str | None = None):
+def informe(fecha: str | None = None, u: dict = Depends(exige("encargado"))):
     dia = fecha or datetime.now().strftime("%Y-%m-%d")
     resumen = q1("""SELECT COUNT(*) AS tickets, COALESCE(SUM(importe_cent),0) AS total_cent
                     FROM pagos WHERE DATE(pagado_en)=%s""", (dia,))
@@ -416,7 +442,7 @@ def informe(fecha: str | None = None):
 
 # ─────────────── Carta (app de carta) ───────────────
 @app.post("/api/categorias", status_code=201)
-async def crear_categoria(d: NuevaCategoria):
+async def crear_categoria(d: NuevaCategoria, u: dict = Depends(exige("encargado"))):
     with conn() as c, c.cursor() as cur:
         cur.execute("INSERT INTO categorias (nombre, color, orden) VALUES (%s,%s,%s)",
                     (d.nombre.strip(), d.color, d.orden))
@@ -426,7 +452,7 @@ async def crear_categoria(d: NuevaCategoria):
 
 
 @app.patch("/api/categorias/{cid}")
-async def editar_categoria(cid: int, d: CambioCategoria):
+async def editar_categoria(cid: int, d: CambioCategoria, u: dict = Depends(exige("encargado"))):
     if not q1("SELECT id FROM categorias WHERE id=%s", (cid,)):
         raise HTTPException(404, "Categoría no encontrada")
     campos = {k: v for k, v in d.model_dump().items() if v is not None}
@@ -438,7 +464,7 @@ async def editar_categoria(cid: int, d: CambioCategoria):
 
 
 @app.post("/api/productos", status_code=201)
-async def crear_producto(d: NuevoProducto):
+async def crear_producto(d: NuevoProducto, u: dict = Depends(exige("encargado"))):
     if d.estacion not in ESTACIONES:
         raise HTTPException(422, "Estación desconocida")
     if not q1("SELECT id FROM categorias WHERE id=%s", (d.categoria_id,)):
@@ -453,7 +479,7 @@ async def crear_producto(d: NuevoProducto):
 
 
 @app.patch("/api/productos/{prid}")
-async def editar_producto(prid: int, d: CambioProducto):
+async def editar_producto(prid: int, d: CambioProducto, u: dict = Depends(exige("encargado"))):
     if not q1("SELECT id FROM productos WHERE id=%s", (prid,)):
         raise HTTPException(404, "Producto no encontrado")
     if d.estacion and d.estacion not in ESTACIONES:
@@ -467,7 +493,7 @@ async def editar_producto(prid: int, d: CambioProducto):
 
 
 @app.delete("/api/productos/{prid}")
-async def quitar_producto(prid: int):
+async def quitar_producto(prid: int, u: dict = Depends(exige("encargado"))):
     """Baja lógica: los pedidos antiguos deben seguir enseñando qué se vendió."""
     if not q1("SELECT id FROM productos WHERE id=%s", (prid,)):
         raise HTTPException(404, "Producto no encontrado")
@@ -478,7 +504,7 @@ async def quitar_producto(prid: int):
 
 # ─────────────── Pagos: dividir cuenta y pago mixto ───────────────
 @app.post("/api/pedidos/{pid}/pagos", status_code=201)
-async def anadir_pago(pid: int, d: NuevoPago):
+async def anadir_pago(pid: int, d: NuevoPago, u: dict = Depends(exige("camarero", "encargado"))):
     """Un pedido admite varios pagos: por líneas, por partes iguales o a importe libre.
 
     El pedido se cierra solo cuando lo pagado alcanza el total.
@@ -537,7 +563,7 @@ async def anadir_pago(pid: int, d: NuevoPago):
 
 
 @app.delete("/api/pedidos/{pid}/pagos/{pago_id}")
-async def anular_pago(pid: int, pago_id: int):
+async def anular_pago(pid: int, pago_id: int, u: dict = Depends(exige("camarero", "encargado"))):
     """Solo se deshace mientras el pedido siga abierto (error de caja reciente)."""
     exigir_abierto(pid)
     if not q1("SELECT id FROM pagos WHERE id=%s AND pedido_id=%s", (pago_id, pid)):
@@ -553,13 +579,13 @@ ROLES = ("camarero", "cocina", "encargado")
 
 
 @app.get("/api/empleados")
-def listar_empleados(todos: bool = False):
+def listar_empleados(todos: bool = False, u: dict = Depends(exige("encargado"))):
     return q("SELECT id, nombre, rol, pin, activo FROM empleados" +
              ("" if todos else " WHERE activo") + " ORDER BY rol, nombre")
 
 
 @app.post("/api/empleados", status_code=201)
-def crear_empleado(d: NuevoEmpleado):
+def crear_empleado(d: NuevoEmpleado, u: dict = Depends(exige("encargado"))):
     if d.rol not in ROLES:
         raise HTTPException(422, "Rol no válido")
     if q1("SELECT id FROM empleados WHERE pin=%s", (d.pin,)):
@@ -572,7 +598,7 @@ def crear_empleado(d: NuevoEmpleado):
 
 
 @app.patch("/api/empleados/{eid}")
-def editar_empleado(eid: int, d: CambioEmpleado):
+def editar_empleado(eid: int, d: CambioEmpleado, u: dict = Depends(exige("encargado"))):
     if not q1("SELECT id FROM empleados WHERE id=%s", (eid,)):
         raise HTTPException(404, "Empleado no encontrado")
     if d.rol and d.rol not in ROLES:
@@ -587,7 +613,7 @@ def editar_empleado(eid: int, d: CambioEmpleado):
 
 
 @app.delete("/api/empleados/{eid}")
-def baja_empleado(eid: int):
+def baja_empleado(eid: int, u: dict = Depends(exige("encargado"))):
     """No se borra: se da de baja. Sus pedidos históricos deben seguir teniendo autor."""
     if not q1("SELECT id FROM empleados WHERE id=%s", (eid,)):
         raise HTTPException(404, "Empleado no encontrado")
@@ -603,12 +629,12 @@ def ajustes_dict():
 
 
 @app.get("/api/ajustes")
-def ver_ajustes():
+def ver_ajustes(u: dict = Depends(usuario)):
     return ajustes_dict()
 
 
 @app.put("/api/ajustes/{clave}")
-def poner_ajuste(clave: str, d: Ajuste):
+def poner_ajuste(clave: str, d: Ajuste, u: dict = Depends(exige("encargado"))):
     if not q1("SELECT clave FROM ajustes WHERE clave=%s", (clave,)):
         raise HTTPException(404, "Ajuste desconocido")
     q("UPDATE ajustes SET valor=%s WHERE clave=%s", (d.valor, clave))
@@ -627,7 +653,7 @@ def factura_completa(fid: int):
 
 
 @app.post("/api/pedidos/{pid}/factura", status_code=201)
-def emitir_factura(pid: int, d: DatosFactura):
+def emitir_factura(pid: int, d: DatosFactura, u: dict = Depends(exige("camarero", "encargado"))):
     p = pedido_completo(pid)
     if p["estado"] != "cobrado":
         raise HTTPException(409, "Solo se factura un pedido cobrado")
@@ -654,7 +680,7 @@ def emitir_factura(pid: int, d: DatosFactura):
 
 
 @app.get("/api/cobros")
-def cobros(fecha: str | None = None):
+def cobros(fecha: str | None = None, u: dict = Depends(exige("camarero", "encargado"))):
     """Pedidos cobrados de un día, con su factura si ya se emitió."""
     dia = fecha or datetime.now().strftime("%Y-%m-%d")
     return q("""SELECT p.id, p.tipo, p.cliente, p.cerrado_en, m.nombre AS mesa, e.nombre AS camarero,
@@ -670,7 +696,7 @@ def cobros(fecha: str | None = None):
 
 
 @app.get("/api/facturas")
-def listar_facturas(fecha: str | None = None, buscar: str | None = None):
+def listar_facturas(fecha: str | None = None, buscar: str | None = None, u: dict = Depends(exige("camarero", "encargado"))):
     donde, args = [], []
     if fecha:
         donde.append("DATE(f.emitida_en)=%s"); args.append(fecha)
@@ -687,12 +713,12 @@ def listar_facturas(fecha: str | None = None, buscar: str | None = None):
 
 
 @app.get("/api/facturas/{fid}")
-def ver_factura(fid: int):
+def ver_factura(fid: int, u: dict = Depends(exige("camarero", "encargado"))):
     return factura_completa(fid)
 
 
 @app.get("/api/pedidos/{pid}/documento")
-def documento_pedido(pid: int):
+def documento_pedido(pid: int, u: dict = Depends(exige("camarero", "encargado"))):
     """Datos que necesita la pantalla para pintar el ticket o la factura del pedido."""
     p = pedido_completo(pid)
     f = q1("SELECT id FROM facturas WHERE pedido_id=%s", (pid,))

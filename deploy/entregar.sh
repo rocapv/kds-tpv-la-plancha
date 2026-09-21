@@ -15,9 +15,12 @@ for candidato in "/d/ProjecteIntermodular/KDS_TPV" "/c/ProjecteIntermodular/KDS_
 done
 [ -n "$DESTINO" ] || { echo "ERROR: ningún destino admite escritura"; exit 1; }
 
-# robocopy /MIR deja el destino igual que el origen sin tener que borrar el árbol antes
-robocopy "$(cygpath -w "$ORIGEN")" "$(cygpath -w "$DESTINO")" /MIR \
-  /XD .git .venv __pycache__ entrega /NFL /NDL /NJH /NJS /NP >/dev/null || true
+# robocopy /MIR deja el destino igual que el origen sin tener que borrar el arbol antes.
+# MSYS_NO_PATHCONV=1 es imprescindible: sin el, Git Bash convierte /MIR en una ruta
+# ("C:/Program Files/Git/MIR") y robocopy aborta sin copiar nada.
+MSYS_NO_PATHCONV=1 robocopy "$(cygpath -w "$ORIGEN")" "$(cygpath -w "$DESTINO")" /MIR /XD .git .venv __pycache__ entrega /NFL /NDL /NJH /NJS /NP >/dev/null && RC=0 || RC=$?
+# robocopy devuelve 0-7 como exito; >=8 es error real
+[ "$RC" -lt 8 ] || { echo "ERROR: robocopy fallo con codigo $RC"; exit 1; }
 
 # Volcado de la base de datos tal y como está en la Mint
 mkdir -p "$DESTINO/entrega"
@@ -46,4 +49,8 @@ ssh -o ConnectTimeout=10 mint "mariadb-dump --socket=$SOCKET --skip-ssl kds_tpv"
   echo "PIN: Laura 1111 · Marc 2222 · Aitana 3333 · Pau 9999 (encargado)"
 } > "$DESTINO/LEEME.txt"
 
-echo "Entregado en $(cygpath -w "$DESTINO") ($(du -sh "$DESTINO" 2>/dev/null | cut -f1))"
+N=$(find "$DESTINO" -type f | wc -l)
+[ "$N" -ge 20 ] || { echo "ERROR: solo $N ficheros en el destino, la copia esta incompleta"; exit 1; }
+[ -s "$DESTINO/entrega/kds_tpv_datos.sql" ] || { echo "ERROR: el volcado de la BD esta vacio"; exit 1; }
+
+echo "Entregado en $(cygpath -w "$DESTINO") - $N ficheros, $(du -sh "$DESTINO" 2>/dev/null | cut -f1)"

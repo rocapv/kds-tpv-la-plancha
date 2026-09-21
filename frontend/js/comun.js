@@ -4,13 +4,21 @@ const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
 
 async function api(ruta, opciones = {}) {
+  const cabeceras = { 'Content-Type': 'application/json' };
+  const t = typeof tokenActual === 'function' ? tokenActual() : null;
+  if (t) cabeceras.Authorization = 'Bearer ' + t;
   const r = await fetch('/api' + ruta, {
-    headers: { 'Content-Type': 'application/json' },
+    headers: cabeceras,
     ...opciones,
     body: opciones.body ? JSON.stringify(opciones.body) : undefined,
   });
   const datos = await r.json().catch(() => ({}));
-  if (!r.ok) throw new Error(datos.detail?.[0]?.msg || datos.detail || r.statusText);
+  if (!r.ok) {
+    const error = new Error(datos.detail?.[0]?.msg || datos.detail || r.statusText);
+    error.estado = r.status;
+    if (r.status === 401 && typeof borrarSesion === 'function') borrarSesion();
+    throw error;
+  }
   return datos;
 }
 
@@ -18,7 +26,8 @@ async function api(ruta, opciones = {}) {
 function conectarWS(alRecibir) {
   const marca = $('#conexion');
   const abrir = () => {
-    const ws = new WebSocket((location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/ws');
+    const t = typeof tokenActual === 'function' ? tokenActual() : null;
+    const ws = new WebSocket((location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/ws' + (t ? '?token=' + encodeURIComponent(t) : ''));
     ws.onopen = () => { marca && (marca.className = 'conexion ok', marca.title = 'Conectado'); alRecibir({ tipo: 'reconectado' }); };
     ws.onmessage = e => alRecibir(JSON.parse(e.data));
     ws.onclose = () => { marca && (marca.className = 'conexion ko', marca.title = 'Sin conexión'); setTimeout(abrir, 2000); };

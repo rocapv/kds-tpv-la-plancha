@@ -1,45 +1,14 @@
 // TPV de sala: PIN → mesas → carta → enviar a cocina → cobrar
-let empleado = JSON.parse(sessionStorage.getItem('empleado') || 'null');
+let empleado = null;
 let catalogo = [], catActiva = null, pedido = null, productoElegido = null, metodoCobro = 'efectivo';
-let pin = '';
 
-// ── PIN ──
-function pintarTeclado() {
-  const t = $('#teclado');
-  t.innerHTML = '';
-  [1, 2, 3, 4, 5, 6, 7, 8, 9, 'C', 0, '⏎'].forEach(k => {
-    const b = document.createElement('button');
-    b.textContent = k;
-    b.onclick = () => tecla(String(k));
-    t.appendChild(b);
-  });
-}
-async function tecla(k) {
-  if (k === 'C') pin = '';
-  else if (k === '⏎' || pin.length === 3 && k !== '⏎') {
-    if (k !== '⏎') pin += k;
-    try {
-      empleado = await api('/login', { method: 'POST', body: { pin } });
-      sessionStorage.setItem('empleado', JSON.stringify(empleado));
-      entrar();
-    } catch (e) { aviso(e.message, 'error'); }
-    pin = '';
-  } else pin += k;
-  $('#pin-pantalla').textContent = '•'.repeat(pin.length);
-}
-document.addEventListener('keydown', e => {
-  if (!$('#v-pin').hidden && /^[0-9]$/.test(e.key)) tecla(e.key);
-});
-
+// ── Arranque: la sesión la lleva sesion.js (PIN una sola vez, luego token) ──
 async function entrar() {
-  $('#v-pin').hidden = true;
-  $('#v-trabajo').hidden = false;
-  $('#empleado').textContent = `${empleado.nombre} (${empleado.rol})`;
+  empleado = await exigirSesion(['camarero', 'encargado']);
   catalogo = await api('/catalogo');
   catActiva = catalogo[0]?.id;
   verMesas();
 }
-$('#b-salir').onclick = () => { sessionStorage.removeItem('empleado'); location.reload(); };
 
 // ── Mesas ──
 async function verMesas() {
@@ -69,7 +38,7 @@ async function verMesas() {
 $('#b-mesas').onclick = () => { pedido = null; pintarTicket(); verMesas(); };
 
 async function abrirMesa(mesaId) {
-  pedido = await api('/pedidos', { method: 'POST', body: { empleado_id: empleado.id, tipo: 'sala', mesa_id: mesaId } });
+  pedido = await api('/pedidos', { method: 'POST', body: { tipo: 'sala', mesa_id: mesaId } });
   verCarta();
 }
 
@@ -77,7 +46,7 @@ async function abrirMesa(mesaId) {
 $('#b-llevar').onclick = () => { $('#l-nombre').value = ''; $('#d-llevar').showModal(); };
 $('#l-cancelar').onclick = () => $('#d-llevar').close();
 $('#l-ok').onclick = async () => {
-  pedido = await api('/pedidos', { method: 'POST', body: { empleado_id: empleado.id, tipo: 'llevar', cliente: $('#l-nombre').value || 'Cliente' } });
+  pedido = await api('/pedidos', { method: 'POST', body: { tipo: 'llevar', cliente: $('#l-nombre').value || 'Cliente' } });
   $('#d-llevar').close();
   verCarta();
 };
@@ -316,5 +285,4 @@ conectarWS(async ev => {
   if (!$('#v-mesas').hidden && (ev.tipo === 'mesas' || ev.tipo === 'reconectado')) verMesas();
 });
 
-pintarTeclado();
-if (empleado) entrar();
+entrar();
