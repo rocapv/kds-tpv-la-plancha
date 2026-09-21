@@ -205,7 +205,10 @@ def main():
     Path(a.fotos).mkdir(exist_ok=True)
 
     with sync_playwright() as pw:
-        navegador = pw.chromium.launch(headless=not a.ver)
+        # Con el certificado autofirmado sin instalar, Chromium se niega a registrar el
+        # trabajador de servicio del TPV y llena la consola de errores de SSL que no son del
+        # programa. En la tableta del local el certificado estara confiado; aqui se hace igual.
+        navegador = pw.chromium.launch(headless=not a.ver, args=["--ignore-certificate-errors"])
         ctx = navegador.new_context(ignore_https_errors=True, viewport={"width": 1400, "height": 900})
         page = ctx.new_page()
         consola = errores_de_consola(page)
