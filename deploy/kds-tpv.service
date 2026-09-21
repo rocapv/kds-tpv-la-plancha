@@ -1,5 +1,5 @@
 [Unit]
-Description=KDS + TPV La Plancha (FastAPI, HTTPS)
+Description=KDS + TPV Cantina Vesta-9 (FastAPI, HTTPS)
 After=network-online.target
 Requires=kds-mariadb.service
 After=kds-mariadb.service
@@ -7,7 +7,8 @@ After=kds-mariadb.service
 [Service]
 WorkingDirectory=@DIR@/backend
 Environment=KDS_DB_USER=roca
-Environment=KDS_DB_SOCKET=/run/mysqld/mysqld.sock
+# La BD es la MariaDB de usuario que arranca kds-mariadb.service, no la del sistema.
+Environment=KDS_DB_SOCKET=%h/.local/share/kds-mariadb/kds.sock
 ExecStart=@DIR@/backend/.venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8443 \
   --ssl-keyfile %h/.local/share/kds-tpv/certs/key.pem \
   --ssl-certfile %h/.local/share/kds-tpv/certs/cert.pem

@@ -1,11 +1,26 @@
+/* Cantina Vesta-9 · cantina de una estación minera excavada en un asteroide.
+   El decorado es solo color y textura: basalto oscuro, luz de sodio ámbar y el
+   verde del indicador de oxígeno. Sin imágenes ni fuentes externas, porque la
+   estación (y la VM) trabajan sin salida a internet. */
 :root {
-  --fondo: #14161a; --panel: #1e2127; --panel2: #292d35; --borde: #3a3f49;
-  --texto: #eceff4; --tenue: #9aa3b2; --acento: #e67e22; --ok: #27ae60; --mal: #c0392b; --aviso: #f1c40f;
+  --fondo: #100d0c; --panel: #1a1512; --panel2: #241d19; --borde: #3d3129;
+  --texto: #f2ebe2; --tenue: #a4907d; --acento: #f0a02c; --ok: #2fae6b; --mal: #cf3b2c; --aviso: #f5c542;
   --r: 10px; --alerg: #ff8f7a;
+  --roca: #0a0807;          /* la piedra del fondo */
+  --sodio: #f0a02c33;       /* halo de las lámparas de la galería */
 }
 * { box-sizing: border-box; }
 html, body { margin: 0; height: 100%; }
-body { background: var(--fondo); color: var(--texto); font: 16px/1.35 system-ui, "Segoe UI", Roboto, sans-serif; }
+body {
+  color: var(--texto); font: 16px/1.35 system-ui, "Segoe UI", Roboto, sans-serif;
+  /* Dos lámparas en lo alto de la galería y, debajo, la veta de la roca. */
+  background:
+    radial-gradient(60vw 40vh at 18% -10%, var(--sodio), transparent 70%),
+    radial-gradient(50vw 35vh at 88% -5%, #6ad1ff1a, transparent 70%),
+    repeating-linear-gradient(112deg, #ffffff05 0 2px, transparent 2px 9px),
+    linear-gradient(#141010, var(--roca));
+  background-attachment: fixed;
+}
 button { font: inherit; color: inherit; background: var(--panel2); border: 1px solid var(--borde); border-radius: var(--r); padding: .6em 1em; cursor: pointer; touch-action: manipulation; }
 button:hover { filter: brightness(1.15); }
 button:disabled { opacity: .4; cursor: not-allowed; }
@@ -17,8 +32,18 @@ h1, h2, h3 { margin: 0; }
 .tenue { color: var(--tenue); }
 a { color: var(--acento); }   /* sin esto el azul del navegador pinta los botones envueltos en <a> */
 
-header.barra { display: flex; align-items: center; gap: 1rem; padding: .6rem 1rem; background: var(--panel); border-bottom: 1px solid var(--borde); }
-header.barra h1 { font-size: 1.15rem; }
+header.barra {
+  display: flex; align-items: center; gap: 1rem; padding: .6rem 1rem;
+  background: linear-gradient(#211a16, var(--panel));
+  border-bottom: 1px solid var(--borde); box-shadow: 0 1px 0 #f0a02c33, 0 6px 18px #0009;
+}
+header.barra h1 { font-size: 1.15rem; letter-spacing: .06em; text-transform: uppercase; }
+/* Franja de señalización de mantenimiento, como en los mamparos de la estación. */
+header.barra::after {
+  content: ''; position: absolute; left: 0; right: 0; top: 52px; height: 3px; pointer-events: none;
+  background: repeating-linear-gradient(115deg, #f0a02c 0 14px, #1a1512 14px 28px); opacity: .25;
+}
+header.barra { position: relative; }
 header.barra .hueco { flex: 1; }
 .conexion { width: 12px; height: 12px; border-radius: 50%; background: var(--tenue); }
 .conexion.ok { background: var(--ok); } .conexion.ko { background: var(--mal); animation: parpadeo 1s infinite; }
@@ -198,3 +223,82 @@ body.recogida { overflow: hidden; }
 .recuento { display: grid; grid-template-columns: repeat(auto-fill, minmax(8.5rem, 1fr)); gap: .5rem; margin: .8rem 0; }
 .recuento label { display: flex; align-items: center; gap: .4rem; color: var(--tenue); font-variant-numeric: tabular-nums; }
 .recuento input { width: 4.5em; text-align: right; }
+
+/* Mandos de la simulación en la barra (solo encargado) */
+.simulacion { display: inline-flex; align-items: center; gap: .2rem; }
+.simulacion button { padding: .2rem .5rem; line-height: 1; }
+.simulacion button.activo { background: var(--ok); border-color: var(--ok); }
+.simulacion .sim-estado { font-size: .8rem; margin-left: .3rem; }
+
+/* ── Decorado de la estación ────────────────────────────────────────────────
+   Añadidos sobre las clases que ya existían: ninguno cambia posiciones ni
+   tamaños, solo el aspecto, para que el decorado se pueda quitar borrando
+   este bloque y las variables de color. */
+
+/* Paneles: chapa remachada con un filo de luz arriba. */
+.app, .columna, .tpv .der, .menu section > .apps > .app, .visor .pin {
+  box-shadow: inset 0 1px 0 #ffffff12;
+}
+.menu h2 { color: var(--acento); }
+.menu h2::before { content: '▚ '; opacity: .5; }
+
+/* Mesas: las del comedor son escotillas; las ocupadas, en ámbar de aviso. */
+.mesa { background: #201a16; border-color: #45372e; }
+.mesa.ocupada { background: linear-gradient(#5a3412, #3a2210); border-color: var(--acento); }
+
+/* La carta: cada categoría mantiene su color, pero sobre piedra. */
+.producto { background: #1d1714; }
+.producto:hover { border-color: var(--acento); }
+
+/* KDS: las comandas son órdenes de trabajo. */
+.comanda { background: #1c1613; }
+
+/* Pantalla de recogida: el tablón de la galería, leído desde lejos. */
+.tablon .columna { background: linear-gradient(#1b1512, #141010); }
+.tablon .columna.listos { box-shadow: 0 0 0 1px #2fae6b55, 0 0 32px #2fae6b22; }
+.numero { background: #241d19; border-color: #453730; }
+.numero b { text-shadow: 0 0 18px #f0a02c44; }
+.numero.listo { background: linear-gradient(#2fae6b, #238954); border-color: #7ee2a8; }
+
+/* Teclado del PIN: esclusa de acceso. */
+.pin .pantalla { background: #0d0a09; border: 1px solid var(--borde); color: var(--acento); }
+
+/* El ticket impreso sigue siendo papel blanco: es un documento fiscal. */
+
+/* Plano de la cantina (usuarios.html): zonas fijas y fichas de empleado arrastrables */
+.pestanas { display: flex; gap: .3rem; padding: .6rem 1rem 0; }
+.pestanas button.activa { background: var(--acento); border-color: var(--acento); }
+.plano { position: relative; width: 100%; aspect-ratio: 16 / 9; min-height: 340px;
+         background: var(--panel2); border-radius: var(--r); overflow: hidden; touch-action: none; }
+.plano .zona { position: absolute; border: 2px dashed; border-radius: var(--r);
+               padding: .3rem .4rem; display: flex; flex-direction: column; gap: .1rem;
+               background: rgba(0,0,0,.18); pointer-events: none; }
+.plano .zona b { font-size: .85rem; }
+.plano .zona small { font-size: .7rem; }
+.plano .zona.encima { background: rgba(255,255,255,.14); border-style: solid; }
+.plano .ficha { position: absolute; display: flex; align-items: center; gap: .35rem;
+                padding: .2rem .5rem .2rem .2rem; border-radius: 999px; cursor: grab;
+                background: var(--acento); border: 2px solid transparent; color: #fff;
+                font-size: .8rem; touch-action: none; }
+.plano .ficha .ini { display: inline-grid; place-items: center; width: 1.6em; height: 1.6em;
+                     border-radius: 50%; background: rgba(0,0,0,.35); font-weight: 700; }
+.plano .ficha.sin-puesto { background: var(--panel); border-color: var(--borde); color: var(--tenue); }
+.plano .ficha.moviendo { cursor: grabbing; transform: scale(1.08); box-shadow: 0 6px 16px rgba(0,0,0,.5); z-index: 5; }
+.resumen { display: flex; flex-wrap: wrap; gap: .4rem; margin: .6rem 0; }
+.resumen .chip { border: 2px solid var(--borde); border-radius: 999px; padding: .15rem .6rem; font-size: .8rem; }
+
+/* ── KDS: deshacer y repintado sin parpadeos ── */
+.comanda header .deshacer { background: transparent; border: 1px solid #ffffff44; color: inherit; padding: .1rem .45rem; font-size: 1rem; line-height: 1; margin-left: .4rem; }
+.comanda header .deshacer:hover { background: #ffffff22; }
+.comanda li { user-select: none; -webkit-user-select: none; }   /* pulsación larga sin seleccionar texto */
+.comanda li:active { background: #ffffff14; }
+#b-deshacer:disabled { opacity: .35; }
+
+/* Botón de avance del KDS con su franja de deshacer: un solo bloque, dos gestos */
+.bump-grupo { display: flex; gap: 2px; }
+.bump-grupo .bump { flex: 1; border-top-right-radius: 0; border-bottom-right-radius: 0; }
+.bump-grupo .deshacer { width: 2.6em; background: var(--mal); border-color: var(--mal); color: #fff;
+                        border-top-left-radius: 0; border-bottom-left-radius: 0; font-size: 1.1rem; }
+.comanda header .borrar { background: transparent; border-color: transparent; color: var(--tenue);
+                          padding: 0 .3rem; }
+.comanda header .borrar:hover { color: var(--mal); }

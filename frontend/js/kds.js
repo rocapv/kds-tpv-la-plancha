@@ -1,13 +1,34 @@
-// KDS: pantalla de cocina por estación. Clic en línea = avanzar esa línea; botón = avanzar comanda.
-const estacion = new URLSearchParams(location.search).get('estacion') || '';
-const NOMBRES = { plancha: 'Plancha', freidora: 'Freidora', frios: 'Fríos', barra: 'Barra', '': 'Pase (todas)' };
+// KDS: pantalla de cocina por estación.
+//   · clic en una línea        → la avanza un paso
+//   · clic derecho / mantener  → la devuelve un paso
+//   · botón grande             → avanza la comanda entera
+//   · ↶ de la comanda          → deshace el último paso de esa comanda
+//   · ↶ de la barra            → deshace lo último que se tocó en esta pantalla
+//
+// El repintado es incremental: solo se toca lo que ha cambiado. Si se rehiciera la pantalla
+// entera en cada aviso, las comandas ya listas parpadearían cada vez que alguien avanza otra.
+const params = new URLSearchParams(location.search);
+const estacion = params.get('estacion') || '';      // una o varias, separadas por comas
+const pantalla = params.get('pantalla') || '';      // fila de kds_pantallas (Ajustes)
 const AVISO_MIN = 8, CRITICO_MIN = 15;
-let vistos = new Set(), primeraCarga = true, sonido = false, desfase = 0;
+let sonido = false, desfase = 0, primeraCarga = true;
+const tarjetas = new Map();          // pedido_id → {art, firma}
+const historial = [];                // lo que se ha tocado desde esta pantalla, para deshacer
 
-$('#titulo').textContent = 'KDS · ' + NOMBRES[estacion];
-document.title = 'KDS ' + NOMBRES[estacion];
-$('#estaciones').innerHTML = Object.entries(NOMBRES).map(([k, v]) =>
-  `<a href="?estacion=${k}"><button class="${k === estacion ? 'activa' : ''}">${v}</button></a>`).join(' ');
+// Qué secciones de cocina mira esta pantalla ya no está escrito aquí: lo decide el encargado
+// en Ajustes → Cocina. Esta barra se pinta con lo que haya dado de alta.
+async function pintarPantallas() {
+  const lista = await api('/kds-pantallas').catch(() => []);
+  const actual = lista.find(p => p.clave === pantalla)
+              || lista.find(p => p.estaciones === estacion)
+              || (!pantalla && !estacion ? lista.find(p => !p.estaciones) : null);
+  const titulo = actual ? actual.nombre : (estacion ? estacion.split(',').join(' + ') : 'Pase (todas)');
+  $('#titulo').textContent = 'KDS · ' + titulo;
+  document.title = 'KDS ' + titulo;
+  $('#estaciones').innerHTML = lista.map(p =>
+    `<a href="?pantalla=${encodeURIComponent(p.clave)}" title="${esc(p.detalle)}">
+       <button class="${p === actual ? 'activa' : ''}">${esc(p.icono)} ${esc(p.nombre)}</button></a>`).join(' ');
+}
 
 $('#b-sonido').onclick = () => { sonido = !sonido; $('#b-sonido').textContent = sonido ? '🔔 on' : '🔔 off'; if (sonido) pitido(); };
 function pitido() {
@@ -18,34 +39,193 @@ function pitido() {
   o.start(); o.stop(ctx.currentTime + .4);
 }
 
+// ── Acciones ──
+const sufijoEstacion = pantalla ? '?pantalla=' + encodeURIComponent(pantalla)
+                       : estacion ? '?estacion=' + encodeURIComponent(estacion) : '';
+
+async function avanzarLinea(lid) {
+  try {
+    const r = await api('/lineas/' + lid, { method: 'PATCH', body: { estado: 'siguiente' } });
+    apuntar({ que: 'linea', id: lid, estado: r.estado });
+  } catch (e) { aviso(e.message, 'error'); }
+}
+
+async function retrocederLinea(lid) {
+  try {
+    const r = await api('/lineas/' + lid, { method: 'PATCH', body: { estado: 'anterior' } });
+    aviso('Deshecho: vuelve a «' + r.estado + '»', 'info');
+  } catch (e) { aviso(e.message, 'error'); }
+}
+
+async function avanzarComanda(pid) {
+  try {
+    const r = await api(`/kds/pedido/${pid}/avanzar` + sufijoEstacion, { method: 'POST' });
+    apuntar({ que: 'comanda', id: pid, estado: r.estado });
+  } catch (e) { aviso(e.message, 'error'); }
+}
+
+async function retrocederComanda(pid) {
+  try {
+    const r = await api(`/kds/pedido/${pid}/retroceder` + sufijoEstacion, { method: 'POST' });
+    aviso(`Deshecho «${r.deshecho}»: ${r.lineas} línea(s) vuelven a «${r.estado}»`, 'info');
+  } catch (e) { aviso(e.message, 'error'); }
+}
+
+function apuntar(accion) {
+  historial.push(accion);
+  if (historial.length > 30) historial.shift();
+  pintarDeshacer();
+}
+
+async function deshacerUltimo() {
+  const ultimo = historial.pop();
+  pintarDeshacer();
+  if (!ultimo) return aviso('No hay nada que deshacer en esta pantalla', 'info');
+  if (ultimo.que === 'linea') await retrocederLinea(ultimo.id);
+  else await retrocederComanda(ultimo.id);
+}
+
+function pintarDeshacer() {
+  const b = $('#b-deshacer');
+  if (!b) return;
+  b.disabled = !historial.length;
+  b.title = historial.length
+    ? `Deshacer lo último (${historial.length} paso${historial.length > 1 ? 's' : ''} guardados)`
+    : 'Nada que deshacer';
+}
+
+// ── Pintado incremental ──
+function firmaDe(c) {
+  return c.lineas.map(l => `${l.id}:${l.estado}`).join('|') + '#' + c.mesa + c.cliente;
+}
+
+function htmlLineas(c) {
+  return c.lineas.map(l => `
+    <li class="${l.estado}" data-linea="${l.id}" title="Clic: avanzar · clic derecho o mantener: deshacer">
+      <b>${l.cantidad}×</b>
+      <span>${esc(l.producto)}${l.alergenos ? `<span class="alerg">⚠ ${esc(l.alergenos)}</span>` : ''}${l.notas ? `<span class="nota">⚠ ${esc(l.notas)}</span>` : ''}</span>
+      <span class="est">${estacion.includes(',') || !estacion ? l.estacion + ' · ' : ''}${l.estado}</span>
+    </li>`).join('');
+}
+
+function etiquetaBump(c) {
+  if (c.lineas.every(l => l.estado === 'lista')) return { texto: 'Servido ✓', clase: 'ok' };
+  if (c.lineas.some(l => l.estado === 'enviada')) return { texto: 'Empezar ▶', clase: 'primario' };
+  return { texto: 'Listo ✓', clase: 'primario' };
+}
+
+function crearTarjeta(c, esNueva) {
+  const art = document.createElement('article');
+  art.className = 'comanda' + (esNueva ? ' nueva' : '');
+  art.dataset.desde = c.desde;
+  art.innerHTML = `
+    <header>
+      <span class="quien"></span>
+      <span class="t">0:00</span>
+      <button class="borrar" title="Anular este pedido entero">🗑</button>
+    </header>
+    <div class="meta"></div>
+    <ul></ul>
+    <div class="bump-grupo">
+      <button class="bump"></button>
+      <button class="deshacer" title="Me he adelantado: volver al paso anterior">↶</button>
+    </div>`;
+  // El deshacer va pegado al botón grande, en rojo: es el gesto de «le he dado sin querer».
+  art.querySelector('.deshacer').onclick = e => { e.stopPropagation(); retrocederComanda(c.pedido_id); };
+  art.querySelector('.borrar').onclick = async e => {
+    e.stopPropagation();
+    if (!confirm(`¿Anular el pedido #${c.pedido_id} entero? Desaparece de todas las pantallas.`)) return;
+    try { await api('/pedidos/' + c.pedido_id + '/anular', { method: 'POST' }); aviso('Pedido anulado', 'ok'); }
+    catch (err) { aviso(err.message, 'error'); }
+  };
+  art.querySelector('.bump').onclick = () => avanzarComanda(c.pedido_id);
+  art.querySelector('ul').addEventListener('click', e => {
+    const li = e.target.closest('[data-linea]');
+    if (li) avanzarLinea(+li.dataset.linea);
+  });
+  art.querySelector('ul').addEventListener('contextmenu', e => {
+    const li = e.target.closest('[data-linea]');
+    if (!li) return;
+    e.preventDefault();
+    retrocederLinea(+li.dataset.linea);
+  });
+  // Pulsación larga en táctil = deshacer esa línea
+  let temporizador;
+  art.querySelector('ul').addEventListener('pointerdown', e => {
+    const li = e.target.closest('[data-linea]');
+    if (!li) return;
+    temporizador = setTimeout(() => {
+      li.dataset.larga = '1';
+      retrocederLinea(+li.dataset.linea);
+    }, 600);
+  });
+  const soltar = e => {
+    clearTimeout(temporizador);
+    const li = e.target.closest?.('[data-linea]');
+    if (li?.dataset.larga) setTimeout(() => delete li.dataset.larga, 0);   // no avanzar tras deshacer
+  };
+  art.querySelector('ul').addEventListener('pointerup', soltar);
+  art.querySelector('ul').addEventListener('pointerleave', soltar);
+  return art;
+}
+
+function actualizarTarjeta(art, c) {
+  art.querySelector('.quien').textContent =
+    c.tipo === 'llevar' ? '🛍 ' + (c.cliente || 'Llevar') : 'Mesa ' + c.mesa;
+  art.querySelector('.meta').textContent = `#${c.pedido_id} · ${c.camarero}`;
+  art.querySelector('ul').innerHTML = htmlLineas(c);
+  const bump = art.querySelector('.bump');
+  const { texto, clase } = etiquetaBump(c);
+  bump.textContent = texto;
+  bump.className = 'bump ' + clase;
+  art.dataset.desde = c.desde;
+}
+
 async function cargar() {
-  const datos = await api('/kds' + (estacion ? '?estacion=' + estacion : ''));
-  desfase = new Date(datos.ahora) - new Date();          // reloj del servidor manda
+  const datos = await api('/kds' + sufijoEstacion);
+  desfase = new Date(datos.ahora) - new Date();          // el reloj del servidor manda
   const cont = $('#kds');
-  if (!datos.comandas.length) { cont.innerHTML = '<div class="vacio">Sin comandas pendientes</div>'; $('#contador').textContent = ''; return; }
+  const vacio = cont.querySelector('.vacio');
+
+  if (!datos.comandas.length) {
+    tarjetas.clear();
+    cont.innerHTML = '<div class="vacio">Sin comandas pendientes</div>';
+    $('#contador').textContent = '';
+    primeraCarga = false;
+    return;
+  }
+  if (vacio) { vacio.remove(); tarjetas.clear(); }
+
   let nuevas = false;
-  cont.innerHTML = datos.comandas.map(c => {
-    const esNueva = !vistos.has(c.pedido_id) && !primeraCarga;
-    if (esNueva) nuevas = true;
+  const vistos = new Set();
+  datos.comandas.forEach(c => {
     vistos.add(c.pedido_id);
-    const todasListas = c.lineas.every(l => l.estado === 'lista');
-    const accion = todasListas ? 'Servido ✓' : c.lineas.some(l => l.estado === 'enviada') ? 'Empezar ▶' : 'Listo ✓';
-    return `<article class="comanda ${esNueva ? 'nueva' : ''}" data-desde="${c.desde}">
-      <header><span>${c.tipo === 'llevar' ? '🛍 ' + esc(c.cliente || 'Llevar') : 'Mesa ' + esc(c.mesa)}</span><span class="t">0:00</span></header>
-      <div class="meta">#${c.pedido_id} · ${esc(c.camarero)}</div>
-      <ul>${c.lineas.map(l => `<li class="${l.estado}" data-linea="${l.id}">
-          <b>${l.cantidad}×</b><span>${esc(l.producto)}${l.alergenos ? `<span class="alerg">⚠ ${esc(l.alergenos)}</span>` : ''}${l.notas ? `<span class="nota">⚠ ${esc(l.notas)}</span>` : ''}</span>
-          <span class="est">${estacion ? '' : l.estacion + ' · '}${l.estado}</span></li>`).join('')}</ul>
-      <button class="bump ${todasListas ? 'ok' : 'primario'}" data-pedido="${c.pedido_id}">${accion}</button>
-    </article>`;
-  }).join('');
+    const firma = firmaDe(c);
+    let ficha = tarjetas.get(c.pedido_id);
+    if (!ficha) {                                         // comanda que no estaba
+      const esNueva = !primeraCarga;
+      if (esNueva) nuevas = true;
+      const art = crearTarjeta(c, esNueva);
+      actualizarTarjeta(art, c);
+      cont.appendChild(art);
+      tarjetas.set(c.pedido_id, { art, firma });
+      return;
+    }
+    if (ficha.firma !== firma) {                          // cambió: se retoca, no se recrea
+      actualizarTarjeta(ficha.art, c);
+      ficha.firma = firma;
+    }
+    // si no ha cambiado no se toca: así las comandas listas no parpadean
+  });
+
+  tarjetas.forEach((ficha, pid) => {                      // comandas que ya no están
+    if (!vistos.has(pid)) { ficha.art.remove(); tarjetas.delete(pid); }
+  });
+
+  // el orden lo decide el servidor (más antigua primero)
+  datos.comandas.forEach(c => cont.appendChild(tarjetas.get(c.pedido_id).art));
+
   $('#contador').textContent = `${datos.comandas.length} comandas`;
-  cont.querySelectorAll('[data-linea]').forEach(li => li.onclick = async () => {
-    await api('/lineas/' + li.dataset.linea, { method: 'PATCH', body: { estado: 'siguiente' } }).catch(e => aviso(e.message, 'error'));
-  });
-  cont.querySelectorAll('[data-pedido]').forEach(b => b.onclick = async () => {
-    await api(`/kds/pedido/${b.dataset.pedido}/avanzar` + (estacion ? '?estacion=' + estacion : ''), { method: 'POST' }).catch(e => aviso(e.message, 'error'));
-  });
   if (nuevas) pitido();
   primeraCarga = false;
   temporizadores();
@@ -63,7 +243,14 @@ function temporizadores() {
 }
 setInterval(temporizadores, 1000);
 
+document.addEventListener('keydown', e => {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'z') { e.preventDefault(); deshacerUltimo(); }
+});
+
 exigirSesion(['cocina', 'encargado']).then(() => {
+  pintarPantallas();
+  $('#b-deshacer').onclick = deshacerUltimo;
+  pintarDeshacer();
   conectarWS(ev => { if (['kds', 'listo', 'reconectado'].includes(ev.tipo)) cargar(); });
   cargar();
 });

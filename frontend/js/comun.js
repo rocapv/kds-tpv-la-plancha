@@ -29,7 +29,12 @@ function conectarWS(alRecibir) {
     const t = typeof tokenActual === 'function' ? tokenActual() : null;
     const ws = new WebSocket((location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/ws' + (t ? '?token=' + encodeURIComponent(t) : ''));
     ws.onopen = () => { marca && (marca.className = 'conexion ok', marca.title = 'Conectado'); alRecibir({ tipo: 'reconectado' }); };
-    ws.onmessage = e => alRecibir(JSON.parse(e.data));
+    ws.onmessage = e => {
+      const ev = JSON.parse(e.data);
+      // cualquier trozo de pantalla puede escuchar el WS sin pelearse por la única devolución
+      window.dispatchEvent(new CustomEvent('evento-ws', { detail: ev }));
+      alRecibir(ev);
+    };
     ws.onclose = () => { marca && (marca.className = 'conexion ko', marca.title = 'Sin conexión'); setTimeout(abrir, 2000); };
     setInterval(() => ws.readyState === 1 && ws.send('ping'), 25000);
   };
@@ -47,3 +52,8 @@ function aviso(texto, tipo = 'info') {
 function minutosDesde(fecha, ahora = new Date()) {
   return Math.floor((ahora - new Date(fecha)) / 60000);
 }
+
+// Rótulos del decorado: en la base de datos las zonas siguen siendo sala, terraza y
+// barra; aquí se les pone el nombre que usa la tripulación de la estación.
+const ZONAS = { sala: 'Comedor presurizado', terraza: 'Mirador de la fractura', barra: 'Atraque' };
+const zonaNombre = z => ZONAS[z] || z;

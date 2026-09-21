@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Usuarios · La Plancha</title>
+<title>Usuarios · Cantina Vesta-9</title>
 <link rel="stylesheet" href="/css/estilo.css?v=__V__">
 </head>
 <body>
@@ -16,9 +16,28 @@
   <span id="conexion" class="conexion"></span>
 </header>
 
-<main class="informe">
+<nav class="pestanas">
+  <button data-vista="lista" class="activa">Empleados</button>
+  <button data-vista="mapa">Mapa de la cantina</button>
+</nav>
+
+<main class="informe" id="v-lista">
   <div class="caja"><table id="tabla"></table></div>
   <p class="tenue">Los usuarios no se borran: se dan de baja para que los pedidos antiguos conserven su autor. Siempre debe quedar un encargado activo.</p>
+</main>
+
+<main class="informe" id="v-mapa" hidden>
+  <div class="fila" style="justify-content:flex-end">
+    <button id="b-reparto" class="primario" title="Coloca a cada empleado en un puesto de su rol, repartidos">Repartir automáticamente</button>
+  </div>
+  <div class="caja">
+    <div id="plano" class="plano"></div>
+  </div>
+  <div id="resumen" class="resumen"></div>
+  <p class="tenue">Arrastra a cada persona al puesto donde trabaja: el puesto decide a qué pantalla
+  entra y qué puede hacer. Quien quede fuera de las cajas se queda <b>fuera de servicio</b> y solo
+  ve el menú. La gestión (carta, usuarios, ajustes, informes y arqueo) sigue siendo del rol
+  encargado, se ponga donde se ponga.</p>
 </main>
 
 <dialog id="d-user">
@@ -34,6 +53,7 @@
 
 <script src="/js/comun.js?v=__V__"></script>
 <script src="/js/sesion.js?v=__V__"></script>
+<script src="/js/mapa.js?v=__V__"></script>
 <script>
 let editando = null;
 async function cargar() {
@@ -84,9 +104,24 @@ $('#u-ok').onclick = async () => {
     aviso('Guardado', 'ok');
   } catch (e) { aviso(e.message, 'error'); }
 };
+// ?vista=mapa abre directamente el plano (cómodo para dejarlo puesto en una pantalla)
+function verPestana(cual) {
+  document.querySelectorAll('.pestanas button').forEach(o => o.classList.toggle('activa', o.dataset.vista === cual));
+  $('#v-lista').hidden = cual !== 'lista';
+  $('#v-mapa').hidden = cual !== 'mapa';
+  if (cual === 'mapa') cargarMapa();
+}
+document.querySelectorAll('.pestanas button').forEach(b => b.onclick = () => {
+  document.querySelectorAll('.pestanas button').forEach(o => o.classList.toggle('activa', o === b));
+  $('#v-lista').hidden = b.dataset.vista !== 'lista';
+  $('#v-mapa').hidden = b.dataset.vista !== 'mapa';
+  if (b.dataset.vista === 'mapa') cargarMapa();
+});
+
 exigirSesion(['encargado']).then(() => {
-  conectarWS(() => {});
+  conectarWS(ev => { if (ev.tipo === 'plantilla' && !$('#v-mapa').hidden) cargarMapa(); });
   cargar();
+  if (new URLSearchParams(location.search).get('vista') === 'mapa') verPestana('mapa');
 });
 </script>
 </body>

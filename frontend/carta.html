@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Carta · La Plancha</title>
+<title>Carta · Cantina Vesta-9</title>
 <link rel="stylesheet" href="/css/estilo.css?v=__V__">
 </head>
 <body>
@@ -27,10 +27,8 @@
   <div class="fila">
     <label>Precio € <input id="p-precio" type="number" step="0.05" min="0" style="width:7em"></label>
     <select id="p-cat"></select>
-    <select id="p-est">
-      <option value="plancha">Plancha</option><option value="freidora">Freidora</option>
-      <option value="frios">Fríos</option><option value="barra">Barra</option>
-    </select>
+    <select id="p-est" title="Seccion de cocina a la que se manda el producto (se gestionan en Ajustes)"></select>
+    <a href="/ajustes.html" title="Dar de alta secciones de cocina"><button type="button">+ secciones</button></a>
   </div>
   <div class="fila"><input id="p-alergenos" placeholder="Alérgenos (gluten, lactosa…)" maxlength="120" style="flex:1"></div>
   <div class="fila"><button id="p-cancelar">Cancelar</button><button id="p-ok" class="primario">Guardar</button></div>
@@ -51,6 +49,15 @@
 <script>
 let cats = [], editandoProd = null, editandoCat = null;
 
+// Las secciones de cocina son datos, no una lista fija: se cargan una vez y se reusan.
+let SECCIONES = [];
+async function cargarSecciones() {
+  SECCIONES = await api('/estaciones');
+  $('#p-est').innerHTML = SECCIONES.map(e =>
+    `<option value="${esc(e.clave)}">${esc(e.icono)} ${esc(e.nombre)}</option>`).join('');
+}
+const nombreSeccion = clave => SECCIONES.find(e => e.clave === clave)?.nombre || clave;
+
 async function cargar() {
   cats = await api('/catalogo?todo=true');
   $('#carta').innerHTML = cats.map(c => `
@@ -64,7 +71,7 @@ async function cargar() {
       </div>
       <table>${c.productos.map(p => `<tr class="${p.activo ? '' : 'baja'}">
         <td>${esc(p.nombre)}${p.alergenos ? `<br><small class="tenue">⚠ ${esc(p.alergenos)}</small>` : ''}</td>
-        <td>${esc(p.estacion)}</td>
+        <td>${esc(nombreSeccion(p.estacion))}</td>
         <td class="num">${euro(p.precio_cent)}</td>
         <td>${!p.activo ? '<span class="estado">baja</span>'
               : p.disponible ? '<span class="estado lista">disponible</span>'
@@ -97,7 +104,7 @@ function abrirProd(p = null) {
   $('#p-nombre').value = p?.nombre || '';
   $('#p-precio').value = p ? (p.precio_cent / 100).toFixed(2) : '';
   $('#p-cat').value = p?.categoria_id || cats[0]?.id;
-  $('#p-est').value = p?.estacion || 'plancha';
+  $('#p-est').value = p?.estacion || SECCIONES[0]?.clave || '';
   $('#p-alergenos').value = p?.alergenos || '';
   $('#d-prod').showModal();
 }
@@ -140,7 +147,8 @@ $('#c-ok').onclick = async () => {
   } catch (e) { aviso(e.message, 'error'); }
 };
 
-exigirSesion(['encargado']).then(() => {
+exigirSesion(['encargado']).then(async () => {
+  await cargarSecciones();
   conectarWS(ev => { if (ev.tipo === 'carta') cargar(); });
   cargar();
 });

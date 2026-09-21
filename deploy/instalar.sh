@@ -5,19 +5,30 @@ set -euo pipefail
 DIR="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$DIR/backend"
 
+# MariaDB propia del usuario (servicio kds-mariadb): hay que hablarle por su socket.
+# Si no existe, se usa la del sistema. Sin esto las ampliaciones se aplicaban «en el aire»
+# (el for de abajo lleva `|| true`) y el decorado o las migraciones no llegaban a la BD.
+SOCK="${KDS_DB_SOCKET:-$HOME/.local/share/kds-mariadb/kds.sock}"
+if [ -S "$SOCK" ]; then
+  MARIADB=(mariadb --socket="$SOCK" -u "${KDS_DB_USER:-$USER}")
+else
+  MARIADB=(mariadb)
+fi
+
 [ -d .venv ] || python3 -m venv .venv
 .venv/bin/pip install -q --upgrade pip
 .venv/bin/pip install -q -r requirements.txt
 
-if [ "${1:-}" = "--reset-bd" ] || ! mariadb kds_tpv -e "SELECT 1 FROM empleados LIMIT 1" >/dev/null 2>&1; then
+if [ "${1:-}" = "--reset-bd" ] || ! "${MARIADB[@]}" kds_tpv -e "SELECT 1 FROM empleados LIMIT 1" >/dev/null 2>&1; then
   echo "· Cargando esquema y datos de ejemplo"
-  mariadb kds_tpv < sql/01_schema.sql
-  mariadb kds_tpv < sql/02_seed.sql
+  "${MARIADB[@]}" kds_tpv < sql/01_schema.sql
+  "${MARIADB[@]}" kds_tpv < sql/02_seed.sql
 fi
 # Ampliaciones: se pueden aplicar sobre una BD ya en uso
-for ampliacion in sql/0[3-9]_*.sql; do
+for ampliacion in sql/[0-9][0-9]_*.sql; do
+  case "$(basename "$ampliacion")" in 0[12]_*) continue;; esac
   echo "· Aplicando $(basename "$ampliacion")"
-  mariadb kds_tpv < "$ampliacion" || true
+  "${MARIADB[@]}" kds_tpv < "$ampliacion" || echo "  ! falló $(basename "$ampliacion")"
 done
 
 echo "· Certificado TLS"

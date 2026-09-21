@@ -1,13 +1,17 @@
-# KDS + TPV · Hamburguesería «La Plancha»
+# KDS + TPV · Cantina «Vesta-9»
 
 Proyecto Intermodular 1 · 1º ASIR. Sistema de punto de venta (TPV) para sala y de pantallas de cocina (KDS) que se comunican en tiempo real.
+
+El local es una cantina de la estación minera **Vesta-9**, excavada dentro de un asteroide: el
+decorado (nombre, carta, rótulos de las zonas y paleta de color) vive en `sql/06_tema_asteroide.sql`
+y en el bloque final de `frontend/css/estilo.css`, separado de la lógica.
 
 ## Arquitectura
 
 ```
- Tablet/PC sala ──┐                     ┌── Pantalla Plancha
- (tpv.html)       │  HTTP REST + WS     │── Pantalla Freidora
-                  ├──────► FastAPI ◄────┤── Pantalla Fríos
+ Tablet/PC sala ──┐                     ┌── Pantalla Placa térmica
+ (tpv.html)       │  HTTP REST + WS     │── Pantalla Fritura
+                  ├──────► FastAPI ◄────┤── Pantalla Cámara fría
  Encargado ───────┘   (uvicorn :8090)   │── Pantalla Barra
  (informe.html)             │           └── Pase (todas)
                         MariaDB
@@ -218,6 +222,47 @@ lo fuerce a conciencia. Como el ticket y la factura, el documento se ve en panta
 como `.txt`: **nunca** se llama a la impresora del sistema.
 
 El histórico de cierres enseña de un vistazo si el descuadre es un día suelto o una costumbre.
+
+## Simulación de actividad (demo)
+
+Al lado de **Salir**, el encargado tiene tres mandos: **▶** pone en marcha un servicio simulado
+(clientes que entran, cocina que avanza, caja que cobra), **⏸** lo congela donde esté y **⟲** lo
+para y borra lo que la simulación creó. Es el `simulador.py` de siempre, pero dentro del servicio y
+llamando a las mismas funciones de la API que usan las pantallas, así que también ejerce el backend.
+
+Dos cautelas para que la demo no se coma datos de verdad: la simulación **solo avanza en cocina sus
+propias comandas**, y el **reset borra únicamente los pedidos anotados en su rastro**
+(`~/.local/share/kds-tpv/simulacion.json`, que sobrevive a un reinicio del servicio). Los mandos
+son de rol `encargado`; a un camarero la API le responde 403.
+
+## Quién está dónde: el plano de la cantina
+
+En **Usuarios → Mapa de la cantina** el encargado arrastra la ficha de cada persona al puesto
+donde trabaja ese turno. El puesto no es decorado: decide **a qué pantalla entra** al teclear el
+PIN y **qué le deja hacer el servidor**.
+
+| Puesto | Pantalla | Trabaja como |
+|---|---|---|
+| Comedor presurizado · Mirador · Atraque | `tpv.html` | camarero |
+| Caja | `facturas.html` | camarero |
+| Placa térmica · Fritura · Cámara fría · Barra de oxígeno · Pase | `kds.html` (su estación) | cocina |
+| Recogida | `recogida.html` | cocina |
+| Oficina | menú | — (gestión, por rol) |
+| Fuera de servicio (o ficha fuera de las cajas) | menú | nadie: la API contesta 403 |
+
+Encima del plano hay un botón **«Repartir automáticamente»** (`POST /api/plantilla/reparto`):
+coloca a cada persona en un puesto de su rol, por turnos, para que no se amontonen todos en la
+misma caja — camareros al comedor, mirador, atraque y caja; cocina repartida entre las estaciones,
+el pase y la recogida; el encargado a la oficina. Es el punto de partida para abrir el servicio;
+después se arrastra lo que haga falta.
+
+Así, un camarero puesto en la placa térmica trabaja de cocina sin tocarle el rol, y al volver al
+comedor vuelve a cobrar. La comprobación es del servidor (`exige()` en `auth.py`), no del
+navegador: mover la ficha de alguien con la sesión abierta le cambia la pantalla al vuelo por el
+WebSocket. Dos cautelas: **la gestión** (carta, usuarios, ajustes, informes, arqueo) sigue pidiendo
+**rol encargado de verdad**, para que nadie se deje a sí mismo fuera moviendo su ficha; y el puesto
+gobierna lo que se **hace**, no lo que se **mira** (los contadores del menú siguen siendo de lectura
+para cualquier sesión válida).
 
 ## Mejoras pendientes
 

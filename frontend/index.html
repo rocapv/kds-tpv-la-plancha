@@ -3,13 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>La Plancha · Menú principal</title>
+<title>Cantina Vesta-9 · Menú principal</title>
 <link rel="stylesheet" href="/css/estilo.css?v=__V__">
 </head>
 <body class="escritorio">
 <header class="barra">
-  <h1 id="local">La Plancha</h1>
-  <span class="tenue">Menú principal</span>
+  <h1 id="local">Cantina Vesta-9</h1>
+  <span class="tenue">Estación Vesta-9 · nivel -3</span>
   <span class="hueco"></span>
   <span id="estado-servicio" class="tenue"></span>
   <span id="reloj"></span>
@@ -18,7 +18,7 @@
 
 <main class="menu">
   <section>
-    <h2>Sala</h2>
+    <h2>Galería</h2>
     <div class="apps">
       <a class="app" href="/tpv.html"><span class="ico">🧾</span><b>TPV</b><small>Mesas, comandas y cobro</small></a>
       <a class="app" href="/facturas.html"><span class="ico">📑</span><b>Facturación</b><small>Tickets y facturas emitidas</small></a>
@@ -26,15 +26,8 @@
     </div>
   </section>
   <section>
-    <h2>Cocina</h2>
-    <div class="apps">
-      <a class="app" href="/kds.html?estacion=plancha"><span class="ico">🍔</span><b>Plancha</b><small id="n-plancha">—</small></a>
-      <a class="app" href="/kds.html?estacion=freidora"><span class="ico">🍟</span><b>Freidora</b><small id="n-freidora">—</small></a>
-      <a class="app" href="/kds.html?estacion=frios"><span class="ico">🥗</span><b>Fríos</b><small id="n-frios">—</small></a>
-      <a class="app" href="/kds.html?estacion=barra"><span class="ico">🥤</span><b>Barra</b><small id="n-barra">—</small></a>
-      <a class="app" href="/kds.html"><span class="ico">🔔</span><b>Pase</b><small id="n-pase">—</small></a>
-      <a class="app" href="/recogida.html"><span class="ico">📣</span><b>Recogida</b><small id="n-recogida">—</small></a>
-    </div>
+    <h2>Cocina de la estación</h2>
+    <div class="apps" id="apps-cocina"></div>
   </section>
   <section>
     <h2>Gestión</h2>
@@ -43,7 +36,7 @@
       <a class="app" href="/arqueo.html"><span class="ico">💶</span><b>Arqueo</b><small id="n-caja">Caja, descuadre y cierre Z</small></a>
       <a class="app" href="/carta.html"><span class="ico">📖</span><b>Carta</b><small>Productos, precios y agotados</small></a>
       <a class="app" href="/usuarios.html"><span class="ico">👥</span><b>Usuarios</b><small>Altas, bajas y PIN</small></a>
-      <a class="app" href="/ajustes.html"><span class="ico">⚙️</span><b>Ajustes</b><small>Datos del local e IVA</small></a>
+      <a class="app" href="/ajustes.html"><span class="ico">⚙️</span><b>Ajustes</b><small>Datos de la cantina e IVA</small></a>
       <a class="app" href="/docs"><span class="ico">🧩</span><b>API</b><small>Documentación OpenAPI</small></a>
     </div>
   </section>
@@ -57,15 +50,23 @@ async function refrescar() {
     const [aj, kds, inf] = await Promise.all([api('/ajustes'), api('/kds'), api('/informe')]);
     $('#local').textContent = aj.local_nombre;
     document.title = aj.local_nombre + ' · Menú principal';
-    const porEstacion = { plancha: 0, freidora: 0, frios: 0, barra: 0 };
-    kds.comandas.forEach(c => c.lineas.forEach(l => porEstacion[l.estacion]++));
-    for (const [e, n] of Object.entries(porEstacion))
-      $('#n-' + e).textContent = n ? `${n} en marcha` : 'sin trabajo';
-    $('#n-pase').textContent = kds.comandas.length ? `${kds.comandas.length} comandas` : 'sin comandas';
-    const llevar = kds.comandas.filter(c => c.tipo === 'llevar').length;
-    $('#n-recogida').textContent = llevar ? `${llevar} para llevar` : 'pantalla de sala';
+    const porEstacion = {};
+    kds.comandas.forEach(c => c.lineas.forEach(l => porEstacion[l.estacion] = (porEstacion[l.estacion] || 0) + 1));
+    // Cada pantalla suma las secciones que mira; la de pase (sin secciones) las cuenta todas.
+    const pantallas = await api('/kds-pantallas');
+    $('#apps-cocina').innerHTML = pantallas.map(p => {
+      const n = p.secciones.length
+        ? p.secciones.reduce((t, e) => t + (porEstacion[e] || 0), 0)
+        : kds.comandas.length;
+      const pie = !p.secciones.length
+        ? (kds.comandas.length ? `${kds.comandas.length} comandas` : 'sin comandas')
+        : (n ? `${n} en marcha` : 'sin trabajo');
+      return `<a class="app" href="/kds.html?pantalla=${encodeURIComponent(p.clave)}" title="${esc(p.detalle)}">
+                <span class="ico">${esc(p.icono)}</span><b>${esc(p.nombre)}</b><small>${pie}</small></a>`;
+    }).join('');
     const rec = await api('/recogida');
-    $('#n-recogida').textContent = rec.listos.length ? `${rec.listos.length} listos para recoger` : 'sin pedidos listos';
+    $('#n-recogida').textContent = rec.listos.length || rec.preparando.length
+      ? `${rec.listos.length} listos · ${rec.preparando.length} en marcha` : 'sin pedidos para llevar';
     const caja = await api('/arqueo');
     $('#n-caja').textContent = !caja.arqueo ? 'caja sin abrir'
       : caja.arqueo.estado === 'cerrado' ? 'cerrada · ' + caja.arqueo.numero_z

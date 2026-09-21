@@ -14,13 +14,22 @@ async function entrar() {
 async function verMesas() {
   $('#v-mesas').hidden = false;
   $('#v-carta').hidden = true;
-  const mesas = await api('/mesas');
-  const abiertos = await api('/pedidos');
+  let mesas, abiertos;
+  try {
+    [mesas, abiertos] = await Promise.all([api('/mesas'), api('/pedidos')]);
+  } catch (e) {
+    // Si el servidor dice que no, hay que decirlo: una sala vacía se lee como «no hay mesas»
+    // y el camarero se queda mirando la pantalla sin saber que es su puesto.
+    $('#v-mesas').innerHTML = `<div class="vacio"><p>${esc(e.message)}</p>
+      <p class="tenue">Las mesas son del personal de sala. Si tu puesto está en cocina o fuera de
+      servicio, el encargado tiene que moverte en <b>Usuarios → Mapa de la cantina</b>.</p></div>`;
+    return;
+  }
   const zonas = {};
   mesas.forEach(m => (zonas[m.zona] ??= []).push(m));
   let html = '';
   for (const [zona, lista] of Object.entries(zonas)) {
-    html += `<div class="zona"><h3>${esc(zona)}</h3><div class="mesas">` +
+    html += `<div class="zona"><h3>${esc(zonaNombre(zona))}</h3><div class="mesas">` +
       lista.map(m => `<button class="mesa ${m.pedido_id ? 'ocupada' : ''}" data-mesa="${m.id}">
         ${esc(m.nombre)}<small>${m.pedido_id ? euro(m.total_cent || 0) + ' · ' + minutosDesde(m.abierto_en) + ' min' : m.plazas + ' pax'}</small></button>`).join('') +
       `</div></div>`;

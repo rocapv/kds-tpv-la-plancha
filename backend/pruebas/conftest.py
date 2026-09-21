@@ -64,15 +64,28 @@ def encargado(cliente):
     return _token(cliente, "9999")
 
 
+def mesa_libre(cliente, camarero):
+    """Una mesa sin pedido abierto. Si no queda ninguna, el mensaje lo dice claro:
+    es señal de que alguna prueba se ha dejado un pedido abierto."""
+    mesas = cliente.get("/api/mesas", headers=camarero).json()
+    libres = [m for m in mesas if not m["pedido_id"]]
+    assert libres, "no quedan mesas libres: alguna prueba no ha cerrado su pedido"
+    return libres[0]
+
+
 @pytest.fixture
 def pedido_enviado(cliente, camarero):
-    """Pedido con dos líneas ya en cocina y listas: el estado desde el que se cobra."""
-    mesas = cliente.get("/api/mesas", headers=camarero).json()
-    libre = next(m for m in mesas if not m["pedido_id"])
+    """Pedido con dos líneas ya en cocina: el estado desde el que se cobra.
+
+    Al terminar la prueba se anula si sigue abierto, para devolver la mesa. Sin esto, las
+    pruebas se pisan entre ellas y la número treinta y tantos se queda sin sitio donde sentar.
+    """
     pid = cliente.post("/api/pedidos", headers=camarero,
-                       json={"tipo": "sala", "mesa_id": libre["id"]}).json()["id"]
+                       json={"tipo": "sala", "mesa_id": mesa_libre(cliente, camarero)["id"]}).json()["id"]
     for producto, cantidad in ((2, 2), (15, 1)):
         cliente.post(f"/api/pedidos/{pid}/lineas", headers=camarero,
                      json={"producto_id": producto, "cantidad": cantidad})
     cliente.post(f"/api/pedidos/{pid}/enviar", headers=camarero)
-    return pid
+    yield pid
+    if cliente.get(f"/api/pedidos/{pid}", headers=camarero).json()["estado"] == "abierto":
+        cliente.post(f"/api/pedidos/{pid}/anular", headers=camarero)

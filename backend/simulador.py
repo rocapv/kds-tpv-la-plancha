@@ -55,7 +55,12 @@ def main():
     except Exception:
         pass   # ya estaba abierta (o cerrada) hoy
     cat = api(a.url, "/catalogo", token=camareros[0]["token"])
-    por_cat = {c["nombre"]: c["productos"] for c in cat}
+    # Agrupado por estación (plancha/freidora/frios/barra): así el simulador aguanta
+    # cualquier cambio de nombre en la carta.
+    por_est = {}
+    for c in cat:
+        for pr in c["productos"]:
+            por_est.setdefault(pr["estacion"], []).append(pr)
     hechos = 0
     en_curso = []  # (pedido_id, momento_cobro)
 
@@ -73,12 +78,12 @@ def main():
                 comensales = random.randint(1, m["plazas"])
             for _ in range(comensales):
                 api(a.url, f"/pedidos/{p['id']}/lineas", "POST",
-                    {"producto_id": random.choice(por_cat["Hamburguesas"])["id"], "notas": random.choice(NOTAS)}, tok)
+                    {"producto_id": random.choice(por_est["plancha"])["id"], "notas": random.choice(NOTAS)}, tok)
                 api(a.url, f"/pedidos/{p['id']}/lineas", "POST",
-                    {"producto_id": random.choice(por_cat["Bebidas"])["id"]}, tok)
+                    {"producto_id": random.choice(por_est["barra"])["id"]}, tok)
                 if random.random() < 0.7:
                     api(a.url, f"/pedidos/{p['id']}/lineas", "POST",
-                        {"producto_id": random.choice(por_cat["Entrantes"])["id"]}, tok)
+                        {"producto_id": random.choice(por_est["freidora"])["id"]}, tok)
             api(a.url, f"/pedidos/{p['id']}/enviar", "POST", token=tok)
             en_curso.append((p["id"], time.time() + random.uniform(120, 300) * k))
             hechos += 1

@@ -29,7 +29,7 @@ ssh -o ConnectTimeout=10 mint "mariadb-dump --socket=$SOCKET --skip-ssl kds_tpv"
   || echo "· aviso: no se pudo volcar la BD (¿VM apagada?)"
 
 {
-  echo "KDS + TPV «La Plancha» — Proyecte Intermodular 1, 1º ASIR"
+  echo "KDS + TPV «Cantina Vesta-9» — Proyecte Intermodular 1, 1º ASIR"
   echo "Copia generada el $(date '+%d/%m/%Y a las %H:%M')"
   echo
   echo "CONTENIDO"

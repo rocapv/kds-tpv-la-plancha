@@ -1,4 +1,5 @@
--- Datos de demostración: hamburguesería "La Plancha"
+-- Datos de demostración. El decorado (nombres de la cantina Vesta-9) lo pone
+-- después sql/06_tema_asteroide.sql, que actualiza estas mismas filas por id.
 SET NAMES utf8mb4;
 
 INSERT INTO empleados (nombre, rol, pin) VALUES

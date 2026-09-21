@@ -4,6 +4,8 @@ Se agrupan por lo que protegen: el dinero, la cocina, la seguridad y la carta.
 """
 import pytest
 
+from conftest import mesa_libre
+
 
 # ─────────────── Seguridad ───────────────
 def test_sin_token_no_se_ve_nada(cliente):
@@ -41,8 +43,7 @@ def test_camarero_no_avanza_cocina(cliente, camarero, pedido_enviado):
 
 def test_el_pedido_guarda_al_camarero_de_la_sesion(cliente, camarero, encargado):
     """Aunque el cliente mienta, manda la sesión."""
-    mesas = cliente.get("/api/mesas", headers=camarero).json()
-    libre = next(m for m in mesas if not m["pedido_id"])
+    libre = mesa_libre(cliente, camarero)
     p = cliente.post("/api/pedidos", headers=camarero,
                      json={"tipo": "sala", "mesa_id": libre["id"], "empleado_id": 99}).json()
     assert p["camarero"] == "Laura"
@@ -50,8 +51,7 @@ def test_el_pedido_guarda_al_camarero_de_la_sesion(cliente, camarero, encargado)
 
 # ─────────────── Dinero ───────────────
 def test_no_se_cobra_sin_enviar_a_cocina(cliente, camarero):
-    mesas = cliente.get("/api/mesas", headers=camarero).json()
-    libre = next(m for m in mesas if not m["pedido_id"])
+    libre = mesa_libre(cliente, camarero)
     pid = cliente.post("/api/pedidos", headers=camarero,
                        json={"tipo": "sala", "mesa_id": libre["id"]}).json()["id"]
     cliente.post(f"/api/pedidos/{pid}/lineas", headers=camarero, json={"producto_id": 1})
@@ -155,6 +155,46 @@ def test_avance_de_estados(cliente, cocina, pedido_enviado):
     assert estados == ["preparando", "lista", "servida"]
 
 
+def test_deshacer_una_linea(cliente, cocina, camarero, pedido_enviado):
+    """En cocina se toca con las manos ocupadas: un clic de más se tiene que poder deshacer."""
+    lineas = cliente.get(f"/api/pedidos/{pedido_enviado}", headers=camarero).json()["lineas"]
+    lid = lineas[0]["id"]
+    assert cliente.patch(f"/api/lineas/{lid}", headers=cocina,
+                         json={"estado": "siguiente"}).json()["estado"] == "preparando"
+    assert cliente.patch(f"/api/lineas/{lid}", headers=cocina,
+                         json={"estado": "anterior"}).json()["estado"] == "enviada"
+    # ya está en el primer paso: no hay nada que deshacer
+    assert cliente.patch(f"/api/lineas/{lid}", headers=cocina,
+                         json={"estado": "anterior"}).status_code == 409
+
+
+def test_deshacer_una_comanda(cliente, cocina, pedido_enviado):
+    a = cliente.post(f"/api/kds/pedido/{pedido_enviado}/avanzar", headers=cocina).json()
+    d = cliente.post(f"/api/kds/pedido/{pedido_enviado}/retroceder", headers=cocina).json()
+    assert d["deshecho"] == a["estado"] and d["estado"] == "enviada"
+    assert cliente.post(f"/api/kds/pedido/{pedido_enviado}/retroceder",
+                        headers=cocina).status_code == 409
+
+
+def test_deshacer_borra_la_hora_de_listo(cliente, cocina, camarero, pedido_enviado):
+    """Si un plato vuelve al fuego, no puede seguir contando como servido a su hora."""
+    for _ in range(2):                                  # enviada → preparando → lista
+        cliente.post(f"/api/kds/pedido/{pedido_enviado}/avanzar", headers=cocina)
+    listas = cliente.get(f"/api/pedidos/{pedido_enviado}", headers=camarero).json()["lineas"]
+    assert all(l["lista_en"] for l in listas if l["estado"] == "lista")
+    cliente.post(f"/api/kds/pedido/{pedido_enviado}/retroceder", headers=cocina)
+    vueltas = cliente.get(f"/api/pedidos/{pedido_enviado}", headers=camarero).json()["lineas"]
+    assert all(l["lista_en"] is None for l in vueltas if l["estado"] == "preparando")
+
+
+def test_no_se_deshace_un_pedido_cobrado(cliente, cocina, camarero, pedido_enviado):
+    for _ in range(3):
+        cliente.post(f"/api/kds/pedido/{pedido_enviado}/avanzar", headers=cocina)
+    cliente.post(f"/api/pedidos/{pedido_enviado}/cobrar", headers=camarero, json={"metodo": "tarjeta"})
+    assert cliente.post(f"/api/kds/pedido/{pedido_enviado}/retroceder",
+                        headers=cocina).status_code == 409
+
+
 def test_estacion_desconocida(cliente, cocina):
     assert cliente.get("/api/kds?estacion=microondas", headers=cocina).status_code == 422
 
@@ -162,8 +202,7 @@ def test_estacion_desconocida(cliente, cocina):
 # ─────────────── Carta y usuarios ───────────────
 def test_producto_agotado_no_se_puede_pedir(cliente, camarero, encargado):
     cliente.patch("/api/productos/1", headers=encargado, json={"disponible": False})
-    mesas = cliente.get("/api/mesas", headers=camarero).json()
-    libre = next(m for m in mesas if not m["pedido_id"])
+    libre = mesa_libre(cliente, camarero)
     pid = cliente.post("/api/pedidos", headers=camarero,
                        json={"tipo": "sala", "mesa_id": libre["id"]}).json()["id"]
     r = cliente.post(f"/api/pedidos/{pid}/lineas", headers=camarero, json={"producto_id": 1})
@@ -175,8 +214,7 @@ def test_producto_agotado_no_se_puede_pedir(cliente, camarero, encargado):
 
 def test_el_precio_se_congela_en_la_linea(cliente, camarero, encargado):
     """Subir el precio no debe cambiar lo que ya está pedido."""
-    mesas = cliente.get("/api/mesas", headers=camarero).json()
-    libre = next(m for m in mesas if not m["pedido_id"])
+    libre = mesa_libre(cliente, camarero)
     pid = cliente.post("/api/pedidos", headers=camarero,
                        json={"tipo": "sala", "mesa_id": libre["id"]}).json()["id"]
     antes = cliente.post(f"/api/pedidos/{pid}/lineas", headers=camarero,

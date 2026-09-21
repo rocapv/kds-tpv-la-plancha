@@ -16,10 +16,39 @@ from pydantic import BaseModel, Field
 
 from .auth import abrir_sesion, cerrar_sesion, exige, usuario, usuario_de_token
 from .db import conn, q, q1
+from .simulacion import simulacion
 
-app = FastAPI(title="KDS + TPV · La Plancha", version="1.0")
+app = FastAPI(title="KDS + TPV · Cantina Vesta-9", version="1.0")
 FRONT = Path(__file__).resolve().parents[2] / "frontend"
-ESTACIONES = ("plancha", "freidora", "frios", "barra")
+def estaciones_validas() -> tuple[str, ...]:
+    """Las secciones de cocina viven en la tabla `estaciones` (ver 09_estaciones.sql): abrir un
+    broiler nuevo es dar de alta una fila, no tocar el código ni el esquema."""
+    return tuple(e["clave"] for e in q("SELECT clave FROM estaciones WHERE activa ORDER BY orden, clave"))
+
+
+def claves_de_pantalla(estacion: str | None, pantalla: str | None) -> list[str] | None:
+    """Qué secciones mira una pantalla de cocina. None = todas (vista de pase).
+    `estacion` admite varias separadas por comas; `pantalla` es una fila de `kds_pantallas`."""
+    crudo = estacion
+    if pantalla:
+        fila = q1("SELECT estaciones FROM kds_pantallas WHERE clave=%s AND activa", (pantalla,))
+        if not fila:
+            raise HTTPException(422, "Esa pantalla de cocina no existe")
+        crudo = fila["estaciones"]
+    claves = [c.strip() for c in (crudo or "").split(",") if c.strip()]
+    if not claves:
+        return None
+    validas = estaciones_validas()
+    desconocidas = [c for c in claves if c not in validas]
+    if desconocidas:
+        raise HTTPException(422, f"Sección de cocina desconocida: {', '.join(desconocidas)}")
+    return claves
+
+
+def filtro_estaciones(claves: list[str] | None, columna: str = "estacion") -> tuple[str, list]:
+    if not claves:
+        return "", []
+    return f"AND {columna} IN ({','.join(['%s'] * len(claves))})", list(claves)
 
 
 # ─────────────── WebSocket: difusión de eventos a pantallas ───────────────
@@ -234,7 +263,9 @@ def logout(u: dict = Depends(usuario)):
 
 @app.get("/api/yo")
 def yo(u: dict = Depends(usuario)):
-    return {"id": u["id"], "nombre": u["nombre"], "rol": u["rol"], "caduca_en": u["caduca_en"]}
+    return {"id": u["id"], "nombre": u["nombre"], "rol": u["rol"], "caduca_en": u["caduca_en"],
+            "puesto": u.get("puesto"), "puesto_nombre": u.get("puesto_nombre"),
+            "rol_operativo": u.get("rol_operativo"), "gui": u.get("gui"), "guis": u.get("guis", [])}
 
 
 @app.get("/api/sesiones")
@@ -373,7 +404,9 @@ async def cobrar(pid: int, d: Cobro, u: dict = Depends(exige("camarero", "encarg
 
 
 @app.post("/api/pedidos/{pid}/anular")
-async def anular(pid: int, u: dict = Depends(exige("camarero", "encargado"))):
+async def anular(pid: int, u: dict = Depends(exige("camarero", "cocina", "encargado"))):
+    """Un pedido se puede tirar desde cualquier pantalla: la cocina es la primera que ve que
+    esa comanda no tenia que haber entrado."""
     exigir_abierto(pid)
     q("UPDATE lineas_pedido SET estado='anulada' WHERE pedido_id=%s AND estado NOT IN ('servida')", (pid,))
     q("UPDATE pedidos SET estado='anulado', cerrado_en=NOW() WHERE id=%s", (pid,))
@@ -385,12 +418,10 @@ async def anular(pid: int, u: dict = Depends(exige("camarero", "encargado"))):
 
 # ─────────────── KDS (cocina) ───────────────
 @app.get("/api/kds")
-def kds(estacion: str | None = None, u: dict = Depends(usuario)):
-    """Comandas activas agrupadas por pedido. Sin estación = vista de pase (todas)."""
-    if estacion and estacion not in ESTACIONES:
-        raise HTTPException(422, "Estación desconocida")
-    filtro = "AND l.estacion=%s" if estacion else ""
-    args = (estacion,) if estacion else ()
+def kds(estacion: str | None = None, pantalla: str | None = None, u: dict = Depends(usuario)):
+    """Comandas activas agrupadas por pedido. Sin secciones = vista de pase (todas)."""
+    claves = claves_de_pantalla(estacion, pantalla)
+    filtro, args = filtro_estaciones(claves, "l.estacion")
     filas = q(f"""SELECT l.id, l.pedido_id, l.cantidad, l.notas, l.estacion, l.estado,
                          l.enviada_en, l.lista_en, pr.nombre AS producto, pr.alergenos,
                          p.tipo, p.cliente, m.nombre AS mesa, e.nombre AS camarero
@@ -401,7 +432,7 @@ def kds(estacion: str | None = None, u: dict = Depends(usuario)):
                   LEFT JOIN mesas m ON m.id=p.mesa_id
                   WHERE l.estado IN ('enviada','preparando','lista') {filtro}
                     AND p.estado <> 'anulado'
-                  ORDER BY l.enviada_en, l.pedido_id, l.id""", args)
+                  ORDER BY l.enviada_en, l.pedido_id, l.id""", tuple(args))
     comandas = {}
     for f in filas:
         c = comandas.setdefault(f["pedido_id"], {
@@ -414,18 +445,41 @@ def kds(estacion: str | None = None, u: dict = Depends(usuario)):
 
 
 SIGUIENTE = {"enviada": "preparando", "preparando": "lista", "lista": "servida"}
+# En cocina se toca la pantalla con las manos ocupadas: hay que poder volver atrás.
+ANTERIOR = {v: k for k, v in SIGUIENTE.items()}
+
+
+def _mover_lineas(ids: list[int], nuevo: str) -> None:
+    """Cambia el estado y ajusta `lista_en`: al retroceder por debajo de «lista» se borra,
+    para que el tiempo de cocina del informe no cuente un plato que volvió al fuego."""
+    marcas = ",".join(["%s"] * len(ids))
+    q(f"""UPDATE lineas_pedido
+          SET estado=%s,
+              lista_en = CASE WHEN %s='lista' THEN NOW()
+                              WHEN %s IN ('enviada','preparando') THEN NULL
+                              ELSE lista_en END
+          WHERE id IN ({marcas})""", (nuevo, nuevo, nuevo, *ids))
 
 
 @app.patch("/api/lineas/{lid}")
 async def cambiar_estado_linea(lid: int, d: CambioEstado, u: dict = Depends(exige("cocina", "encargado"))):
-    l = q1("SELECT estado, pedido_id FROM lineas_pedido WHERE id=%s", (lid,))
+    l = q1("""SELECT l.estado, l.pedido_id, p.estado AS estado_pedido
+              FROM lineas_pedido l JOIN pedidos p ON p.id=l.pedido_id WHERE l.id=%s""", (lid,))
     if not l:
         raise HTTPException(404, "Línea no encontrada")
-    nuevo = SIGUIENTE.get(l["estado"]) if d.estado == "siguiente" else d.estado
+    if d.estado == "siguiente":
+        nuevo = SIGUIENTE.get(l["estado"])
+    elif d.estado == "anterior":
+        nuevo = ANTERIOR.get(l["estado"])
+        if not nuevo:
+            raise HTTPException(409, f"«{l['estado']}» ya es el primer paso: no hay nada que deshacer")
+        if l["estado_pedido"] != "abierto":
+            raise HTTPException(409, "El pedido ya está cerrado: no se puede deshacer")
+    else:
+        nuevo = d.estado
     if nuevo not in ("enviada", "preparando", "lista", "servida"):
         raise HTTPException(409, f"No se puede pasar de {l['estado']} a {d.estado}")
-    q("UPDATE lineas_pedido SET estado=%s, lista_en=IF(%s='lista', NOW(), lista_en) WHERE id=%s",
-      (nuevo, nuevo, lid))
+    _mover_lineas([lid], nuevo)
     await hub.emitir("kds", pedido_id=l["pedido_id"])
     await hub.emitir_publico("recogida")
     if nuevo == "lista":
@@ -433,11 +487,37 @@ async def cambiar_estado_linea(lid: int, d: CambioEstado, u: dict = Depends(exig
     return {"id": lid, "estado": nuevo}
 
 
+@app.post("/api/kds/pedido/{pid}/retroceder")
+async def retroceder_pedido(pid: int, estacion: str | None = None, pantalla: str | None = None,
+                            u: dict = Depends(exige("cocina", "encargado"))):
+    """Deshace el último «bump» de la comanda: el grupo más adelantado vuelve un paso atrás."""
+    p = q1("SELECT estado FROM pedidos WHERE id=%s", (pid,))
+    if not p:
+        raise HTTPException(404, "Pedido no encontrado")
+    if p["estado"] != "abierto":
+        raise HTTPException(409, "El pedido ya está cerrado: no se puede deshacer")
+    claves = claves_de_pantalla(estacion, pantalla)
+    filtro, extra = filtro_estaciones(claves)
+    args = (pid, *extra)
+    lineas = q(f"""SELECT id, estado FROM lineas_pedido WHERE pedido_id=%s
+                   AND estado IN ('preparando','lista','servida') {filtro}""", args)
+    if not lineas:
+        raise HTTPException(409, "No hay nada que deshacer en esta comanda")
+    orden = ["enviada", "preparando", "lista", "servida"]
+    maximo = max(lineas, key=lambda x: orden.index(x["estado"]))["estado"]
+    ids = [x["id"] for x in lineas if x["estado"] == maximo]
+    _mover_lineas(ids, ANTERIOR[maximo])
+    await hub.emitir("kds", pedido_id=pid)
+    await hub.emitir_publico("recogida")
+    return {"pedido_id": pid, "estado": ANTERIOR[maximo], "lineas": len(ids), "deshecho": maximo}
+
+
 @app.post("/api/kds/pedido/{pid}/avanzar")
-async def avanzar_pedido(pid: int, estacion: str | None = None, u: dict = Depends(exige("cocina", "encargado"))):
+async def avanzar_pedido(pid: int, estacion: str | None = None, pantalla: str | None = None, u: dict = Depends(exige("cocina", "encargado"))):
     """Botón 'bump': avanza todas las líneas del pedido (de esa estación) un paso."""
-    filtro = "AND estacion=%s" if estacion else ""
-    args = (pid, estacion) if estacion else (pid,)
+    claves = claves_de_pantalla(estacion, pantalla)
+    filtro, extra = filtro_estaciones(claves)
+    args = (pid, *extra)
     lineas = q(f"""SELECT id, estado FROM lineas_pedido WHERE pedido_id=%s
                    AND estado IN ('enviada','preparando','lista') {filtro}""", args)
     if not lineas:
@@ -445,9 +525,7 @@ async def avanzar_pedido(pid: int, estacion: str | None = None, u: dict = Depend
     minimo = min(lineas, key=lambda x: list(SIGUIENTE).index(x["estado"]))["estado"]
     nuevo = SIGUIENTE[minimo]
     ids = [x["id"] for x in lineas if x["estado"] == minimo]
-    marcas = ",".join(["%s"] * len(ids))
-    q(f"UPDATE lineas_pedido SET estado=%s, lista_en=IF(%s='lista', NOW(), lista_en) WHERE id IN ({marcas})",
-      (nuevo, nuevo, *ids))
+    _mover_lineas(ids, nuevo)
     await hub.emitir("kds", pedido_id=pid)
     await hub.emitir_publico("recogida")
     if nuevo == "lista":
@@ -482,7 +560,7 @@ def recogida():
     listos.sort(key=lambda d: d["lista_en"] or d["desde"], reverse=True)
     preparando.sort(key=lambda d: d["desde"])
     aj = ajustes_dict()
-    return {"ahora": datetime.now(), "local": aj.get("local_nombre", "La Plancha"),
+    return {"ahora": datetime.now(), "local": aj.get("local_nombre", "Cantina Vesta-9"),
             "listos": listos, "preparando": preparando}
 
 
@@ -539,7 +617,7 @@ async def editar_categoria(cid: int, d: CambioCategoria, u: dict = Depends(exige
 
 @app.post("/api/productos", status_code=201)
 async def crear_producto(d: NuevoProducto, u: dict = Depends(exige("encargado"))):
-    if d.estacion not in ESTACIONES:
+    if d.estacion not in estaciones_validas():
         raise HTTPException(422, "Estación desconocida")
     if not q1("SELECT id FROM categorias WHERE id=%s", (d.categoria_id,)):
         raise HTTPException(404, "Categoría no encontrada")
@@ -556,7 +634,7 @@ async def crear_producto(d: NuevoProducto, u: dict = Depends(exige("encargado"))
 async def editar_producto(prid: int, d: CambioProducto, u: dict = Depends(exige("encargado"))):
     if not q1("SELECT id FROM productos WHERE id=%s", (prid,)):
         raise HTTPException(404, "Producto no encontrado")
-    if d.estacion and d.estacion not in ESTACIONES:
+    if d.estacion and d.estacion not in estaciones_validas():
         raise HTTPException(422, "Estación desconocida")
     enviados = d.model_dump(exclude_unset=True)
     # alergenos es el unico campo que se puede vaciar: un null explicito lo borra.
@@ -989,6 +1067,233 @@ def ver_arqueo(aid: int, u: dict = Depends(exige("encargado"))):
     if not a:
         raise HTTPException(404, "Arqueo no encontrado")
     return estado_caja(a["fecha"].strftime("%Y-%m-%d"))
+
+
+# ─────────────── Secciones de cocina y pantallas de KDS ───────────────
+class NuevaEstacion(BaseModel):
+    clave: str = Field(pattern=r"^[a-z0-9_]{2,20}$")
+    nombre: str = Field(min_length=2, max_length=40)
+    icono: str = Field("🍳", max_length=8)
+    orden: int = Field(0, ge=0, le=127)
+
+
+class CambioEstacion(BaseModel):
+    nombre: str | None = Field(None, min_length=2, max_length=40)
+    icono: str | None = Field(None, max_length=8)
+    orden: int | None = Field(None, ge=0, le=127)
+    activa: bool | None = None
+
+
+class NuevaPantalla(BaseModel):
+    clave: str = Field(pattern=r"^[a-z0-9_]{2,20}$")
+    nombre: str = Field(min_length=2, max_length=40)
+    icono: str = Field("🔔", max_length=8)
+    estaciones: str = Field("", max_length=200)          # vacío = todas (pase)
+    orden: int = Field(0, ge=0, le=127)
+
+
+class CambioPantalla(BaseModel):
+    nombre: str | None = Field(None, min_length=2, max_length=40)
+    icono: str | None = Field(None, max_length=8)
+    estaciones: str | None = Field(None, max_length=200)
+    orden: int | None = Field(None, ge=0, le=127)
+    activa: bool | None = None
+
+
+@app.get("/api/estaciones")
+def listar_estaciones(todas: bool = False, u: dict = Depends(usuario)):
+    return q("SELECT * FROM estaciones" + ("" if todas else " WHERE activa") + " ORDER BY orden, clave")
+
+
+@app.post("/api/estaciones", status_code=201)
+async def crear_estacion(d: NuevaEstacion, u: dict = Depends(exige("encargado"))):
+    if q1("SELECT clave FROM estaciones WHERE clave=%s", (d.clave,)):
+        raise HTTPException(409, "Ya existe una sección con esa clave")
+    q("INSERT INTO estaciones (clave, nombre, icono, orden) VALUES (%s,%s,%s,%s)",
+      (d.clave, d.nombre.strip(), d.icono, d.orden))
+    await hub.emitir("cocina_config")
+    return q1("SELECT * FROM estaciones WHERE clave=%s", (d.clave,))
+
+
+@app.patch("/api/estaciones/{clave}")
+async def editar_estacion(clave: str, d: CambioEstacion, u: dict = Depends(exige("encargado"))):
+    if not q1("SELECT clave FROM estaciones WHERE clave=%s", (clave,)):
+        raise HTTPException(404, "Sección no encontrada")
+    campos = {k: v for k, v in d.model_dump(exclude_unset=True).items() if v is not None}
+    if campos:
+        q(f"UPDATE estaciones SET {', '.join(f'{k}=%s' for k in campos)} WHERE clave=%s",
+          (*campos.values(), clave))
+    await hub.emitir("cocina_config")
+    return q1("SELECT * FROM estaciones WHERE clave=%s", (clave,))
+
+
+@app.delete("/api/estaciones/{clave}")
+async def quitar_estacion(clave: str, u: dict = Depends(exige("encargado"))):
+    """No se borra si hay carta colgando de ella: se desactiva, que es lo honrado."""
+    n = q1("SELECT COUNT(*) n FROM productos WHERE estacion=%s AND activo", (clave,))["n"]
+    if n:
+        q("UPDATE estaciones SET activa=0 WHERE clave=%s", (clave,))
+        await hub.emitir("cocina_config")
+        return {"desactivada": True, "productos": n}
+    q("DELETE FROM estaciones WHERE clave=%s", (clave,))
+    await hub.emitir("cocina_config")
+    return {"borrada": True}
+
+
+@app.get("/api/kds-pantallas")
+def listar_pantallas(todas: bool = False, u: dict = Depends(usuario)):
+    filas = q("SELECT * FROM kds_pantallas" + ("" if todas else " WHERE activa") + " ORDER BY orden, clave")
+    nombres = {e["clave"]: e["nombre"] for e in q("SELECT clave, nombre FROM estaciones")}
+    for f in filas:
+        claves = [c for c in f["estaciones"].split(",") if c]
+        f["secciones"] = claves
+        f["detalle"] = " + ".join(nombres.get(c, c) for c in claves) or "todas las secciones"
+    return filas
+
+
+@app.post("/api/kds-pantallas", status_code=201)
+async def crear_pantalla(d: NuevaPantalla, u: dict = Depends(exige("encargado"))):
+    if q1("SELECT clave FROM kds_pantallas WHERE clave=%s", (d.clave,)):
+        raise HTTPException(409, "Ya existe una pantalla con esa clave")
+    claves_de_pantalla(d.estaciones, None)               # valida las secciones antes de guardar
+    q("INSERT INTO kds_pantallas (clave, nombre, icono, estaciones, orden) VALUES (%s,%s,%s,%s,%s)",
+      (d.clave, d.nombre.strip(), d.icono, d.estaciones, d.orden))
+    await hub.emitir("cocina_config")
+    return q1("SELECT * FROM kds_pantallas WHERE clave=%s", (d.clave,))
+
+
+@app.patch("/api/kds-pantallas/{clave}")
+async def editar_pantalla(clave: str, d: CambioPantalla, u: dict = Depends(exige("encargado"))):
+    if not q1("SELECT clave FROM kds_pantallas WHERE clave=%s", (clave,)):
+        raise HTTPException(404, "Pantalla no encontrada")
+    campos = {k: v for k, v in d.model_dump(exclude_unset=True).items() if v is not None}
+    if "estaciones" in campos:
+        claves_de_pantalla(campos["estaciones"], None)
+    if campos:
+        q(f"UPDATE kds_pantallas SET {', '.join(f'{k}=%s' for k in campos)} WHERE clave=%s",
+          (*campos.values(), clave))
+    await hub.emitir("cocina_config")
+    return q1("SELECT * FROM kds_pantallas WHERE clave=%s", (clave,))
+
+
+@app.delete("/api/kds-pantallas/{clave}")
+async def quitar_pantalla(clave: str, u: dict = Depends(exige("encargado"))):
+    q("DELETE FROM kds_pantallas WHERE clave=%s", (clave,))
+    await hub.emitir("cocina_config")
+    return {"borrada": True}
+
+
+# ─────────────── Plano de la cantina: quién está dónde ───────────────
+class Destino(BaseModel):
+    puesto: str | None = None                       # None = quitar del plano
+    x: int | None = Field(None, ge=0, le=100)       # posición de la ficha, en % del plano
+    y: int | None = Field(None, ge=0, le=100)
+
+
+@app.get("/api/puestos")
+def listar_puestos(u: dict = Depends(usuario)):
+    """El plano: cajas, colores y a qué pantalla entra quien esté en cada una."""
+    return q("SELECT * FROM puestos ORDER BY orden, clave")
+
+
+@app.get("/api/plantilla")
+def plantilla(u: dict = Depends(exige("encargado"))):
+    """Quién está en cada puesto ahora mismo, con la sesión abierta si la tiene."""
+    return q("""SELECT e.id, e.nombre, e.rol, e.puesto, e.mapa_x, e.mapa_y,
+                       p.nombre AS puesto_nombre, p.gui, p.rol_operativo,
+                       MAX(s.ultimo_uso) AS ultimo_uso
+                FROM empleados e
+                LEFT JOIN puestos p ON p.clave = e.puesto
+                LEFT JOIN sesiones s ON s.empleado_id = e.id AND s.caduca_en > NOW()
+                WHERE e.activo
+                GROUP BY e.id, p.nombre, p.gui, p.rol_operativo
+                ORDER BY e.nombre""")
+
+
+@app.put("/api/empleados/{eid}/puesto")
+async def mover_empleado(eid: int, d: Destino, u: dict = Depends(exige("encargado"))):
+    """Suelta la ficha de un empleado en un puesto del plano. Sus pantallas se enteran
+    por el WebSocket y se van solas a la GUI que les toca."""
+    e = q1("SELECT id, nombre FROM empleados WHERE id=%s AND activo", (eid,))
+    if not e:
+        raise HTTPException(404, "Empleado no encontrado")
+    if d.puesto and not q1("SELECT clave FROM puestos WHERE clave=%s", (d.puesto,)):
+        raise HTTPException(422, "Ese puesto no está en el plano")
+    q("UPDATE empleados SET puesto=%s, mapa_x=%s, mapa_y=%s WHERE id=%s",
+      (d.puesto, d.x, d.y, eid))
+    await hub.emitir("plantilla", empleado_id=eid, puesto=d.puesto)
+    return q1("""SELECT e.id, e.nombre, e.rol, e.puesto, e.mapa_x, e.mapa_y,
+                        p.nombre AS puesto_nombre, p.gui, p.rol_operativo
+                 FROM empleados e LEFT JOIN puestos p ON p.clave=e.puesto
+                 WHERE e.id=%s""", (eid,))
+
+
+def sitio_en_puesto(p: dict, n: int) -> tuple[int, int]:
+    """Dónde cae la ficha número `n` dentro de la caja de un puesto: dos por fila, sin pisarse."""
+    x = p["x"] + 3 + (n % 2) * max(6, p["ancho"] // 2)
+    y = p["y"] + 9 + (n // 2) * 8
+    return (min(x, p["x"] + p["ancho"] - 4), min(y, p["y"] + p["alto"] - 3))
+
+
+@app.post("/api/plantilla/reparto")
+async def repartir_plantilla(u: dict = Depends(exige("encargado"))):
+    """Coloca a todo el mundo en su sitio de un botón: cada rol a sus puestos, por turnos,
+    para que no se amontonen todos en la plancha. Es un punto de partida razonable para
+    abrir el servicio; luego el encargado arrastra lo que quiera."""
+    puestos = q("SELECT * FROM puestos ORDER BY orden, clave")
+    por_rol = {"camarero": [p for p in puestos if p["rol_operativo"] == "camarero"],
+               "cocina":   [p for p in puestos if p["rol_operativo"] == "cocina"]}
+    oficina = next((p for p in puestos if p["clave"] == "oficina"), None)
+    descanso = next((p for p in puestos if p["clave"] == "descanso"), None)
+    empleados = q("SELECT id, nombre, rol FROM empleados WHERE activo ORDER BY rol, id")
+    turno = {"camarero": 0, "cocina": 0}
+    ocupacion: dict[str, int] = {}
+    colocados = 0
+    for e in empleados:
+        if e["rol"] == "encargado":
+            destino = oficina
+        else:
+            sitios = por_rol.get(e["rol"]) or []
+            if not sitios:
+                destino = descanso
+            else:
+                destino = sitios[turno[e["rol"]] % len(sitios)]
+                turno[e["rol"]] += 1
+        if not destino:
+            continue
+        n = ocupacion.get(destino["clave"], 0)
+        ocupacion[destino["clave"]] = n + 1
+        x, y = sitio_en_puesto(destino, n)
+        q("UPDATE empleados SET puesto=%s, mapa_x=%s, mapa_y=%s WHERE id=%s",
+          (destino["clave"], x, y, e["id"]))
+        colocados += 1
+    await hub.emitir("plantilla", reparto=True)
+    return {"colocados": colocados, "plantilla": plantilla(u)}
+
+
+# ─────────────── Simulación de actividad (demo) ───────────────
+@app.get("/api/simulacion")
+def ver_simulacion(u: dict = Depends(usuario)):
+    return simulacion.resumen()
+
+
+@app.post("/api/simulacion/{accion}")
+async def mandar_simulacion(accion: str, ritmo: float | None = None,
+                            u: dict = Depends(exige("encargado"))):
+    """play arranca o reanuda, pause congela, reset para y borra lo que la simulación creó."""
+    if accion == "play":
+        return await simulacion.play(ritmo)
+    if accion == "pause":
+        return await simulacion.pause()
+    if accion == "reset":
+        return await simulacion.reset()
+    raise HTTPException(422, "Acción desconocida: play, pause o reset")
+
+
+@app.on_event("shutdown")
+async def parar_simulacion():
+    if simulacion.tarea:
+        simulacion.tarea.cancel()
 
 
 # ─────────────── Frontend estático ───────────────
