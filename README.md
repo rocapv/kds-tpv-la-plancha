@@ -29,7 +29,8 @@ La portada es el **menú principal**, con el trabajo pendiente de cada estación
 | TPV | Mesas, comandas, cobro y documento del pedido |
 | Facturación | Cobros del día, emisión de facturas y consulta de las emitidas |
 | KDS (×4 + pase) | Pantallas de cocina por estación |
-| Informe | Cierre de caja del día |
+| Informe | Ventas del día: facturación, más vendidos y tiempos de cocina |
+| Arqueo | Fondo, movimientos de efectivo, descuadre y cierre Z |
 | Carta | Productos, precios, categorías, alérgenos y agotados |
 | Usuarios | Altas, bajas, cambio de rol y de PIN |
 | Recogida | Pantalla de sala con los números «para llevar» listos (pública, sin PIN) |
@@ -56,7 +57,8 @@ que repetir la petición devuelve la misma factura en lugar de duplicarla.
 2. Con **Enviar a cocina**, cada línea pasa a `enviada` y va a la pantalla de su estación.
 3. En cocina, **Empezar** la pasa a `preparando`, **Listo** a `lista` (el TPV recibe el aviso) y **Servido** a `servida`. Si se toca una línea, avanza solo esa.
 4. Se cobra entero, **dividido en partes iguales** o **por líneas**, y con varios métodos en el mismo pedido (mitad tarjeta, mitad efectivo). El pedido se cierra solo cuando lo pagado alcanza el total; mientras siga abierto, un pago se puede deshacer. Al cerrarse aparece el ticket en pantalla, desde el que se emite la factura.
-5. El **informe** muestra la facturación, la base imponible y el IVA, los productos más vendidos, las ventas por hora y el tiempo medio de cocina de cada estación.
+5. Al terminar el servicio, el **arqueo** cuenta el cajón y firma el cierre Z.
+6. El **informe** muestra la facturación, la base imponible y el IVA, los productos más vendidos, las ventas por hora y el tiempo medio de cocina de cada estación.
 
 Las comandas se ponen en amarillo a los 8 minutos y en rojo, parpadeando, a los 15.
 
@@ -183,9 +185,10 @@ el total cobrado. Una copia que nunca se ha restaurado no es una copia, es un fi
 
 ## Pruebas y despliegue
 
-31 pruebas con `pytest` sobre una base de datos de pruebas que se crea y se destruye sola, nunca
+50 pruebas con `pytest` sobre una base de datos de pruebas que se crea y se destruye sola, nunca
 contra la real. Cubren lo que debe funcionar y, sobre todo, lo que debe fallar: cobros, cuentas
-divididas, numeración de facturas, estados de cocina, permisos por rol y congelación de precios.
+divididas, numeración de facturas, estados de cocina, permisos por rol, congelación de precios y
+el arqueo de caja con su cierre Z.
 
 ```bash
 cd backend && .venv/bin/python -m pytest      # las pruebas
@@ -193,6 +196,28 @@ bash deploy/desplegar.sh                      # copia → pruebas → reinicio �
 ```
 
 Si una prueba falla, el despliegue se aborta y el servicio sigue con la versión anterior.
+
+## Arqueo de caja y cierre Z
+
+El informe dice lo que se ha vendido; el arqueo dice si el dinero está. El día empieza abriendo la
+caja con su **fondo de cambio** y termina contando el cajón:
+
+```
+esperado   = fondo + ventas en efectivo + entradas - salidas
+descuadre  = contado - esperado          (negativo = falta dinero)
+```
+
+Las **entradas y salidas** son el efectivo que se mueve sin ser una venta (pagar al del pan, reponer
+cambio, retirar al banco); sin ellas el descuadre mentiría. El recuento se teclea por billetes y
+monedas y el servidor rechaza el cierre si el desglose no cuadra con el efectivo declarado.
+
+El **cierre Z** es correlativo (`Z<año>/<5 dígitos>`, con el mismo `FOR UPDATE` que las facturas),
+congela las cifras del día, guarda el descuadre y queda firmado con el nombre del encargado y la
+hora. No se puede repetir ni deshacer, y no se cierra con pedidos sin cobrar salvo que el encargado
+lo fuerce a conciencia. Como el ticket y la factura, el documento se ve en pantalla y se descarga
+como `.txt`: **nunca** se llama a la impresora del sistema.
+
+El histórico de cierres enseña de un vistazo si el descuadre es un día suelto o una costumbre.
 
 ## Mejoras pendientes
 

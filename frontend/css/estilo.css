@@ -15,6 +15,7 @@ button.mal { background: var(--mal); border-color: var(--mal); }
 input, select { font: inherit; background: var(--panel2); color: var(--texto); border: 1px solid var(--borde); border-radius: var(--r); padding: .5em .7em; }
 h1, h2, h3 { margin: 0; }
 .tenue { color: var(--tenue); }
+a { color: var(--acento); }   /* sin esto el azul del navegador pinta los botones envueltos en <a> */
 
 header.barra { display: flex; align-items: center; gap: 1rem; padding: .6rem 1rem; background: var(--panel); border-bottom: 1px solid var(--borde); }
 header.barra h1 { font-size: 1.15rem; }
@@ -191,3 +192,9 @@ body.recogida { overflow: hidden; }
 .numero.listo .t { color: #0a3d1c; }
 .vacio { color: var(--tenue); font-size: 1.2rem; }
 @keyframes aparece { from { transform: scale(.7); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+/* ── Arqueo de caja ── */
+.fila-acciones { display: flex; gap: .5rem; flex-wrap: wrap; margin-top: .8rem; }
+.recuento { display: grid; grid-template-columns: repeat(auto-fill, minmax(8.5rem, 1fr)); gap: .5rem; margin: .8rem 0; }
+.recuento label { display: flex; align-items: center; gap: .4rem; color: var(--tenue); font-variant-numeric: tabular-nums; }
+.recuento input { width: 4.5em; text-align: right; }

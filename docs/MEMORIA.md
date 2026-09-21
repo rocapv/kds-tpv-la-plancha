@@ -291,14 +291,18 @@ todo.
                          pagos ──┐
                                  ├── facturas ──(1:1)── pedidos
                        ajustes ──┘
+
+  arqueos ──< movimientos_caja
 ```
 
-Once tablas y una vista (`v_totales_pedido`). Puntos de diseño destacables:
+Trece tablas y una vista (`v_totales_pedido`). Puntos de diseño destacables:
 
 - `UNIQUE (serie, ejercicio, numero)` en facturas: la numeración no puede repetirse.
 - `UNIQUE (pedido_id)` en facturas: un pedido, una factura. Pedirla dos veces devuelve la misma.
 - `lineas_pedido.pago_id`: liga cada línea al pago que la liquidó, de modo que en una cuenta
   dividida ninguna línea se cobra dos veces.
+- `UNIQUE (fecha)` en arqueos: un solo arqueo por día de servicio; y `UNIQUE (z_ejercicio,
+  z_numero)`, que impide repetir un número de cierre Z.
 - Claves foráneas en todas las relaciones, con `ON DELETE CASCADE` solo donde tiene sentido
   (las líneas mueren con su pedido; los pagos y las facturas, nunca).
 
@@ -325,7 +329,29 @@ depender del hardware de impresión, permite trabajar con el ticket digital y ah
 La numeración de facturas se calcula dentro de la transacción con `SELECT MAX(numero)+1 … FOR
 UPDATE`, de modo que dos cajas simultáneas no pueden generar el mismo número.
 
-### 4.6. Seguridad
+### 4.6. Arqueo de caja y cierre Z
+
+La facturación dice lo que se ha vendido; el arqueo dice si el dinero está. El servicio empieza
+declarando el **fondo de cambio** y termina contando el cajón, con el efectivo que se mueve durante
+el día sin ser una venta (pagar a un proveedor, reponer cambio, retirar al banco) anotado como
+entradas y salidas:
+
+```
+esperado   = fondo + ventas en efectivo + entradas − salidas
+descuadre  = contado − esperado          (negativo = falta dinero)
+```
+
+El recuento se teclea por billetes y monedas y el servidor rechaza el cierre si el desglose no suma
+el efectivo declarado. El **cierre Z** recibe numeración correlativa propia (`Z<año>/<5 dígitos>`,
+con el mismo `SELECT MAX(…) … FOR UPDATE` que las facturas), congela las cifras del día en la tabla
+`arqueos`, guarda el descuadre y queda firmado con el nombre del encargado y la hora; no se puede
+repetir ni deshacer, y no se cierra con pedidos sin cobrar salvo decisión expresa del encargado. El
+documento se ve en pantalla y se descarga como texto, igual que el ticket y la factura.
+
+El histórico de cierres permite distinguir un descuadre puntual de uno sistemático, que es lo que
+convierte el arqueo en una herramienta de control y no en un trámite.
+
+### 4.7. Seguridad
 
 **Tabla 5 · Roles y permisos**
 
@@ -345,7 +371,7 @@ UPDATE`, de modo que dos cajas simultáneas no pueden generar el mismo número.
 - **HTTPS en todo.** TLS en el 8443, incluido el WebSocket; el 8090 solo devuelve un 301, para que
   ninguna pantalla con la dirección antigua guardada siga tecleando su PIN en claro.
 
-### 4.7. Despliegue y explotación
+### 4.8. Despliegue y explotación
 
 Tres unidades de `systemd` de usuario, todas con `Restart=always`:
 
@@ -361,7 +387,7 @@ un día entero ocupa kilobytes y se puede recuperar hasta el último minuto ante
 semana, un temporizador restaura la copia en una base de pruebas y compara tabla por tabla y el
 total cobrado: si algo no cuadra, queda registrado como fallo.
 
-**Pruebas y despliegue.** 31 pruebas automáticas con `pytest` sobre una base de datos que se crea y
+**Pruebas y despliegue.** 50 pruebas automáticas con `pytest` sobre una base de datos que se crea y
 se destruye sola. El despliegue las ejecuta antes de reiniciar: si fallan, el servicio se queda con
 la versión anterior. La secuencia es copia → pruebas → reinicio → comprobación de salud.
 
@@ -387,7 +413,7 @@ un servicio completo usando únicamente la API pública —es decir, probando el
 | O5 · Recuperación tras corte | 0 acciones | Verificado: tras reiniciar el servidor, los tres servicios levantaron solos |
 | O6 · Tráfico en claro | 0 | 0; el 8090 redirige y el WebSocket exige token |
 | O7 · Copia restaurable | Restauración probada | Verificada: 8 tablas y el total cobrado coinciden |
-| O8 · Regresiones en producción | 0 | 31 pruebas automáticas bloquean el despliegue si fallan |
+| O8 · Regresiones en producción | 0 | 50 pruebas automáticas bloquean el despliegue si fallan |
 
 Pruebas de comportamiento ante el error, todas comprobadas contra la API:
 
@@ -466,10 +492,8 @@ es un obstáculo técnico; son trabajo.
 
 **Líneas de trabajo futuras** (documentadas y priorizadas en el repositorio):
 
-1. Modo sin red en el TPV, para que una caída de wifi no pare el servicio.
-2. Arqueo de caja y cierre Z.
-3. Alérgenos visibles en la toma de comanda y en la pantalla de cocina.
-4. Pantalla de cliente para los pedidos de recogida.
+1. Modo sin red en el TPV, para que una caída de wifi no pare el servicio: es la única de las diez
+   mejoras propuestas que queda por hacer.
 
 ---
 
@@ -533,16 +557,19 @@ Real Decreto 499/2024, de 21 de mayo, por el que se establecen los títulos de f
 | POST | `/api/kds/pedido/{id}/avanzar` | cocina | Avanza la comanda un paso |
 | POST | `/api/pedidos/{id}/pagos` | camarero | Pago total, por líneas o por partes |
 | POST | `/api/pedidos/{id}/factura` | camarero | Emite factura numerada |
-| GET | `/api/informe` | encargado | Cierre de caja del día |
+| GET | `/api/informe` | encargado | Ventas del día |
+| POST | `/api/arqueo/apertura` | encargado | Abre la caja con su fondo de cambio |
+| POST | `/api/arqueo/movimientos` | camarero | Entrada o salida de efectivo |
+| POST | `/api/arqueo/cierre` | encargado | Cierre Z: descuadre y firma |
 | WS | `/ws?token=…` | cualquiera | Avisos de cambio en tiempo real |
 
 ### Anexo II · Estructura del repositorio
 
 ```
 backend/app/      main.py (API), auth.py (sesiones y roles), db.py, redirector.py
-backend/sql/      01_schema · 02_seed · 03_facturacion · 04_carta_y_pagos · 05_sesiones
+backend/sql/      01_schema · 02_seed · 03_facturacion · 04_carta_y_pagos · 05_sesiones · 06_arqueo
 backend/          simulador.py (servicio simulado para la demo)
-frontend/         menú, tpv, kds, facturas, carta, usuarios, ajustes, informe
+frontend/         menú, tpv, kds, facturas, carta, usuarios, ajustes, informe, arqueo, recogida
 deploy/           instalar.sh, certificado.sh, entregar.sh, units de systemd, nginx.conf
 docs/             esta memoria y PENDIENTES.md
 ```

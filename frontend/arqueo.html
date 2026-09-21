@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Arqueo de caja · La Plancha</title>
+<link rel="stylesheet" href="/css/estilo.css?v=__V__">
+</head>
+<body>
+<header class="barra">
+  <a href="/"><button>◀ Menú</button></a>
+  <h1>Arqueo de caja</h1>
+  <input type="date" id="fecha">
+  <span class="hueco"></span>
+  <span id="conexion" class="conexion"></span>
+</header>
+<main class="informe">
+  <div class="caja" id="cabecera">
+    <div id="estado-caja"></div>
+    <div id="acciones" class="fila-acciones"></div>
+  </div>
+  <section class="kpis" id="kpis"></section>
+  <section class="dos">
+    <div class="caja"><h3>Cobros del día</h3><table id="metodos"></table></div>
+    <div class="caja"><h3>Movimientos de caja</h3><table id="movimientos"></table>
+      <h3 style="margin-top:1rem">Pedidos sin cobrar</h3><table id="pendientes"></table></div>
+  </section>
+  <section class="dos" style="margin-top:.8rem">
+    <div class="caja"><h3>Recuento del cierre</h3><table id="recuento-z"></table></div>
+    <div class="caja"><h3>Últimos cierres</h3><table id="historico"></table></div>
+  </section>
+  <p class="tenue">El descuadre es <b>contado − debería haber</b>: en rojo falta dinero, en amarillo
+    sobra. El cierre Z es correlativo y no tiene vuelta atrás; se ve en pantalla y se descarga
+    como <code>.txt</code>, nunca se manda a la impresora del sistema.</p>
+</main>
+<script src="/js/comun.js?v=__V__"></script>
+<script src="/js/sesion.js?v=__V__"></script>
+<script src="/js/arqueo.js?v=__V__"></script>
+<script>
+$('#fecha').value = new Date().toLocaleDateString('sv');
+$('#fecha').onchange = () => cargar($('#fecha').value);
+exigirSesion(['encargado']).then(() => {
+  conectarWS(ev => { if (['caja', 'mesas', 'reconectado'].includes(ev.tipo)) { cargar(); cargarHistorico(); } });
+  cargar().then(cargarHistorico);
+});
+</script>
+</body>
+</html>

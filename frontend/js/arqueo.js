@@ -234,7 +234,7 @@ function textoCierreZ(e) {
     col('  Fondo inicial', euro(a.fondo_cent)),
     col('  Ventas en efectivo', euro(a.ventas_efectivo_cent)),
     col('  Entradas', euro(e.entradas_cent)),
-    col('  Salidas', '-' + euro(e.salidas_cent)),
+    col('  Salidas', e.salidas_cent ? '-' + euro(e.salidas_cent) : euro(0)),
     col('  DEBERIA HABER', euro(a.esperado_cent)),
     col('  CONTADO', euro(a.contado_cent)),
     col('  DESCUADRE', signo(a.diferencia_cent)),

@@ -48,6 +48,12 @@ def main():
     # cada "persona" del simulador abre su sesión, igual que una pantalla real
     camareros = [api(a.url, "/login", "POST", {"pin": p}) for p in ("1111", "2222")]
     cocina = api(a.url, "/login", "POST", {"pin": "3333"})
+    encargado = api(a.url, "/login", "POST", {"pin": "9999"})
+    try:   # el servicio empieza con la caja abierta y su fondo de cambio
+        api(a.url, "/arqueo/apertura", "POST", {"fondo_cent": 15000}, encargado["token"])
+        print("· caja abierta con 150,00 € de fondo")
+    except Exception:
+        pass   # ya estaba abierta (o cerrada) hoy
     cat = api(a.url, "/catalogo", token=camareros[0]["token"])
     por_cat = {c["nombre"]: c["productos"] for c in cat}
     hechos = 0
