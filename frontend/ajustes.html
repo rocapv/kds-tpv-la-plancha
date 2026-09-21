@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ajustes · La Plancha</title>
+<link rel="stylesheet" href="/css/estilo.css?v=__V__">
+</head>
+<body>
+<header class="barra">
+  <a href="/"><button>◀ Menú</button></a>
+  <h1>Ajustes</h1>
+  <span class="hueco"></span>
+  <span id="conexion" class="conexion"></span>
+</header>
+<main class="informe">
+  <div class="caja"><table id="tabla"></table></div>
+  <p class="tenue">Los datos del local salen en el ticket y en la factura. El IVA se aplica al calcular la base imponible; los minutos de aviso colorean las comandas del KDS.</p>
+</main>
+<script src="/js/comun.js?v=__V__"></script>
+<script>
+const ETIQUETAS = {
+  local_nombre: 'Nombre del local', local_nif: 'NIF', local_direccion: 'Dirección',
+  local_telefono: 'Teléfono', iva_pct: 'IVA (%)', aviso_min: 'Aviso en cocina (min)', critico_min: 'Retraso crítico (min)',
+};
+async function cargar() {
+  const a = await api('/ajustes');
+  $('#tabla').innerHTML = Object.entries(a).map(([k, v]) => `<tr>
+    <td style="width:16em">${esc(ETIQUETAS[k] || k)}</td>
+    <td><input data-k="${k}" value="${esc(v)}" style="width:100%"></td>
+    <td class="num"><button data-guardar="${k}">Guardar</button></td></tr>`).join('');
+  $('#tabla').querySelectorAll('[data-guardar]').forEach(b => b.onclick = async () => {
+    const k = b.dataset.guardar;
+    try {
+      await api('/ajustes/' + k, { method: 'PUT', body: { valor: $(`[data-k="${k}"]`).value } });
+      aviso('Guardado', 'ok');
+    } catch (e) { aviso(e.message, 'error'); }
+  });
+}
+conectarWS(() => {});
+cargar();
+</script>
+</body>
+</html>

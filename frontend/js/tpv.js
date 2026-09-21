@@ -151,7 +151,7 @@ function pintarTicket() {
   const pendientes = lineas.some(l => l.estado === 'pendiente');
   $('#b-enviar').disabled = !pendientes;
   $('#b-cobrar').disabled = !hay || pendientes || pedido.total_cent === 0;
-  $('#b-imprimir').disabled = !hay || pedido.total_cent === 0;
+  $('#b-documento').disabled = !hay || pedido.total_cent === 0;
   $('#b-anular').disabled = !hay;
 }
 
@@ -198,37 +198,17 @@ $('#c-ok').onclick = async () => {
     $('#d-cobro').close();
     const pago = cerrado.pagos[0];
     aviso(`Cobrado ${euro(pago.importe_cent)}${pago.cambio_cent ? ' · cambio ' + euro(pago.cambio_cent) : ''}`, 'ok');
-    imprimir(cerrado);
+    verDocumento(cerrado.id);
     pedido = null; pintarTicket(); verMesas();
   } catch (e) { aviso(e.message, 'error'); }
 };
 
-// ── Ticket impreso (80 mm) ──
-function imprimir(p = pedido) {
-  const ancho = 32, linea = '-'.repeat(ancho);
-  const col = (izq, der) => izq.slice(0, ancho - der.length - 1).padEnd(ancho - der.length) + der;
-  const base = Math.round(p.total_cent / 1.10);
-  const txt = [
-    'LA PLANCHA - Hamburgueseria'.padStart(30), 'NIF B00000000 - Ticket simplificado', linea,
-    `Pedido #${p.id}  ${p.mesa ? 'Mesa ' + p.mesa : 'Llevar'}`, new Date().toLocaleString('es-ES'), `Atiende: ${p.camarero}`, linea,
-    ...p.lineas.filter(l => l.estado !== 'anulada').map(l => col(`${l.cantidad} ${l.producto}`, euro(l.cantidad * l.precio_cent))),
-    linea, col('Base imponible', euro(base)), col('IVA 10%', euro(p.total_cent - base)), col('TOTAL', euro(p.total_cent)),
-    ...(p.pagos || []).map(pg => col(pg.metodo.toUpperCase(), euro(pg.entregado_cent ?? pg.importe_cent)) + (pg.cambio_cent ? '\n' + col('Cambio', euro(pg.cambio_cent)) : '')),
-    linea, 'Gracias por su visita'.padStart(26),
-  ].join('\n');
-  $('#ticket-impreso').textContent = txt;
-  // Los TPV imprimen en una ventana propia: no depende del CSS de impresion de la pagina
-  // y deja el ticket a la vista aunque no haya impresora configurada.
-  const v = window.open('', 'ticket', 'width=380,height=640');
-  if (!v) { window.print(); return; }   // si el navegador bloquea la ventana, imprimimos la pagina
-  v.document.write('<!doctype html><meta charset="utf-8"><title>Ticket ' + p.id +
-    '</title><style>@page{size:72mm auto;margin:3mm}body{font:12px/1.35 monospace;white-space:pre}</style>' +
-    '<body>' + txt.replace(/[&<>]/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[ch])));
-  v.document.close();
-  v.focus();
-  v.print();            // abre el dialogo de impresion del sistema
+// ── Ticket y factura: SIEMPRE en pantalla, nunca se llama a la impresora del sistema ──
+async function verDocumento(pedidoId, ofrecerFactura = true) {
+  const d = await api('/pedidos/' + pedidoId + '/documento');
+  mostrarDocumento(d, d.factura, ofrecerFactura ? (dd => pedirFactura(dd)) : null);
 }
-$('#b-imprimir').onclick = () => imprimir();
+$('#b-documento').onclick = () => verDocumento(pedido.id, pedido.estado === 'cobrado');
 
 // ── Tiempo real ──
 conectarWS(async ev => {

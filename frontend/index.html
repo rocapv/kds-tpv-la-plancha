@@ -3,23 +3,66 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>La Plancha · KDS + TPV</title>
-<link rel="stylesheet" href="/css/estilo.css">
+<title>La Plancha · Menú principal</title>
+<link rel="stylesheet" href="/css/estilo.css?v=__V__">
 </head>
-<body>
-<main class="portada">
-  <h1>La Plancha</h1>
-  <p class="tenue">Sistema de sala y cocina · Proyecto Intermodular 1º ASIR</p>
-  <div class="tarjetas">
-    <a href="/tpv.html"><b>TPV</b>Sala: mesas, comandas y cobro</a>
-    <a href="/kds.html?estacion=plancha"><b>KDS Plancha</b>Hamburguesas</a>
-    <a href="/kds.html?estacion=freidora"><b>KDS Freidora</b>Patatas, nuggets, pollo</a>
-    <a href="/kds.html?estacion=frios"><b>KDS Fríos</b>Ensaladas y postres</a>
-    <a href="/kds.html?estacion=barra"><b>KDS Barra</b>Bebidas</a>
-    <a href="/kds.html"><b>Pase</b>Todas las estaciones</a>
-    <a href="/informe.html"><b>Informe</b>Cierre de caja del día</a>
-    <a href="/docs"><b>API</b>Documentación OpenAPI</a>
-  </div>
+<body class="escritorio">
+<header class="barra">
+  <h1 id="local">La Plancha</h1>
+  <span class="tenue">Menú principal</span>
+  <span class="hueco"></span>
+  <span id="estado-servicio" class="tenue"></span>
+  <span id="reloj"></span>
+  <span id="conexion" class="conexion"></span>
+</header>
+
+<main class="menu">
+  <section>
+    <h2>Sala</h2>
+    <div class="apps">
+      <a class="app" href="/tpv.html"><span class="ico">🧾</span><b>TPV</b><small>Mesas, comandas y cobro</small></a>
+      <a class="app" href="/facturas.html"><span class="ico">📑</span><b>Facturación</b><small>Tickets y facturas emitidas</small></a>
+    </div>
+  </section>
+  <section>
+    <h2>Cocina</h2>
+    <div class="apps">
+      <a class="app" href="/kds.html?estacion=plancha"><span class="ico">🍔</span><b>Plancha</b><small id="n-plancha">—</small></a>
+      <a class="app" href="/kds.html?estacion=freidora"><span class="ico">🍟</span><b>Freidora</b><small id="n-freidora">—</small></a>
+      <a class="app" href="/kds.html?estacion=frios"><span class="ico">🥗</span><b>Fríos</b><small id="n-frios">—</small></a>
+      <a class="app" href="/kds.html?estacion=barra"><span class="ico">🥤</span><b>Barra</b><small id="n-barra">—</small></a>
+      <a class="app" href="/kds.html"><span class="ico">🔔</span><b>Pase</b><small id="n-pase">—</small></a>
+    </div>
+  </section>
+  <section>
+    <h2>Gestión</h2>
+    <div class="apps">
+      <a class="app" href="/informe.html"><span class="ico">📊</span><b>Informe</b><small>Cierre de caja del día</small></a>
+      <a class="app" href="/usuarios.html"><span class="ico">👥</span><b>Usuarios</b><small>Altas, bajas y PIN</small></a>
+      <a class="app" href="/ajustes.html"><span class="ico">⚙️</span><b>Ajustes</b><small>Datos del local e IVA</small></a>
+      <a class="app" href="/docs"><span class="ico">🧩</span><b>API</b><small>Documentación OpenAPI</small></a>
+    </div>
+  </section>
 </main>
+
+<script src="/js/comun.js?v=__V__"></script>
+<script>
+async function refrescar() {
+  try {
+    const [aj, kds, inf] = await Promise.all([api('/ajustes'), api('/kds'), api('/informe')]);
+    $('#local').textContent = aj.local_nombre;
+    document.title = aj.local_nombre + ' · Menú principal';
+    const porEstacion = { plancha: 0, freidora: 0, frios: 0, barra: 0 };
+    kds.comandas.forEach(c => c.lineas.forEach(l => porEstacion[l.estacion]++));
+    for (const [e, n] of Object.entries(porEstacion))
+      $('#n-' + e).textContent = n ? `${n} en marcha` : 'sin trabajo';
+    $('#n-pase').textContent = kds.comandas.length ? `${kds.comandas.length} comandas` : 'sin comandas';
+    $('#estado-servicio').textContent = `${inf.tickets} tickets · ${euro(inf.total_cent)} hoy`;
+  } catch (e) { $('#estado-servicio').textContent = 'sin conexión con el servidor'; }
+}
+setInterval(() => $('#reloj').textContent = new Date().toLocaleTimeString('es-ES'), 1000);
+conectarWS(() => refrescar());
+refrescar();
+</script>
 </body>
 </html>

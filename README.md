@@ -19,6 +19,34 @@ Proyecto Intermodular 1 · 1º ASIR. Sistema de punto de venta (TPV) para sala y
 - **Frontend:** HTML, CSS y JavaScript sin frameworks, pensado para pantallas táctiles. El TPV imprime tickets de 80 mm con `window.print()`.
 - **Sistema:** servicio `systemd --user` con reinicio automático, en Linux Mint 22.3.
 
+## Aplicaciones
+
+La portada es el **menú principal**, con el trabajo pendiente de cada estación en vivo:
+
+| App | Para qué sirve |
+|---|---|
+| TPV | Mesas, comandas, cobro y documento del pedido |
+| Facturación | Cobros del día, emisión de facturas y consulta de las emitidas |
+| KDS (×4 + pase) | Pantallas de cocina por estación |
+| Informe | Cierre de caja del día |
+| Usuarios | Altas, bajas, cambio de rol y de PIN |
+| Ajustes | Datos fiscales del local, IVA y minutos de aviso del KDS |
+| API | Documentación OpenAPI generada sola |
+
+## Ticket y factura: sin impresora
+
+El sistema **nunca llama a la impresora del sistema operativo**. El documento se dibuja en pantalla
+tal y como saldría en papel (40 columnas) y se puede descargar como `.txt`. Imprimirlo, si hace
+falta, es una decisión de la persona desde su navegador.
+
+- **Ticket:** resumen del pedido, sin validez fiscal.
+- **Factura simplificada:** numerada, sin datos del cliente.
+- **Factura completa:** exige NIF y nombre; añade también la dirección.
+
+La numeración es `A<año>/<5 dígitos>`, correlativa y sin huecos: se calcula dentro de la transacción
+con `SELECT MAX(numero)+1 … FOR UPDATE`, y cada pedido solo puede tener una factura (`UNIQUE`), así
+que repetir la petición devuelve la misma factura en lugar de duplicarla.
+
 ## Flujo de una comanda
 
 1. El camarero entra con su PIN, elige una mesa (o «para llevar») y añade productos. Un clic derecho o una pulsación larga permite añadir notas.

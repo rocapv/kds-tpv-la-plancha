@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Facturación · La Plancha</title>
+<link rel="stylesheet" href="/css/estilo.css?v=__V__">
+</head>
+<body>
+<header class="barra">
+  <a href="/"><button>◀ Menú</button></a>
+  <h1>Facturación</h1>
+  <input type="date" id="fecha">
+  <input id="buscar" placeholder="Nombre, NIF o nº" style="width:14em">
+  <span class="hueco"></span>
+  <span id="resumen" class="tenue"></span>
+  <span id="conexion" class="conexion"></span>
+</header>
+
+<main class="informe">
+  <div class="caja">
+    <h3>Cobros del día · ticket y factura</h3>
+    <table id="cobros"></table>
+  </div>
+  <div class="caja" style="margin-top:.8rem">
+    <h3>Facturas emitidas</h3>
+    <table id="facturas"></table>
+  </div>
+</main>
+
+<script src="/js/comun.js?v=__V__"></script>
+<script src="/js/documento.js?v=__V__"></script>
+<script>
+$('#fecha').value = new Date().toLocaleDateString('sv');
+$('#fecha').onchange = cargar;
+$('#buscar').oninput = () => { clearTimeout(window.t); window.t = setTimeout(cargar, 300); };
+
+async function verDocumento(pedidoId) {
+  const d = await api('/pedidos/' + pedidoId + '/documento');
+  mostrarDocumento(d, d.factura, async dd => { await pedirFactura(dd); cargar(); });
+}
+
+async function cargar() {
+  const fecha = $('#fecha').value, buscar = $('#buscar').value.trim();
+  const [cobrados, facturas] = await Promise.all([
+    api('/cobros?fecha=' + fecha),
+    api('/facturas?fecha=' + fecha + (buscar ? '&buscar=' + encodeURIComponent(buscar) : '')),
+  ]);
+  $('#cobros').innerHTML = '<tr><th>Pedido</th><th>Mesa</th><th>Camarero</th><th>Hora</th><th class="num">Total</th><th>Factura</th><th></th></tr>' +
+    cobrados.map(c => `<tr>
+      <td>#${c.id}</td><td>${esc(c.mesa || (c.cliente ? '🛍 ' + c.cliente : 'Llevar'))}</td>
+      <td>${esc(c.camarero)}</td><td>${new Date(c.cerrado_en).toLocaleTimeString('es-ES')}</td>
+      <td class="num">${euro(c.total_cent)}</td>
+      <td>${c.numero_completo ? esc(c.numero_completo) : '<span class="tenue">—</span>'}</td>
+      <td class="num"><button data-doc="${c.id}">Ver documento</button></td></tr>`).join('')
+    || '<tr><td class="tenue">Sin cobros ese día</td></tr>';
+  $('#cobros').querySelectorAll('[data-doc]').forEach(b => b.onclick = () => verDocumento(b.dataset.doc));
+
+  $('#facturas').innerHTML = '<tr><th>Número</th><th>Tipo</th><th>Cliente</th><th>Hora</th><th class="num">Base</th><th class="num">IVA</th><th class="num">Total</th><th></th></tr>' +
+    facturas.map(f => `<tr>
+      <td>${esc(f.numero_completo)}</td><td>${esc(f.tipo)}</td>
+      <td>${esc(f.cliente_nombre || '—')}${f.cliente_nif ? ' · ' + esc(f.cliente_nif) : ''}</td>
+      <td>${new Date(f.emitida_en).toLocaleTimeString('es-ES')}</td>
+      <td class="num">${euro(f.base_cent)}</td><td class="num">${euro(f.iva_cent)}</td><td class="num">${euro(f.total_cent)}</td>
+      <td class="num"><button data-doc="${f.pedido_id}">Ver</button></td></tr>`).join('')
+    || '<tr><td class="tenue">Sin facturas ese día</td></tr>';
+  $('#facturas').querySelectorAll('[data-doc]').forEach(b => b.onclick = () => verDocumento(b.dataset.doc));
+
+  const total = facturas.reduce((s, f) => s + f.total_cent, 0);
+  $('#resumen').textContent = `${facturas.length} facturas · ${euro(total)}`;
+}
+conectarWS(ev => { if (ev.tipo === 'mesas') cargar(); });
+cargar();
+</script>
+</body>
+</html>

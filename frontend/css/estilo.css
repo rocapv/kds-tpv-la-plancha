@@ -33,6 +33,25 @@ header.barra .hueco { flex: 1; }
 .portada a:hover { border-color: var(--acento); }
 .portada a b { display: block; font-size: 1.3rem; color: var(--acento); margin-bottom: .4rem; }
 
+/* ── Menú principal de aplicaciones ── */
+.menu { max-width: 1100px; margin: 0 auto; padding: 1.5rem 1rem 4rem; }
+.menu section { margin-bottom: 2rem; }
+.menu h2 { color: var(--tenue); font-size: .9rem; text-transform: uppercase; letter-spacing: .1em; margin-bottom: .8rem; }
+.apps { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: .9rem; }
+.app { display: block; padding: 1.2rem; background: var(--panel); border: 1px solid var(--borde); border-radius: var(--r); color: var(--texto); text-decoration: none; transition: border-color .15s, transform .15s; }
+.app:hover { border-color: var(--acento); transform: translateY(-2px); }
+.app .ico { font-size: 1.8rem; display: block; margin-bottom: .4rem; }
+.app b { display: block; font-size: 1.15rem; }
+.app small { color: var(--tenue); }
+
+/* ── Visor de ticket / factura (en pantalla, sin impresora) ── */
+.visor { position: fixed; inset: 0; background: #000b; display: grid; place-items: center; z-index: 200; padding: 1rem; }
+.visor .papel { background: #fdfcf7; color: #111; border-radius: 6px; padding: 1.2rem; max-height: 90vh; overflow: auto; box-shadow: 0 10px 40px #000a; }
+.visor pre { font: 13px/1.4 "Cascadia Mono", Consolas, monospace; margin: 0; white-space: pre; }
+.visor .acciones { display: flex; gap: .5rem; margin-top: 1rem; justify-content: flex-end; }
+.visor .acciones button { background: #e7e3d8; color: #111; border-color: #c9c3b4; }
+.visor .acciones button.primario { background: var(--acento); border-color: var(--acento); }
+
 /* ── TPV ── */
 .pin { max-width: 320px; margin: 10vh auto; text-align: center; }
 .pin .pantalla { font-size: 2rem; letter-spacing: .6em; background: var(--panel); border-radius: var(--r); padding: .6rem; margin: 1rem 0; min-height: 3.4rem; }
@@ -64,6 +83,7 @@ header.barra .hueco { flex: 1; }
 .ticket-pie { padding: 1rem; border-top: 1px solid var(--borde); display: grid; gap: .5rem; }
 .ticket-pie .total { display: flex; justify-content: space-between; font-size: 1.6rem; font-weight: 800; }
 .ticket-pie .botones { display: grid; grid-template-columns: 1fr 1fr; gap: .5rem; }
+.escritorio { background: radial-gradient(1200px 600px at 50% -10%, #1f2530, var(--fondo)); }
 
 dialog { background: var(--panel); color: var(--texto); border: 1px solid var(--borde); border-radius: var(--r); padding: 1.4rem; min-width: 340px; }
 dialog::backdrop { background: #000a; }
@@ -112,3 +132,5 @@ td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
   #ticket-impreso { display: block !important; font: 12px monospace; width: 72mm; }
 }
 #ticket-impreso { display: none; }
+
+header.barra a { text-decoration: none; }

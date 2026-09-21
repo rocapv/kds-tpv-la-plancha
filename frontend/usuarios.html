@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Usuarios · La Plancha</title>
+<link rel="stylesheet" href="/css/estilo.css?v=__V__">
+</head>
+<body>
+<header class="barra">
+  <a href="/"><button>◀ Menú</button></a>
+  <h1>Usuarios</h1>
+  <span class="hueco"></span>
+  <label class="tenue"><input type="checkbox" id="ver-bajas"> Ver bajas</label>
+  <button id="b-nuevo" class="primario">Nuevo usuario</button>
+  <span id="conexion" class="conexion"></span>
+</header>
+
+<main class="informe">
+  <div class="caja"><table id="tabla"></table></div>
+  <p class="tenue">Los usuarios no se borran: se dan de baja para que los pedidos antiguos conserven su autor. Siempre debe quedar un encargado activo.</p>
+</main>
+
+<dialog id="d-user">
+  <h3 id="u-titulo">Nuevo usuario</h3>
+  <div class="fila"><input id="u-nombre" placeholder="Nombre" maxlength="60" style="flex:1"></div>
+  <div class="fila">
+    <select id="u-rol"><option value="camarero">Camarero</option><option value="cocina">Cocina</option><option value="encargado">Encargado</option></select>
+    <input id="u-pin" placeholder="PIN (4 cifras)" inputmode="numeric" maxlength="4" style="width:9em">
+    <button id="u-dado" title="PIN libre al azar">🎲</button>
+  </div>
+  <div class="fila"><button id="u-cancelar">Cancelar</button><button id="u-ok" class="primario">Guardar</button></div>
+</dialog>
+
+<script src="/js/comun.js?v=__V__"></script>
+<script>
+let editando = null;
+async function cargar() {
+  const lista = await api('/empleados?todos=' + ($('#ver-bajas').checked ? 'true' : 'false'));
+  $('#tabla').innerHTML = '<tr><th>Nombre</th><th>Rol</th><th>PIN</th><th>Estado</th><th></th></tr>' +
+    lista.map(e => `<tr>
+      <td>${esc(e.nombre)}</td><td>${esc(e.rol)}</td><td class="num">${e.pin}</td>
+      <td>${e.activo ? '<span class="estado lista">activo</span>' : '<span class="estado">baja</span>'}</td>
+      <td class="num">
+        <button data-editar="${e.id}">Editar</button>
+        ${e.activo ? `<button data-baja="${e.id}" class="mal">Dar de baja</button>` : `<button data-alta="${e.id}" class="ok">Reactivar</button>`}
+      </td></tr>`).join('');
+  $('#tabla').querySelectorAll('[data-editar]').forEach(b => b.onclick = () => abrir(lista.find(x => x.id == b.dataset.editar)));
+  $('#tabla').querySelectorAll('[data-baja]').forEach(b => b.onclick = async () => {
+    if (!confirm('¿Dar de baja a este usuario?')) return;
+    try { await api('/empleados/' + b.dataset.baja, { method: 'DELETE' }); cargar(); }
+    catch (e) { aviso(e.message, 'error'); }
+  });
+  $('#tabla').querySelectorAll('[data-alta]').forEach(b => b.onclick = async () => {
+    await api('/empleados/' + b.dataset.alta, { method: 'PATCH', body: { activo: true } }); cargar();
+  });
+}
+$('#ver-bajas').onchange = cargar;
+
+function abrir(e = null) {
+  editando = e;
+  $('#u-titulo').textContent = e ? 'Editar ' + e.nombre : 'Nuevo usuario';
+  $('#u-nombre').value = e?.nombre || '';
+  $('#u-rol').value = e?.rol || 'camarero';
+  $('#u-pin').value = e?.pin || '';
+  $('#d-user').showModal();
+}
+$('#b-nuevo').onclick = () => abrir();
+$('#u-cancelar').onclick = () => $('#d-user').close();
+$('#u-dado').onclick = async () => {
+  const usados = (await api('/empleados?todos=true')).map(e => e.pin);
+  let p; do { p = String(Math.floor(1000 + Math.random() * 9000)); } while (usados.includes(p));
+  $('#u-pin').value = p;
+};
+$('#u-ok').onclick = async () => {
+  const body = { nombre: $('#u-nombre').value.trim(), rol: $('#u-rol').value, pin: $('#u-pin').value.trim() };
+  if (!/^\d{4}$/.test(body.pin)) return aviso('El PIN debe tener 4 cifras', 'error');
+  if (body.nombre.length < 2) return aviso('Falta el nombre', 'error');
+  try {
+    if (editando) await api('/empleados/' + editando.id, { method: 'PATCH', body });
+    else await api('/empleados', { method: 'POST', body });
+    $('#d-user').close(); cargar();
+    aviso('Guardado', 'ok');
+  } catch (e) { aviso(e.message, 'error'); }
+};
+conectarWS(() => {});
+cargar();
+</script>
+</body>
+</html>

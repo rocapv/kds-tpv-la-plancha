@@ -4,10 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>TPV · La Plancha</title>
-<link rel="stylesheet" href="/css/estilo.css">
+<link rel="stylesheet" href="/css/estilo.css?v=__V__">
 </head>
 <body>
 <header class="barra">
+  <a href="/"><button>◀ Menú</button></a>
   <h1>TPV · La Plancha</h1>
   <button id="b-mesas">Mesas</button>
   <button id="b-llevar">Para llevar</button>
@@ -41,7 +42,7 @@
       <div class="botones">
         <button id="b-enviar" class="primario" disabled>Enviar a cocina</button>
         <button id="b-cobrar" class="ok" disabled>Cobrar</button>
-        <button id="b-imprimir" disabled>Imprimir ticket</button>
+        <button id="b-documento" disabled>Ticket / factura</button>
         <button id="b-anular" class="mal" disabled>Anular</button>
       </div>
     </div>
@@ -82,9 +83,9 @@
   <div class="fila"><button id="l-cancelar">Cancelar</button><button id="l-ok" class="primario">Crear</button></div>
 </dialog>
 
-<pre id="ticket-impreso"></pre>
 
-<script src="/js/comun.js"></script>
-<script src="/js/tpv.js"></script>
+<script src="/js/comun.js?v=__V__"></script>
+<script src="/js/documento.js?v=__V__"></script>
+<script src="/js/tpv.js?v=__V__"></script>
 </body>
 </html>
