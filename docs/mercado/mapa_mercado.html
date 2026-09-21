@@ -102,6 +102,9 @@ button.primario{background:var(--acento);border-color:var(--acento);color:#18181
 .punto{border-radius:50%;border:2px solid #0b0d10;box-shadow:0 0 0 1px #ffffff33}
 
 /* Aviso de red, oculto salvo que Leaflet o las teselas no lleguen. */
+#mapa.sin-base{background:
+  repeating-linear-gradient(0deg,#1a1d23 0 39px,#242832 39px 40px),
+  repeating-linear-gradient(90deg,#1a1d23 0 39px,#242832 39px 40px)}
 #sin-red{display:none;position:absolute;z-index:1000;top:50%;left:50%;
   transform:translate(-50%,-50%);background:var(--mal);color:#fff;
   padding:1rem 1.4rem;border-radius:var(--r);max-width:80%;text-align:center;
@@ -159,7 +162,8 @@ footer code{color:var(--texto);background:var(--panel2);padding:.05em .35em;bord
 <div class="cuerpo">
   <div style="position:relative">
     <div id="mapa"></div>
-    <div id="sin-red">No se han podido cargar el mapa base ni las teselas de
+    <div id="sin-red">Sin mapa base (sin conexión o el proveedor de teselas ha rechazado la petición).
+      Los marcadores, los filtros y los totales siguen funcionando sobre la cuadrícula. Teselas de
       OpenStreetMap (sin conexión a internet). Los datos de los locales sí están
       cargados: usa los filtros y el panel de totales.</div>
   </div>
@@ -274,20 +278,60 @@ function iniciarMapa(){
     return;
   }
   mapa = L.map('mapa', {zoomControl:true}).setView([39.4699, -0.3763], 13);
-  const teselas = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom: 19,
-    // Atribución obligatoria por la licencia ODbL de OpenStreetMap.
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a> · datos de locales FICTICIOS'
-  });
-  // Si ninguna tesela llega en 6 s damos por hecho que no hay red y avisamos,
-  // pero sin romper la página: los filtros y los totales siguen sirviendo.
-  let llego = false;
-  teselas.on('tileload', () => { llego = true; });
-  teselas.on('tileerror', () => {
-    if (!llego) document.getElementById('sin-red').style.display = 'block';
-  });
-  setTimeout(() => { if (!llego) document.getElementById('sin-red').style.display = 'block'; }, 6000);
-  teselas.addTo(mapa);
+
+  // Proveedores de teselas, en orden. El primero es CARTO (mapa oscuro, que además pega con el
+  // resto del proyecto). OpenStreetMap queda de reserva, pero OJO: sus servidores devuelven 403
+  // cuando la página se abre con doble clic desde el disco, porque la petición no lleva origen.
+  // Por eso el orden no es caprichoso: abierto como fichero, OSM falla siempre.
+  const PROVEEDORES = [
+    {
+      url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+      opciones: {subdomains:'abcd', maxZoom:19,
+        attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>' +
+                    ' &copy; <a href="https://carto.com/attributions">CARTO</a> · datos de locales FICTICIOS'},
+    },
+    {
+      url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+      opciones: {maxZoom:19,
+        attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>' +
+                    ' · datos de locales FICTICIOS'},
+    },
+  ];
+
+  let proveedor = 0, teselas = null, llego = false, reloj = null;
+
+  function avisarSinBase(){
+    // Sin base no se rompe nada: quedan los marcadores, los filtros y los totales, que es
+    // donde está la información. Se dibuja una cuadrícula para que el plano siga leyéndose.
+    document.getElementById('sin-red').style.display = 'block';
+    document.getElementById('mapa').classList.add('sin-base');
+  }
+
+  function probarProveedor(){
+    if (teselas) mapa.removeLayer(teselas);
+    const cfg = PROVEEDORES[proveedor];
+    teselas = L.tileLayer(cfg.url, cfg.opciones);
+    llego = false;
+    teselas.on('tileload', () => {
+      llego = true;
+      document.getElementById('sin-red').style.display = 'none';
+      document.getElementById('mapa').classList.remove('sin-base');
+      clearTimeout(reloj);
+    });
+    teselas.on('tileerror', () => {
+      if (llego) return;                       // un hueco suelto no es una caída
+      if (proveedor < PROVEEDORES.length - 1){ proveedor++; probarProveedor(); }
+      else avisarSinBase();
+    });
+    reloj = setTimeout(() => {
+      if (llego) return;
+      if (proveedor < PROVEEDORES.length - 1){ proveedor++; probarProveedor(); }
+      else avisarSinBase();
+    }, 6000);
+    teselas.addTo(mapa);
+  }
+  probarProveedor();
+
   capa = L.layerGroup().addTo(mapa);
   dibujarMarcadores();
 }

@@ -1,317 +1,424 @@
 # Informe de mercado · Sistema KDS + TPV autoalojado para hostelería pequeña
 
 **Proyecto Intermodular 1 · 1º CFGS Administración de Sistemas Informáticos en Red**
-Autor: RocaPV · Septiembre de 2026
-Documento complementario a [MEMORIA.md](MEMORIA.md)
+Autor: RocaPV · Septiembre de 2026 · Documento complementario a [MEMORIA.md](MEMORIA.md)
 
 > **Pregunta que responde este informe:** ¿qué nos ha llevado a elegir un KDS + TPV como proyecto?
 
-**Nota metodológica.** Todos los datos numéricos de este informe llevan fuente y año. Cuando un dato
-no ha podido verificarse en una fuente primaria o secundaria fiable, se indica expresamente con la
-fórmula «no se ha podido verificar». Las estimaciones propias se señalan como tales y se explica el
-procedimiento con el que se han obtenido. Las fuentes internas son los cuatro análisis de producto
-ya realizados en este mismo proyecto, citados por su ruta.
+**Nota metodológica.** Todo dato numérico lleva fuente y año. Lo que no ha podido verificarse en una
+fuente identificable se marca como «no se ha podido verificar», y las estimaciones propias se
+señalan explicando el procedimiento. Las fuentes internas son los cuatro análisis de producto ya
+realizados en este proyecto, citados por su ruta. Enlaces consultados el 21 de septiembre de 2026.
 
 ---
 
 ## 1. Resumen ejecutivo
 
-La restauración española es un sector enorme y extraordinariamente atomizado: 280.403
-establecimientos de hostelería en 2024 (UVE Data Market Horeca, junio de 2025), de los cuales el
-93 % son locales independientes, no cadenas. El tejido empresarial español al que pertenecen es de
-microempresa: el 54,4 % de las empresas activas no tiene ningún asalariado y el 81,6 % tiene dos o
-menos (INE, DIRCE a 1 de enero de 2025, publicado en diciembre de 2025).
+La restauración española es un sector enorme y atomizado: 280.403 establecimientos de hostelería en
+2024, de los cuales el 93 % son locales independientes (UVE Data Market Horeca, 2025). Pertenecen a
+un tejido de microempresa: el 81,6 % de las empresas españolas tiene dos asalariados o menos (INE,
+DIRCE 2025).
 
-Ese sector factura más cada año pero gana menos: en 2025 la facturación creció entre un 2 % y un
-4 %, mientras la rentabilidad de la restauración cayó un 0,9 % (Anuario de Hostelería de España,
-enero de 2026). Es decir, el margen se estrecha, y con él aumenta el valor de cualquier herramienta
-que reduzca error y tiempo muerto en el servicio.
+Ese sector factura más y gana menos. En 2025 la facturación creció entre un 2 % y un 4 % mientras la
+rentabilidad de la restauración caía un 0,9 % (Anuario de Hostelería de España, enero de 2026). Con
+el margen estrechándose, solo se compra tecnología que ahorre horas, evite errores o evite sanciones.
 
-Al mismo tiempo, tres normas empujan a renovar el equipamiento: la Ley 11/2021 antifraude, el
-Real Decreto 1007/2023 (reglamento de sistemas informáticos de facturación, conocido como
-Verifactu) y la factura electrónica entre empresas de la Ley 18/2022. El local pequeño va a tener
-que tocar su sistema de cobro sí o sí en los próximos ejercicios.
+Tres normas obligan además a tocar el equipamiento: la Ley 11/2021 antifraude, el RD 1007/2023
+(Verifactu), aplazado hasta enero y julio de 2027, y la factura electrónica entre empresas de la Ley
+18/2022, desarrollada por el RD 238/2026.
 
-El mercado de TPV está cubierto en funcionalidad, pero cobra casi siempre **por terminal**, y el
-KDS —la pantalla de cocina— aparece de forma sistemática como módulo aparte o como dispositivo
-adicional facturable. Un local que quiere cuatro pantallas de cocina paga cuatro veces. Esa es la
-grieta concreta que justifica este proyecto: un sistema web autoalojado en el que la pantalla
-número cinco cuesta lo que cuesta la pantalla, no lo que cuesta la licencia.
+El mercado está cubierto en funcionalidad pero cobra **por terminal**, y el KDS aparece casi siempre
+como módulo o dispositivo facturable aparte: de doce productos revisados, solo Loyverse lo regala, y
+a cambio los datos salen del local. Un local con cuatro estaciones de cocina paga cuatro veces.
+
+Esa es la grieta que justifica el proyecto: un sistema web autoalojado en el que la pantalla número
+cinco cuesta lo que cuesta la pantalla, no lo que cuesta la licencia.
 
 ---
 
-## 2. El sector: la restauración en España y en la Comunitat Valenciana
+## 2. El sector
 
 ### 2.1. Tamaño y estructura
 
-**Tabla 1 · Magnitudes del sector (datos verificados)**
+**Tabla 1 · Magnitudes verificadas**
 
 | Magnitud | Valor | Fuente y año |
 |---|---|---|
-| Establecimientos de hostelería en España | 280.403 (+1,6 % interanual) | UVE Data Market Horeca 2025, difundido por *Profesional Horeca*, junio de 2025 |
-| Cuota de hostelería independiente (no cadena) | 93 % de los establecimientos (+1,3 %) | UVE Data Market Horeca 2025 |
-| Cuota de restauración organizada (cadenas y franquicias) | 7,5 % de los establecimientos, creciendo al +6,2 % | UVE Data Market Horeca 2025 |
-| Empleo medio en hostelería | 1,89 millones de personas en 2025 (+2 %), con picos de 2 millones en verano | Anuario de Hostelería de España, enero de 2026 |
-| Peso de la hostelería en el empleo total | 8,6 % del empleo en España; 65,9 % del empleo turístico | Anuario de Hostelería de España, enero de 2026 |
-| Crecimiento de la facturación en 2025 | entre +2 % y +4 % sobre 2024 | Anuario de Hostelería de España, enero de 2026 |
-| Rentabilidad de la restauración (hasta septiembre de 2025) | **−0,9 %** (el alojamiento, en cambio, +2,1 %) | Anuario de Hostelería de España, enero de 2026 |
-| Empresas activas en España | 3,31 millones (+1,7 %) | INE, DIRCE a 1 de enero de 2025 (publicado 11/12/2025) |
-| Empresas sin asalariados | 54,4 % del total | INE, DIRCE 2025 |
-| Empresas con dos asalariados o menos | 81,6 % del total | INE, DIRCE 2025 |
+| Establecimientos de hostelería en España | 280.403 (+1,6 %) | UVE Data Market Horeca 2025, vía *Profesional Horeca*, junio 2025 |
+| Hostelería independiente / restauración organizada | 93 % (+1,3 %) frente a 7,5 % (+6,2 %) | Ídem |
+| Empleo en hostelería | 1,89 millones de media en 2025 (+2 %); 8,6 % del empleo español | Anuario de Hostelería de España, enero 2026 |
+| Facturación 2025 | +2 % a +4 % sobre 2024 | Ídem |
+| **Rentabilidad de la restauración** (hasta septiembre 2025) | **−0,9 %** (alojamiento: +2,1 %) | Ídem |
+| Empresas activas en España | 3,31 millones (+1,7 %) | INE, DIRCE a 1/1/2025 (publicado 11/12/2025) |
+| Empresas sin asalariados / con dos o menos | 54,4 % / 81,6 % | Ídem |
+| Bares y restaurantes en la Comunitat Valenciana | 31.186 (3.ª comunidad); un bar por cada 174 habitantes | Consejo General de Economistas sobre el Anuario 2024, prensa 27/05/2025 |
+| Establecimientos Horeca en la provincia de València | 13.698 | Ídem |
 
-Dos lecturas importan para este proyecto.
+Dos lecturas importan. **La atomización:** el DIRCE no desglosa asalariados para el epígrafe de
+servicios de comidas y bebidas, así que el porcentaje exacto de locales de restauración con menos de
+diez empleados **no se ha podido verificar**; sí está verificado el marco general y el 93 % de
+independientes. El cliente típico de un TPV en España no es una cadena con departamento de sistemas:
+es un local de cuatro personas sin nadie que sepa de informática. **La tijera entre ingresos y
+margen:** un sector que factura más y gana menos juzga una herramienta por lo que ahorra, no por su
+lista de funciones. Ese es el criterio con el que hay que evaluar un KDS.
 
-**La primera es la atomización.** El DIRCE no publica en su nota de prensa el desglose de
-asalariados restringido al epígrafe de servicios de comidas y bebidas, de modo que el porcentaje
-exacto de locales de restauración con menos de diez empleados **no se ha podido verificar** en
-fuente primaria. Lo que sí está verificado es el marco general —más de ocho de cada diez empresas
-españolas tienen dos asalariados o menos— y el dato sectorial de que el 93 % de los
-establecimientos de hostelería son independientes. Ambos apuntan en la misma dirección: el cliente
-típico de un TPV en España no es una cadena con departamento de sistemas, es un local con cuatro
-personas y sin nadie que sepa de informática.
+### 2.2. Digitalización: mucho cobro, poca cocina
 
-**La segunda es la tijera entre ingresos y margen.** La restauración factura más y gana menos. Un
-sector cuyo margen se estrecha no compra tecnología por moda: la compra si ahorra horas de trabajo,
-si evita platos devueltos o si evita una sanción. Ese es el criterio con el que hay que juzgar un
-KDS, y no por la lista de funciones.
+Conviene ser prudente, porque casi todas las cifras de «digitalización hostelera» que circulan
+proceden de estudios encargados por fabricantes de TPV.
 
-### 2.2. Comunitat Valenciana
+- **Estadística pública.** En la *Encuesta sobre el uso de TIC y comercio electrónico en las
+  empresas* del INE (año 2024, datos definitivos de 2025), el 84,5 % de las empresas tiene sitio web
+  y el 26,6 % vendió por comercio electrónico. El desglose de hostelería para empresas de menos de
+  diez empleados existe en INEbase, pero **no se ha podido verificar** su valor exacto aquí.
+- **Origen comercial, citado como tal.** Glop sitúa entre el 65 % y el 70 % los pagos en España por
+  medios digitales, con datos de más de 8.000 clientes propios (*El Independiente*, 21/05/2026). Es
+  una muestra de clientes de un fabricante: indicio, no estadística.
+- **Descartado.** Circulan porcentajes de «establecimientos altamente digitalizados» (del 15 % al
+  22 % según la fuente) sin informe original localizable; no se incorporan.
 
-**Tabla 2 · La hostelería valenciana**
-
-| Magnitud | Valor | Fuente y año |
-|---|---|---|
-| Bares y restaurantes en la Comunitat Valenciana | 31.186 establecimientos (tercera comunidad de España) | Consejo General de Economistas sobre el Anuario de la Hostelería de España 2024, recogido en prensa el 27/05/2025 |
-| Densidad | aproximadamente **un bar por cada 174 habitantes** (media española: uno por cada 175) | Misma fuente, 2025 |
-| Establecimientos del canal Horeca en la provincia de València | 13.698 | Misma fuente, 2024 |
-
-La Comunitat Valenciana es, por tanto, el tercer mercado español por número de locales y tiene una
-densidad de establecimientos por habitante ligeramente superior a la media nacional. Para un
-proyecto que nace en Burjassot (València), el mercado potencial inmediato es de decenas de miles de
-locales, la inmensa mayoría independientes.
-
-### 2.3. Digitalización: mucho cobro, poca cocina
-
-Aquí conviene ser prudente, porque la mayoría de las cifras de «digitalización hostelera» que
-circulan proceden de estudios encargados por fabricantes de TPV y no de estadística pública.
-
-- **Dato verificado (estadística pública, pero no sectorial).** El INE publica anualmente la
-  *Encuesta sobre el uso de TIC y del comercio electrónico en las empresas*, armonizada con
-  Eurostat; en la edición de 2024 (datos definitivos publicados en 2025) el 84,5 % de las empresas
-  dispone de sitio web y el 26,6 % vendió por comercio electrónico. El desglose específico del
-  epígrafe de hostelería para empresas de menos de diez empleados existe en INEbase pero **no se ha
-  podido verificar** su valor exacto en esta investigación.
-- **Dato de origen comercial, citado como tal.** Glop, empresa española de software TPV, sitúa
-  entre el 65 % y el 70 % los pagos realizados en España por medios digitales, a partir de datos de
-  más de 8.000 clientes propios (*El Independiente*, 21/05/2026). Es una muestra de clientes de un
-  fabricante, no representativa del sector, y debe leerse como indicio, no como estadística.
-- **Cifras no verificadas.** Circulan porcentajes concretos de «establecimientos altamente
-  digitalizados» (entre el 15 % y el 22 % según la fuente) atribuidos a informes sectoriales; no ha
-  sido posible localizar el informe original ni su año de publicación, de modo que **no se
-  incorporan** a este informe.
-
-Lo que sí puede afirmarse con las fuentes disponibles y con las observaciones de los cuatro
-análisis de producto internos es una asimetría cualitativa: la digitalización de la hostelería
-española se ha concentrado en **el cobro** (terminal de pago, TPV, carta con código QR) y apenas ha
-llegado a **la producción**, es decir, a la cocina. El comandero de papel y la voz siguen siendo el
-protocolo entre sala y fogón en una parte muy grande del sector.
+Lo que sí sostienen las fuentes y los cuatro análisis internos es una asimetría cualitativa: la
+digitalización de la hostelería española se ha concentrado en **el cobro** (datáfono, TPV, carta por
+QR) y apenas ha llegado a **la producción**. Entre la caja y el fogón siguen mandando el papel y la
+voz.
 
 ---
 
 ## 3. La normativa que empuja la digitalización
 
-Una parte relevante de la demanda de TPV en España no nace del deseo de modernizarse, sino de una
-obligación legal. Conviene distinguir cuatro bloques, con sus plazos **verificados a fecha de
-septiembre de 2026**, porque el calendario de facturación se ha modificado dos veces.
+Buena parte de la demanda de TPV en España no nace del deseo de modernizarse, sino de una obligación
+legal. Los plazos que siguen están verificados a septiembre de 2026, porque el calendario fiscal se
+ha modificado dos veces.
 
-### 3.1. Ley 11/2021 antifraude: el fin del software de doble uso
+**Ley 11/2021, de 9 de julio, antifraude.** Introdujo el artículo 29.2.j) de la Ley General
+Tributaria, que prohíbe producir, comercializar y usar programas de facturación capaces de llevar
+contabilidades distintas, no registrar operaciones o alterar registros. Es la norma que ilegaliza el
+«software de doble uso»: para un TPV, obliga a que el registro de ventas sea íntegro y trazable.
 
-La Ley 11/2021, de 9 de julio, de medidas de prevención y lucha contra el fraude fiscal, añadió a
-la Ley General Tributaria el artículo 29.2.j), que prohíbe producir, comercializar y usar programas
-de facturación que permitan llevar contabilidades distintas, no registrar operaciones o alterar
-registros. Es la norma que hace ilegal el «software de doble uso» y la que abre la puerta al
-desarrollo reglamentario posterior. Para un TPV de hostelería, su efecto práctico es que el
-registro de las ventas debe ser íntegro, trazable e inalterable.
+**RD 1007/2023, de 5 de diciembre (Verifactu).** Desarrolla ese artículo y fija los requisitos de
+todo sistema de facturación: registro por cada factura, encadenamiento mediante huella, firma,
+trazabilidad, conservación y, opcionalmente, remisión automática a la AEAT. Su calendario se ha
+aplazado dos veces: de julio de 2025 pasó, por el RD 254/2025, a enero y julio de 2026, y por el
+**Real Decreto-ley 15/2025** (BOE de 3/12/2025, convalidado el 16/12/2025) al **1 de enero de 2027**
+para contribuyentes del Impuesto sobre Sociedades y al **1 de julio de 2027** para el resto
+(Garrigues, diciembre de 2025).
 
-### 3.2. Real Decreto 1007/2023 (Verifactu): requisitos de los sistemas de facturación
+La lectura es doble. Es la oportunidad de mercado más clara —cientos de miles de locales deberán
+revisar su sistema antes de julio de 2027— y a la vez una limitación que este informe debe declarar:
+el sistema desarrollado emite facturas con numeración correlativa y sin huecos garantizada dentro de
+la transacción de base de datos, pero **no implementa** encadenamiento por huella, firma ni remisión
+a la AEAT, y por tanto **hoy no es conforme al RD 1007/2023**. Es una línea de trabajo, no una
+característica.
 
-El Real Decreto 1007/2023, de 5 de diciembre, aprueba el reglamento que desarrolla ese artículo y
-fija los requisitos que debe cumplir todo sistema informático de facturación: registro de
-facturación por cada factura emitida, encadenamiento mediante huella o *hash*, firma, trazabilidad,
-conservación, accesibilidad y, opcionalmente, remisión automática de los registros a la Agencia
-Tributaria (modalidad **Verifactu** propiamente dicha).
+**Ley 18/2022 «Crea y Crece» y RD 238/2026.** El artículo 12 obliga a emitir y recibir factura
+electrónica en las operaciones entre empresas y profesionales establecidos en España. Su desarrollo
+reglamentario, el **RD 238/2026 (BOE de 31/03/2026)**, define plataformas privadas y una solución
+pública de la AEAT, admite los formatos UBL, CII, EDIFACT y Facturae conformes al modelo europeo
+**EN 16931**, y fija plazos de **12 meses** para empresas de más de ocho millones de euros de
+facturación y **24 meses** para el resto, contados desde la orden ministerial de desarrollo. Excluye
+expresamente las **facturas simplificadas**, y esa excepción es decisiva: lo que un bar entrega a un
+cliente particular es un tique o una factura simplificada, de modo que la norma le afecta sobre todo
+**como receptor** de las facturas de sus proveedores. Para el diseño del sistema, la prioridad
+funcional está en el tique y la factura simplificada bien numerados.
 
-**Plazos vigentes.** El calendario se ha aplazado dos veces:
+**Alérgenos: Reglamento (UE) 1169/2011 y RD 126/2015.** El reglamento europeo obliga a informar de
+las catorce sustancias de su anexo II; el RD 126/2015, de 27 de febrero, regula en España la
+información de los alimentos sin envasar para el consumidor final —el caso exacto de un plato
+servido en un bar—, que debe estar disponible antes de formalizar la compra y con soporte documental
+verificable. La traducción al software es directa: el alérgeno es un dato obligatorio del producto
+que debe verse a la vez en la carta del cliente, en la pantalla del camarero y en la línea que llega
+a cocina, tal como lo modela el sistema desarrollado ([../README.md](../README.md)).
 
-| Hito | Plazo |
-|---|---|
-| Redacción original del RD 1007/2023 | julio de 2025 |
-| Tras el Real Decreto 254/2025 | 1 de enero de 2026 (sociedades) y 1 de julio de 2026 (resto) |
-| **Tras el Real Decreto-ley 15/2025** (BOE de 3/12/2025, en vigor el 4/12/2025, convalidado el 16/12/2025) | **1 de enero de 2027** para contribuyentes del Impuesto sobre Sociedades y **1 de julio de 2027** para el resto (autónomos en IRPF, no residentes con establecimiento permanente y entidades en atribución de rentas) |
-
-*Fuente: Garrigues, «Se retrasa la entrada en vigor de Veri\*factu», diciembre de 2025; y
-Real Decreto-ley 15/2025.*
-
-La lectura para este proyecto es doble. Por un lado, es la **oportunidad de mercado** más clara:
-cientos de miles de locales tendrán que revisar o cambiar su sistema de facturación antes de julio
-de 2027. Por otro, es una **limitación honesta** que este informe debe declarar: el sistema
-desarrollado emite facturas con numeración correlativa y sin huecos, garantizada dentro de la
-transacción de base de datos, pero **no implementa todavía** el encadenamiento por huella, la firma
-ni la remisión a la AEAT, y por tanto **no es hoy un sistema conforme al RD 1007/2023**. Es una
-línea de trabajo, no una característica actual.
-
-### 3.3. Ley 18/2022 «Crea y Crece» y la factura electrónica entre empresas
-
-El artículo 12 de la Ley 18/2022, de 28 de septiembre, de creación y crecimiento de empresas,
-obliga a emitir y recibir factura electrónica en todas las operaciones entre empresas y
-profesionales establecidos en España. Su desarrollo reglamentario es el **Real Decreto 238/2026,
-publicado en el BOE el 31 de marzo de 2026**, que define los requisitos técnicos, las plataformas
-privadas de intercambio y una solución pública de facturación gestionada por la AEAT.
-
-- Formatos admitidos: UBL, CII, EDIFACT y Facturae, todos conformes al modelo semántico europeo
-  **EN 16931**.
-- Calendario: **12 meses** para empresas con facturación superior a 8 millones de euros y
-  **24 meses** para el resto, contados desde la fecha que fije la orden ministerial de desarrollo.
-- Quedan expresamente **exceptuadas las facturas simplificadas**.
-
-Esa última excepción es decisiva para entender el caso de un bar. El documento que un local entrega
-a un cliente particular es un ticket o una factura simplificada, no una factura electrónica B2B: la
-obligación de «Crea y Crece» le afecta sobre todo **como receptor** de las facturas de sus
-proveedores, y solo como emisor cuando factura a empresas (comidas de empresa, *catering*). Para el
-diseño del sistema, esto significa que la prioridad funcional está en el ticket y la factura
-simplificada bien numerados —que es lo que el proyecto implementa— y que la factura electrónica
-estructurada es un requisito de segundo orden para este segmento.
-
-### 3.4. Alérgenos: Reglamento (UE) 1169/2011 y Real Decreto 126/2015
-
-El **Reglamento (UE) n.º 1169/2011** del Parlamento Europeo y del Consejo, de 25 de octubre de 2011,
-sobre la información alimentaria facilitada al consumidor, obliga a informar de la presencia de las
-catorce sustancias o productos que causan alergias e intolerancias recogidos en su anexo II. El
-**Real Decreto 126/2015, de 27 de febrero**, regula en España la información obligatoria de los
-alimentos que se presentan sin envasar para la venta al consumidor final, que es exactamente el
-caso de un plato servido en un bar: la información debe estar disponible antes de que se formalice
-la compra y puede facilitarse por escrito o de forma verbal siempre que exista un soporte
-documental accesible y verificable.
-
-Este requisito tiene una traducción directa en el software: el alérgeno no es un adorno de la carta
-digital, es un dato obligatorio asociado al producto, que debe verse a la vez en la carta del
-cliente, en la pantalla del camarero y en la línea de comanda que llega a cocina. El sistema
-desarrollado lo modela así (véase [../README.md](../README.md), aplicaciones «Carta» y «Carta del
-cliente»).
-
-### 3.5. Protección de datos: RGPD y LOPDGDD
-
-El **Reglamento (UE) 2016/679** (RGPD) y la **Ley Orgánica 3/2018, de 5 de diciembre**, de
-Protección de Datos Personales y garantía de los derechos digitales (LOPDGDD) se aplican a los
-datos personales que maneja un TPV: los del personal (usuarios, PIN, jornada, productividad) y los
-del cliente cuando se emite factura completa con NIF, se gestiona una reserva o se opera con una
-plataforma de reparto.
-
-Dos principios del RGPD son especialmente pertinentes en el diseño de un sistema de sala y cocina:
-
-- **Minimización (art. 5.1.c).** Solo deben tratarse los datos necesarios. La pantalla pública de
-  recogida del sistema desarrollado aplica este principio de forma literal: expone únicamente
-  números de pedido y tiempos de espera, sin nombres, productos ni importes.
-- **Protección de datos desde el diseño y por defecto (art. 25).** Un sistema autoalojado en el que
-  los datos no salen de la red del local reduce el número de encargados del tratamiento y, con él,
-  la superficie de riesgo y la carga documental. Un TPV en la nube exige, como mínimo, identificar
-  al proveedor como encargado del tratamiento, firmar el contrato del artículo 28 del RGPD y
-  verificar la ubicación del tratamiento. Conviene no exagerar la diferencia: autoalojar no exime
-  de cumplir el RGPD, solo simplifica la cadena de responsabilidad y traslada al titular del local
-  la obligación de la seguridad y de las copias.
+**RGPD y LOPDGDD.** El Reglamento (UE) 2016/679 y la Ley Orgánica 3/2018 alcanzan a los datos del
+personal (usuarios, PIN, productividad) y del cliente (NIF en factura completa, reservas, reparto).
+Dos principios importan aquí: la **minimización** (art. 5.1.c), que la pantalla pública de recogida
+aplica literalmente al exponer solo números de pedido y tiempos; y la **protección desde el diseño**
+(art. 25), pues autoalojar reduce el número de encargados del tratamiento y la carga documental del
+artículo 28. Sin exagerar la diferencia: autoalojar no exime de cumplir el RGPD, solo simplifica la
+cadena de responsabilidad y traslada al titular del local la obligación de seguridad y copias.
 
 ---
 
 ## 4. La competencia
 
-### 4.1. Panorama
+El mercado español tiene tres capas: el **software español clásico de licencia** (Glop, Ágora,
+Cuiner, Camarero10), heredero del TPV Windows instalado en el local; las **plataformas en la nube**
+(Revo, Last.app, Lightspeed, Square, Epos Now), que cobran suscripción y venden la integración con
+el reparto a domicilio; y el **modelo gratuito con monetización indirecta** (Loyverse, TMBill).
 
-El mercado español de TPV de hostelería tiene tres capas. La primera es la del **software español
-clásico de licencia** (Glop, Ágora, Cuiner, Camarero10), heredero del TPV Windows instalado en el
-local. La segunda es la de las **plataformas en la nube** (Revo, Last.app, Lightspeed, Square, Epos
-Now), que cobran suscripción y venden la integración con reparto a domicilio como argumento
-principal. La tercera es la del **software gratuito o muy barato con monetización indirecta**
-(Loyverse, TMBill), que regala el TPV y cobra los complementos o los pagos.
+**Tabla 2 · Doce productos con KDS presentes en España**
 
-**Tabla 3 · Competencia en TPV con KDS presente en España**
+| Producto | Modelo de precio (fuente y fecha) | ¿KDS aparte? | ¿Nube? | Punto débil para un local pequeño |
+|---|---|---|---|---|
+| **Revo XEF** (ES) | **Sin precio público**: remite al distribuidor (09/2026) | Módulo de la suite | Sí | Opacidad de precio y coste por terminal; depende del distribuidor |
+| **Glop** (ES) | Desde **19,90 €/mes** o **~299 €** en pago único; Mini desde 199 € y Pro desde 399 € sin IVA (distribuidores, 09/2026) | Módulo de cocina | No: instalación local | Windows obligatorio; cada pantalla añade licencia |
+| **Ágora / IGT** (ES) | **Desde 32 €/mes**; también licencia perpetua por terminal (agorapos.com, 09/2026) | Incluido como monitor de cocina | Opcional | Modelo por terminal: cada puesto suma |
+| **Cuiner** (ES) | **Sin precio público**; se cotiza por local (el módulo de reservas, desde 22 €/mes) | Módulo de cocina | Mixto | Precio no transparente; funciones troceadas |
+| **Camarero10** (ES) | **Sin precio oficial**; comparadores lo sitúan en **30–50 €/mes** (tpvhosteleria.org, 2026) | Módulo | Sí | Coste final dependiente de los módulos |
+| **Lightspeed** (CA) | 69–399 $/mes según plan (tarifa de EE. UU., julio 2026). **Precio en euros: no verificado** | **Sí: ~30 $ por pantalla y mes** (UpMenu, 2026) | Sí | El coste por pantalla castiga la cocina por estaciones |
+| **Square** (EE. UU.) | Plan gratuito o **59 €/mes + IVA por punto de venta**, licencias ilimitadas; **1,25 % + 0,05 €** por pago presencial UE (squareup.com/es, 09/2026) | Existe; **coste separado no publicado** en España | Sí | El coste real está en la comisión, no en la cuota |
+| **Loyverse** (LV/EE. UU.) | TPV, panel, **KDS y pantalla de cliente gratuitos**; complementos: 5 €/mes por tienda (histórico), 5 €/mes por empleado, 25 €/mes por tienda (inventario) (loyverse.com/es/pricing, 09/2026) | **No: gratuito** | Sí: datos en su nube | Los datos salen del local y el histórico completo se paga |
+| **TMBill** (IN) | **Sin precio público** en euros | Aplicación aparte (Windows y Android) | Sí | No orientado al mercado español: soporte, idioma, fiscalidad |
+| **Epos Now** (RU/ES) | **Sin precio público en España**: cotización personalizada (en EE. UU., 39 $/mes o 449 $ por 12 meses) | Complemento de su tienda de *apps* | Sí | Paquete con hardware y permanencia; precio opaco |
+| **Last.app** (ES) | Starter **50 €**, Growth **95 €**, Unlimited **175 €**/mes con pago anual + **500 € de alta** (last.app/precios, 21/09/2026) | **Sí: 35 €/mes por local**, en ningún plan | Sí | Alta de 500 € y KDS de pago antes de vender nada |
+| **Ordatic** (ES) | **39 €/mes** (300 pedidos) a **149 €/mes** sin límite (comparadores, 2026) | No es TPV: integrador de reparto | Sí | Resuelve solo el reparto |
 
-| Producto | Origen | Modelo de precio (fuente y fecha) | ¿KDS aparte? | ¿Depende de la nube? | Punto débil para un local pequeño |
-|---|---|---|---|---|---|
-| **Revo XEF** | España | **Sin precio público**: la web y la documentación remiten al distribuidor (consultado 21/09/2026) | Módulo diferenciado dentro de la suite | Sí, arquitectura en la nube | Opacidad de precio y coste por terminal; el local depende del distribuidor para cualquier cambio |
-| **Glop Hostelería** | España | Desde **19,90 €/mes** o **~299 € en pago único**; versiones Mini desde 199 € y Pro desde 399 € sin IVA (red de distribuidores, consultado 09/2026) | Módulo de cocina adicional | No: instalación local | Windows obligatorio; escalar a varias pantallas implica licencias adicionales |
-| **Ágora (IGT / Iberical)** | España | **Desde 32 €/mes** en suscripción; también licencia perpetua por terminal (agorapos.com, consultado 09/2026) | KDS incluido como módulo de monitor de cocina | Opcional | Modelo por terminal: cada puesto suma |
-| **Cuiner** | España | **Sin precio público** para el TPV: se cotiza por local. El módulo de reservas se anuncia desde 22 €/mes (cuiner.com y comparadores, 09/2026) | Módulo de cocina adicional | Mixto | Precio no transparente; funciones troceadas en módulos |
-| **Camarero10** | España | **Sin precio público oficial**; los comparadores sitúan la base en **30–50 €/mes** (tpvhosteleria.org, 2026). Cifra de comparador, no del fabricante | KDS como módulo | Sí | Coste final dependiente de los módulos contratados |
-| **Lightspeed Restaurant** | Canadá | Planes desde **69 $/mes** (Starter) hasta 399 $/mes (Premium), tarifa de EE. UU., julio de 2026. **Precio en euros para España: no se ha podido verificar** | **Sí: en torno a 30 $ por pantalla y mes** (análisis de UpMenu y Merchant Maverick, 2026) | Sí | El KDS por pantalla multiplica el coste justo en el local con cocina por estaciones |
-| **Square for Restaurants** | EE. UU. | Plan gratuito, o **59 €/mes + IVA por punto de venta** con licencias de TPV ilimitadas; comisión **1,25 % + 0,05 €** en pagos presenciales en la UE (squareup.com/es, consultado 09/2026) | Square KDS existe; **su coste separado no está publicado** en la web española | Sí | El coste real está en la comisión por transacción, no en la cuota |
-| **Loyverse** | Letonia / EE. UU. | TPV, panel, **KDS y pantalla de cliente gratuitos**. Complementos: historial de ventas ilimitado 5 €/mes por tienda, gestión del personal 5 €/mes por empleado, inventario avanzado 25 €/mes por tienda (loyverse.com/es/pricing, consultado 09/2026) | **No: el KDS es gratuito** | Sí: los datos residen en su nube | Es la excepción del mercado, pero a cambio los datos salen del local y el histórico de ventas se paga |
-| **TMBill** | India | **Sin precio público** en euros | KDS como aplicación aparte (Windows y Android) | Sí | Producto no orientado al mercado español: soporte, idioma y fiscalidad |
-| **Epos Now** | Reino Unido, con delegación en España | **Sin precio público en España**: cotización personalizada. En EE. UU. se anuncian 39 $/mes o 449 $ por doce meses (comparadores, 2026) | KDS como aplicación de su tienda de complementos | Sí | Venta por paquete con hardware y permanencia; precio no transparente |
-| **Last.app** | España | Starter **50 €/mes**, Growth **95 €/mes**, Unlimited **175 €/mes** con facturación anual, más **500 € + IVA de alta** (last.app/precios, consultado 21/09/2026) | **Sí: 35 €/mes por local**, complemento no incluido en ningún plan | Sí | El alta de 500 € y el KDS de pago se abonan antes de vender nada |
-| **Ordatic** | España | De **39 €/mes** (hasta 300 pedidos) a **149 €/mes** sin límite (comparadores, 2026) | No es un TPV: es integrador de reparto | Sí | Resuelve solo el reparto; no sustituye a un TPV ni a un KDS |
+Dos advertencias: las cifras en dólares son del mercado estadounidense y no trasladables sin más a
+España, y cuando la fuente es un comparador y no el fabricante se indica, porque los comparadores no
+siempre actualizan tarifas.
 
-Dos advertencias metodológicas sobre esta tabla. La primera: las cifras en dólares corresponden al
-mercado estadounidense y no son trasladables sin más a España; se incluyen porque son el único dato
-público del fabricante. La segunda: cuando la fuente es un comparador y no el fabricante, se dice
-expresamente, porque los comparadores no siempre actualizan las tarifas.
+**Lo que se ve al mirar los productos por dentro.** Los cuatro análisis internos, hechos con
+descarga, transcripción y fotogramas clave de demostraciones reales, dicen cosas que ninguna tabla
+de precios recoge. En [ANALISIS_KDS_COMPETENCIA.md](ANALISIS_KDS_COMPETENCIA.md) (STARPOS), el KDS
+vive dentro del TPV: ver comandas exige un equipo Windows con el punto de venta instalado, no un
+cliente ligero. En [ANALISIS_KDS_TMBILL.md](ANALISIS_KDS_TMBILL.md), nueve de los quince minutos de
+la demostración oficial son instalación y configuración de un ecosistema que se vende entero.
+[ANALISIS_KDS_LOYVERSE.md](ANALISIS_KDS_LOYVERSE.md) documenta una decisión de diseño que el mercado
+casi no usa: tratar el KDS **como una impresora más**, lo que simplifica el encaminamiento pero ata
+la pantalla al modelo de «imprimir en destino» en vez de al estado de la línea. Y
+[ANALISIS_KDS_EPOSNOW.md](ANALISIS_KDS_EPOSNOW.md) reduce el producto a lo esencial en 47 segundos:
+qué ocurre en cocina en el instante en que el camarero envía la comanda, que es el núcleo funcional
+de todo KDS.
 
-### 4.2. Lo que se ve al mirar los productos por dentro
-
-Los cuatro análisis de producto realizados en este proyecto —con descarga, transcripción y
-selección de fotogramas clave de demostraciones reales— permiten afirmar cosas que ninguna tabla de
-precios dice:
-
-- **El KDS suele vivir dentro del TPV.** En [ANALISIS_KDS_COMPETENCIA.md](ANALISIS_KDS_COMPETENCIA.md)
-  (STARPOS) se documenta que para ver las comandas hace falta un equipo Windows con el punto de
-  venta instalado. La pantalla de cocina no es un cliente ligero: es otra instalación completa.
-- **El ecosistema se vende entero o no se vende.** En [ANALISIS_KDS_TMBILL.md](ANALISIS_KDS_TMBILL.md)
-  nueve de los quince minutos de la demostración oficial son instalación y configuración: aplicación
-  de camarero, pedido del cliente, canales digitales y KDS en dos sistemas operativos distintos.
-- **Hay una alternativa de diseño que el mercado casi no usa.**
-  [ANALISIS_KDS_LOYVERSE.md](ANALISIS_KDS_LOYVERSE.md) muestra que Loyverse trata el KDS como si
-  fuera **una impresora más**: eso simplifica el encaminamiento de comandas, pero ata la pantalla al
-  modelo de «imprimir en destino» en lugar de al estado de la línea.
-- **Lo que de verdad importa dura menos de un minuto.**
-  [ANALISIS_KDS_EPOSNOW.md](ANALISIS_KDS_EPOSNOW.md) reduce el producto a lo esencial: 47 segundos
-  de pantalla partida que enseñan qué ocurre en cocina en el instante en que el camarero envía la
-  comanda. Ese instante es el núcleo funcional de todo KDS.
-
-### 4.3. Conclusión del análisis competitivo
-
-Tres patrones se repiten con independencia del fabricante:
-
-1. **La unidad de facturación es el terminal o la pantalla.** Lightspeed lo cobra explícitamente por
-   pantalla; Last.app lo cobra como complemento por local; Glop y Ágora lo cobran como licencia de
-   puesto.
-2. **El KDS casi nunca está incluido.** De los doce productos de la tabla, solo en Loyverse el KDS
-   es gratuito sin condiciones, y a cambio los datos del local residen en la nube del fabricante y
-   el histórico de ventas completo es de pago.
-3. **El precio no es público.** En cinco de los doce casos no existe tarifa publicada. Para un local
-   de cuatro personas, eso significa negociar sin referencia y, a menudo, con permanencia.
+**Tres patrones se repiten** con independencia del fabricante: la unidad de facturación es el
+terminal o la pantalla; el KDS casi nunca está incluido (solo en Loyverse, a cambio de ceder los
+datos); y el precio no es público en cinco de los doce casos, lo que obliga al local pequeño a
+negociar sin referencia.
 
 ---
 
-## 5. El cliente: a quién sirve un KDS y a quién no
+## 5. El cliente
 
 No todos los locales pequeños tienen el mismo problema. La segmentación siguiente es **elaboración
-propia**, a partir de la observación del flujo de trabajo descrita en la memoria y del
-funcionamiento de los productos analizados; no procede de un estudio de mercado con muestra
-estadística, y debe leerse como hipótesis de trabajo, no como dato.
+propia** a partir de la observación del flujo de trabajo descrita en la memoria y del funcionamiento
+de los productos analizados; no procede de un estudio con muestra estadística.
 
-**Tabla 4 · Segmentos de cliente y necesidad dominante (elaboración propia, 2026)**
+**Tabla 3 · Segmentos y necesidad dominante (elaboración propia, 2026)**
 
-| Segmento | Cómo es el servicio | Qué necesita de verdad | Valor del KDS |
+| Segmento | Servicio | Qué necesita | Valor del KDS |
 |---|---|---|---|
-| **Bar de barrio** | Barra, rotación alta, ticket bajo, cocina pequeña o inexistente | Cobrar rápido, dividir cuentas, cerrar la caja sin descuadres | **Bajo-medio**: una sola pantalla de pase basta; el valor está en el TPV |
-| **Hamburguesería o comida rápida** | Picos cortos y muy densos, cocina dividida en estaciones (plancha, fritura, fríos), mucho «para llevar» | Que cada línea llegue a la estación correcta y que el retraso se vea | **Alto**: es el caso canónico, y es el del proyecto |
-| **Arrocería o restaurante de mantel** | Menos comandas, tiempos de cocción largos y muy desiguales, coordinación de pases | Sincronizar el pase de mesa: que todos los platos salgan a la vez | **Alto, pero con otra lógica**: importa el pase, no la velocidad |
-| **Cafetería o panadería-cafetería** | Mostrador, producto mayormente preelaborado | Cobro ágil y control de caja | **Bajo**: una pantalla de recogida aporta más que un KDS por estaciones |
-| **Dark kitchen** | Sin sala; casi todos los pedidos entran por plataformas de reparto | Agregar pedidos de varias plataformas en una sola cola de producción | **Muy alto**, pero la pieza crítica es la integración con las plataformas, que este proyecto no cubre |
+| Bar de barrio | Barra, rotación alta, ticket bajo, cocina mínima | Cobrar rápido, dividir cuentas, cerrar caja sin descuadres | **Bajo-medio**: basta una pantalla de pase; el valor está en el TPV |
+| Hamburguesería o comida rápida | Picos cortos y densos, cocina por estaciones, mucho «para llevar» | Que cada línea llegue a su estación y el retraso se vea | **Alto**: caso canónico, y el del proyecto |
+| Arrocería o restaurante de mantel | Pocas comandas, cocciones largas y desiguales | Sincronizar el pase: que los platos salgan a la vez | **Alto, con otra lógica**: importa el pase, no la velocidad |
+| Cafetería | Mostrador, producto preelaborado | Cobro ágil y control de caja | **Bajo**: una pantalla de recogida aporta más |
+| Dark kitchen | Sin sala; pedidos de plataformas | Agregar varias plataformas en una cola de producción | **Muy alto**, pero la pieza crítica es la integración, que el proyecto no cubre |
 
-La conclusión operativa es que el KDS no es un producto universal: su valor crece con **el número de
-estaciones de cocina y la densidad del pico de servicio**. El proyecto acierta al elegir una
-hamburguesería con cuatro estaciones y servicio concentrado, porque es el escenario donde la
-diferencia entre papel y pantalla es máxima; y debe reconocer que para una cafetería de mostrador la
-misma herramienta aporta poco.
+El valor del KDS crece con **el número de estaciones y la densidad del pico de servicio**. Por eso
+acierta el proyecto al elegir una hamburguesería de cuatro estaciones, donde la diferencia entre
+papel y pantalla es máxima, y por eso debe reconocer que en una cafetería de mostrador aporta poco.
 
 ---
+
+## 6. Los proveedores del sector
+
+Un TPV se apoya en cuatro cadenas de suministro, y cada una condiciona alguna decisión técnica.
+
+**Alimentación.** El canal mayorista del local independiente es el *cash & carry*: **Makro** opera
+37 establecimientos en España y lidera por superficie comercial en la Comunitat Valenciana, Madrid y
+País Vasco, y **GM Cash** (Transgourmet Ibérica) tiene 74 centros en doce comunidades y más de
+200.000 clientes anuales (*Inforetail* y gmcash.es, 2026). **Bidfood** opera en España como
+distribuidor de hostelería, aunque **no se ha podido verificar** el número de plataformas logísticas
+que mantiene. Su papel aquí es indirecto pero real: el albarán del proveedor es la entrada natural
+del escandallo y del control de existencias, línea de trabajo futura del sistema.
+
+**Hardware.** **Epson** (serie TM) y **Star Micronics** dominan la impresión de tiques, **Elo** las
+pantallas táctiles de punto de venta y **Sunmi** los terminales Android integrados de bajo coste.
+Frente a este grupo, la decisión relevante del proyecto es **no depender de la impresora**: el tique
+y la factura se dibujan en pantalla a cuarenta columnas y se descargan, lo que elimina el
+controlador del sistema operativo como punto de fallo y como atadura de marca.
+
+**Pagos.** **Redsys** es la plataforma participada por la banca que encamina la mayoría de las
+operaciones con tarjeta de los comercios españoles; **SumUp** compite en el datáfono autónomo sin
+cuota; **Stripe** y **Adyen** son los adquirentes habituales de las plataformas que integran el pago
+en el propio TPV, como Square. La diferencia es estructural: cuando el TPV integra el pago, el
+fabricante se vuelve intermediario financiero y su ingreso deja de estar en la cuota. Este proyecto
+registra el método de pago pero no procesa el cobro: limitación deliberada y garantía de
+independencia.
+
+**Reparto.** Glovo, Uber Eats y Just Eat concentran el pedido a domicilio en España y generan la
+complejidad de la que vive la categoría de los integradores. Para la *dark kitchen* es la
+funcionalidad decisiva; para el bar de barrio, apenas cuenta. El sistema no la aborda, y ese es su
+límite de mercado más claro.
+
+---
+
+## 7. DAFO del proyecto frente al mercado
+
+Esta matriz no repite la de la memoria, que mira al local simulado; aquí se mira al **mercado**.
+
+| | Favorable | Desfavorable |
+|---|---|---|
+| **Interno** | El número de pantallas no es variable de coste, que es justo donde el mercado cobra. Funciona en cualquier navegador: no impone sistema operativo ni marca. Los datos no salen del local, lo que simplifica la cadena del RGPD | No cumple aún el RD 1007/2023, el requisito que decidirá compras en 2027-2028. No integra pagos ni plataformas de reparto. No hay soporte ni red comercial, y el mercado compra soporte tanto como software |
+| **Externo** | Dos oleadas normativas obligan a renovar antes de julio de 2027. El 93 % de establecimientos independientes es sensible al coste recurrente. El hardware táctil barato abarata la pantalla adicional | Competidores consolidados con distribución capilar. Modelos «freemium» como Loyverse neutralizan la ventaja de precio. Concentración en suites que incluyen pagos y reparto |
+
+Conviene no maquillar la coincidencia entre una debilidad y una oportunidad: la misma normativa que
+abre el mercado es la que el sistema todavía no cumple.
+
+---
+
+## 8. Conclusión: por qué un KDS + TPV
+
+### 8.1. Dónde pierde dinero un local pequeño
+
+Cuando el margen se estrecha —facturación al alza y rentabilidad al −0,9 %—, el coste que más duele
+no es el que aparece en la factura, sino el que nadie mide: la comanda mal leída que obliga a
+rehacer un plato, la mesa que espera porque nadie sabe qué falta, el turno en que una sola persona
+sostiene en la cabeza el orden de toda la cocina.
+
+Este informe **no dispone de un dato verificado** sobre el porcentaje de comandas erróneas en
+hostelería española, y no lo va a inventar. Lo que sostienen las fuentes reunidas es un razonamiento
+en tres pasos: el sector está formado casi por completo por locales independientes dentro de un
+tejido de microempresa; esos locales ya han digitalizado el cobro pero no la producción; luego el
+margen de mejora disponible no está en cobrar mejor, sino en **el tramo que va de la comanda al
+plato**, que es exactamente el tramo que cubre un KDS.
+
+### 8.2. Por qué el KDS es la pieza que el mercado cobra aparte
+
+El patrón de la sección 4 no parece casual. Lightspeed factura el KDS por pantalla y mes; Last.app
+lo vende como complemento de 35 €/mes que ningún plan incluye; Glop, Ágora y Cuiner lo tratan como
+módulo; Epos Now lo coloca en su tienda de complementos; STARPOS lo empotra en el TPV, de modo que
+ver comandas exige otro equipo Windows completo.
+
+La razón es económica y transparente: el KDS es el único componente del sistema que **se multiplica
+de forma natural**. Un local tiene una caja y quizá dos comanderos, pero puede tener cuatro, cinco o
+seis pantallas si su cocina está bien dividida en estaciones. Cobrar por pantalla convierte una
+buena práctica de organización —repartir la producción— en un coste creciente, y penaliza justo la
+conducta que el propio producto dice fomentar.
+
+El efecto es perverso y observable. Con una tarifa por pantalla, el sobrecoste crece linealmente con
+cada estación, y el local acaba juntando dos estaciones en una sola pantalla: menos claridad, más
+errores, peor servicio. La decisión técnica la toma la factura, no la cocina.
+
+### 8.3. Por qué un sistema web autoalojado cambia la ecuación
+
+Tres consecuencias se siguen de la arquitectura elegida —HTML servido sobre HTTPS desde un servidor
+propio en la red del local, con WebSocket para el tiempo real—, y cada una ataca un punto de lo
+anterior.
+
+**La pantalla adicional deja de tener licencia.** Si la interfaz de cocina es una página web, añadir
+una estación cuesta lo que cuesta la pantalla: un dispositivo con navegador y una dirección. El
+presupuesto de la memoria cifra en 180 € la pantalla con soporte, pago único, frente a una cuota que
+se repite cada mes mientras el local exista. La variable de coste desaparece y la decisión vuelve a
+ser de organización de la cocina.
+
+**Los datos se quedan dentro.** Ventas, tiempos de cocina y datos del personal residen en una base
+de datos accesible solo por socket local. Esto no exime de cumplir el RGPD, y conviene decirlo sin
+triunfalismo: traslada al titular del local la responsabilidad de la seguridad y de las copias. Pero
+elimina un encargado del tratamiento de la cadena y, con él, el contrato del artículo 28, la
+verificación de la ubicación del tratamiento y la dependencia de que un proveedor siga existiendo.
+
+**El sistema operativo deja de importar.** Es el contraste más nítido con los análisis internos:
+STARPOS exige Windows con el TPV instalado en cada puesto de cocina y TMBill distribuye aplicaciones
+distintas para Windows y Android. Aquí sirve cualquier navegador reciente —una tableta vieja, un
+portátil reutilizado, un mini-PC con una pantalla de segunda mano— y no hay nada que instalar ni
+actualizar en las pantallas. El único equipo que mantener es el servidor, y es también el único que
+necesita copia de seguridad.
+
+### 8.4. Respuesta a la pregunta
+
+Se eligió un KDS + TPV porque ahí coinciden tres cosas que rara vez coinciden: un mercado grande y
+atomizado, una necesidad real que el sector dejó sin cubrir mientras digitalizaba el cobro, y un
+modelo de precio de la competencia que penaliza justo la solución correcta.
+
+Y se eligió construirlo **autoalojado y sobre web** porque esa decisión no es estética: es la que
+hace el argumento demostrable. El proyecto no compite en funciones —el mercado está cubierto, como
+reconoce la propia memoria— sino en una afirmación estructural: en un local pequeño, el número de
+pantallas de cocina debería ser una decisión de cocina y no de tesorería.
+
+Queda dicho con la misma franqueza lo que falta: conformidad con el RD 1007/2023, integración de
+pagos y de plataformas de reparto, y alguien que dé soporte. Un informe de mercado honesto describe
+la grieta que justifica el proyecto y también la distancia que lo separa de un producto.
+
+---
+
+## 9. Bibliografía
+
+Formato APA 7.ª edición. Enlaces consultados el 21 de septiembre de 2026.
+
+Ágora TPV. (2026). *Precios de software TPV y suscripciones*. https://www.agorapos.com/pricing/
+
+El Independiente. (2026, 21 de mayo). *La digitalización silenciosa impulsa el uso del software TPV
+en la hostelería española*. https://www.elindependiente.com/eli/2026/05/21/la-digitalizacion-silenciosa-impulsa-el-uso-del-software-tpv-en-la-hosteleria-espanola/
+
+El Periòdic. (2025, 27 de mayo). *Un bar cada 174 valencianos: la Comunitat Valenciana, tercera con
+más bares y restaurantes*. https://www.elperiodic.com/cada-valencianos-comunitat-valenciana-tercera-bares-restaurantes_1018629
+
+España. (2015). *Real Decreto 126/2015, de 27 de febrero* (información alimentaria de alimentos sin
+envasar). BOE, 54. https://www.boe.es/buscar/act.php?id=BOE-A-2015-2293
+
+España. (2018). *Ley Orgánica 3/2018, de 5 de diciembre, de Protección de Datos Personales y
+garantía de los derechos digitales*. BOE, 294. https://www.boe.es/buscar/act.php?id=BOE-A-2018-16673
+
+España. (2021). *Ley 11/2021, de 9 de julio, de medidas de prevención y lucha contra el fraude
+fiscal*. BOE, 164. https://www.boe.es/buscar/act.php?id=BOE-A-2021-11473
+
+España. (2022). *Ley 18/2022, de 28 de septiembre, de creación y crecimiento de empresas*. BOE, 234.
+https://www.boe.es/buscar/act.php?id=BOE-A-2022-15818
+
+España. (2023). *Real Decreto 1007/2023, de 5 de diciembre* (requisitos de los sistemas informáticos
+de facturación). BOE, 291. https://www.boe.es/buscar/act.php?id=BOE-A-2023-24840
+
+España. (2026, 31 de marzo). *Real Decreto 238/2026* (desarrollo reglamentario de la factura
+electrónica entre empresarios y profesionales). BOE.
+
+Garrido Abogados. (2026). *Real Decreto 238/2026: se aprueba el desarrollo reglamentario de la
+factura electrónica*. https://garrido.es/real-decreto-238-2026-aprueba-el-desarrollo-reglamentario-de-la-factura-electronica/
+
+Garrigues. (2025, diciembre). *Se retrasa la entrada en vigor de Veri\*factu*.
+https://www.garrigues.com/es_ES/noticia/retrasa-entrada-vigor-verifactu
+
+GM Cash / Transgourmet Ibérica. (2026). *Quiénes somos*. https://www.gmcash.es/quienes-somos/
+
+Hosteltur. (2026, 5 de enero). *La hostelería alcanza los 1,89 millones de empleados en 2025 pero ve
+amenazada su rentabilidad* [datos del Anuario de Hostelería de España]. https://www.hosteltur.com/173449_la-hosteleria-alcanza-los-189-millones-de-empleados-en-2025-pero-ve-amenazada-su-rentabilidad.html
+
+Inforetail. (2025). *Makro y GM Cash lideran el cash&carry en tres comunidades autónomas*.
+https://www.revistainforetail.com/
+
+Instituto Nacional de Estadística. (2025, 11 de diciembre). *Directorio Central de Empresas (DIRCE).
+Datos a 1 de enero de 2025* [Nota de prensa]. https://www.ine.es/dyngs/Prensa/DIRCE2025.htm
+
+Instituto Nacional de Estadística. (2025). *Encuesta sobre el uso de TIC y del comercio electrónico
+en las empresas. Año 2024 – 1.er trimestre de 2025* [Nota de prensa].
+https://www.ine.es/dyngs/Prensa/ETICCE20241T2025.htm
+
+Last.app. (2026). *Un precio para cada restaurante*. https://www.last.app/precios
+
+Loyverse. (2026). *Precios*. https://loyverse.com/es/pricing
+
+Makro España. (2026). *Cash and carry*. https://www.makro.es/compra-como-quieras/cash-and-carry
+
+Profesional Horeca. (2025, junio). *La hostelería en España en 2025: 280.400 establecimientos,
+transformación y consolidación* [datos de UVE Data Market Horeca 2025].
+https://www.profesionalhoreca.com/la-hosteleria-en-espana-en-2025-280-400-establecimientos-transformacion-y-consolidacion/
+
+Square. (2026). *Precios de Square en España*. https://squareup.com/es/es/pricing
+
+TPV Hostelería. (2026). *Camarero10: reseñas y opiniones*. https://tpvhosteleria.org/camarero10/
+
+Unión Europea. (2011). *Reglamento (UE) n.º 1169/2011 sobre la información alimentaria facilitada al
+consumidor*. DOUE, L 304. https://eur-lex.europa.eu/legal-content/ES/TXT/?uri=CELEX%3A32011R1169
+
+Unión Europea. (2016). *Reglamento (UE) 2016/679 (RGPD)*. DOUE, L 119.
+https://eur-lex.europa.eu/legal-content/ES/TXT/?uri=CELEX%3A32016R0679
+
+UpMenu. (2026). *Lightspeed POS pricing for restaurants: fees and hidden costs*.
+https://www.upmenu.com/blog/lightspeed-pos-pricing/
+
+VentaTPV. (2026). *Software Glop TPV: precios, versiones y características*.
+https://ventatpv.com/content/34-tpv-glop
+
+**Fuentes internas del proyecto.** RocaPV (2026): `docs/MEMORIA.md`;
+`docs/ANALISIS_KDS_COMPETENCIA.md` (STARPOS); `docs/ANALISIS_KDS_TMBILL.md`;
+`docs/ANALISIS_KDS_LOYVERSE.md`; `docs/ANALISIS_KDS_EPOSNOW.md`; y `README.md` del repositorio.
+
+---
+
+### Limitaciones de este informe
+
+No se ha podido verificar, y por tanto no se afirma: el porcentaje de establecimientos de
+restauración con menos de diez empleados en fuente primaria del INE; el desglose sectorial de la
+encuesta TIC del INE para hostelería de menos de diez empleados; el precio en euros de Lightspeed
+Restaurant y de Epos Now para España; el coste separado del KDS de Square; la tarifa oficial de Revo
+XEF, Cuiner, Camarero10 y TMBill; el número de plataformas logísticas de Bidfood en España; y
+cualquier cifra sobre porcentaje de comandas erróneas en hostelería.
