@@ -415,6 +415,44 @@ HTTPS con certificado de Let's Encrypt (renovación automática por webroot) y e
 combinaciones al alcance de un robot. Para volver a cerrarlo basta con poner
 `KDS_REDES=127.0.0.0/8,192.168.1.0/24` en `deploy/raspa/kds-tpv.service`.
 
+### Raspa se actualiza sola
+
+No se despliega a mano: **se commitea y se sube**. Un temporizador de systemd mira la rama
+`ASIR-KDS-TPV` cada 5 minutos y, si hay algo nuevo, lo pone en marcha.
+
+```
+git push            →   kds-actualiza.timer (cada 5 min)
+                         └─ git merge --ff-only
+                            ├─ dependencias      (si cambió requirements)
+                            ├─ pruebas           (si cambió backend/) ─── fallan → vuelve atrás
+                            ├─ esquema           (ampliaciones que falten, migrar.sh)
+                            ├─ pantallas         (publicar.sh, con su sello de versión)
+                            └─ reinicio de la API (si cambió backend/app)
+```
+
+```bash
+sudo systemctl start kds-actualiza.service     # traerlo ya, sin esperar
+journalctl -u kds-actualiza -n 40 --no-pager   # qué hizo la última vez
+systemctl list-timers kds-actualiza            # cuándo vuelve a mirar
+```
+
+Lo que **no** hace solo, y por qué:
+
+- **No pisa trabajo sin commitear.** Si en Raspa hay cambios a medias, se para y lo dice: quien
+  esté editando ahí no se encuentra el fichero reescrito a mitad de frase.
+- **No fuerza la rama.** Solo avanza en línea recta; un historial divergido lo mira una persona.
+- **No instala los vhosts de Apache.** Esa máquina también sirve Jellyfin, el Director y demás:
+  cambiar su configuración no puede ser un efecto secundario de un `git push`. Avisa y ya.
+- **No ejecuta `01_schema.sql` ni `02_seed.sql` jamás.** El primero empieza con `DROP TABLE` y el
+  segundo son datos de ejemplo. Las demás ampliaciones se aplican una vez y quedan apuntadas en
+  la tabla `migraciones`.
+
+Si algo falla —pruebas, esquema o la API que no responde— vuelve al commit anterior, republica y
+reinicia: el local se queda con la versión que se sabe que funcionaba.
+
+La credencial es una **clave de despliegue de solo lectura** (`~/.ssh/kds_deploy_ed25519`,
+registrada en GitHub como `raspa-autodespliegue`): Raspa puede leer el repo, no escribirlo.
+
 ## Mejoras pendientes
 
 En [docs/PENDIENTES.md](docs/PENDIENTES.md).
