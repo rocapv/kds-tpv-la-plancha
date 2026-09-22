@@ -378,6 +378,43 @@ Dos condiciones: **el certificado tiene que estar confiado en la tableta** (si n
 registra el trabajador de servicio y el TPV solo aguanta el corte con la pantalla ya abierta) y
 **empezar el turno exige red**, porque el PIN lo valida el servidor.
 
+## Despliegue en RASPA (home.pr1.es) — 22/09/2026
+
+El sistema **vive ahora en Raspa** (Raspberry Pi, Debian 13). Piezas:
+
+| Pieza | Dónde |
+|---|---|
+| Código | `/home/roca/kds_tpv` |
+| Base de datos | MariaDB **del sistema**, base `kds_tpv`, usuario `roca` por socket (sin contraseña escrita) |
+| API | `kds-tpv.service` → uvicorn en **127.0.0.1:8092**, sin puerto abierto a la red |
+| Pantallas | **document root de Apache** (`/var/www/html`), publicadas con `deploy/raspa/publicar.sh` |
+| Nombres | `http://192.168.1.100/` (solo LAN) y **`https://home.pr1.es`** (abierto a internet) |
+
+```bash
+# publicar cambios del frontal (pone el sello de versión en las páginas)
+bash deploy/raspa/publicar.sh
+# recargar la API
+sudo systemctl restart kds-tpv
+```
+
+Tres cosas que cuestan una tarde si no se saben:
+
+1. **`/api` ya tenía dueño en Raspa.** `sites-enabled/director-ocr.conf` declara un `<Location /api/>`
+   FUERA de todo vhost, así que se lleva el `/api` de *todos* los sitios a la API OCR del Director.
+   Se le gana con otro `<Location /api/>` dentro del vhost del KDS; un `ProxyPass` suelto no basta.
+2. **uvicorn trae `--proxy-headers` activado.** Detrás de Apache, la aplicación ve la IP REAL del
+   navegante (no la del proxy), así que la lista `KDS_REDES` decide quién entra de verdad.
+3. **El frontal lo sirve Apache, que no sustituye `__V__`.** El sello de versión lo pone
+   `publicar.sh` al copiar; si se copia a mano, el navegador se queda con el JavaScript viejo.
+
+### Abierto a internet
+
+Por decisión expresa (22/09/2026), `home.pr1.es` atiende a cualquiera: `KDS_REDES=0.0.0.0/0,::/0`.
+HTTPS con certificado de Let's Encrypt (renovación automática por webroot) y el `:80` redirige.
+**El PIN de 4 cifras no tiene límite de intentos**: expuesto a internet, eso son 10.000
+combinaciones al alcance de un robot. Para volver a cerrarlo basta con poner
+`KDS_REDES=127.0.0.0/8,192.168.1.0/24` en `deploy/raspa/kds-tpv.service`.
+
 ## Mejoras pendientes
 
 En [docs/PENDIENTES.md](docs/PENDIENTES.md).

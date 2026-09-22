@@ -20,3 +20,13 @@ aquí abajo.
 - Sin red el TPV enseña la carta y las mesas **de la última vez que hubo servidor**. Si el
   encargado cambia un precio mientras una tableta está caída, esa tableta apunta el precio viejo;
   al reenviar manda el producto, y **el precio lo pone el servidor**.
+
+## Abierto por internet (22/09/2026)
+
+`home.pr1.es` sirve el TPV a todo el mundo, y el PIN sigue siendo de cuatro cifras **sin límite
+de intentos**. En el primer minuto de exposición los registros ya recogieron sondas automáticas
+pidiendo `/api/.env`, `/api/config` y `/api/settings`. Pendiente, por orden:
+
+1. Freno al `POST /api/login`: espera creciente y bloqueo temporal por IP.
+2. Registro de intentos fallidos (quién, desde dónde, cuántos) visible para el encargado.
+3. Contraseña larga obligatoria para los escalafones con gestión; el PIN, solo para la barra.

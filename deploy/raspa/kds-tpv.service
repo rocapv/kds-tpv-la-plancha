@@ -1,0 +1,33 @@
+[Unit]
+# KDS + TPV en RASPA (Raspberry Pi). Aquí, a diferencia de la VM Mint, el servicio NO habla
+# con la red: escucha en 127.0.0.1 y quien atiende a las pantallas es Apache, que sirve el
+# frontal desde el document root y reenvía /api y /ws a este proceso.
+Description=KDS + TPV Cantina Vesta-9 (FastAPI, tras Apache)
+After=network-online.target mariadb.service
+Requires=mariadb.service
+
+[Service]
+User=roca
+Group=roca
+WorkingDirectory=/home/roca/kds_tpv/backend
+# MariaDB del sistema, por socket: el usuario 'roca' entra sin contraseña (unix_socket),
+# así no hay ninguna clave escrita en este fichero ni en el entorno.
+Environment=KDS_DB_USER=roca
+Environment=KDS_DB_SOCKET=/run/mysqld/mysqld.sock
+Environment=KDS_DB_NAME=kds_tpv
+# ABIERTO A INTERNET por decisión expresa de RocaPV (22/09/2026): home.pr1.es sirve el TPV
+# a cualquiera que llegue. Hasta hoy el sistema era «solo LAN» en dos capas; esta es la capa
+# que se retira a conciencia, así que queda escrito aquí.
+#
+# Ojo al detalle que lo hacía fallar: uvicorn trae `--proxy-headers` ACTIVADO por defecto y,
+# como Apache es un proxy de confianza (127.0.0.1), sustituye la IP del cliente por la de
+# X-Forwarded-For. Es decir, la aplicación SÍ ve la IP real del navegante —bien para el
+# registro— y por eso, con la lista de antes, contestaba «solo atiende a la red local» a todo
+# el que venía de fuera. Para volver a cerrarlo: poner 127.0.0.0/8,192.168.1.0/24 aquí.
+Environment=KDS_REDES=0.0.0.0/0,::/0
+ExecStart=/home/roca/kds_tpv/backend/.venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8092
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target
