@@ -1,0 +1,9 @@
+[Unit]
+Description=KDS + TPV · traer del repo lo nuevo y ponerlo en marcha
+After=network-online.target kds-tpv.service
+
+[Service]
+Type=oneshot
+User=roca
+WorkingDirectory=/home/roca/kds_tpv
+ExecStart=/bin/bash /home/roca/kds_tpv/deploy/raspa/actualizar.sh

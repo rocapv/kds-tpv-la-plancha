@@ -1,0 +1,13 @@
+[Unit]
+Description=Mirar el repo del KDS cada pocos minutos
+
+[Timer]
+# Cinco minutos es el compromiso: un arreglo de hora punta entra rápido y el repo no recibe
+# una visita por minuto. Al arrancar la máquina se mira enseguida, por si estuvo apagada.
+OnBootSec=2min
+OnUnitActiveSec=5min
+AccuracySec=30s
+Unit=kds-actualiza.service
+
+[Install]
+WantedBy=timers.target
