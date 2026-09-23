@@ -4,7 +4,8 @@ Lo que se protege aquí no es el aspecto de la demo, es que no se forme un cuell
 delante del tribunal: si todos los camareros apretaran a la vez mientras toda la cocina va
 floja, la pantalla del pase se llena de tarjetas que nadie saca.
 """
-from app.simulacion import CICLO_MARCHA, FACTORES, marcha_en, repartir_desfases
+from app.simulacion import (CICLO_MARCHA, COLA_APURO, COLA_ATASCO, FACTORES,
+                            PLATOS_EN_APURO, marcha_en, repartir_desfases)
 
 
 def test_cada_marcha_dura_tres_minutos():
@@ -49,3 +50,12 @@ def test_la_capacidad_total_no_se_mueve():
             fuertes = sum(1 for d in desfases if marcha_en(d, t) == "fuerte")
             assert abs(fuertes - cuantos / 2) <= 1, (
                 f"con {cuantos} bots, en t={t} van fuerte {fuertes}")
+
+
+def test_las_valvulas_van_en_el_sentido_correcto():
+    """Apretar tiene que ser más rápido que ir fuerte, y esperar más lento que ir flojo."""
+    assert FACTORES["apuro"] <= FACTORES["fuerte"] < 1 < FACTORES["espera"] <= FACTORES["flojo"]
+    # El cocinero apurado saca varias de una tacada, o no recupera nunca el terreno perdido.
+    assert PLATOS_EN_APURO >= 2
+    # La sección se da por apurada ANTES de que la cocina entera se dé por atascada.
+    assert COLA_APURO < COLA_ATASCO

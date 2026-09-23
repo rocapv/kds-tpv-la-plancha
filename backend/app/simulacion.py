@@ -30,12 +30,17 @@ NOMBRES = ["Ana", "Joan", "Lucía", "Iker", "Marta", "Sergi", "Nerea", "Hugo"]  
 # largo del ciclo completo. Así, en cualquier momento, parte de la sala va fuerte mientras otra
 # parte va floja, y lo mismo en cocina: hay ritmo, pero no se sincroniza nadie con nadie.
 CICLO_MARCHA = 180.0                 # segundos que dura cada marcha (3 minutos)
-FACTORES = {"fuerte": 0.45, "flojo": 1.9}    # multiplican la espera: <1 es ir más deprisa
+FACTORES = {"fuerte": 0.45, "flojo": 1.9, "apuro": 0.4, "espera": 1.3}   # multiplican la espera
+PLATOS_EN_APURO = 3      # comandas que saca un cocinero de una tacada cuando va apurado
 
 # Dos válvulas de seguridad, que son las que garantizan que no haya atasco aunque el azar se
-# ponga en contra. Las dos imitan lo que hace una cocina de verdad.
-COLA_APURO = 6      # comandas en MI sección → el cocinero aprieta, vaya por donde vaya su ciclo
-COLA_ATASCO = 25    # comandas en toda la cocina → la sala deja de sentar gente tan deprisa
+# ponga en contra. Las dos imitan lo que hace una cocina de verdad, y sin ellas el ritmo alegre
+# de la sala se come a la cocina: medido, la cola pasaba de 13 a 42 comandas en siete minutos.
+COLA_APURO = 6      # comandas en MI sección → el cocinero aprieta y saca varias de una tacada
+ABIERTOS_TOPE = 18  # pedidos sin cobrar de la simulación → la caja cobra varios por vuelta
+COLA_ATASCO = 22    # comandas en toda la cocina → el camarero DEJA de sentar gente esta vuelta
+                    # (no «va más lento»: con la cocina desbordada, seguir sentando gente no es
+                    #  trabajar más, es alargar la cola. Un maître de verdad hace esperar)
 
 
 def marcha_en(desfase: float, ahora: float) -> str:
@@ -222,7 +227,7 @@ class Simulacion:
             if forzada:
                 marcha = forzada
             ficha["marcha"] = marcha
-            factor = FACTORES.get(marcha, FACTORES["fuerte"] if marcha == "apuro" else 1.0)
+            factor = FACTORES.get(marcha, 1.0)
         await asyncio.sleep(random.uniform(minimo, maximo) * self.ritmo * factor)
         return self.estado == "corriendo"
 
@@ -238,16 +243,20 @@ class Simulacion:
         ficha = self.bots[f"sala:{puesto['clave']}"]
         try:
             while True:
-                # Si la cocina está desbordada, este camarero baja el ritmo aunque le tocara ir
-                # fuerte: seguir metiendo comandas en una cocina atascada no es ir más deprisa,
-                # es hacer la cola más larga.
+                # Si la cocina está desbordada, este camarero NO sienta a nadie esta vuelta.
+                # No es ir más lento: es lo que hace un maître cuando hay cuarenta comandas sin
+                # salir. Es el techo que impide que la cola crezca sin parar.
+                atasco = 0
                 try:
-                    if self._cocina_pendiente(quien) >= COLA_ATASCO:
-                        ficha["forzar"] = "flojo"
-                        ficha["ultimo"] = "espera: cocina llena"
+                    atasco = self._cocina_pendiente(quien)
                 except Exception:
                     pass
-                if not await self._espera(8, 22, ficha):
+                if atasco >= COLA_ATASCO:
+                    ficha["forzar"] = "espera"
+                    ficha["ultimo"] = f"espera: {atasco} comandas en cocina"
+                    await self._espera(14, 34, ficha)
+                    continue
+                if not await self._espera(14, 34, ficha):
                     continue
                 try:
                     pid = await self._nuevo_pedido(quien, zona_puesto=puesto["clave"])
@@ -276,14 +285,18 @@ class Simulacion:
                     mias = [c for c in datos["comandas"] if c["pedido_id"] in self.creados]
                     if not mias:
                         continue
-                    if len(mias) >= COLA_APURO:
+                    apurado = len(mias) >= COLA_APURO
+                    if apurado:
                         ficha["forzar"] = "apuro"         # se le está acumulando: aprieta
-                    elegida = mias[0]                     # la más antigua: el pase manda
-                    await api.avanzar_pedido(elegida["pedido_id"], estacion=estacion["clave"],
-                                             pantalla=None, u=quien)
-                    ficha["avances"] += 1
+                    # Con la sección llena se sacan varias de una tacada: un cocinero con seis
+                    # comandas encima no saca un plato y se sienta. Las más antiguas primero,
+                    # que el pase manda.
+                    for elegida in mias[:PLATOS_EN_APURO if apurado else 1]:
+                        await api.avanzar_pedido(elegida["pedido_id"], estacion=estacion["clave"],
+                                                 pantalla=None, u=quien)
+                        ficha["avances"] += 1
                     ficha["cola"] = len(mias)
-                    ficha["ultimo"] = f"#{elegida['pedido_id']}"
+                    ficha["ultimo"] = f"#{mias[0]['pedido_id']}"
                 except Exception as e:
                     ficha["ultimo"] = f"error: {e}"
         except asyncio.CancelledError:
@@ -304,7 +317,13 @@ class Simulacion:
                 if self.estado != "corriendo":
                     continue
                 try:
-                    await self._cobrar_uno(api, camarero, cocina)
+                    # La caja sigue el ritmo del servicio: si se acumulan pedidos sin cobrar,
+                    # cobra varios de una vuelta. Sin esto la cocina iba bien pero el TPV se
+                    # llenaba de pedidos «para llevar» abiertos que no se cerraban nunca
+                    # (medido: 220 creados y 43 cobrados en ocho minutos).
+                    veces = 4 if len(self.creados) - self.cobrados > ABIERTOS_TOPE else 1
+                    for _ in range(veces):
+                        await self._cobrar_uno(api, camarero, cocina)
                 except Exception as e:
                     from .main import hub
                     await hub.emitir("simulacion", **{**self.resumen(), "error": str(e)})
