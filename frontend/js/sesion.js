@@ -226,12 +226,22 @@ function mandosSimulacion(yo) {
                                 || (b.dataset.sim === 'pause' && s.estado === 'pausado'));
     });
     const bots = s.bots || [];
+    // Cada bot lleva su cronómetro: cambia de marcha cada pocos minutos y no coincide con los
+    // demás. Se resume en la barra porque durante la demo es justo lo que hay que poder señalar:
+    // «mira, ahora aprietan estos tres y descansan estos dos».
+    const MARCHA = { fuerte: '▲ fuerte', flojo: '▼ flojo', apuro: '‼ apuro', espera: '⏸ espera' };
+    const cuantos = s.marchas || {};
+    const resumenMarchas = Object.entries(cuantos)
+      .map(([m, n]) => `${n} ${(MARCHA[m] || m).split(' ')[1] || m}`).join(' · ');
     caja.querySelector('.sim-estado').textContent = s.estado === 'parado' ? ''
-      : `${s.estado} · ${bots.length} bots · ${s.pedidos} pedidos, ${s.cobrados} cobrados`;
+      : `${s.estado} · ${bots.length} bots${resumenMarchas ? ' (' + resumenMarchas + ')' : ''} · ${s.pedidos} pedidos, ${s.cobrados} cobrados`;
     // El detalle de quién está haciendo qué, sin ocupar sitio en la barra.
-    caja.querySelector('.sim-estado').title = bots.map(b => b.tipo === 'sala'
-      ? `${b.area}: ${b.empleado} · ${b.pedidos} comandas`
-      : `${b.area}: ${b.empleado} · ${b.avances} pases`).join(String.fromCharCode(10)) || 'Sin bots en marcha';
+    caja.querySelector('.sim-estado').title = bots.map(b => {
+      const m = MARCHA[b.marcha] || b.marcha || '';
+      return b.tipo === 'sala'
+        ? `${b.area}: ${b.empleado} · ${m} · ${b.pedidos} comandas`
+        : `${b.area}: ${b.empleado} · ${m} · ${b.avances} pases${b.cola ? ` (${b.cola} en cola)` : ''}`;
+    }).join(String.fromCharCode(10)) || 'Sin bots en marcha';
   };
 
   caja.querySelectorAll('[data-sim]').forEach(b => b.onclick = async () => {

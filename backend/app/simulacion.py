@@ -13,10 +13,48 @@ import asyncio
 import json
 import os
 import random
+import time
 from pathlib import Path
 
 NOTAS = [None, None, None, "Sin cebolla", "Muy hecha", "Sin pepinillo", "Sin gluten", "Extra de queso"]
 NOMBRES = ["Ana", "Joan", "Lucía", "Iker", "Marta", "Sergi", "Nerea", "Hugo"]   # tripulación de paso
+
+# ── El cronómetro de los bots ──────────────────────────────────────────────────────────────
+# Un servicio real no va a ritmo constante: hay rachas. Si todos los bots fueran al mismo paso
+# la demo se vería plana, y si además coincidieran sus rachas se formaría un cuello de botella
+# —la sala metiendo comandas a la vez que la cocina va floja— que acaba con una pantalla llena
+# de tarjetas que nadie saca.
+#
+# Por eso cada bot lleva SU cronómetro: cambia de marcha cada 3 minutos, alternando fuerte y
+# flojo, y arranca con un desfase propio, repartido dentro de su familia (sala / cocina) a lo
+# largo del ciclo completo. Así, en cualquier momento, parte de la sala va fuerte mientras otra
+# parte va floja, y lo mismo en cocina: hay ritmo, pero no se sincroniza nadie con nadie.
+CICLO_MARCHA = 180.0                 # segundos que dura cada marcha (3 minutos)
+FACTORES = {"fuerte": 0.45, "flojo": 1.9}    # multiplican la espera: <1 es ir más deprisa
+
+# Dos válvulas de seguridad, que son las que garantizan que no haya atasco aunque el azar se
+# ponga en contra. Las dos imitan lo que hace una cocina de verdad.
+COLA_APURO = 6      # comandas en MI sección → el cocinero aprieta, vaya por donde vaya su ciclo
+COLA_ATASCO = 25    # comandas en toda la cocina → la sala deja de sentar gente tan deprisa
+
+
+def marcha_en(desfase: float, ahora: float) -> str:
+    """Qué marcha le toca a un bot con ese desfase en ese instante.
+
+    Función aparte y sin estado a propósito: así se puede comprobar en una prueba que dos bots
+    con desfases distintos no van sincronizados, sin levantar la simulación entera.
+    """
+    return "fuerte" if int((ahora + desfase) // CICLO_MARCHA) % 2 == 0 else "flojo"
+
+
+def repartir_desfases(cuantos: int) -> list[float]:
+    """Desfases repartidos a lo largo del ciclo completo (fuerte + flojo = 2 marchas).
+
+    Con cuatro camareros salen a 0, 90, 180 y 270 s: dos van fuerte mientras dos van flojos, y
+    el relevo se va dando de uno en uno, no todos de golpe.
+    """
+    periodo = CICLO_MARCHA * 2
+    return [periodo * i / max(1, cuantos) for i in range(cuantos)]
 
 RASTRO = Path(os.environ.get("KDS_DATOS", Path.home() / ".local/share/kds-tpv")) / "simulacion.json"
 
@@ -53,9 +91,13 @@ class Simulacion:
             pass                        # el rastro es una comodidad, no una garantía
 
     def resumen(self) -> dict:
+        bots = sorted(self.bots.values(), key=lambda b: (b["tipo"], b["area"]))
+        marchas = {}
+        for b in bots:
+            marchas[b.get("marcha", "—")] = marchas.get(b.get("marcha", "—"), 0) + 1
         return {"estado": self.estado, "pedidos": len(self.creados),
                 "cobrados": self.cobrados, "ritmo": self.ritmo,
-                "bots": sorted(self.bots.values(), key=lambda b: (b["tipo"], b["area"]))}
+                "ciclo_marcha": CICLO_MARCHA, "marchas": marchas, "bots": bots}
 
     # ── mandos ──
     def _podar_rastro(self) -> None:
@@ -141,27 +183,54 @@ class Simulacion:
         cocina = q("SELECT clave, nombre FROM estaciones WHERE activa ORDER BY orden")
         suplente_sala = self._quien("camarero")
         suplente_cocina = self._quien("cocina")
-        for p in sala:
+        # Los desfases se reparten DENTRO de cada familia: los camareros entre ellos y los
+        # cocineros entre ellos. Si se repartieran todos juntos, con pocos bots podría tocar
+        # toda la sala fuerte y toda la cocina floja a la vez, que es justo lo que se evita.
+        desf_sala = repartir_desfases(len(sala))
+        desf_cocina = repartir_desfases(len(cocina))
+        for i, p in enumerate(sala):
             quien = self._quien_esta_en(p["clave"]) or suplente_sala
             if not quien:
                 continue
             self.bots[f"sala:{p['clave']}"] = {
                 "tipo": "sala", "area": p["nombre"], "clave": p["clave"],
-                "empleado": quien["nombre"], "pedidos": 0, "cobros": 0, "ultimo": None}
+                "empleado": quien["nombre"], "pedidos": 0, "cobros": 0, "ultimo": None,
+                "desfase": round(desf_sala[i], 1), "marcha": marcha_en(desf_sala[i], time.monotonic())}
             self.tareas_bot.append(asyncio.create_task(self._bot_sala(p, quien)))
-        for e in cocina:
+        for i, e in enumerate(cocina):
             quien = self._quien_esta_en(e["clave"]) or suplente_cocina
             if not quien:
                 continue
             self.bots[f"cocina:{e['clave']}"] = {
                 "tipo": "cocina", "area": e["nombre"], "clave": e["clave"],
-                "empleado": quien["nombre"], "avances": 0, "ultimo": None}
+                "empleado": quien["nombre"], "avances": 0, "ultimo": None,
+                "desfase": round(desf_cocina[i], 1), "marcha": marcha_en(desf_cocina[i], time.monotonic())}
             self.tareas_bot.append(asyncio.create_task(self._bot_cocina(e, quien)))
 
-    async def _espera(self, minimo: float, maximo: float) -> bool:
-        """Duerme lo suyo y dice si hay que seguir trabajando (False = simulación parada)."""
-        await asyncio.sleep(random.uniform(minimo, maximo) * self.ritmo)
+    async def _espera(self, minimo: float, maximo: float, ficha: dict | None = None) -> bool:
+        """Duerme lo suyo y dice si hay que seguir trabajando (False = simulación parada).
+
+        Si se le pasa la ficha de un bot, la espera se multiplica por su marcha del momento:
+        en «fuerte» tarda menos de la mitad, en «flojo» casi el doble. La marcha se apunta en
+        la ficha para que se vea en la barra quién está apretando y quién no.
+        """
+        factor = 1.0
+        if ficha is not None:
+            marcha = marcha_en(ficha.get("desfase", 0.0), time.monotonic())
+            # Una marcha forzada por las válvulas de seguridad manda sobre el cronómetro.
+            forzada = ficha.pop("forzar", None)
+            if forzada:
+                marcha = forzada
+            ficha["marcha"] = marcha
+            factor = FACTORES.get(marcha, FACTORES["fuerte"] if marcha == "apuro" else 1.0)
+        await asyncio.sleep(random.uniform(minimo, maximo) * self.ritmo * factor)
         return self.estado == "corriendo"
+
+    def _cocina_pendiente(self, quien: dict) -> int:
+        """Cuántas comandas hay esperando en TODA la cocina (para frenar a la sala)."""
+        from . import main as api
+        datos = api.kds(estacion=None, pantalla=None, limite=1, u=quien)
+        return len(datos["comandas"]) + datos.get("esperando", 0)
 
     async def _bot_sala(self, puesto: dict, quien: dict):
         """Camarero de un área: sienta gente en SUS mesas y manda la comanda a cocina."""
@@ -169,7 +238,16 @@ class Simulacion:
         ficha = self.bots[f"sala:{puesto['clave']}"]
         try:
             while True:
-                if not await self._espera(8, 22):
+                # Si la cocina está desbordada, este camarero baja el ritmo aunque le tocara ir
+                # fuerte: seguir metiendo comandas en una cocina atascada no es ir más deprisa,
+                # es hacer la cola más larga.
+                try:
+                    if self._cocina_pendiente(quien) >= COLA_ATASCO:
+                        ficha["forzar"] = "flojo"
+                        ficha["ultimo"] = "espera: cocina llena"
+                except Exception:
+                    pass
+                if not await self._espera(8, 22, ficha):
                     continue
                 try:
                     pid = await self._nuevo_pedido(quien, zona_puesto=puesto["clave"])
@@ -187,16 +265,24 @@ class Simulacion:
         ficha = self.bots[f"cocina:{estacion['clave']}"]
         try:
             while True:
-                if not await self._espera(4, 10):
+                if not await self._espera(4, 10, ficha):
                     continue
                 try:
-                    datos = api.kds(estacion["clave"], None, quien)
+                    # Las llamadas van POR NOMBRE a propósito: estas funciones son endpoints y
+                    # el día que a uno se le añada un parámetro en medio (pasó con `pantalla` y
+                    # con `limite`), una llamada posicional mete el empleado donde no toca y el
+                    # bot se cae en silencio.
+                    datos = api.kds(estacion=estacion["clave"], pantalla=None, u=quien)
                     mias = [c for c in datos["comandas"] if c["pedido_id"] in self.creados]
                     if not mias:
                         continue
+                    if len(mias) >= COLA_APURO:
+                        ficha["forzar"] = "apuro"         # se le está acumulando: aprieta
                     elegida = mias[0]                     # la más antigua: el pase manda
-                    await api.avanzar_pedido(elegida["pedido_id"], estacion["clave"], None, quien)
+                    await api.avanzar_pedido(elegida["pedido_id"], estacion=estacion["clave"],
+                                             pantalla=None, u=quien)
                     ficha["avances"] += 1
+                    ficha["cola"] = len(mias)
                     ficha["ultimo"] = f"#{elegida['pedido_id']}"
                 except Exception as e:
                     ficha["ultimo"] = f"error: {e}"
@@ -238,7 +324,7 @@ class Simulacion:
             ped = api.pedido_completo(pid)
             if not any(l["estado"] in ("enviada", "preparando", "lista") for l in ped["lineas"]):
                 break
-            await api.avanzar_pedido(pid, None, cocina)
+            await api.avanzar_pedido(pid, estacion=None, pantalla=None, u=cocina)
         ped = api.pedido_completo(pid)
         if ped["estado"] != "abierto" or ped["pendiente_cent"] <= 0:
             return
