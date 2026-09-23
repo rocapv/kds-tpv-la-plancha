@@ -15,12 +15,12 @@
 </header>
 <main class="informe">
   <h2>Datos del local</h2>
-  <div class="caja"><table id="tabla"></table></div>
+  <div class="caja"><table id="tabla" class="fichas"></table></div>
   <p class="tenue">Los datos del local salen en el ticket y en la factura. El IVA se aplica al calcular la base imponible; los minutos de aviso colorean las comandas del KDS.</p>
 
   <h2>Cocina &middot; secciones</h2>
   <div class="caja">
-    <table id="t-estaciones"></table>
+    <table id="t-estaciones" class="fichas"></table>
     <div class="fila">
       <input id="e-clave" placeholder="clave (broiler)" maxlength="20" style="width:11em">
       <input id="e-nombre" placeholder="Nombre visible (Broiler)" maxlength="40" style="flex:1">
@@ -32,7 +32,7 @@
 
   <h2>Cocina &middot; pantallas de KDS</h2>
   <div class="caja">
-    <table id="t-pantallas"></table>
+    <table id="t-pantallas" class="fichas"></table>
     <div class="fila">
       <input id="p-clave" placeholder="clave (linea2)" maxlength="20" style="width:11em">
       <input id="p-nombre" placeholder="Nombre visible (Linea 2)" maxlength="40" style="flex:1">
@@ -45,15 +45,25 @@
 <script src="/js/comun.js?v=__V__"></script>
 <script src="/js/sesion.js?v=__V__"></script>
 <script>
+// Toda clave de la tabla `ajustes` tiene aquí su nombre en cristiano. Una clave sin etiqueta
+// sale tal cual (`idempotencia_dias`) y nadie sabe qué es ni si puede tocarla.
 const ETIQUETAS = {
   local_nombre: 'Nombre del local', local_nif: 'NIF', local_direccion: 'Dirección',
-  local_telefono: 'Teléfono', fondo_caja_cent: 'Fondo de caja sugerido (céntimos)', iva_pct: 'IVA (%)', aviso_min: 'Aviso en cocina (min)', critico_min: 'Retraso crítico (min)',
+  local_telefono: 'Teléfono', fondo_caja_cent: 'Fondo de caja sugerido (céntimos)', iva_pct: 'IVA (%)',
+  aviso_min: 'Aviso en cocina (min)', critico_min: 'Retraso crítico (min)',
+  cliente_pedidos: 'Los clientes pueden pedir desde el móvil (1 sí · 0 no)',
+  cliente_mensaje: 'Mensaje en la carta del cliente',
+  protocolo_general: 'Protocolo general si alguien reacciona a un alérgeno',
+  idempotencia_dias: 'Días que se recuerda un reenvío del TPV sin red',
+  sala_espera_nota: 'Sala · minutos sin tomar nota antes de avisar',
+  sala_espera_cuenta: 'Sala · minutos esperando la cuenta antes de avisar',
+  sala_espera_pase: 'Sala · minutos con un plato en el pase antes de avisar',
 };
 async function cargar() {
   const a = await api('/ajustes');
   $('#tabla').innerHTML = Object.entries(a).map(([k, v]) => `<tr>
-    <td style="width:16em">${esc(ETIQUETAS[k] || k)}</td>
-    <td><input data-k="${k}" value="${esc(v)}" style="width:100%"></td>
+    <td style="width:22em">${esc(ETIQUETAS[k] || k)}</td>
+    <td><input data-k="${k}" value="${esc(v)}" style="width:100%" aria-label="${esc(ETIQUETAS[k] || k)}"></td>
     <td class="num"><button data-guardar="${k}">Guardar</button></td></tr>`).join('');
   $('#tabla').querySelectorAll('[data-guardar]').forEach(b => b.onclick = async () => {
     const k = b.dataset.guardar;
@@ -70,21 +80,21 @@ async function cargarCocina() {
   [ESTACIONES, PANTALLAS] = await Promise.all([api('/estaciones?todas=true'), api('/kds-pantallas?todas=true')]);
   $('#t-estaciones').innerHTML = '<tr><th>Clave</th><th>Nombre</th><th>Icono</th><th>Orden</th><th>Estado</th><th></th></tr>' +
     ESTACIONES.map(e => `<tr class="${e.activa ? '' : 'baja'}">
-      <td><code>${esc(e.clave)}</code></td>
-      <td><input data-en="${esc(e.clave)}" value="${esc(e.nombre)}" style="width:100%"></td>
-      <td><input data-ei="${esc(e.clave)}" value="${esc(e.icono)}" style="width:3.5em"></td>
-      <td class="num"><input data-eo="${esc(e.clave)}" type="number" value="${e.orden}" style="width:4.5em"></td>
-      <td>${e.activa ? '<span class="estado lista">activa</span>' : '<span class="estado">oculta</span>'}</td>
+      <td data-col="Clave"><code>${esc(e.clave)}</code></td>
+      <td data-col="Nombre"><input data-en="${esc(e.clave)}" value="${esc(e.nombre)}" style="width:100%"></td>
+      <td data-col="Icono"><input data-ei="${esc(e.clave)}" value="${esc(e.icono)}" style="width:3.5em"></td>
+      <td class="num" data-col="Orden"><input data-eo="${esc(e.clave)}" type="number" value="${e.orden}" style="width:4.5em"></td>
+      <td data-col="Estado">${e.activa ? '<span class="estado lista">activa</span>' : '<span class="estado">oculta</span>'}</td>
       <td class="num"><button data-eg="${esc(e.clave)}">Guardar</button>
         ${e.activa ? `<button data-eb="${esc(e.clave)}" class="mal">Quitar</button>`
                    : `<button data-ea="${esc(e.clave)}" class="ok">Reactivar</button>`}</td></tr>`).join('');
 
   $('#t-pantallas').innerHTML = '<tr><th>Clave</th><th>Nombre</th><th>Icono</th><th>Secciones que muestra</th><th></th></tr>' +
     PANTALLAS.map(p => `<tr class="${p.activa ? '' : 'baja'}">
-      <td><code>${esc(p.clave)}</code></td>
-      <td><input data-pn="${esc(p.clave)}" value="${esc(p.nombre)}" style="width:100%"></td>
-      <td><input data-pi="${esc(p.clave)}" value="${esc(p.icono)}" style="width:3.5em"></td>
-      <td>${ESTACIONES.filter(e => e.activa).map(e => `<label class="tenue" style="margin-right:.7em">
+      <td data-col="Clave"><code>${esc(p.clave)}</code></td>
+      <td data-col="Nombre"><input data-pn="${esc(p.clave)}" value="${esc(p.nombre)}" style="width:100%"></td>
+      <td data-col="Icono"><input data-pi="${esc(p.clave)}" value="${esc(p.icono)}" style="width:3.5em"></td>
+      <td data-col="Secciones que muestra">${ESTACIONES.filter(e => e.activa).map(e => `<label class="tenue" style="margin-right:.7em">
             <input type="checkbox" data-ps="${esc(p.clave)}" value="${esc(e.clave)}"
                    ${p.secciones.includes(e.clave) ? 'checked' : ''}> ${esc(e.nombre)}</label>`).join('')}</td>
       <td class="num"><button data-pg="${esc(p.clave)}">Guardar</button>

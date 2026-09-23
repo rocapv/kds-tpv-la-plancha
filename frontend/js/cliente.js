@@ -207,10 +207,10 @@ $('#c-ok').onclick = async () => {
   try {
     const r = await api('/publico/solicitudes', { method: 'POST', body: cuerpo });
     cesta = []; guardarCesta(); pintarCesta();
-    try { localStorage.setItem(LLAVE_COMANDA, String(r.id)); } catch {}
     $('#d-cesta').close();
     aviso('Comanda enviada · la confirma un camarero', 'ok');
-    verEstado(r.id);
+    seguirComanda(r.id);
+    $('#mi-comanda').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   } catch (e) { aviso(e.message, 'error'); }
 };
 
@@ -241,16 +241,90 @@ async function verEstado(id) {
 }
 $('#e-cerrar').onclick = () => $('#d-estado').close();
 
-// Si ya hay una comanda enviada desde este teléfono, se ofrece seguirla
-const mia = localStorage.getItem(LLAVE_COMANDA);
-if (mia) {
-  const b = document.createElement('button');
-  b.className = 'seguir';
-  b.textContent = 'Ver mi comanda';
-  b.onclick = () => verEstado(+mia);
-  document.querySelector('.barra-cliente .hueco').after(b);
-  setInterval(() => { if ($('#d-estado').open) verEstado(+mia); }, 10000);
+// ── La tira de seguimiento: el estado de la comanda propia, siempre a la vista ──
+// Cinco pasos: enviada → confirmada (un camarero la ha aceptado) → en cocina → lista → servida.
+// Se refresca sola: el canal público del servidor avisa de «algo ha cambiado» (sin datos, por
+// privacidad) y, por si un aviso se pierde, cada 15 s se vuelve a preguntar.
+const PASOS = ['enviada', 'confirmada', 'cocina', 'lista', 'servida'];
+let comandaSeguida = null, temporizadorSeguimiento = null, wsPublico = null;
+
+function pasoDe(s) {
+  if (s.estado === 'rechazada') return { paso: 'enviada', rechazada: true, texto: TEXTO.rechazada };
+  if (s.estado === 'pendiente') return { paso: 'enviada', texto: TEXTO.pendiente };
+  const c = s.cocina || {};
+  const n = k => c[k] || 0;
+  const enCocina = n('enviada') + n('preparando') + n('lista') + n('servida');
+  if (!enCocina) return { paso: 'confirmada', texto: 'Confirmada · el camarero la está pasando a cocina' };
+  if (n('enviada') + n('preparando') + n('lista') === 0) return { paso: 'servida', texto: 'Todo servido · ¡que aproveche!' };
+  if (n('enviada') + n('preparando') === 0) return { paso: 'lista', texto: 'Lista en el pase · te la llevan ahora' };
+  const partes = [];
+  if (n('preparando')) partes.push(`${n('preparando')} cocinándose`);
+  if (n('enviada')) partes.push(`${n('enviada')} en cola`);
+  if (n('lista')) partes.push(`${n('lista')} ya lista`);
+  if (n('servida')) partes.push(`${n('servida')} servida`);
+  return { paso: 'cocina', texto: 'En cocina · ' + partes.join(' · ') };
 }
+
+function pintarSeguimiento(s) {
+  const tira = $('#mi-comanda');
+  const { paso, texto, rechazada } = pasoDe(s);
+  tira.hidden = false;
+  tira.classList.toggle('rechazada', !!rechazada);
+  tira.classList.toggle('servida', paso === 'servida');
+  $('#mc-titulo').textContent = `Comanda #${s.id}${s.mesa ? ' · mesa ' + s.mesa : ''} · ${euro(s.total_cent)}`;
+  $('#mc-texto').textContent = texto;
+  const hasta = PASOS.indexOf(paso);
+  tira.querySelectorAll('[data-paso]').forEach(li => {
+    const i = PASOS.indexOf(li.dataset.paso);
+    li.classList.toggle('hecho', i < hasta);
+    li.classList.toggle('actual', i === hasta);
+  });
+}
+
+async function refrescarSeguimiento() {
+  if (!comandaSeguida) return;
+  try {
+    const s = await api('/publico/solicitudes/' + comandaSeguida);
+    pintarSeguimiento(s);
+    if ($('#d-estado').open) verEstado(comandaSeguida);
+  } catch (e) {
+    if (e.estado === 404) dejarDeSeguir();          // la comanda ya no existe: fuera la tira
+  }
+}
+
+function escucharCanalPublico() {
+  if (wsPublico) return;
+  const abrir = () => {
+    wsPublico = new WebSocket((location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/ws/publico');
+    wsPublico.onmessage = () => refrescarSeguimiento();     // el aviso no trae datos: se vuelve a mirar
+    wsPublico.onclose = () => setTimeout(abrir, 3000);
+  };
+  abrir();
+}
+
+function seguirComanda(id) {
+  comandaSeguida = id;
+  try { localStorage.setItem(LLAVE_COMANDA, String(id)); } catch {}
+  refrescarSeguimiento();
+  escucharCanalPublico();
+  clearInterval(temporizadorSeguimiento);
+  temporizadorSeguimiento = setInterval(refrescarSeguimiento, 15000);
+}
+
+function dejarDeSeguir() {
+  comandaSeguida = null;
+  try { localStorage.removeItem(LLAVE_COMANDA); } catch {}
+  clearInterval(temporizadorSeguimiento);
+  $('#mi-comanda').hidden = true;
+}
+
+$('#mc-detalle').onclick = () => comandaSeguida && verEstado(comandaSeguida);
+$('#mc-pasos').onclick = () => comandaSeguida && verEstado(comandaSeguida);
+$('#mc-olvidar').onclick = dejarDeSeguir;
+
+// Si ya hay una comanda enviada desde este teléfono, se sigue desde el primer momento
+const mia = localStorage.getItem(LLAVE_COMANDA);
+if (mia) seguirComanda(+mia);
 
 cargar();
 setInterval(cargar, 60000);        // por si cambia la carta o se agota algo

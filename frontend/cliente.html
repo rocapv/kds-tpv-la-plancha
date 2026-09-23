@@ -22,6 +22,25 @@
 
 <p id="mensaje" class="aviso-local"></p>
 
+<!-- Seguimiento de la comanda propia: en vez de un diálogo que hay que abrir, una tira que
+     se queda a la vista y avanza sola (canal público + sondeo). -->
+<section id="mi-comanda" class="mi-comanda" hidden aria-live="polite">
+  <div class="cab">
+    <b id="mc-titulo">Tu comanda</b>
+    <span class="hueco"></span>
+    <button id="mc-detalle" class="sutil">Detalle</button>
+    <button id="mc-olvidar" class="sutil" title="Dejar de seguir esta comanda" aria-label="Dejar de seguir">✕</button>
+  </div>
+  <ol class="pasos" id="mc-pasos">
+    <li data-paso="enviada"><span>1</span>Enviada</li>
+    <li data-paso="confirmada"><span>2</span>Confirmada</li>
+    <li data-paso="cocina"><span>3</span>En cocina</li>
+    <li data-paso="lista"><span>4</span>Lista</li>
+    <li data-paso="servida"><span>5</span>Servida</li>
+  </ol>
+  <p id="mc-texto"></p>
+</section>
+
 <section class="destacados" id="destacados" hidden>
   <h2>Lo que más sale</h2>
   <div class="pila" id="pila"></div>

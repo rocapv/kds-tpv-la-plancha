@@ -3,3 +3,7 @@ __pycache__/
 *.pyc
 .env
 docs/_corpus/graphify-out/
+
+# capturas de la QA de interfaz: se regeneran con deploy/qa_gui.py, pesan y cambian cada vez
+deploy/_qa/gui/*/*.png
+deploy/_qa/*.png

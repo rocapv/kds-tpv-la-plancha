@@ -2092,6 +2092,9 @@ async def aceptar_solicitud(sid: int, u: dict = Depends(exige("camarero", "encar
                        atendida_por=%s, resuelta_en=NOW() WHERE id=%s""", (pid, u["id"], sid))
     await hub.emitir("mesas")
     await hub.emitir("solicitudes", solicitud_id=sid)
+    # El teléfono del cliente escucha el canal público, que no lleva datos: solo «vuelve a
+    # mirar». Así ve que su comanda ha sido confirmada sin esperar al siguiente sondeo.
+    await hub.emitir_publico("solicitud")
     return pedido_completo(pid)
 
 
@@ -2105,6 +2108,7 @@ async def rechazar_solicitud(sid: int, u: dict = Depends(exige("camarero", "enca
     q("""UPDATE solicitudes SET estado='rechazada', atendida_por=%s, resuelta_en=NOW()
          WHERE id=%s""", (u["id"], sid))
     await hub.emitir("solicitudes", solicitud_id=sid)
+    await hub.emitir_publico("solicitud")
     return {"ok": True}
 
 
