@@ -401,7 +401,7 @@ un día entero ocupa kilobytes y se puede recuperar hasta el último minuto ante
 semana, un temporizador restaura la copia en una base de pruebas y compara tabla por tabla y el
 total cobrado: si algo no cuadra, queda registrado como fallo.
 
-**Pruebas y despliegue.** 65 pruebas automáticas con `pytest` sobre una base de datos que se crea y
+**Pruebas y despliegue.** 71 pruebas automáticas con `pytest` sobre una base de datos que se crea y
 se destruye sola. El despliegue las ejecuta antes de reiniciar: si fallan, el servicio se queda con
 la versión anterior. La secuencia es copia → pruebas → reinicio → comprobación de salud.
 
@@ -532,6 +532,33 @@ callarlo. El tablón de recogida de la sala hace lo mismo con 24 números. Tres 
 lo fijan: que el tope se respete, que las que se manden sean las más viejas y que un `limite`
 absurdo (0, negativo, 99.999) no tumbe la consulta.
 
+### 4.12. La simulación de la demostración
+
+Enseñar el sistema parado no enseña nada: lo que hay que ver es el TPV, la cocina y la caja
+moviéndose a la vez. La simulación levanta **un bot por área** —uno por puesto de sala y uno por
+sección de cocina— que llaman a las mismas funciones de la API que usan las pantallas, así que
+la demostración ejerce el sistema de verdad, no una maqueta.
+
+El problema de una simulación así es que se ve artificial: todos los bots al mismo ritmo dan una
+actividad plana, y si además sus rachas coinciden se forma un cuello de botella delante del
+tribunal. Por eso **cada bot lleva su propio cronómetro**: alterna una marcha fuerte y una floja
+cada tres minutos, con un desfase repartido dentro de su familia. La propiedad que evita el
+atasco no es que los relevos vayan escalonados —en desfases opuestos el relevo es simultáneo, y
+está bien porque uno sube justo cuando el otro baja— sino que en todo momento hay
+aproximadamente la mitad del equipo apretando. Seis pruebas automáticas fijan esa invariante.
+
+Sobre eso, tres válvulas copiadas de lo que hace un local de verdad: el cocinero al que se le
+juntan seis comandas aprieta y saca tres de una tacada; el camarero deja de sentar gente cuando
+la cocina pasa de veintidós comandas (un maître no sienta más mesas con la cocina desbordada); y
+la caja cobra de cuatro en cuatro si se acumulan pedidos sin cerrar.
+
+Nada de esto se dio por bueno sin medirlo. `deploy/qa_ritmo.py` arranca la simulación, toma una
+muestra cada quince segundos durante dos ciclos completos y responde a tres preguntas: si hay
+rachas, si van desacompasados y si la cola crece. La primera medición **suspendió**: las rachas
+estaban bien, pero la cola pasaba de 13 a 42 comandas en siete minutos. Con las válvulas
+puestas, la medición final —empezando de cero— da diez repartos de marcha distintos, ninguna
+muestra con el equipo sincronizado y una cola que oscila entre 0 y 11 con tendencia plana.
+
 ## 5. Evaluación del proyecto
 
 Los KPI del apartado 3.3 se han medido sobre el sistema desplegado, con un simulador que reproduce
@@ -548,7 +575,7 @@ un servicio completo usando únicamente la API pública —es decir, probando el
 | O5 · Recuperación tras corte | 0 acciones | Verificado: tras reiniciar el servidor, los tres servicios levantaron solos; y con el wifi cortado el TPV sigue tomando nota y reenvía al volver (apartado 4.9) |
 | O6 · Tráfico en claro | 0 | 0; el 8090 redirige y el WebSocket exige token |
 | O7 · Copia restaurable | Restauración probada | Verificada: 8 tablas y el total cobrado coinciden |
-| O8 · Regresiones en producción | 0 | 65 pruebas automáticas bloquean el despliegue si fallan, y dos recorridos de interfaz (`qa_gui.py`, `qa_cliente.py`) se pasan antes de publicar |
+| O8 · Regresiones en producción | 0 | 71 pruebas automáticas bloquean el despliegue si fallan, y dos recorridos de interfaz (`qa_gui.py`, `qa_cliente.py`) se pasan antes de publicar |
 
 Pruebas de comportamiento ante el error, todas comprobadas contra la API:
 
@@ -705,13 +732,14 @@ backend/app/      main.py (API), auth.py (sesiones y roles), db.py, redirector.p
 backend/sql/      01_schema · 02_seed · 03_facturacion · 04_carta_y_pagos · 05_sesiones · 06_arqueo
                   · 07…15 (tema, puestos, estaciones, escalafones, carta, plano, sala)
                   · 16_idempotencia (modo sin red)
-backend/pruebas/  test_api.py · test_arqueo.py · test_sinred.py · test_tope_pantallas.py (65)
+backend/pruebas/  test_api · test_arqueo · test_sinred · test_tope_pantallas · test_ritmo_bots (71)
 backend/          simulador.py (servicio simulado para la demo)
 frontend/         menú, tpv, kds, facturas, carta, usuarios, ajustes, informe, arqueo, recogida
                   js/sinred.js y sw.js (modo sin red del TPV)
 deploy/           instalar.sh, certificado.sh, entregar.sh, units de systemd, nginx.conf
                   qa.py (roles), qa_sinred.py (modo sin red), qa_gui.py (interfaz medida)
-                  y qa_cliente.py (el cliente pide y sigue su comanda)
+                  qa_cliente.py (el cliente pide y sigue su comanda) y qa_ritmo.py
+                  (mide las rachas de la simulación y que no se atasque)
 docs/             esta memoria y PENDIENTES.md
 ```
 

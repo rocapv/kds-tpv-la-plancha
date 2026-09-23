@@ -247,7 +247,7 @@ el total cobrado. Una copia que nunca se ha restaurado no es una copia, es un fi
 
 ## Pruebas y despliegue
 
-65 pruebas con `pytest` sobre una base de datos de pruebas que se crea y se destruye sola, nunca
+71 pruebas con `pytest` sobre una base de datos de pruebas que se crea y se destruye sola, nunca
 contra la real. Cubren lo que debe funcionar y, sobre todo, lo que debe fallar: cobros, cuentas
 divididas, numeración de facturas, estados de cocina, permisos por rol, congelación de precios,
 el arqueo de caja con su cierre Z y el reenvío de lo apuntado sin red (que no duplique nada).
@@ -492,6 +492,32 @@ recorre el camino entero con tres navegadores a la vez: cliente, camarera y coci
 pantalla lo enseña en vez de callarlo. Con 5.736 comandas pendientes (las dejó la simulación) la
 pantalla del pase dejaba de responder: repintar cinco mil tarjetas en cada aviso es más trabajo del
 que una Raspberry Pi hace entre dos toques. El tablón de recogida hace lo mismo con 24 números.
+
+## La simulación de la demo: rachas, no ritmo plano
+
+Los bots no trabajan todos igual ni todos a la vez. Cada uno lleva **su cronómetro**: alterna
+«fuerte» y «flojo» cada **3 minutos** y arranca con un desfase propio, repartido dentro de su
+familia (los camareros entre ellos, las secciones de cocina entre ellas). Con cuatro camareros
+los desfases salen a 0, 90, 180 y 270 s.
+
+Lo que evita el cuello de botella no es que cambien escalonados, sino que **siempre hay
+aproximadamente la mitad del equipo apretando**; más dos válvulas que imitan una cocina real:
+
+| Situación | Qué hace |
+|---|---|
+| 6 comandas en MI sección | el cocinero aprieta (marcha «apuro») y saca tres de una tacada |
+| 22 comandas en toda la cocina | el camarero **no sienta a nadie** esa vuelta |
+| 18 pedidos sin cobrar | la caja cobra cuatro por vuelta en lugar de uno |
+
+La barra lo resume en vivo: «corriendo · 8 bots (5 fuerte · 3 flojo) · 102 pedidos, 84 cobrados»,
+y al pasar el ratón se ve quién aprieta y cuánta cola tiene cada sección.
+
+```bash
+python deploy/qa_ritmo.py --url https://home.pr1.es --minutos 8   # medir antes de la demo
+```
+
+Medido de cero: 10 repartos de marcha distintos en ocho minutos, ninguna muestra con el equipo
+sincronizado, cola de cocina entre 0 y 11 con tendencia plana y 102 pedidos con 84 cobrados.
 
 ## Mejoras pendientes
 
