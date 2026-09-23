@@ -179,7 +179,6 @@ function abrirProd(p = null) {
       if (invElegido) { $('#p-inv').value = etiquetaInv(invElegido); pintarCoste(); }
     });
   }
-  $('#p-alergenos').value = p?.alergenos || '';
   $('#d-prod').showModal();
 }
 $('#b-producto').onclick = () => abrirProd();

@@ -121,6 +121,12 @@ def rellenar_formularios(page, url, pin):
     page.fill("#u-nombre", "QA Temporal")
     page.select_option("#u-rol", "cocina")
     page.click("#u-dado")                                   # PIN libre al azar
+    # El PIN lo da el servidor (busca uno que no esté cogido), así que hay que esperarlo:
+    # leerlo de inmediato devolvía vacío y el informe mentía sobre lo que había creado.
+    try:
+        page.wait_for_function("document.querySelector('#u-pin').value.length === 4", timeout=5000)
+    except Exception:
+        pass
     pin_qa = page.input_value("#u-pin")
     page.click("#u-ok")
     page.wait_for_timeout(1200)
@@ -135,7 +141,13 @@ def rellenar_formularios(page, url, pin):
     page.click("#b-producto")
     page.fill("#p-nombre", "Plato QA")
     page.fill("#p-precio", "7.25")
-    page.fill("#p-alergenos", "gluten, soja")
+    # Los alérgenos dejaron de ser un campo de texto: ahora son el catálogo de los catorce, en
+    # casillas. Se marcan las dos primeras, que es lo que haría una persona.
+    casillas = page.query_selector_all("#p-alergenos [data-al]")
+    if not casillas:
+        anota(fallos, "[carta] el producto no ofrece ningún alérgeno que marcar")
+    for c in casillas[:2]:
+        c.click()
     page.click("#p-ok")
     page.wait_for_timeout(1200)
     if "Plato QA" not in page.inner_text("#carta"):
@@ -180,17 +192,27 @@ def rellenar_formularios(page, url, pin):
 
 
 def limpiar(page, url):
-    """Deshace lo que ha creado el QA: usuario y producto de prueba."""
+    """Deshace lo que ha creado el QA: usuario y producto de prueba.
+
+    Se llama SIEMPRE, también si el recorrido ha reventado a mitad (va en un `finally`). Un QA
+    que aborta dejando un usuario activo deja también su PIN funcionando, y en un TPV abierto a
+    internet eso no es un resto molesto: es una puerta.
+    """
     page.goto(url + "/usuarios.html", wait_until="domcontentloaded")
     page.wait_for_timeout(900)
-    fila = page.query_selector("tr:has-text('QA Temporal') [data-baja]")
-    if fila:
+    # Puede haber más de uno si alguna pasada anterior se quedó a medias: se dan de baja todos.
+    for _ in range(10):
+        fila = page.query_selector("tr:has-text('QA Temporal') [data-baja]")
+        if not fila:
+            break
         page.once("dialog", lambda d: d.accept())
         fila.click(); page.wait_for_timeout(800)
     page.goto(url + "/carta.html", wait_until="domcontentloaded")
     page.wait_for_timeout(900)
-    fila = page.query_selector("tr:has-text('Plato QA') [data-baja]")
-    if fila:
+    for _ in range(10):
+        fila = page.query_selector("tr:has-text('Plato QA') [data-baja]")
+        if not fila:
+            break
         page.once("dialog", lambda d: d.accept())
         fila.click(); page.wait_for_timeout(800)
     print("  · limpieza hecha (usuario y producto de prueba dados de baja)")
@@ -229,8 +251,12 @@ def main():
                           if n in esperado["no_ve"]]
             probar_prohibido(page, a.url, pin, prohibidas)
             if pin == "9999":
-                rellenar_formularios(page, a.url, pin)
-                limpiar(page, a.url)
+                # La limpieza va en `finally`: si el recorrido revienta a mitad, el usuario de
+                # prueba (con su PIN funcionando) NO se puede quedar vivo en el sistema.
+                try:
+                    rellenar_formularios(page, a.url, pin)
+                finally:
+                    limpiar(page, a.url)
 
         navegador.close()
 
