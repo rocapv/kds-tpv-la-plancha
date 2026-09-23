@@ -466,31 +466,67 @@ async def anular(pid: int, u: dict = Depends(exige("camarero", "cocina", "encarg
 
 
 # ─────────────── KDS (cocina) ───────────────
+# Cuántas comandas se mandan a una pantalla de cocina como mucho. No es una limitación de la
+# base de datos, es de la pantalla: nadie cocina mirando doscientas tarjetas, y el navegador de
+# una tableta (o de una Raspberry Pi) tiene que repintarlas TODAS en cada aviso. Con la cocina
+# atascada, pintarlo todo es justo lo que impide despacharlo. Se mandan las más viejas —que es
+# el orden en el que se cocina— y se dice cuántas quedan detrás.
+TOPE_KDS = 60
+TOPE_RECOGIDA = 24    # números que caben en el tablón de la sala sin encoger la letra
+
+
 @app.get("/api/kds")
-def kds(estacion: str | None = None, pantalla: str | None = None, u: dict = Depends(usuario)):
-    """Comandas activas agrupadas por pedido. Sin secciones = vista de pase (todas)."""
+def kds(estacion: str | None = None, pantalla: str | None = None, limite: int = TOPE_KDS,
+        u: dict = Depends(usuario)):
+    """Comandas activas agrupadas por pedido. Sin secciones = vista de pase (todas).
+
+    Devuelve como mucho `limite` comandas, las más antiguas primero, y en `esperando` cuántas
+    se han quedado fuera.
+    """
     claves = claves_de_pantalla(estacion, pantalla)
     filtro, args = filtro_estaciones(claves, "l.estacion")
-    filas = q(f"""SELECT l.id, l.pedido_id, l.cantidad, l.notas, l.estacion, l.estado,
-                         l.enviada_en, l.lista_en, pr.nombre AS producto, pr.alergenos,
-                         p.tipo, p.cliente, m.nombre AS mesa, e.nombre AS camarero
-                  FROM lineas_pedido l
-                  JOIN pedidos p   ON p.id=l.pedido_id
-                  JOIN productos pr ON pr.id=l.producto_id
-                  JOIN empleados e ON e.id=p.empleado_id
-                  LEFT JOIN mesas m ON m.id=p.mesa_id
-                  WHERE l.estado IN ('enviada','preparando','lista') {filtro}
-                    AND p.estado <> 'anulado'
-                  ORDER BY l.enviada_en, l.pedido_id, l.id""", tuple(args))
+    tope = max(1, min(limite, 500))
+
+    # Primero QUÉ comandas entran (las más viejas), y luego sus líneas: así la consulta gorda
+    # no tiene que traerse la cocina entera para tirar casi todo.
+    cabeceras = q(f"""SELECT l.pedido_id, MIN(l.enviada_en) AS desde
+                      FROM lineas_pedido l JOIN pedidos p ON p.id=l.pedido_id
+                      WHERE l.estado IN ('enviada','preparando','lista') {filtro}
+                        AND p.estado <> 'anulado'
+                      GROUP BY l.pedido_id ORDER BY desde, l.pedido_id
+                      LIMIT %s""", (*args, tope + 1))
+    esperando = max(0, len(cabeceras) - tope)
+    cabeceras = cabeceras[:tope]
+    if esperando:
+        total = q1(f"""SELECT COUNT(DISTINCT l.pedido_id) AS n
+                       FROM lineas_pedido l JOIN pedidos p ON p.id=l.pedido_id
+                       WHERE l.estado IN ('enviada','preparando','lista') {filtro}
+                         AND p.estado <> 'anulado'""", tuple(args))["n"]
+        esperando = total - len(cabeceras)
+
     comandas = {}
-    for f in filas:
-        c = comandas.setdefault(f["pedido_id"], {
-            "pedido_id": f["pedido_id"], "mesa": f["mesa"], "tipo": f["tipo"],
-            "cliente": f["cliente"], "camarero": f["camarero"],
-            "desde": f["enviada_en"], "lineas": []})
-        c["desde"] = min(c["desde"], f["enviada_en"])
-        c["lineas"].append(f)
-    return {"ahora": datetime.now(), "comandas": list(comandas.values())}
+    if cabeceras:
+        ids = [c["pedido_id"] for c in cabeceras]
+        marcas = ",".join(["%s"] * len(ids))
+        filas = q(f"""SELECT l.id, l.pedido_id, l.cantidad, l.notas, l.estacion, l.estado,
+                             l.enviada_en, l.lista_en, pr.nombre AS producto, pr.alergenos,
+                             p.tipo, p.cliente, m.nombre AS mesa, e.nombre AS camarero
+                      FROM lineas_pedido l
+                      JOIN pedidos p   ON p.id=l.pedido_id
+                      JOIN productos pr ON pr.id=l.producto_id
+                      JOIN empleados e ON e.id=p.empleado_id
+                      LEFT JOIN mesas m ON m.id=p.mesa_id
+                      WHERE l.estado IN ('enviada','preparando','lista') {filtro}
+                        AND l.pedido_id IN ({marcas})
+                      ORDER BY l.enviada_en, l.pedido_id, l.id""", (*args, *ids))
+        for f in filas:
+            c = comandas.setdefault(f["pedido_id"], {
+                "pedido_id": f["pedido_id"], "mesa": f["mesa"], "tipo": f["tipo"],
+                "cliente": f["cliente"], "camarero": f["camarero"],
+                "desde": f["enviada_en"], "lineas": []})
+            c["desde"] = min(c["desde"], f["enviada_en"])
+            c["lineas"].append(f)
+    return {"ahora": datetime.now(), "comandas": list(comandas.values()), "esperando": esperando}
 
 
 SIGUIENTE = {"enviada": "preparando", "preparando": "lista", "lista": "servida"}
@@ -595,6 +631,7 @@ def recogida():
                  WHERE p.tipo='llevar' AND p.estado <> 'anulado'
                    AND l.estado IN ('enviada','preparando','lista')
                  ORDER BY l.pedido_id""")
+    # El tablón de la sala se lee de lejos: caben unos cuantos números, no doscientos.
     pedidos = {}
     for f in filas:
         d = pedidos.setdefault(f["pedido_id"], {"numero": f["pedido_id"], "estados": set(),
@@ -610,7 +647,9 @@ def recogida():
     preparando.sort(key=lambda d: d["desde"])
     aj = ajustes_dict()
     return {"ahora": datetime.now(), "local": aj.get("local_nombre", "Cantina Vesta-9"),
-            "listos": listos, "preparando": preparando}
+            "listos": listos[:TOPE_RECOGIDA], "preparando": preparando[:TOPE_RECOGIDA],
+            "mas_listos": max(0, len(listos) - TOPE_RECOGIDA),
+            "mas_preparando": max(0, len(preparando) - TOPE_RECOGIDA)}
 
 
 # ─────────────── Informes (encargado) ───────────────

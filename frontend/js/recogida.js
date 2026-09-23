@@ -13,12 +13,15 @@ async function cargar() {
   desfase = new Date(d.ahora) - new Date();
   $('#local').textContent = d.local;
   document.title = d.local + ' · Pedidos para recoger';
-  $('#listos').innerHTML = d.listos.length
+  // El servidor manda como mucho un puñado de números (los que caben leyéndose de lejos) y
+  // dice cuántos más hay. Callarlos daría a entender que la cocina va más desahogada de lo que va.
+  const mas = n => n ? `<p class="mas-cola">… y ${n} más</p>` : '';
+  $('#listos').innerHTML = (d.listos.length
     ? d.listos.map(p => tarjeta(p, true)).join('')
-    : '<p class="vacio">Ningún pedido listo todavía</p>';
-  $('#preparando').innerHTML = d.preparando.length
+    : '<p class="vacio">Ningún pedido listo todavía</p>') + mas(d.mas_listos);
+  $('#preparando').innerHTML = (d.preparando.length
     ? d.preparando.map(p => tarjeta(p, false)).join('')
-    : '<p class="vacio">Nada en marcha</p>';
+    : '<p class="vacio">Nada en marcha</p>') + mas(d.mas_preparando);
   const ahora = new Set(d.listos.map(p => p.numero));
   if (!primera && d.listos.some(p => !anteriores.has(p.numero))) campana();
   anteriores = ahora;

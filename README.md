@@ -247,7 +247,7 @@ el total cobrado. Una copia que nunca se ha restaurado no es una copia, es un fi
 
 ## Pruebas y despliegue
 
-62 pruebas con `pytest` sobre una base de datos de pruebas que se crea y se destruye sola, nunca
+65 pruebas con `pytest` sobre una base de datos de pruebas que se crea y se destruye sola, nunca
 contra la real. Cubren lo que debe funcionar y, sobre todo, lo que debe fallar: cobros, cuentas
 divididas, numeración de facturas, estados de cocina, permisos por rol, congelación de precios,
 el arqueo de caja con su cierre Z y el reenvío de lo apuntado sin red (que no duplique nada).
@@ -452,6 +452,46 @@ reinicia: el local se queda con la versión que se sabe que funcionaba.
 
 La credencial es una **clave de despliegue de solo lectura** (`~/.ssh/kds_deploy_ed25519`,
 registrada en GitHub como `raspa-autodespliegue`): Raspa puede leer el repo, no escribirlo.
+
+## La interfaz, medida
+
+El aspecto no se discute a ojo: se mide. `deploy/qa_gui.py` recorre cada pantalla con cada rol, en
+tableta y en móvil, y comprueba desbordes, contraste WCAG AA, objetivos táctiles de 44 px, textos
+cortados y errores de consola; deja capturas y un informe en `deploy/_qa/gui/<tanda>/`.
+
+```bash
+python deploy/qa_gui.py --url http://192.168.1.100:8093 --tanda despues   # la interfaz
+python deploy/qa_cliente.py --url http://192.168.1.100:8093               # el flujo del cliente
+```
+
+Rediseño del 23/09/2026, medido antes y después:
+
+| Medida | Antes | Después |
+|---|---|---|
+| Pantallas medidas | 48 | 72 |
+| Desbordes horizontales | 4 | **0** |
+| Textos por debajo del contraste AA | 72 | **0** |
+| Objetivos táctiles < 40 px | 57 | **0** |
+| Errores de consola | 8 | **0** |
+
+Las reglas del sistema de diseño están al principio de `frontend/css/estilo.css`. La más útil de
+recordar: **cada color de fondo lleva emparejado su color de texto** (`--ok` / `--ok-texto`), para
+que no se pueda pintar un verde y olvidar que encima iba un texto que no se lee.
+
+## El cliente sigue su comanda
+
+`cliente.html` (el QR de la mesa) no es solo una carta: al enviar la comanda aparece una tira con
+cinco pasos —enviada, confirmada, en cocina, lista, servida— que **avanza sola**. El servidor avisa
+por el canal público (sin datos: solo «vuelve a mirar») cuando un camarero la acepta o la rechaza y
+cuando cocina la mueve; además se refresca cada 15 s por si se pierde un aviso. `qa_cliente.py`
+recorre el camino entero con tres navegadores a la vez: cliente, camarera y cocinera.
+
+## Cocina atascada: la pantalla no se ahoga
+
+`/api/kds` manda como mucho **60 comandas, las más antiguas**, y dice cuántas quedan detrás; la
+pantalla lo enseña en vez de callarlo. Con 5.736 comandas pendientes (las dejó la simulación) la
+pantalla del pase dejaba de responder: repintar cinco mil tarjetas en cada aviso es más trabajo del
+que una Raspberry Pi hace entre dos toques. El tablón de recogida hace lo mismo con 24 números.
 
 ## Mejoras pendientes
 

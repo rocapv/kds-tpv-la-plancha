@@ -96,16 +96,53 @@ function pintarDeshacer() {
 
 // ── Pintado incremental ──
 function firmaDe(c) {
-  return c.lineas.map(l => `${l.id}:${l.estado}`).join('|') + '#' + c.mesa + c.cliente;
+  return c.lineas.map(firmaLinea).join('|') + '#' + c.mesa + c.cliente;
 }
 
-function htmlLineas(c) {
-  return c.lineas.map(l => `
-    <li class="${l.estado}" data-linea="${l.id}" title="Clic: avanzar · clic derecho o mantener: deshacer">
-      <b>${l.cantidad}×</b>
+// Una línea se repinta solo si cambia algo suyo. Antes la firma miraba nada más el estado,
+// así que cambiar la cantidad o una nota no se veía hasta el siguiente cambio de estado.
+function firmaLinea(l) {
+  return [l.id, l.estado, l.cantidad, l.producto, l.alergenos || '', l.notas || '', l.estacion].join('');
+}
+
+function htmlLinea(l) {
+  return `<b>${l.cantidad}×</b>
       <span>${esc(l.producto)}${l.alergenos ? `<span class="alerg">⚠ ${esc(l.alergenos)}</span>` : ''}${l.notas ? `<span class="nota">⚠ ${esc(l.notas)}</span>` : ''}</span>
-      <span class="est">${estacion.includes(',') || !estacion ? l.estacion + ' · ' : ''}${l.estado}</span>
-    </li>`).join('');
+      <span class="est">${estacion.includes(',') || !estacion ? l.estacion + ' · ' : ''}${l.estado}</span>`;
+}
+
+// Repintado POR LÍNEA. Antes se hacía `ul.innerHTML = ...`, que rehacía todas las líneas de la
+// comanda: parpadeaban todas al marcar una, y el <li> que tenías debajo del dedo desaparecía a
+// media pulsación (se perdía el `dataset.larga` del mantener-para-deshacer).
+function actualizarLineas(ul, c) {
+  const previas = new Map();
+  ul.querySelectorAll('[data-linea]').forEach(li => previas.set(li.dataset.linea, li));
+  let anterior = null;
+  c.lineas.forEach(l => {
+    const clave = String(l.id), firma = firmaLinea(l);
+    let li = previas.get(clave);
+    if (!li) {
+      li = document.createElement('li');
+      li.dataset.linea = l.id;
+      li.title = 'Clic: avanzar · clic derecho o mantener: deshacer';
+      li.className = l.estado;
+      li.dataset.firma = firma;
+      li.innerHTML = htmlLinea(l);
+    } else {
+      previas.delete(clave);
+      if (li.dataset.firma !== firma) {        // solo ESTA línea se toca
+        if (li.className !== l.estado) li.className = l.estado;
+        li.innerHTML = htmlLinea(l);
+        li.dataset.firma = firma;
+      }
+    }
+    // colocarla en su sitio solo si no lo está ya: mover un nodo que ya está bien
+    // lo saca y lo vuelve a meter en el DOM, y eso reinicia sus animaciones.
+    const esperada = anterior ? anterior.nextElementSibling : ul.firstElementChild;
+    if (esperada !== li) ul.insertBefore(li, esperada);
+    anterior = li;
+  });
+  previas.forEach(li => li.remove());          // líneas que ya no vienen
 }
 
 function etiquetaBump(c) {
@@ -118,6 +155,9 @@ function crearTarjeta(c, esNueva) {
   const art = document.createElement('article');
   art.className = 'comanda' + (esNueva ? ' nueva' : '');
   art.dataset.desde = c.desde;
+  // La animación de entrada se corre UNA vez: si la clase se queda puesta, cualquier
+  // reinserción futura la repetiría.
+  if (esNueva) art.addEventListener('animationend', () => art.classList.remove('nueva'), { once: true });
   art.innerHTML = `
     <header>
       <span class="quien"></span>
@@ -169,15 +209,19 @@ function crearTarjeta(c, esNueva) {
   return art;
 }
 
+function ponerTexto(el, texto) {         // no reescribir lo que ya pone eso
+  if (el && el.textContent !== texto) el.textContent = texto;
+}
+
 function actualizarTarjeta(art, c) {
-  art.querySelector('.quien').textContent =
-    c.tipo === 'llevar' ? '🛍 ' + (c.cliente || 'Llevar') : 'Mesa ' + c.mesa;
-  art.querySelector('.meta').textContent = `#${c.pedido_id} · ${c.camarero}`;
-  art.querySelector('ul').innerHTML = htmlLineas(c);
+  ponerTexto(art.querySelector('.quien'),
+    c.tipo === 'llevar' ? '🛍 ' + (c.cliente || 'Llevar') : 'Mesa ' + c.mesa);
+  ponerTexto(art.querySelector('.meta'), `#${c.pedido_id} · ${c.camarero}`);
+  actualizarLineas(art.querySelector('ul'), c);
   const bump = art.querySelector('.bump');
   const { texto, clase } = etiquetaBump(c);
-  bump.textContent = texto;
-  bump.className = 'bump ' + clase;
+  ponerTexto(bump, texto);
+  if (bump.className !== 'bump ' + clase) bump.className = 'bump ' + clase;
   art.dataset.desde = c.desde;
 }
 
@@ -222,10 +266,29 @@ async function cargar() {
     if (!vistos.has(pid)) { ficha.art.remove(); tarjetas.delete(pid); }
   });
 
-  // el orden lo decide el servidor (más antigua primero)
-  datos.comandas.forEach(c => cont.appendChild(tarjetas.get(c.pedido_id).art));
+  // El orden lo decide el servidor (más antigua primero), pero se mueve SOLO lo que está fuera
+  // de sitio. Antes se hacía `appendChild` de todas las tarjetas en cada aviso: reinsertar un
+  // nodo reinicia sus animaciones CSS, así que la comanda crítica (que parpadea) y la recién
+  // entrada (que hace zoom) se reiniciaban cada vez que alguien marcaba algo en cualquier zona.
+  let anterior = null;
+  datos.comandas.forEach(c => {
+    const art = tarjetas.get(c.pedido_id).art;
+    const esperada = anterior ? anterior.nextElementSibling : cont.firstElementChild;
+    if (esperada !== art) cont.insertBefore(art, esperada);
+    anterior = art;
+  });
 
-  $('#contador').textContent = `${datos.comandas.length} comandas`;
+  // La pantalla enseña las más viejas (se cocina por orden de llegada). Si la cocina va con
+  // retraso hay más esperando, y callarlo sería mentir sobre el trabajo que queda.
+  $('#contador').textContent = datos.esperando
+    ? `${datos.comandas.length} comandas · ${datos.esperando} esperando`
+    : `${datos.comandas.length} comandas`;
+  let cola = cont.querySelector('.mas-cola');
+  if (datos.esperando) {
+    if (!cola) { cola = document.createElement('div'); cola.className = 'mas-cola'; }
+    cola.textContent = `… y ${datos.esperando} comandas más esperando turno`;
+    cont.appendChild(cola);                       // siempre la última
+  } else if (cola) cola.remove();
   if (nuevas) pitido();
   primeraCarga = false;
   temporizadores();

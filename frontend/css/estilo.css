@@ -321,15 +321,21 @@ dialog input:not([type="checkbox"]):not([type="number"]):not([type="color"]) { f
 @keyframes entrar { from { transform: scale(.94); opacity: 0; } }
 .comanda .meta { padding: .35rem .8rem; font-size: .85rem; color: var(--tenue); border-bottom: 1px solid var(--borde); display: flex; justify-content: space-between; gap: .5rem; }
 .comanda ul { list-style: none; margin: 0; padding: .3rem .8rem; }
-.comanda li { min-height: var(--toque); padding: .45rem 0; border-bottom: 1px solid var(--borde); cursor: pointer; display: flex; gap: .6rem; align-items: baseline; font-size: 1.05rem; user-select: none; -webkit-user-select: none; }
+.comanda li { min-height: var(--toque); padding: .45rem 0; border-bottom: 1px solid var(--borde); cursor: pointer; display: flex; flex-wrap: wrap; gap: .1rem .6rem; align-items: baseline; font-size: 1.05rem; user-select: none; -webkit-user-select: none; }
+/* El nombre del plato manda: si la etiqueta de sección no cabe al lado, baja a su renglón en
+   vez de estrangular el nombre en una columna de tres letras. */
+.comanda li > span:not(.est) { flex: 1 1 60%; min-width: 0; }
 .comanda li:last-child { border-bottom: 0; }
 .comanda li:active { background: #ffffff14; }
 .comanda li b { font-size: 1.2rem; min-width: 1.8em; font-variant-numeric: tabular-nums; }
 .comanda li .nota { display: block; color: var(--aviso-tinta); font-size: .9rem; }
 .comanda li .alerg { display: block; }
-.comanda li .est { margin-left: auto; font-size: .7rem; text-transform: uppercase; letter-spacing: .04em; color: var(--tenue); white-space: nowrap; }
+.comanda li .est { margin-left: auto; font-size: .7rem; text-transform: uppercase; letter-spacing: .04em; color: var(--tenue); white-space: nowrap; flex: 0 0 auto; }
 .comanda li.preparando { color: var(--aviso-tinta); }
 .comanda li.lista { color: var(--ok-tinta); text-decoration: line-through; }
+/* El alérgeno NO se tacha aunque el plato esté listo: sigue siendo la información que hay
+   que poder leer si alguien pregunta al recogerlo en el pase. */
+.comanda li.lista .alerg { text-decoration: none; }
 .comanda header .deshacer, .comanda header .borrar { min-height: 44px; min-width: 44px; padding: 0 .4rem; background: #00000033; border: 0; color: inherit; font-size: 1.1rem; }
 .comanda header .deshacer:hover, .comanda header .borrar:hover { background: #00000055; }
 .comanda header .borrar { margin-left: auto; }
@@ -342,6 +348,8 @@ dialog input:not([type="checkbox"]):not([type="number"]):not([type="color"]) { f
 .comanda .bump.ok { background: var(--ok); color: var(--ok-texto); }
 .comanda .bump.ok:hover { background: #5cdc86; }
 .bump-grupo .deshacer { width: 3.2em; min-height: 56px; border-radius: 0; border: 0; background: var(--mal); color: var(--mal-texto); font-size: 1.2rem; }
+.mas-cola { grid-column: 1 / -1; text-align: center; padding: .9rem; border-radius: var(--r);
+            background: var(--panel2); border: 1px dashed var(--borde-fuerte); color: var(--tenue); font-weight: 600; }
 .vacio { grid-column: 1 / -1; text-align: center; padding: 20vh 1rem; color: var(--tenue); font-size: 1.3rem; }
 #b-deshacer:disabled { opacity: .35; }
 
@@ -507,8 +515,8 @@ body.cliente[data-tema="claro"] {
 .pasos li.actual span { background: var(--acento); border-color: var(--acento); color: var(--acento-texto); box-shadow: 0 0 0 4px var(--acento-suave); }
 .mi-comanda.rechazada .pasos li.actual span { background: var(--mal); border-color: var(--mal); color: var(--mal-texto); box-shadow: none; }
 /* Interruptor día/noche */
-.tema { position: relative; width: 68px; height: 40px; min-height: 0; border-radius: var(--r-pill); padding: 0; background: #1b2a4a; border: 1px solid var(--borde-fuerte); overflow: hidden; flex: none; }
-.tema .astro { position: absolute; top: 5px; left: 5px; width: 28px; height: 28px; border-radius: 50%; background: #dfe6f5; box-shadow: inset -6px -2px 0 0 #b9c4dc; transition: transform .35s cubic-bezier(.4,1.4,.6,1), background .35s; }
+.tema { position: relative; width: 72px; height: 44px; min-height: 0; border-radius: var(--r-pill); padding: 0; background: #1b2a4a; border: 1px solid var(--borde-fuerte); overflow: hidden; flex: none; }
+.tema .astro { position: absolute; top: 7px; left: 7px; width: 30px; height: 30px; border-radius: 50%; background: #dfe6f5; box-shadow: inset -6px -2px 0 0 #b9c4dc; transition: transform .35s cubic-bezier(.4,1.4,.6,1), background .35s; }
 .tema::after { content: ''; position: absolute; inset: 0; background: radial-gradient(2px 2px at 44px 8px, #fff9, transparent), radial-gradient(1.5px 1.5px at 50px 20px, #fff7, transparent); transition: opacity .35s; }
 .tema.dia { background: #7dc4f2; }
 .tema.dia::after { opacity: 0; }
@@ -524,7 +532,7 @@ body.cliente[data-tema="claro"] {
 .pila .texto small { color: var(--tenue); font-size: .8rem; }
 .pila .texto b { font-size: 1.1rem; line-height: 1.15; }
 .pila .texto .precio { font-weight: 800; font-variant-numeric: tabular-nums; }
-.pila .pedir { align-self: center; min-height: 44px; background: var(--acento); border-color: var(--acento); color: var(--acento-texto); }
+.pila .pedir { align-self: center; height: 48px; min-width: 5rem; background: var(--acento); border-color: var(--acento); color: var(--acento-texto); }
 .destacados .mandos { display: flex; align-items: center; justify-content: center; gap: 1rem; margin-top: .5rem; }
 .destacados .mandos button { min-width: 44px; min-height: 44px; font-size: 1.3rem; line-height: 1; padding: 0; }
 

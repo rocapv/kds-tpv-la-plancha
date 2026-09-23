@@ -56,6 +56,7 @@ sesiones por token y comprobación de roles en el servidor.
 | 6 | Resultados medidos frente a los KPI |
 | 7 | Presupuesto de implantación |
 | 8 | Coste comparado a cinco años |
+| 9 | La interfaz antes y después del rediseño |
 
 **Índice de figuras**
 
@@ -400,7 +401,7 @@ un día entero ocupa kilobytes y se puede recuperar hasta el último minuto ante
 semana, un temporizador restaura la copia en una base de pruebas y compara tabla por tabla y el
 total cobrado: si algo no cuadra, queda registrado como fallo.
 
-**Pruebas y despliegue.** 62 pruebas automáticas con `pytest` sobre una base de datos que se crea y
+**Pruebas y despliegue.** 65 pruebas automáticas con `pytest` sobre una base de datos que se crea y
 se destruye sola. El despliegue las ejecuta antes de reiniciar: si fallan, el servicio se queda con
 la versión anterior. La secuencia es copia → pruebas → reinicio → comprobación de salud.
 
@@ -476,6 +477,61 @@ carta que se ve sin red es la de la última conexión, aunque el precio final si
 servidor al reenviar; y el certificado debe estar confiado en la tableta, porque si no el navegador
 no registra el trabajador de servicio y se pierde el aguante a la recarga.
 
+## 4.10. La interfaz: medida, no opinada
+
+Una interfaz de hostelería no se juzga por si «queda bonita» en la pantalla de quien la programa,
+sino por si se puede usar de pie, con prisa, con las manos ocupadas y con la luz que haya. Por eso
+el rediseño del 23/09/2026 se hizo con un medidor delante, no a ojo.
+
+**El sistema de diseño** (`frontend/css/estilo.css`) se apoya en cinco reglas:
+
+1. **44 px de objetivo táctil** en todo lo que se toca (recomendación de las WCAG 2.1 y de las
+   guías de Apple y Google). Un botón de 24 px es un botón que se falla con el dedo mojado.
+2. **Contraste AA**: 4,5:1 para el texto normal y 3:1 para el grande. Cada color de fondo del
+   sistema lleva emparejado su color de texto (`--ok` / `--ok-texto`), de modo que no se puede
+   poner un verde de fondo y olvidar que encima iba texto blanco ilegible.
+3. **Fondos sólidos** bajo el texto: los degradados engañan al ojo y al medidor.
+4. **Un solo acento**. El ámbar significa «la acción principal de esta pantalla»; el verde,
+   dinero o plato listo; el rojo, destruir; el amarillo, esperar. Nada más compite.
+5. **Sin imágenes ni fuentes externas**: el local (y el aula) trabajan sin salida a internet.
+
+**El medidor** (`deploy/qa_gui.py`) recorre cada pantalla con cada rol, en tableta (1280×800) y en
+móvil (390×844), y mide lo que un revisor miraría a mano pero sin cansarse: desbordes horizontales,
+contraste real de cada texto —calculado componiendo los fondos transparentes hasta el primero
+opaco—, objetivos táctiles por debajo de 40 px, textos que se cortan sin avisar y errores de
+consola. Deja captura de cada pantalla y un informe en Markdown.
+
+**Tabla 9 · La interfaz antes y después del rediseño**
+
+| Medida | Antes | Después |
+|---|---|---|
+| Pantallas medidas | 48 | 72 |
+| Desbordes horizontales | 4 | **0** |
+| Textos por debajo del contraste AA | 72 | **0** |
+| Objetivos táctiles < 40 px | 57 | **0** |
+| Textos cortados | 2 | **0** |
+| Errores de consola | 8 | **0** |
+
+Dos matices honestos sobre esas cifras. La primera columna mide menos pantallas porque el propio
+recorrido tenía un fallo: las tarjetas de cocina llegan por AJAX y el medidor no las esperaba, así
+que las seis pantallas de KDS no se estaban midiendo. Y de los 57 objetivos pequeños, parte eran
+del medidor y no de la interfaz: una casilla de 24 px dentro de su etiqueta de 44 se toca igual, y
+ahora se mide el área que de verdad recibe el dedo.
+
+### 4.11. Que la cocina atascada no tumbe la pantalla
+
+Durante las pruebas apareció un fallo que no se ve con datos de juguete: con la cocina atascada
+—5.736 comandas pendientes, dejadas por la simulación— la pantalla del pase dejaba de responder.
+No era un error de lógica: el repintado incremental es correcto, pero recorrer 5.736 tarjetas en
+cada aviso del WebSocket es más trabajo del que una Raspberry Pi hace entre dos toques.
+
+La solución no es pintar más rápido, es **no pintar lo que nadie va a cocinar ahora**: `/api/kds`
+manda como mucho 60 comandas, **las más antiguas** (que es el orden en el que se despacha), y dice
+cuántas quedan detrás; la pantalla lo enseña («… y 37 comandas más esperando turno») en vez de
+callarlo. El tablón de recogida de la sala hace lo mismo con 24 números. Tres pruebas automáticas
+lo fijan: que el tope se respete, que las que se manden sean las más viejas y que un `limite`
+absurdo (0, negativo, 99.999) no tumbe la consulta.
+
 ## 5. Evaluación del proyecto
 
 Los KPI del apartado 3.3 se han medido sobre el sistema desplegado, con un simulador que reproduce
@@ -492,7 +548,7 @@ un servicio completo usando únicamente la API pública —es decir, probando el
 | O5 · Recuperación tras corte | 0 acciones | Verificado: tras reiniciar el servidor, los tres servicios levantaron solos; y con el wifi cortado el TPV sigue tomando nota y reenvía al volver (apartado 4.9) |
 | O6 · Tráfico en claro | 0 | 0; el 8090 redirige y el WebSocket exige token |
 | O7 · Copia restaurable | Restauración probada | Verificada: 8 tablas y el total cobrado coinciden |
-| O8 · Regresiones en producción | 0 | 62 pruebas automáticas bloquean el despliegue si fallan |
+| O8 · Regresiones en producción | 0 | 65 pruebas automáticas bloquean el despliegue si fallan, y dos recorridos de interfaz (`qa_gui.py`, `qa_cliente.py`) se pasan antes de publicar |
 
 Pruebas de comportamiento ante el error, todas comprobadas contra la API:
 
@@ -649,12 +705,13 @@ backend/app/      main.py (API), auth.py (sesiones y roles), db.py, redirector.p
 backend/sql/      01_schema · 02_seed · 03_facturacion · 04_carta_y_pagos · 05_sesiones · 06_arqueo
                   · 07…15 (tema, puestos, estaciones, escalafones, carta, plano, sala)
                   · 16_idempotencia (modo sin red)
-backend/pruebas/  test_api.py · test_arqueo.py · test_sinred.py (62 pruebas)
+backend/pruebas/  test_api.py · test_arqueo.py · test_sinred.py · test_tope_pantallas.py (65)
 backend/          simulador.py (servicio simulado para la demo)
 frontend/         menú, tpv, kds, facturas, carta, usuarios, ajustes, informe, arqueo, recogida
                   js/sinred.js y sw.js (modo sin red del TPV)
 deploy/           instalar.sh, certificado.sh, entregar.sh, units de systemd, nginx.conf
-                  qa.py (QA por roles) y qa_sinred.py (QA del modo sin red)
+                  qa.py (roles), qa_sinred.py (modo sin red), qa_gui.py (interfaz medida)
+                  y qa_cliente.py (el cliente pide y sigue su comanda)
 docs/             esta memoria y PENDIENTES.md
 ```
 

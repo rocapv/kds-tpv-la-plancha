@@ -12,7 +12,23 @@ import pytest
 
 RAIZ = Path(__file__).resolve().parents[1]
 BD_PRUEBAS = os.getenv("KDS_TEST_DB", "kds_tpv_test")
-SOCKET = os.getenv("KDS_DB_SOCKET", str(Path.home() / ".local/share/kds-mariadb/kds.sock"))
+def _socket() -> str:
+    """El socket de MariaDB, que no está en el mismo sitio en cada máquina.
+
+    En la VM Mint no había root, así que el proyecto levantaba su propia MariaDB de usuario;
+    en Raspa usa la del sistema. Se coge el primero que exista para que las pruebas se puedan
+    lanzar a mano en cualquiera de las dos sin acordarse de exportar nada.
+    """
+    if os.getenv("KDS_DB_SOCKET"):
+        return os.environ["KDS_DB_SOCKET"]
+    for ruta in (Path.home() / ".local/share/kds-mariadb/kds.sock",
+                 Path("/run/mysqld/mysqld.sock"), Path("/var/run/mysqld/mysqld.sock")):
+        if ruta.exists():
+            return str(ruta)
+    return str(Path.home() / ".local/share/kds-mariadb/kds.sock")
+
+
+SOCKET = _socket()
 
 
 def mariadb(*args, entrada=None):

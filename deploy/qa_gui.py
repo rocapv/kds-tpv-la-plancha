@@ -68,21 +68,42 @@ MEDIR = r"""
     }
   }
 
+  // Objetivo táctil: lo que cuenta es el área que de verdad se puede tocar. Una casilla de
+  // 24 px dentro de su <label> de 44 se toca igual (el clic en la etiqueta la marca), así que
+  // se mide la etiqueta. Lo mismo con un <a> que envuelve un botón: el área es la del botón.
+  const areaTactil = (el) => {
+    let r = el.getBoundingClientRect();
+    const etiqueta = el.closest('label');
+    if (etiqueta && (el.type === 'checkbox' || el.type === 'radio')) {
+      const re = etiqueta.getBoundingClientRect();
+      r = { width: Math.max(r.width, re.width), height: Math.max(r.height, re.height) };
+    }
+    if (el.tagName === 'A') {
+      const b = el.querySelector('button');
+      if (b) { const rb = b.getBoundingClientRect(); r = { width: Math.max(r.width, rb.width), height: Math.max(r.height, rb.height) }; }
+    }
+    return r;
+  };
   const pequenos = [];
   for (const el of document.querySelectorAll('button,a[href],input[type=checkbox],[role=button]')) {
     if (!visible(el)) continue;
-    const r = el.getBoundingClientRect();
+    const r = areaTactil(el);
     if (r.width < 40 || r.height < 40) {
       pequenos.push({ sel: el.tagName.toLowerCase() + (el.id ? '#' + el.id : '') + (el.className ? '.' + String(el.className).split(' ')[0] : ''), w: Math.round(r.width), h: Math.round(r.height), texto: (el.textContent || '').trim().slice(0, 25) });
     }
   }
 
+  // Texto cortado: solo cuenta si se corta el texto PROPIO del elemento. Un contenedor que
+  // recorta a sus hijos a propósito (el lienzo del plano, una columna con scroll) no es un
+  // fallo; lo es una etiqueta cuyo texto no cabe y desaparece sin avisar.
   const cortados = [];
   for (const el of document.querySelectorAll('*')) {
     if (!visible(el)) continue;
     const cs = getComputedStyle(el);
-    if (cs.overflow === 'hidden' && el.scrollWidth > el.clientWidth + 2 && el.textContent.trim().length > 3 && cs.textOverflow !== 'ellipsis') {
-      cortados.push({ sel: el.tagName.toLowerCase() + (el.id ? '#' + el.id : '') + (el.className ? '.' + String(el.className).split(' ')[0] : ''), texto: el.textContent.trim().slice(0, 30) });
+    const propio = [...el.childNodes].filter(n => n.nodeType === 3).map(n => n.textContent.trim()).join(' ').trim();
+    if (!propio || propio.length < 4) continue;
+    if (cs.overflow === 'hidden' && el.scrollWidth > el.clientWidth + 2 && cs.textOverflow !== 'ellipsis') {
+      cortados.push({ sel: el.tagName.toLowerCase() + (el.id ? '#' + el.id : '') + (el.className ? '.' + String(el.className).split(' ')[0] : ''), texto: propio.slice(0, 30) });
       if (cortados.length > 8) break;
     }
   }

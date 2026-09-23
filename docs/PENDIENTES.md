@@ -30,3 +30,14 @@ pidiendo `/api/.env`, `/api/config` y `/api/settings`. Pendiente, por orden:
 1. Freno al `POST /api/login`: espera creciente y bloqueo temporal por IP.
 2. Registro de intentos fallidos (quién, desde dónde, cuántos) visible para el encargado.
 3. Contraseña larga obligatoria para los escalafones con gestión; el PIN, solo para la barra.
+
+## Rediseño de la interfaz (23/09/2026)
+
+Hecho y medido (ver `deploy/_qa/gui/`). Lo que queda apuntado de esa tanda:
+
+- Los botones de categoría del TPV se pintan con el color de la categoría por estilo **en línea**
+  desde `tpv.js`, así que la hoja de estilos no puede gobernarlos. Funciona y el contraste da bien,
+  pero el día que una categoría se ponga de un color claro, el texto blanco dejará de leerse. Lo
+  suyo es que la carta guarde el color y el CSS decida el texto.
+- `qa_gui.py` mide con el navegador a 1280×800 y 390×844. Faltaría una pasada a 1024×600, que es
+  la resolución de muchas tabletas de TPV baratas.
