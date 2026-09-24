@@ -28,7 +28,7 @@ Tres normas obligan además a tocar el equipamiento: la Ley 11/2021 antifraude, 
 18/2022, desarrollada por el RD 238/2026.
 
 El mercado está cubierto en funcionalidad pero cobra **por terminal**, y el KDS aparece casi siempre
-como módulo o dispositivo facturable aparte: de doce productos revisados, solo Loyverse lo regala, y
+como módulo o dispositivo facturable aparte: de trece productos revisados, solo Loyverse lo regala, y
 a cambio los datos salen del local. Un local con cuatro estaciones de cocina paga cuatro veces.
 
 Esa es la grieta que justifica el proyecto: un sistema web autoalojado en el que la pantalla número
@@ -146,10 +146,11 @@ Cuiner, Camarero10), heredero del TPV Windows instalado en el local; las **plata
 (Revo, Last.app, Lightspeed, Square, Epos Now), que cobran suscripción y venden la integración con
 el reparto a domicilio; y el **modelo gratuito con monetización indirecta** (Loyverse, TMBill).
 
-**Tabla 2 · Doce productos con KDS presentes en España**
+**Tabla 2 · Trece productos con KDS presentes en España**
 
 | Producto | Modelo de precio (fuente y fecha) | ¿KDS aparte? | ¿Nube? | Punto débil para un local pequeño |
 |---|---|---|---|---|
+| **Oracle MICROS Simphony** (EE. UU.) | **Sin tarifa pública**: se cotiza. Comparadores: Essentials **desde 55 $/mes** y Plus **desde 75 $/mes** por estación; terminal 2.500–8.000 $; instalación 500–8.000 $; 2,4–2,9 % por pago (Loman y TrustRadius, 09/2026) | **Sí: módulo aparte**, importe no publicado | Sí, con controlador **Windows** en el local | Pensado para cadenas: cuota por estación, equipo Windows por cocina y respaldo en otra máquina. Ver [ANALISIS_KDS_ORACLE_SIMPHONY.md](ANALISIS_KDS_ORACLE_SIMPHONY.md) |
 | **Revo XEF** (ES) | **Sin precio público**: remite al distribuidor (09/2026) | Módulo de la suite | Sí | Opacidad de precio y coste por terminal; depende del distribuidor |
 | **Glop** (ES) | Desde **19,90 €/mes** o **~299 €** en pago único; Mini desde 199 € y Pro desde 399 € sin IVA (distribuidores, 09/2026) | Módulo de cocina | No: instalación local | Windows obligatorio; cada pantalla añade licencia |
 | **Ágora / IGT** (ES) | **Desde 32 €/mes**; también licencia perpetua por terminal (agorapos.com, 09/2026) | Incluido como monitor de cocina | Opcional | Modelo por terminal: cada puesto suma |
@@ -166,6 +167,17 @@ el reparto a domicilio; y el **modelo gratuito con monetización indirecta** (Lo
 Dos advertencias: las cifras en dólares son del mercado estadounidense y no trasladables sin más a
 España, y cuando la fuente es un comparador y no el fabricante se indica, porque los comparadores no
 siempre actualizan tarifas.
+
+**El líder marca el patrón.** Oracle compró MICROS en 2014 por **5.300 millones de dólares**; MICROS
+tenía entonces **6.600 empleados** y **330.000 locales de clientes en 180 países** ([nota de prensa de
+Oracle](https://www.oracle.com/corporate/pressrelease/oracle-buys-micros-systems-062314.html)), y hoy
+Oracle declara **~141.000 empleados** y **67.357 M$** de ingresos (10-K FY2026). Su KDS no es una
+pantalla: es un **servicio Windows** (*KDS Controller*) que hace de puente entre el TPV y los monitores,
+con el respaldo obligatoriamente en otra máquina y un controlador por cada cocina independiente
+([documentación de Oracle](https://docs.oracle.com/en/industries/food-beverage/simphony/simcm/t_shared_services_overview_kdsc.htm)).
+Es una respuesta proporcionada a una cadena de mil locales y desproporcionada para un bar de barrio:
+ahí está la grieta que este proyecto aprovecha. Análisis completo en
+[ANALISIS_KDS_ORACLE_SIMPHONY.md](ANALISIS_KDS_ORACLE_SIMPHONY.md).
 
 **Lo que se ve al mirar los productos por dentro.** Los cuatro análisis internos, hechos con
 descarga, transcripción y fotogramas clave de demostraciones reales, dicen cosas que ninguna tabla

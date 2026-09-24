@@ -8,7 +8,7 @@ con doble clic en cualquier ordenador (también sin wifi) y se puede llevar en u
 | `→` `espacio` `AvPág` | siguiente |
 | `←` `RePág` | anterior |
 | `Inicio` · `Fin` | primera · última |
-| `O` | vista general de las 17 diapositivas |
+| `O` | vista general de las 20 diapositivas |
 | `F` | pantalla completa |
 | `P` | cronómetro de quien presenta |
 
@@ -18,7 +18,7 @@ También se pasa con el ratón (mitad derecha avanza, izquierda retrocede) y con
 ## PDF para entregar
 
 `Ctrl+P` → *Guardar como PDF*, **horizontal**, con «Gráficos de fondo» activado: sale una
-diapositiva por hoja. El PDF ya generado está al lado (`kds_presentacion.pdf`, 17 páginas).
+diapositiva por hoja. El PDF ya generado está al lado (`kds_presentacion.pdf`, 20 páginas).
 
 ## Por qué se ve como el sistema
 

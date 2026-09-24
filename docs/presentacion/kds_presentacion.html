@@ -159,6 +159,26 @@ table.datos tr td:last-child { font-weight: 700; }
 .slide.activa .linea-datos { stroke-dasharray: 2000; stroke-dashoffset: 2000; animation: dibujar 2.4s ease-out .5s forwards; }
 @keyframes dibujar { to { stroke-dashoffset: 0; } }
 
+/* ── Comparativa: dos columnas enfrentadas ── */
+.duelo { display: grid; grid-template-columns: 1fr 1fr; gap: 0; border: 1px solid var(--borde); border-radius: var(--r); overflow: hidden; }
+.duelo > div { padding: 18px 22px; }
+.duelo > div + div { border-left: 1px solid var(--borde); }
+.duelo h3 { font-size: 19px; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+.duelo .ellos { background: var(--panel); }
+.duelo .nosotros { background: linear-gradient(var(--panel), #241c12); }
+.duelo ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 9px; }
+.duelo li { font-size: 16px; line-height: 1.35; color: var(--tenue); display: grid; grid-template-columns: 18px 1fr; gap: 8px; }
+.duelo li b { color: var(--texto); font-weight: 700; }
+.duelo .ellos li::before { content: '▪'; color: var(--info-tinta); }
+.duelo .nosotros li::before { content: '▪'; color: var(--acento); }
+
+/* Cifra enorme para un dato que tiene que doler */
+.golpe { display: flex; align-items: baseline; gap: 14px; }
+.golpe b { font-size: 88px; font-weight: 800; line-height: .9; color: var(--acento); font-variant-numeric: tabular-nums; }
+.golpe span { font-size: 19px; color: var(--tenue); max-width: 22ch; line-height: 1.3; }
+.fuente, .golpe .fuente { font-size: 13px; color: var(--apagado); line-height: 1.3; }
+.fuente b { color: var(--tenue); font-weight: 600; }
+
 /* ── Barra de progreso, mandos y numeración ── */
 #progreso { position: fixed; left: 0; top: 0; height: 4px; background: var(--acento); width: 0; transition: width .35s ease; z-index: 50; }
 #mandos { position: fixed; right: 18px; bottom: 14px; display: flex; align-items: center; gap: 10px; z-index: 50;
@@ -441,7 +461,92 @@ table.datos tr td:last-child { font-weight: 700; }
     </div>
   </section>
 
-  <!-- 13 · Seguridad ──────────────────────────────────────────────────────── -->
+  <!-- 13 · La competencia: quién hay al otro lado ───────────────────────────── -->
+  <section class="slide" data-titulo="La competencia">
+    <div class="rotulo" data-anim style="--i:0">La competencia · lo que hay al otro lado</div>
+    <h2 data-anim style="--i:1">Esto ya lo hace <span class="acento">Oracle</span>, en 180 países</h2>
+    <div class="rejilla c2" style="grid-template-columns: .95fr 1.05fr; align-items:start; margin-top:4px">
+      <div>
+        <div class="golpe" data-anim style="--i:2">
+          <b data-contar="141000">0</b>
+          <span>empleados tiene Oracle hoy<br><span class="fuente">10-K FY2026 · 49.000 en EE. UU. y 92.000 fuera</span></span>
+        </div>
+        <div class="golpe" data-anim style="--i:3; margin-top:18px">
+          <b data-contar="1">1</b>
+          <span>persona ha hecho este proyecto<br><span class="fuente">8.928 líneas · 34 commits · un trimestre</span></span>
+        </div>
+      </div>
+      <ul class="lista">
+        <li data-anim style="--i:4"><span class="marca">💰</span><div>Oracle compró <b>MICROS</b> en 2014
+          <small><b>5.300 millones de dólares</b> a 68 $ por acción · fuente: nota de prensa de Oracle</small></div></li>
+        <li data-anim style="--i:5"><span class="marca">🌍</span><div>MICROS ya tenía entonces
+          <small><b>6.600 empleados</b> y <b>330.000 locales</b> de clientes en <b>180 países</b></small></div></li>
+        <li data-anim style="--i:6"><span class="marca">📈</span><div>Ingresos de Oracle en FY2026
+          <small><b>67.357 millones de dólares</b>, un 17 % más que el año anterior</small></div></li>
+      </ul>
+    </div>
+    <p class="nota" data-anim style="--i:7">Su producto de hostelería se llama <b>Simphony</b>, y también trae KDS.
+      Conviene saber cómo funciona el de ellos antes de defender el nuestro.</p>
+  </section>
+
+  <!-- 14 · Cómo funciona el KDS de Oracle ─────────────────────────────────────── -->
+  <section class="slide" data-titulo="Cómo funciona Oracle">
+    <div class="rotulo" data-anim style="--i:0">La competencia · su arquitectura</div>
+    <h2 data-anim style="--i:1">El KDS de Simphony, por dentro</h2>
+    <div class="flujo" style="grid-template-columns: repeat(4, 1fr); margin-top:14px">
+      <div class="paso" style="--i:0"><span class="ico">🧾</span><b>POS clients</b><small>los terminales de sala</small></div>
+      <div class="paso" style="--i:1"><span class="ico">🔗</span><b>KDS shared service</b><small>en el «service host»</small></div>
+      <div class="paso eje" style="--i:2"><span class="ico">🪟</span><b>KDS Controller</b><small>servicio <b>Windows</b></small></div>
+      <div class="paso" style="--i:3"><span class="ico">🖥️</span><b>KDS Displays</b><small>pantallas de cocina</small></div>
+    </div>
+    <div class="rejilla c3" style="margin-top:16px">
+      <div class="tarjeta" data-anim style="--i:5"><h3>Un equipo Windows en el local</h3>
+        <p>La lógica de la cocina vive en un <b>servicio Windows</b>. Si cae el controlador, las pantallas
+          se quedan a oscuras: son clientes.</p></div>
+      <div class="tarjeta" data-anim style="--i:6"><h3>Redundancia = otra máquina</h3>
+        <p>El controlador de respaldo <b>no puede estar en el mismo hardware</b>. Y cada cocina independiente
+          pide su propio controlador.</p></div>
+      <div class="tarjeta" data-anim style="--i:7"><h3>Se paga por estación</h3>
+        <p>Desde <b>55 $/mes</b> (Essentials) o <b>75 $/mes</b> (Plus), con el <b>KDS como módulo aparte</b>,
+          terminal de 2.500 a 8.000 $ y 2,4–2,9 % por pago.</p></div>
+    </div>
+    <p class="fuente" data-anim style="--i:8">Fuentes: documentación oficial de Oracle (Kitchen Display System Controller)
+      y tarifas recogidas por Loman y TrustRadius, septiembre de 2026. Oracle no publica tarifa completa: se cotiza.</p>
+  </section>
+
+  <!-- 15 · Frente a frente ────────────────────────────────────────────────────── -->
+  <section class="slide" data-titulo="Frente a frente">
+    <div class="rotulo" data-anim style="--i:0">La competencia · dónde está la grieta</div>
+    <h2 data-anim style="--i:1">No competimos en lo mismo</h2>
+    <div class="duelo" data-anim style="--i:2; margin-top:6px">
+      <div class="ellos">
+        <h3>🏢 Lo que hace Oracle y aquí no está</h3>
+        <ul>
+          <li><span>Cadenas de <b>cientos de locales</b> con carta centralizada</span></li>
+          <li><span>Integración con las <b>plataformas de reparto</b></span></li>
+          <li><span><b>Soporte 24/7</b> y responsabilidad contractual</span></li>
+          <li><span>Fiscalidad de <b>180 países</b> y certificaciones</span></li>
+          <li><span>Cuarenta años de <b>casos límite</b> ya resueltos</span></li>
+        </ul>
+      </div>
+      <div class="nosotros">
+        <h3>🍓 Lo que hace este proyecto y allí cuesta dinero</h3>
+        <ul>
+          <li><span>La <b>pantalla número cinco</b> cuesta lo que cuesta la pantalla, no una licencia</span></li>
+          <li><span><b>Sin Windows</b>: vale el navegador de una tableta de 60 €</span></li>
+          <li><span>Los <b>datos no salen del local</b>: ni nube, ni cuota, ni dependencia</span></li>
+          <li><span>Sin red <b>no duplica</b>: cada acción lleva su clave de idempotencia</span></li>
+          <li><span>El <b>código es auditable</b> por quien lo usa</span></li>
+        </ul>
+      </div>
+    </div>
+    <p class="nota" data-anim style="--i:3">De ellos se ha copiado <b>una idea</b>: que la lógica viva en el servidor y
+      las pantallas sean clientes tontos. No se ha copiado el despliegue: un servicio Windows por cocina, con su
+      máquina de respaldo, es la respuesta para una cadena de mil locales; para una cantina de trece mesas
+      <b>es el problema, no la solución</b>.</p>
+  </section>
+
+  <!-- 16 · Seguridad ──────────────────────────────────────────────────────── -->
   <section class="slide" data-titulo="Seguridad">
     <div class="rotulo" data-anim style="--i:0">Seguridad</div>
     <h2 data-anim style="--i:1">El PIN solo viaja una vez</h2>
@@ -457,7 +562,7 @@ table.datos tr td:last-child { font-weight: 700; }
     </ul>
   </section>
 
-  <!-- 14 · Calidad ────────────────────────────────────────────────────────── -->
+  <!-- 17 · Calidad ────────────────────────────────────────────────────────── -->
   <section class="slide" data-titulo="Calidad medida">
     <div class="rotulo" data-anim style="--i:0">Calidad</div>
     <h2 data-anim style="--i:1">Medido, no opinado</h2>
@@ -485,7 +590,7 @@ table.datos tr td:last-child { font-weight: 700; }
       no esperaba a las tarjetas de cocina, que llegan después. <b>El QA también se audita.</b></p>
   </section>
 
-  <!-- 15 · Despliegue ─────────────────────────────────────────────────────── -->
+  <!-- 18 · Despliegue ─────────────────────────────────────────────────────── -->
   <section class="slide" data-titulo="Despliegue">
     <div class="rotulo" data-anim style="--i:0">Explotación</div>
     <h2 data-anim style="--i:1">No se despliega a mano: se commitea</h2>
@@ -506,7 +611,7 @@ table.datos tr td:last-child { font-weight: 700; }
     </div>
   </section>
 
-  <!-- 16 · La demo ────────────────────────────────────────────────────────── -->
+  <!-- 19 · La demo ────────────────────────────────────────────────────────── -->
   <section class="slide" data-titulo="La demostración">
     <div class="rotulo" data-anim style="--i:0">La demostración</div>
     <h2 data-anim style="--i:1">El local se mueve solo, y sin atascarse</h2>
@@ -532,7 +637,7 @@ table.datos tr td:last-child { font-weight: 700; }
     </div>
   </section>
 
-  <!-- 17 · Cierre ─────────────────────────────────────────────────────────── -->
+  <!-- 20 · Cierre ─────────────────────────────────────────────────────────── -->
   <section class="slide" data-titulo="Cierre">
     <div class="rotulo" data-anim style="--i:0">Y ahora, en vivo</div>
     <h1 data-anim style="--i:1; font-size:60px">Vamos a verlo<br>funcionando</h1>
@@ -553,7 +658,7 @@ table.datos tr td:last-child { font-weight: 700; }
 <div id="crono">00:00</div>
 <div id="pista">→ avanzar · O vista general · F pantalla completa</div>
 <div id="mandos">
-  <span id="contador">1 / 17</span>
+  <span id="contador">1 / 20</span>
   <button id="b-atras" title="Anterior (←)">‹</button>
   <button id="b-alante" title="Siguiente (→)">›</button>
   <button id="b-general" title="Vista general (O)">▦</button>
