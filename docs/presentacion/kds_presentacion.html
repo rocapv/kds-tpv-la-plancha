@@ -1,0 +1,691 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KDS + TPV · Cantina Vesta-9 · Presentación</title>
+<meta name="description" content="Presentación del Projecte Intermodular: sistema de comandas (TPV + KDS) para hostelería.">
+<!--
+  Presentación del proyecto KDS + TPV · 1r ASIR · 2026
+  ─────────────────────────────────────────────────────────────────────────────
+  Un solo fichero, sin dependencias y sin salida a internet: se abre con doble clic en
+  cualquier ordenador del aula, funciona sin wifi y se puede llevar en un pendrive.
+
+  Teclas:  →/espacio avanzar · ← retroceder · Inicio/Fin · O vista general · P cronómetro
+           F pantalla completa · Ctrl+P imprime una diapositiva por hoja (PDF)
+
+  El aspecto es EL MISMO que el del sistema (mismos colores y tipografía), para que al pasar
+  de la presentación a la demostración no parezca que se cambia de proyecto.
+-->
+<style>
+/* ── Tokens: los del propio sistema, para que la presentación y el producto sean lo mismo ── */
+:root {
+  --fondo: #0e1116; --panel: #171b22; --panel2: #202631; --panel3: #2a3140;
+  --borde: #313a49; --borde-fuerte: #46516a;
+  --texto: #eef2f7; --tenue: #a3adbd; --apagado: #7f8a9b;
+  --acento: #f2a33a; --acento-texto: #1c1200;
+  --ok: #3ccf6d; --ok-texto: #05230f; --ok-tinta: #86e8a8;
+  --mal: #d92f36; --mal-tinta: #ff9a9a;
+  --aviso: #f7c948; --aviso-tinta: #ffd970;
+  --info: #1f6fd0; --info-tinta: #9cc7ff;
+  --fuente: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+  --mono: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  --r: 14px;
+}
+* { box-sizing: border-box; margin: 0; }
+html, body { height: 100%; overflow: hidden; }
+body {
+  background: var(--fondo); color: var(--texto); font-family: var(--fuente);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── El escenario: 16:9 escalado para que quepa siempre, como una diapositiva de verdad ── */
+#escenario { position: fixed; inset: 0; display: grid; place-items: center; }
+#lienzo {
+  width: 1280px; height: 720px; position: relative; transform-origin: center;
+  background: radial-gradient(1200px 700px at 15% -20%, #1b2433, var(--fondo));
+  overflow: hidden;
+}
+/* Trama de fondo: la retícula de una cantina excavada en roca, muy tenue */
+#lienzo::before {
+  content: ''; position: absolute; inset: 0; pointer-events: none; opacity: .5;
+  background: repeating-linear-gradient(0deg, transparent 0 39px, #ffffff06 39px 40px),
+              repeating-linear-gradient(90deg, transparent 0 39px, #ffffff06 39px 40px);
+}
+
+.slide {
+  position: absolute; inset: 0; padding: 64px 80px;
+  display: flex; flex-direction: column; justify-content: center; gap: 22px;
+  opacity: 0; transform: translateX(60px); pointer-events: none;
+  transition: opacity .45s ease, transform .45s cubic-bezier(.2,.7,.3,1);
+}
+.slide.activa { opacity: 1; transform: none; pointer-events: auto; }
+.slide.atras { transform: translateX(-60px); }
+
+/* ── Entrada escalonada de los elementos ── */
+[data-anim] { opacity: 0; transform: translateY(18px); transition: opacity .5s ease, transform .5s cubic-bezier(.2,.7,.3,1); }
+.slide.activa [data-anim] { opacity: 1; transform: none; transition-delay: calc(var(--i, 0) * .09s + .12s); }
+
+/* ── Tipografía ── */
+.rotulo { font-size: 15px; letter-spacing: .18em; text-transform: uppercase; color: var(--acento); font-weight: 700; }
+h1 { font-size: 74px; line-height: 1.02; letter-spacing: -.025em; font-weight: 800; }
+h2 { font-size: 46px; line-height: 1.08; letter-spacing: -.02em; font-weight: 800; }
+h3 { font-size: 24px; font-weight: 700; }
+p.grande { font-size: 26px; line-height: 1.45; color: var(--tenue); max-width: 60ch; }
+p.enorme { font-size: 40px; line-height: 1.25; font-weight: 700; max-width: 22ch; }
+.pie { font-size: 15px; color: var(--apagado); }
+.acento { color: var(--acento); }
+.verde { color: var(--ok-tinta); }
+.rojo { color: var(--mal-tinta); }
+b.num { font-variant-numeric: tabular-nums; }
+code { font: .92em var(--mono); background: var(--panel2); padding: .12em .4em; border-radius: 6px; color: var(--aviso-tinta); }
+
+/* ── Piezas ── */
+.rejilla { display: grid; gap: 18px; }
+.c2 { grid-template-columns: 1fr 1fr; }
+.c3 { grid-template-columns: repeat(3, 1fr); }
+.c4 { grid-template-columns: repeat(4, 1fr); }
+.tarjeta {
+  background: var(--panel); border: 1px solid var(--borde); border-radius: var(--r);
+  padding: 22px 24px; display: flex; flex-direction: column; gap: 8px;
+}
+.tarjeta .ico { font-size: 30px; line-height: 1; }
+.tarjeta h3 { font-size: 21px; }
+.tarjeta p { font-size: 16px; color: var(--tenue); line-height: 1.4; }
+.tarjeta.destacada { border-color: var(--acento); background: linear-gradient(var(--panel), #2a2116); }
+
+.lista { display: flex; flex-direction: column; gap: 14px; }
+.lista li { list-style: none; display: grid; grid-template-columns: 34px 1fr; gap: 14px; align-items: start; font-size: 21px; line-height: 1.4; }
+.lista li .marca { width: 30px; height: 30px; border-radius: 9px; background: var(--panel2); border: 1px solid var(--borde-fuerte);
+                   display: grid; place-items: center; font-size: 15px; font-weight: 800; color: var(--acento); }
+.lista li small { display: block; font-size: 16px; color: var(--tenue); margin-top: 2px; }
+
+.cifras { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 16px; }
+.cifra { background: var(--panel); border: 1px solid var(--borde); border-radius: var(--r); padding: 18px 20px; }
+.cifra b { display: block; font-size: 44px; font-weight: 800; font-variant-numeric: tabular-nums; line-height: 1; }
+.cifra span { display: block; font-size: 14px; color: var(--tenue); margin-top: 8px; line-height: 1.3; }
+.cifra.ok b { color: var(--ok-tinta); } .cifra.acento b { color: var(--acento); } .cifra.mal b { color: var(--mal-tinta); }
+
+table.datos { width: 100%; border-collapse: collapse; font-size: 19px; }
+table.datos th { text-align: left; font-size: 13px; text-transform: uppercase; letter-spacing: .08em; color: var(--tenue); padding: 8px 10px; }
+table.datos td { padding: 10px; border-top: 1px solid var(--borde); }
+table.datos td.num { text-align: right; font-variant-numeric: tabular-nums; }
+table.datos tr td:last-child { font-weight: 700; }
+
+.cita { border-left: 5px solid var(--acento); padding: 6px 0 6px 22px; font-size: 30px; line-height: 1.3; font-weight: 700; max-width: 26ch; }
+.nota { background: var(--panel2); border: 1px dashed var(--borde-fuerte); border-radius: var(--r); padding: 14px 18px; font-size: 17px; color: var(--tenue); }
+
+/* ── Diagrama de flujo ── */
+.flujo { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; align-items: stretch; }
+.paso { background: var(--panel); border: 2px solid var(--borde-fuerte); border-radius: var(--r); padding: 16px 14px; text-align: center; position: relative; }
+.paso .ico { font-size: 28px; display: block; margin-bottom: 6px; }
+.paso b { display: block; font-size: 17px; }
+.paso small { font-size: 13px; color: var(--tenue); }
+.paso::after { content: '▸'; position: absolute; right: -13px; top: 50%; transform: translateY(-50%); color: var(--borde-fuerte); font-size: 22px; z-index: 2; }
+.paso:last-child::after { display: none; }
+.slide.activa .paso { animation: latido .6s ease-out both; animation-delay: calc(var(--i) * .16s + .3s); }
+@keyframes latido { from { opacity: 0; transform: translateY(14px) scale(.94); } }
+.paso.eje { border-color: var(--acento); background: linear-gradient(var(--panel), #241c12); }
+
+/* ── Estados de una línea de comanda ── */
+.estados { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.pastilla { padding: 10px 18px; border-radius: 999px; font-size: 18px; font-weight: 700; background: var(--panel2); border: 2px solid var(--borde-fuerte); }
+.pastilla.enviada { background: #1f6fd02b; border-color: var(--info); color: var(--info-tinta); }
+.pastilla.preparando { background: #f7c94826; border-color: var(--aviso); color: var(--aviso-tinta); }
+.pastilla.lista { background: #3ccf6d24; border-color: var(--ok); color: var(--ok-tinta); }
+.pastilla.servida { color: var(--tenue); }
+.flecha { color: var(--borde-fuerte); font-size: 20px; }
+
+/* ── Maqueta de pantalla de cocina (se anima sola) ── */
+.maqueta { background: var(--panel); border: 1px solid var(--borde); border-radius: var(--r); padding: 14px; display: grid; gap: 10px; }
+.maqueta .barrita { height: 34px; border-radius: 8px; background: var(--panel2); display: flex; align-items: center; padding: 0 12px; font-size: 13px; color: var(--tenue); gap: 8px; }
+.comanditas { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.comandita { border: 2px solid var(--borde-fuerte); border-radius: 10px; overflow: hidden; background: var(--panel2); }
+.comandita header { background: var(--info); color: #fff; font-size: 13px; font-weight: 800; padding: 6px 10px; display: flex; justify-content: space-between; }
+.comandita.tarde header { background: var(--aviso); color: var(--acento-texto); }
+.comandita.critica header { background: var(--mal); color: #fff; }
+.comandita ul { margin: 0; padding: 8px 10px; list-style: none; display: grid; gap: 6px; }
+.comandita li { font-size: 13px; display: flex; justify-content: space-between; color: var(--texto); }
+.comandita li.hecha { color: var(--ok-tinta); text-decoration: line-through; }
+.comandita .bump { height: 28px; background: var(--acento); color: var(--acento-texto); font-size: 12px; font-weight: 800; display: grid; place-items: center; }
+.comandita.critica .bump { background: var(--ok); color: var(--ok-texto); }
+.slide.activa .comandita { animation: latido .5s ease-out both; animation-delay: calc(var(--i) * .18s + .4s); }
+
+/* ── Gráfica de la cola medida ── */
+.grafica { background: var(--panel); border: 1px solid var(--borde); border-radius: var(--r); padding: 18px 20px 10px; }
+.grafica svg { width: 100%; height: 190px; display: block; }
+.grafica .leyenda { display: flex; gap: 18px; font-size: 14px; color: var(--tenue); margin-top: 6px; }
+.grafica .leyenda i { font-style: normal; }
+.slide.activa .linea-datos { stroke-dasharray: 2000; stroke-dashoffset: 2000; animation: dibujar 2.4s ease-out .5s forwards; }
+@keyframes dibujar { to { stroke-dashoffset: 0; } }
+
+/* ── Barra de progreso, mandos y numeración ── */
+#progreso { position: fixed; left: 0; top: 0; height: 4px; background: var(--acento); width: 0; transition: width .35s ease; z-index: 50; }
+#mandos { position: fixed; right: 18px; bottom: 14px; display: flex; align-items: center; gap: 10px; z-index: 50;
+          font-size: 13px; color: var(--apagado); }
+#mandos button { background: var(--panel2); color: var(--texto); border: 1px solid var(--borde-fuerte); border-radius: 8px;
+                 width: 36px; height: 36px; font-size: 15px; cursor: pointer; }
+#mandos button:hover { background: var(--panel3); }
+#contador { font-variant-numeric: tabular-nums; min-width: 54px; text-align: right; }
+#crono { position: fixed; left: 18px; bottom: 14px; z-index: 50; font: 700 15px var(--mono); color: var(--apagado);
+         background: var(--panel2); border: 1px solid var(--borde); border-radius: 8px; padding: 6px 12px; display: none; }
+#crono.visible { display: block; }
+#pista { position: fixed; left: 50%; bottom: 16px; transform: translateX(-50%); z-index: 50; font-size: 13px; color: var(--apagado);
+         transition: opacity .6s; }
+
+/* ── Vista general (tecla O) ── */
+#general { position: fixed; inset: 0; z-index: 60; background: #070a0ef2; padding: 40px; overflow: auto; display: none; }
+#general.visible { display: block; }
+#general h2 { font-size: 22px; margin-bottom: 18px; color: var(--tenue); }
+#general .rejilla-mini { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 14px; }
+#general .mini { background: var(--panel); border: 2px solid var(--borde); border-radius: 10px; padding: 14px; cursor: pointer;
+                 min-height: 104px; display: flex; flex-direction: column; gap: 6px; }
+#general .mini:hover, #general .mini.actual { border-color: var(--acento); }
+#general .mini b { font-size: 15px; line-height: 1.2; }
+#general .mini span { font-size: 12px; color: var(--apagado); }
+
+/* ── Impresión: una diapositiva por hoja, para entregar el PDF ── */
+@media print {
+  @page { size: A4 landscape; margin: 0; }
+  html, body { overflow: visible; height: auto; background: #fff; }
+  #escenario { position: static; display: block; }
+  #lienzo { width: 100%; height: auto; transform: none !important; background: var(--fondo); }
+  .slide { position: relative; inset: auto; opacity: 1 !important; transform: none !important;
+           page-break-after: always; break-after: page; height: 190mm; width: 100%; }
+  [data-anim] { opacity: 1 !important; transform: none !important; }
+  #progreso, #mandos, #pista, #crono, #general { display: none !important; }
+}
+</style>
+</head>
+<body>
+
+<div id="progreso"></div>
+
+<div id="escenario">
+<div id="lienzo">
+
+  <!-- 1 · Portada ─────────────────────────────────────────────────────────── -->
+  <section class="slide" data-titulo="Portada">
+    <div class="rotulo" data-anim style="--i:0">Projecte Intermodular · 1r ASIR · curso 2026</div>
+    <h1 data-anim style="--i:1">KDS <span class="acento">+</span> TPV<br>Cantina Vesta-9</h1>
+    <p class="grande" data-anim style="--i:2">Un sistema de comandas para hostelería: de la mesa a la cocina,
+      de la cocina a la caja, y el cliente enterándose en su móvil.</p>
+    <div class="rejilla c4" data-anim style="--i:3; margin-top:10px">
+      <div class="cifra acento"><b data-contar="94">0</b><span>endpoints de la API</span></div>
+      <div class="cifra"><b data-contar="24">0</b><span>tablas en MariaDB</span></div>
+      <div class="cifra"><b data-contar="14">0</b><span>pantallas</span></div>
+      <div class="cifra ok"><b data-contar="71">0</b><span>pruebas automáticas</span></div>
+    </div>
+  </section>
+
+  <!-- 2 · El problema ─────────────────────────────────────────────────────── -->
+  <section class="slide" data-titulo="El problema">
+    <div class="rotulo" data-anim style="--i:0">El problema</div>
+    <h2 data-anim style="--i:1">La comanda se pierde entre la sala y la cocina</h2>
+    <div class="rejilla c3" style="margin-top:8px">
+      <div class="tarjeta" data-anim style="--i:2">
+        <span class="ico">📝</span><h3>Papel y voz</h3>
+        <p>Lo que apunta el camarero lo canta a gritos. Si el papel se moja, se pierde o se lee mal,
+           el plato sale tarde o sale otro.</p>
+      </div>
+      <div class="tarjeta" data-anim style="--i:3">
+        <span class="ico">🤷</span><h3>El cliente a ciegas</h3>
+        <p>Nadie le dice si su comanda ha entrado, si está en el fuego o si se ha olvidado.
+           Solo puede levantar la mano.</p>
+      </div>
+      <div class="tarjeta" data-anim style="--i:4">
+        <span class="ico">💸</span><h3>La caja no cuadra</h3>
+        <p>Al cerrar, el dinero contado y lo vendido no coinciden, y no hay manera de saber
+           en qué momento se torció.</p>
+      </div>
+    </div>
+    <p class="nota" data-anim style="--i:5">Y todo esto pasa <b>en hora punta</b>, que es justo cuando el sistema
+      tiene que aguantar: con prisa, con las manos ocupadas y con ruido.</p>
+  </section>
+
+  <!-- 3 · La idea ─────────────────────────────────────────────────────────── -->
+  <section class="slide" data-titulo="La idea">
+    <div class="rotulo" data-anim style="--i:0">La idea</div>
+    <p class="cita" data-anim style="--i:1">Una sola comanda, viva, que va del cliente a la cocina
+      y de la cocina a la caja sin que nadie la copie a mano.</p>
+    <div class="flujo" style="margin-top:22px">
+      <div class="paso" style="--i:0"><span class="ico">📱</span><b>Cliente</b><small>QR de la mesa</small></div>
+      <div class="paso" style="--i:1"><span class="ico">🧾</span><b>Camarero</b><small>TPV, acepta y manda</small></div>
+      <div class="paso eje" style="--i:2"><span class="ico">⚙️</span><b>Servidor</b><small>API + WebSocket</small></div>
+      <div class="paso" style="--i:3"><span class="ico">🍳</span><b>Cocina</b><small>KDS por sección</small></div>
+      <div class="paso" style="--i:4"><span class="ico">💶</span><b>Caja</b><small>ticket, factura, arqueo</small></div>
+    </div>
+    <p class="grande" data-anim style="--i:6; margin-top:18px">El servidor no manda datos por el WebSocket:
+      manda un <b class="acento">«algo ha cambiado»</b>. Cada pantalla vuelve a preguntar lo suyo, así que
+      un aviso perdido nunca deja una pantalla mintiendo.</p>
+  </section>
+
+  <!-- 4 · Arquitectura ────────────────────────────────────────────────────── -->
+  <section class="slide" data-titulo="Arquitectura">
+    <div class="rotulo" data-anim style="--i:0">Cómo está hecho</div>
+    <h2 data-anim style="--i:1">Pequeño, entero y sin dependencias raras</h2>
+    <div class="rejilla c4" style="margin-top:10px">
+      <div class="tarjeta" data-anim style="--i:2"><span class="ico">🐍</span><h3>FastAPI</h3>
+        <p>94 endpoints REST y dos WebSocket: uno con sesión y otro <b>público sin datos</b>,
+           para las pantallas que ve el cliente.</p></div>
+      <div class="tarjeta" data-anim style="--i:3"><span class="ico">🗄️</span><h3>MariaDB</h3>
+        <p>24 tablas. Importes en <b>céntimos enteros</b>: nunca coma flotante, porque
+           <code>0,1 + 0,2 ≠ 0,3</code> y eso en una caja es un descuadre.</p></div>
+      <div class="tarjeta" data-anim style="--i:4"><span class="ico">🧩</span><h3>Frontal sin frameworks</h3>
+        <p>HTML, CSS y JavaScript a pelo. Ni React ni build: se edita un fichero y se recarga.</p></div>
+      <div class="tarjeta" data-anim style="--i:5"><span class="ico">🍓</span><h3>Una Raspberry Pi</h3>
+        <p>Todo el local cabe en un Pi: base de datos, API y pantallas. Sin nube y sin cuota mensual.</p></div>
+    </div>
+    <p class="nota" data-anim style="--i:6"><b>Ni una imagen ni una fuente de fuera.</b> El sistema tiene que arrancar
+      con el router caído, así que no puede depender de que alguien en internet le conteste.</p>
+  </section>
+
+  <!-- 5 · Ciclo de vida ───────────────────────────────────────────────────── -->
+  <section class="slide" data-titulo="Ciclo de una línea">
+    <div class="rotulo" data-anim style="--i:0">El corazón del sistema</div>
+    <h2 data-anim style="--i:1">Lo que viaja es la <span class="acento">línea</span>, no el pedido</h2>
+    <div class="estados" data-anim style="--i:2; margin:14px 0">
+      <span class="pastilla">pendiente</span><span class="flecha">→</span>
+      <span class="pastilla enviada">enviada</span><span class="flecha">→</span>
+      <span class="pastilla preparando">preparando</span><span class="flecha">→</span>
+      <span class="pastilla lista">lista</span><span class="flecha">→</span>
+      <span class="pastilla servida">servida</span>
+    </div>
+    <p class="grande" data-anim style="--i:3">En una mesa de cuatro, las bebidas pueden estar servidas mientras
+      la plancha sigue trabajando. Por eso cada <b>sección de cocina ve solo lo suyo</b> y el pase lo ve todo.</p>
+    <div class="rejilla c3" style="margin-top:10px">
+      <div class="tarjeta" data-anim style="--i:4"><h3>Precio congelado</h3>
+        <p>Cada línea guarda el precio que tenía al venderse: cambiar la carta no reescribe el pasado.</p></div>
+      <div class="tarjeta" data-anim style="--i:5"><h3>Bajas lógicas</h3>
+        <p>Ni empleados ni productos se borran. Un pedido de hace un mes sigue diciendo quién lo atendió.</p></div>
+      <div class="tarjeta" data-anim style="--i:6"><h3>Se puede deshacer</h3>
+        <p>En cocina se toca con las manos ocupadas: todo avance tiene su vuelta atrás.</p></div>
+    </div>
+  </section>
+
+  <!-- 6 · TPV ─────────────────────────────────────────────────────────────── -->
+  <section class="slide" data-titulo="TPV de sala">
+    <div class="rotulo" data-anim style="--i:0">Función 1 · Sala</div>
+    <h2 data-anim style="--i:1">El TPV dice qué le pasa a cada mesa</h2>
+    <ul class="lista" style="margin-top:8px">
+      <li data-anim style="--i:2"><span class="marca">1</span><div>El color no dice «ocupada», dice <b>qué está esperando</b>
+        <small>sin pedir · tomando nota · en cocina · listo en el pase · esperando la cuenta</small></div></li>
+      <li data-anim style="--i:3"><span class="marca">2</span><div>Cuenta dividida y pago mixto
+        <small>en partes iguales, por líneas o a medias entre efectivo, tarjeta y Bizum, con su cambio</small></div></li>
+      <li data-anim style="--i:4"><span class="marca">3</span><div>Comensales por mesa
+        <small>el único dato que nadie apuntaba, y sin él no se puede medir el gasto por persona</small></div></li>
+      <li data-anim style="--i:5"><span class="marca">4</span><div>En el móvil, el ticket es una hoja que sube desde abajo
+        <small>la comanda se toma de pie, junto a la mesa, con una sola mano</small></div></li>
+    </ul>
+  </section>
+
+  <!-- 7 · KDS ─────────────────────────────────────────────────────────────── -->
+  <section class="slide" data-titulo="KDS de cocina">
+    <div class="rotulo" data-anim style="--i:0">Función 2 · Cocina</div>
+    <h2 data-anim style="--i:1">La pantalla de cocina, pensada para no mirarla</h2>
+    <div class="rejilla c2" style="grid-template-columns: 1.05fr .95fr; align-items:start; margin-top:6px">
+      <div class="maqueta" data-anim style="--i:2">
+        <div class="barrita"><b style="color:var(--acento)">KDS · Pase</b> <span>14 comandas</span> <span style="margin-left:auto">🔔</span></div>
+        <div class="comanditas">
+          <div class="comandita" style="--i:0"><header><span>Mesa C1</span><span>1:20</span></header>
+            <ul><li><span>1× Doble Impacto</span></li><li><span>1× Rubia</span></li></ul>
+            <div class="bump">Empezar ▶</div></div>
+          <div class="comandita tarde" style="--i:1"><header><span>Mesa M4</span><span>9:41</span></header>
+            <ul><li><span>2× Roca Madre</span></li><li class="hecha"><span>1× Batido</span></li></ul>
+            <div class="bump">Listo ✓</div></div>
+          <div class="comandita critica" style="--i:2"><header><span>🛍 Joan</span><span>16:02</span></header>
+            <ul><li class="hecha"><span>1× Regolito</span></li><li class="hecha"><span>1× Anillos</span></li></ul>
+            <div class="bump">Servido ✓</div></div>
+        </div>
+      </div>
+      <ul class="lista">
+        <li data-anim style="--i:3"><span class="marca">⏱</span><div>Se pone <b class="rojo">ámbar a los 8 min</b> y rojo a los 15
+          <small>el color del cabecero es el aviso; no hay que leer nada</small></div></li>
+        <li data-anim style="--i:4"><span class="marca">🔁</span><div>Repintado incremental
+          <small>solo cambia la tarjeta que cambia: las demás ni parpadean bajo el dedo</small></div></li>
+        <li data-anim style="--i:5"><span class="marca">60</span><div>Tope de comandas en pantalla
+          <small>con la cocina atascada se mandan las 60 más antiguas y se dice cuántas esperan</small></div></li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- 8 · El cliente ──────────────────────────────────────────────────────── -->
+  <section class="slide" data-titulo="El cliente pide">
+    <div class="rotulo" data-anim style="--i:0">Función 3 · El cliente</div>
+    <h2 data-anim style="--i:1">Pide con el QR de su mesa y ve su comanda avanzar</h2>
+    <div class="flujo" style="margin-top:18px">
+      <div class="paso" style="--i:0"><span class="ico">1</span><b>Enviada</b><small>desde su móvil</small></div>
+      <div class="paso" style="--i:1"><span class="ico">2</span><b>Confirmada</b><small>un camarero la acepta</small></div>
+      <div class="paso" style="--i:2"><span class="ico">3</span><b>En cocina</b><small>2 en cola</small></div>
+      <div class="paso" style="--i:3"><span class="ico">4</span><b>Lista</b><small>en el pase</small></div>
+      <div class="paso eje" style="--i:4"><span class="ico">5</span><b>Servida</b><small>que aproveche</small></div>
+    </div>
+    <p class="grande" data-anim style="--i:6; margin-top:16px">Lo que pide el cliente <b class="acento">NO llega a cocina</b>:
+      entra en una bandeja y un camarero la acepta. El QR de la mesa no puede ser una puerta abierta al fuego.</p>
+    <p class="nota" data-anim style="--i:7">La tira avanza sola, sin recargar: el servidor avisa por el canal
+      <b>público</b>, que no lleva ni nombres ni importes; solo dice «vuelve a mirar».</p>
+  </section>
+
+  <!-- 9 · Sin red ─────────────────────────────────────────────────────────── -->
+  <section class="slide" data-titulo="Modo sin red">
+    <div class="rotulo" data-anim style="--i:0">Función 4 · Cuando se cae el wifi</div>
+    <p class="cita" data-anim style="--i:1">Sin red se toma nota. Con red se cobra.</p>
+    <div class="rejilla c2" style="margin-top:14px">
+      <div class="tarjeta" data-anim style="--i:2"><span class="ico">✍️</span><h3>Se puede seguir trabajando</h3>
+        <p>Abrir mesa, añadir y quitar líneas y mandar la comanda a cocina. Todo queda en la tableta
+          (IndexedDB) y se reenvía solo al volver la red. La pantalla se abre incluso recargando,
+          porque un <i>service worker</i> guarda copia.</p></div>
+      <div class="tarjeta destacada" data-anim style="--i:3"><span class="ico">🧾</span><h3>Lo que NO se puede</h3>
+        <p>Cobrar, facturar ni arquear. La numeración de tickets y facturas es correlativa y la
+          asigna el servidor: dos tabletas desconectadas emitirían <b>el mismo número</b>.
+          No es una limitación técnica, es legal.</p></div>
+    </div>
+    <p class="nota" data-anim style="--i:4"><b>El peligro no era perder la comanda, era duplicarla.</b> Si la petición
+      llegó y lo que se perdió fue la respuesta, el reenvío crearía un pedido gemelo: dos platos y dos cobros.
+      Se resuelve con una <b>clave de idempotencia</b> por acción, el mismo mecanismo que usan las pasarelas de pago.</p>
+  </section>
+
+  <!-- 10 · El dinero ──────────────────────────────────────────────────────── -->
+  <section class="slide" data-titulo="El dinero">
+    <div class="rotulo" data-anim style="--i:0">Función 5 · La caja</div>
+    <h2 data-anim style="--i:1">Del ticket al cierre Z</h2>
+    <div class="rejilla c3" style="margin-top:8px">
+      <div class="tarjeta" data-anim style="--i:2"><span class="ico">🧮</span><h3>Arqueo de caja</h3>
+        <p>El día se abre declarando el fondo y se cierra contando el cajón, billete a billete.
+          <b>Descuadre = contado − esperado.</b></p></div>
+      <div class="tarjeta" data-anim style="--i:3"><span class="ico">🔒</span><h3>Cierre Z correlativo</h3>
+        <p><code>Z2026/00001</code>. No se repite, no se deshace y no cierra con pedidos sin cobrar
+          salvo que el encargado lo fuerce a conciencia.</p></div>
+      <div class="tarjeta" data-anim style="--i:4"><span class="ico">📄</span><h3>Sin impresora</h3>
+        <p>Ticket y factura se dibujan en pantalla a 40 columnas y se descargan como <code>.txt</code>.
+          El aula no tiene impresora térmica; el sistema no la necesita.</p></div>
+    </div>
+    <p class="grande" data-anim style="--i:5; margin-top:12px">Entradas y salidas de efectivo (pagar al del pan, retirar al banco)
+      también se apuntan: <b>sin ellas el descuadre miente</b>, y era lo que convertía el arqueo en un trámite.</p>
+  </section>
+
+  <!-- 11 · Alérgenos ──────────────────────────────────────────────────────── -->
+  <section class="slide" data-titulo="Alérgenos">
+    <div class="rotulo" data-anim style="--i:0">Función 6 · Lo que obliga la ley</div>
+    <h2 data-anim style="--i:1">Los 14 alérgenos, del catálogo al pase</h2>
+    <div class="rejilla c2" style="margin-top:8px">
+      <ul class="lista">
+        <li data-anim style="--i:2"><span class="marca">14</span><div>Catálogo completo (Reglamento UE 1169/2011)
+          <small>cada uno con dónde aparece y <b>qué hacer si alguien reacciona</b></small></div></li>
+        <li data-anim style="--i:3"><span class="marca">↔</span><div>Viajan con la línea
+          <small>de la carta al botón del TPV, de ahí al ticket y a la tarjeta de cocina</small></div></li>
+        <li data-anim style="--i:4"><span class="marca">✓</span><div>No se tachan aunque el plato esté listo
+          <small>es lo que hay que poder leer si alguien pregunta al recogerlo en el pase</small></div></li>
+      </ul>
+      <div class="tarjeta destacada" data-anim style="--i:5">
+        <span class="ico">⚠️</span><h3>La pantalla de protocolo no pide permisos</h3>
+        <p>Es la única que ve todo el mundo, tenga el puesto que tenga. Si alguien está teniendo una
+          reacción, no es momento de que el sistema conteste «no tienes acceso a esta pantalla».</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 12 · Plano y puestos ────────────────────────────────────────────────── -->
+  <section class="slide" data-titulo="Plano y puestos">
+    <div class="rotulo" data-anim style="--i:0">Función 7 · Quién está dónde</div>
+    <h2 data-anim style="--i:1">El puesto del plano decide lo que se puede hacer</h2>
+    <p class="grande" data-anim style="--i:2">El encargado arrastra la ficha de cada persona sobre el plano del local.
+      Quien está en la placa térmica trabaja de cocina <b>aunque su ficha diga camarero</b>.</p>
+    <div class="rejilla c2" style="margin-top:10px">
+      <div class="tarjeta" data-anim style="--i:3"><h3>Dos varas de medir</h3>
+        <p>Lo <b>operativo</b> (avanzar comandas, abrir mesas) mira el puesto. La <b>gestión</b> (carta, usuarios,
+          informes, arqueo) mira el escalafón, para que el encargado no se deje fuera moviendo su propia ficha.</p></div>
+      <div class="tarjeta" data-anim style="--i:4"><h3>Lo decide el servidor</h3>
+        <p>El plano en 2D también: meter una mesa dentro de un muro da error <b>del servidor</b>, no del navegador.
+          Lo que no comprueba el servidor, no está comprobado.</p></div>
+    </div>
+  </section>
+
+  <!-- 13 · Seguridad ──────────────────────────────────────────────────────── -->
+  <section class="slide" data-titulo="Seguridad">
+    <div class="rotulo" data-anim style="--i:0">Seguridad</div>
+    <h2 data-anim style="--i:1">El PIN solo viaja una vez</h2>
+    <ul class="lista" style="margin-top:6px">
+      <li data-anim style="--i:2"><span class="marca">🔑</span><div>Un único sitio por donde pasa el PIN: <code>POST /api/login</code>
+        <small>devuelve un token de 43 caracteres con caducidad de 12 h; el resto de peticiones van con él</small></div></li>
+      <li data-anim style="--i:3"><span class="marca">🎖</span><div>Escalafones, no roles sueltos
+        <small>a menor número, más mando; nadie puede ascender ni dar de baja a alguien de su escalafón o superior</small></div></li>
+      <li data-anim style="--i:4"><span class="marca">🔐</span><div>Contraseñas con pbkdf2-sha256 y sal, 200.000 vueltas
+        <small>en la base de datos no hay ni una contraseña en claro</small></div></li>
+      <li data-anim style="--i:5"><span class="marca">🌐</span><div>HTTPS con certificado de Let's Encrypt y HSTS
+        <small>el puerto 80 redirige; sin certificado de confianza el navegador ni registra el service worker</small></div></li>
+    </ul>
+  </section>
+
+  <!-- 14 · Calidad ────────────────────────────────────────────────────────── -->
+  <section class="slide" data-titulo="Calidad medida">
+    <div class="rotulo" data-anim style="--i:0">Calidad</div>
+    <h2 data-anim style="--i:1">Medido, no opinado</h2>
+    <div class="rejilla c2" style="grid-template-columns: 1fr 1fr; margin-top:6px">
+      <div>
+        <table class="datos" data-anim style="--i:2">
+          <tr><th>La interfaz</th><th class="num">Antes</th><th class="num">Después</th></tr>
+          <tr><td>Pantallas medidas</td><td class="num">48</td><td class="num">72</td></tr>
+          <tr><td>Desbordes</td><td class="num">4</td><td class="num verde">0</td></tr>
+          <tr><td>Contraste bajo AA</td><td class="num">72</td><td class="num verde">0</td></tr>
+          <tr><td>Botones &lt; 40 px</td><td class="num">57</td><td class="num verde">0</td></tr>
+          <tr><td>Errores de consola</td><td class="num">8</td><td class="num verde">0</td></tr>
+        </table>
+      </div>
+      <ul class="lista">
+        <li data-anim style="--i:3"><span class="marca">71</span><div>Pruebas automáticas con <code>pytest</code>
+          <small>sobre una base efímera que se crea y se destruye sola; nunca contra la real</small></div></li>
+        <li data-anim style="--i:4"><span class="marca">4</span><div>Recorridos de navegador de verdad
+          <small>roles, interfaz, el cliente de punta a punta y el corte de red</small></div></li>
+        <li data-anim style="--i:5"><span class="marca">⛔</span><div>Si una prueba falla, no se despliega
+          <small>el servicio se queda con la versión que se sabe que funcionaba</small></div></li>
+      </ul>
+    </div>
+    <p class="nota" data-anim style="--i:6">La columna «antes» mide menos pantallas porque el propio medidor tenía un fallo:
+      no esperaba a las tarjetas de cocina, que llegan después. <b>El QA también se audita.</b></p>
+  </section>
+
+  <!-- 15 · Despliegue ─────────────────────────────────────────────────────── -->
+  <section class="slide" data-titulo="Despliegue">
+    <div class="rotulo" data-anim style="--i:0">Explotación</div>
+    <h2 data-anim style="--i:1">No se despliega a mano: se commitea</h2>
+    <div class="flujo" style="margin-top:16px">
+      <div class="paso" style="--i:0"><span class="ico">⬆️</span><b>git push</b><small>desde donde sea</small></div>
+      <div class="paso" style="--i:1"><span class="ico">⏱</span><b>5 min</b><small>timer de systemd</small></div>
+      <div class="paso eje" style="--i:2"><span class="ico">🧪</span><b>Pruebas</b><small>si fallan, vuelve atrás</small></div>
+      <div class="paso" style="--i:3"><span class="ico">🗃️</span><b>Esquema</b><small>solo lo que falte</small></div>
+      <div class="paso" style="--i:4"><span class="ico">🚀</span><b>En marcha</b><small>pantallas y API</small></div>
+    </div>
+    <div class="rejilla c3" style="margin-top:18px">
+      <div class="tarjeta" data-anim style="--i:6"><h3>No pisa trabajo</h3><p>Si hay cambios sin commitear en el
+        servidor, se para y lo dice.</p></div>
+      <div class="tarjeta" data-anim style="--i:7"><h3>Nunca borra el esquema</h3><p>El guion que empieza con
+        <code>DROP TABLE</code> no se ejecuta jamás de forma automática.</p></div>
+      <div class="tarjeta" data-anim style="--i:8"><h3>Copias probadas</h3><p>Completa semanal e incremental cada hora,
+        y una restauración de prueba que se compara sola.</p></div>
+    </div>
+  </section>
+
+  <!-- 16 · La demo ────────────────────────────────────────────────────────── -->
+  <section class="slide" data-titulo="La demostración">
+    <div class="rotulo" data-anim style="--i:0">La demostración</div>
+    <h2 data-anim style="--i:1">El local se mueve solo, y sin atascarse</h2>
+    <div class="rejilla c2" style="grid-template-columns: 1.1fr .9fr; align-items:start; margin-top:4px">
+      <div class="grafica" data-anim style="--i:2">
+        <svg viewBox="0 0 520 190" preserveAspectRatio="none" aria-label="Cola de cocina durante ocho minutos">
+          <line x1="0" y1="150" x2="520" y2="150" stroke="#313a49" stroke-width="1"/>
+          <line x1="0" y1="90" x2="520" y2="90" stroke="#313a49" stroke-width="1" stroke-dasharray="4 6"/>
+          <text x="4" y="84" fill="#7f8a9b" font-size="11">10 comandas</text>
+          <polyline class="linea-datos" fill="none" stroke="#f2a33a" stroke-width="3" stroke-linejoin="round"
+            points="0,150 17,144 34,138 51,132 68,132 85,108 102,108 119,84 136,114 153,114 170,96 187,108 204,102 221,90 238,108 255,96 272,108 289,108 306,108 323,108 340,102 357,102 374,108 391,120 408,108 425,114 442,108 459,102 476,102 493,102 510,102"/>
+        </svg>
+        <div class="leyenda"><i>Cola de cocina · 8 minutos medidos · mínimo 0, máximo 11, tendencia plana</i></div>
+      </div>
+      <ul class="lista">
+        <li data-anim style="--i:3"><span class="marca">🤖</span><div>Un bot por área
+          <small>uno por puesto de sala y uno por sección de cocina, con la persona que el encargado puso en el plano</small></div></li>
+        <li data-anim style="--i:4"><span class="marca">⏲</span><div>Cada uno con su cronómetro
+          <small>alterna fuerte y flojo cada 3 minutos, desfasado de los demás: siempre hay media plantilla apretando</small></div></li>
+        <li data-anim style="--i:5"><span class="marca">🚦</span><div>Válvulas de una cocina real
+          <small>el cocinero apurado saca tres de una tacada; con 22 comandas el camarero deja de sentar gente</small></div></li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- 17 · Cierre ─────────────────────────────────────────────────────────── -->
+  <section class="slide" data-titulo="Cierre">
+    <div class="rotulo" data-anim style="--i:0">Y ahora, en vivo</div>
+    <h1 data-anim style="--i:1; font-size:60px">Vamos a verlo<br>funcionando</h1>
+    <div class="rejilla c4" data-anim style="--i:2; margin-top:6px">
+      <div class="cifra"><b data-contar="8928">0</b><span>líneas de código</span></div>
+      <div class="cifra"><b data-contar="17">0</b><span>ampliaciones de esquema</span></div>
+      <div class="cifra acento"><b data-contar="10">0</b><span>mejoras propuestas… y hechas</span></div>
+      <div class="cifra ok"><b data-contar="0">0</b><span>fallos en la última auditoría</span></div>
+    </div>
+    <p class="grande" data-anim style="--i:3; margin-top:10px">El sistema está sirviendo ahora mismo desde una Raspberry Pi.
+      Se entra con el PIN de cada puesto y se ve lo que ve esa persona: ni más ni menos.</p>
+    <p class="pie" data-anim style="--i:4">Projecte Intermodular 1 · Administració de Sistemes Informàtics en Xarxa · 2026</p>
+  </section>
+
+</div>
+</div>
+
+<div id="crono">00:00</div>
+<div id="pista">→ avanzar · O vista general · F pantalla completa</div>
+<div id="mandos">
+  <span id="contador">1 / 17</span>
+  <button id="b-atras" title="Anterior (←)">‹</button>
+  <button id="b-alante" title="Siguiente (→)">›</button>
+  <button id="b-general" title="Vista general (O)">▦</button>
+  <button id="b-pantalla" title="Pantalla completa (F)">⛶</button>
+</div>
+
+<div id="general" hidden>
+  <h2>Vista general · pulsa una diapositiva para ir a ella</h2>
+  <div class="rejilla-mini" id="rejilla-mini"></div>
+</div>
+
+<script>
+// ── Escalado: la diapositiva es de 1280×720 y se escala para que quepa entera, como en
+//    PowerPoint. Así el texto nunca se recoloca de una pantalla a otra (ni en el proyector).
+const LIENZO = { w: 1280, h: 720 };
+const lienzo = document.getElementById('lienzo');
+function encajar() {
+  const escala = Math.min(innerWidth / LIENZO.w, innerHeight / LIENZO.h);
+  lienzo.style.transform = `scale(${escala})`;
+}
+addEventListener('resize', encajar);
+encajar();
+
+// ── Navegación ──
+const slides = [...document.querySelectorAll('.slide')];
+const contador = document.getElementById('contador');
+const progreso = document.getElementById('progreso');
+let actual = 0;
+
+function mostrar(n, desdeAtras = false) {
+  n = Math.max(0, Math.min(slides.length - 1, n));
+  slides.forEach((s, i) => {
+    s.classList.toggle('activa', i === n);
+    s.classList.toggle('atras', i < n);
+  });
+  actual = n;
+  contador.textContent = `${n + 1} / ${slides.length}`;
+  progreso.style.width = ((n + 1) / slides.length * 100) + '%';
+  location.hash = n + 1;
+  contadores(slides[n]);
+  document.querySelectorAll('#rejilla-mini .mini').forEach((m, i) => m.classList.toggle('actual', i === n));
+}
+const alante = () => mostrar(actual + 1);
+const atras = () => mostrar(actual - 1, true);
+
+// ── Contadores que suben: el número «aterriza» en vez de aparecer ──
+function contadores(slide) {
+  slide.querySelectorAll('[data-contar]').forEach(el => {
+    const fin = +el.dataset.contar;
+    if (fin === 0) { el.textContent = '0'; return; }
+    const arranque = performance.now(), duracion = 900;
+    const paso = ahora => {
+      const t = Math.min(1, (ahora - arranque) / duracion);
+      const suave = 1 - Math.pow(1 - t, 3);            // frena al final, no corta de golpe
+      el.textContent = Math.round(fin * suave).toLocaleString('es-ES');
+      if (t < 1) requestAnimationFrame(paso);
+    };
+    requestAnimationFrame(paso);
+  });
+}
+
+addEventListener('keydown', e => {
+  const vistaAbierta = general.classList.contains('visible');
+  if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') { e.preventDefault(); alante(); }
+  else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); atras(); }
+  else if (e.key === 'Home') mostrar(0);
+  else if (e.key === 'End') mostrar(slides.length - 1);
+  else if (e.key === 'o' || e.key === 'O') alternarGeneral();
+  else if (e.key === 'Escape' && vistaAbierta) alternarGeneral();
+  else if (e.key === 'f' || e.key === 'F') pantallaCompleta();
+  else if (e.key === 'p' || e.key === 'P') alternarCrono();
+});
+
+// Clic: la mitad derecha avanza, la izquierda retrocede (como en el móvil)
+lienzo.addEventListener('click', e => {
+  if (e.target.closest('a, button')) return;
+  (e.clientX > innerWidth / 2 ? alante : atras)();
+});
+
+// Dedo: deslizar para pasar
+let x0 = null;
+addEventListener('touchstart', e => x0 = e.touches[0].clientX, { passive: true });
+addEventListener('touchend', e => {
+  if (x0 === null) return;
+  const dx = e.changedTouches[0].clientX - x0;
+  if (Math.abs(dx) > 50) (dx < 0 ? alante : atras)();
+  x0 = null;
+}, { passive: true });
+
+document.getElementById('b-alante').onclick = e => { e.stopPropagation(); alante(); };
+document.getElementById('b-atras').onclick = e => { e.stopPropagation(); atras(); };
+
+// ── Vista general ──
+const general = document.getElementById('general');
+document.getElementById('rejilla-mini').innerHTML = slides.map((s, i) =>
+  `<div class="mini" data-ir="${i}"><b>${s.dataset.titulo}</b><span>Diapositiva ${i + 1}</span></div>`).join('');
+document.querySelectorAll('#rejilla-mini .mini').forEach(m =>
+  m.onclick = () => { mostrar(+m.dataset.ir); alternarGeneral(); });
+function alternarGeneral() {
+  general.classList.toggle('visible');
+  general.hidden = !general.classList.contains('visible');
+}
+document.getElementById('b-general').onclick = e => { e.stopPropagation(); alternarGeneral(); };
+
+// ── Pantalla completa y cronómetro de quien presenta ──
+function pantallaCompleta() {
+  if (document.fullscreenElement) document.exitFullscreen();
+  else document.documentElement.requestFullscreen?.();
+}
+document.getElementById('b-pantalla').onclick = e => { e.stopPropagation(); pantallaCompleta(); };
+
+const crono = document.getElementById('crono');
+let t0 = null;
+function alternarCrono() {
+  crono.classList.toggle('visible');
+  t0 = crono.classList.contains('visible') ? Date.now() : null;
+}
+setInterval(() => {
+  if (!t0) return;
+  const s = Math.floor((Date.now() - t0) / 1000);
+  crono.textContent = `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
+}, 250);
+
+// La pista de teclas se retira sola: ayuda al empezar y estorba durante la presentación
+setTimeout(() => document.getElementById('pista').style.opacity = 0, 6000);
+
+// El número de la dirección (…#7) manda, tanto al abrir como si alguien lo cambia a mano o
+// usa el botón «atrás» del navegador: sin esto, enlazar una diapositiva concreta solo
+// funcionaba recargando la página entera.
+const desdeDireccion = () => Math.max(0, (parseInt(location.hash.slice(1), 10) || 1) - 1);
+addEventListener('hashchange', () => { const n = desdeDireccion(); if (n !== actual) mostrar(n); });
+mostrar(desdeDireccion());
+</script>
+</body>
+</html>

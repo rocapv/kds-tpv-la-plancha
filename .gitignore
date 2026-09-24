@@ -8,3 +8,4 @@ docs/_corpus/graphify-out/
 deploy/_qa/gui/*/*.png
 deploy/_qa/*.png
 deploy/_qa/gui/*/informe.json
+docs/presentacion/kds_presentacion.pdf
