@@ -1,4 +1,4 @@
-# QA de la interfaz · tanda «despues» · 2026-09-28T01:23:37 · http://192.168.1.100:8093
+# QA de la interfaz · tanda «claro» · 2026-09-28T01:27:05 · http://192.168.1.100:8093
 
 Pantallas medidas: 72 · desbordes: 0 · textos con contraste bajo: 0 · botones pequeños en móvil: 0 · cortados: 0 · errores de consola: 0
 
