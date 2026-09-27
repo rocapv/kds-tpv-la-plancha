@@ -508,8 +508,11 @@ def kds(estacion: str | None = None, pantalla: str | None = None, limite: int = 
     if cabeceras:
         ids = [c["pedido_id"] for c in cabeceras]
         marcas = ",".join(["%s"] * len(ids))
+        # Sin `pr.alergenos` a propósito: la cocina no pinta lo que LLEVA el plato (eso es para
+        # el cliente), sino la NOTA, que es lo que hay que hacer distinto. Lo que no se usa, no
+        # se manda: menos datos por el cable y menos que repintar en la tableta.
         filas = q(f"""SELECT l.id, l.pedido_id, l.cantidad, l.notas, l.estacion, l.estado,
-                             l.enviada_en, l.lista_en, pr.nombre AS producto, pr.alergenos,
+                             l.enviada_en, l.lista_en, pr.nombre AS producto,
                              p.tipo, p.cliente, m.nombre AS mesa, e.nombre AS camarero
                       FROM lineas_pedido l
                       JOIN pedidos p   ON p.id=l.pedido_id

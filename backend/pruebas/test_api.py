@@ -148,6 +148,33 @@ def test_la_comanda_llega_a_su_estacion(cliente, camarero, cocina, pedido_enviad
     assert any(c["pedido_id"] == pedido_enviado for c in barra["comandas"])
 
 
+def test_la_cocina_no_recibe_los_alergenos_del_producto(cliente, camarero, cocina):
+    """La cocina ve la NOTA, no la lista de lo que lleva el plato (decisión del 28/09/2026).
+
+    Los alérgenos de la carta son información para el cliente: al cocinero le repetían sus
+    propios ingredientes en cada tarjeta. Lo que la cocina sí necesita —«sin gluten»— viaja en
+    la nota, y esa tiene que seguir llegando. Se comprueban las dos cosas a la vez porque el
+    riesgo de este cambio es llevarse la nota por delante.
+    """
+    pid = cliente.post("/api/pedidos", headers=camarero,
+                       json={"tipo": "llevar", "cliente": "Alergias"}).json()["id"]
+    cliente.post(f"/api/pedidos/{pid}/lineas", headers=camarero,
+                 json={"producto_id": 2, "cantidad": 1, "notas": "Sin gluten"})
+    cliente.post(f"/api/pedidos/{pid}/enviar", headers=camarero)
+
+    comanda = next(c for c in cliente.get("/api/kds", headers=cocina).json()["comandas"]
+                   if c["pedido_id"] == pid)
+    linea = comanda["lineas"][0]
+    assert "alergenos" not in linea, "la cocina no tiene por qué recibir los alérgenos del producto"
+    assert linea["notas"] == "Sin gluten", "la nota SÍ tiene que llegar a la cocina"
+
+    # Y donde sí deben seguir estando: el pedido completo, que es de lo que salen el TPV y el ticket
+    ped = cliente.get(f"/api/pedidos/{pid}", headers=camarero).json()
+    assert "alergenos" in ped["lineas"][0], "el TPV y el ticket sí llevan alérgenos"
+
+    cliente.post(f"/api/pedidos/{pid}/anular", headers=camarero)
+
+
 def test_avance_de_estados(cliente, cocina, pedido_enviado):
     estados = []
     for _ in range(3):

@@ -99,15 +99,22 @@ function firmaDe(c) {
   return c.lineas.map(firmaLinea).join('|') + '#' + c.mesa + c.cliente;
 }
 
+// En la cocina NO se pintan los alérgenos del producto (decisión de RocaPV, 28/09/2026). Son la
+// lista de lo que lleva el plato según la carta, y eso es información para el CLIENTE: al
+// cocinero le repetía sus propios ingredientes en cada tarjeta y le robaba sitio a lo que sí
+// tiene que leer. Lo que la cocina necesita —«sin gluten», «alergia al sésamo»— no viaja en ese
+// campo, viaja en la NOTA, y la nota se sigue viendo en rojo. Los alérgenos siguen estando en la
+// carta del cliente, en el TPV, en el ticket y en la pantalla de protocolo.
+//
 // Una línea se repinta solo si cambia algo suyo. Antes la firma miraba nada más el estado,
 // así que cambiar la cantidad o una nota no se veía hasta el siguiente cambio de estado.
 function firmaLinea(l) {
-  return [l.id, l.estado, l.cantidad, l.producto, l.alergenos || '', l.notas || '', l.estacion].join('');
+  return [l.id, l.estado, l.cantidad, l.producto, l.notas || '', l.estacion].join('');
 }
 
 function htmlLinea(l) {
   return `<b>${l.cantidad}×</b>
-      <span>${esc(l.producto)}${l.alergenos ? `<span class="alerg">⚠ ${esc(l.alergenos)}</span>` : ''}${l.notas ? `<span class="nota">⚠ ${esc(l.notas)}</span>` : ''}</span>
+      <span>${esc(l.producto)}${l.notas ? `<span class="nota">⚠ ${esc(l.notas)}</span>` : ''}</span>
       <span class="est">${estacion.includes(',') || !estacion ? l.estacion + ' · ' : ''}${l.estado}</span>`;
 }
 

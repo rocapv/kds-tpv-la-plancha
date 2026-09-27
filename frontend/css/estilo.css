@@ -329,13 +329,9 @@ dialog input:not([type="checkbox"]):not([type="number"]):not([type="color"]) { f
 .comanda li:active { background: #ffffff14; }
 .comanda li b { font-size: 1.2rem; min-width: 1.8em; font-variant-numeric: tabular-nums; }
 .comanda li .nota { display: block; color: var(--aviso-tinta); font-size: .9rem; }
-.comanda li .alerg { display: block; }
 .comanda li .est { margin-left: auto; font-size: .7rem; text-transform: uppercase; letter-spacing: .04em; color: var(--tenue); white-space: nowrap; flex: 0 0 auto; }
 .comanda li.preparando { color: var(--aviso-tinta); }
 .comanda li.lista { color: var(--ok-tinta); text-decoration: line-through; }
-/* El alérgeno NO se tacha aunque el plato esté listo: sigue siendo la información que hay
-   que poder leer si alguien pregunta al recogerlo en el pase. */
-.comanda li.lista .alerg { text-decoration: none; }
 .comanda header .deshacer, .comanda header .borrar { min-height: 44px; min-width: 44px; padding: 0 .4rem; background: #00000033; border: 0; color: inherit; font-size: 1.1rem; }
 .comanda header .deshacer:hover, .comanda header .borrar:hover { background: #00000055; }
 .comanda header .borrar { margin-left: auto; }
