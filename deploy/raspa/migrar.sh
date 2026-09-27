@@ -32,19 +32,17 @@ for guion in "$DIR"/backend/sql/*.sql; do
   puesta=$("${MARIADB[@]}" -N -B -e "SELECT COUNT(*) FROM migraciones WHERE fichero='$nombre'")
   [ "$puesta" = "1" ] && continue
 
-  if [ "$PRIMERA" = "0" ] && [ "$YA_VIVA" = "1" ]; then
-    # Base que ya venía funcionando: se apunta sin ejecutar.
-    "${MARIADB[@]}" -e "INSERT IGNORE INTO migraciones (fichero) VALUES ('$nombre')"
-    continue
-  fi
+  # Antes, la primera vez sobre una base ya en marcha se apuntaba TODO como aplicado sin
+  # ejecutarlo. Parecía prudente y salió caro: `14_imagenes.sql` estaba en el repo pero sus
+  # tablas nunca se habían creado, así que quedó marcado como aplicado y el día que algo las
+  # necesitó, no existían. Ahora se ejecutan todas: son idempotentes a propósito (CREATE TABLE
+  # IF NOT EXISTS, ADD COLUMN IF NOT EXISTS, INSERT IGNORE) y las dos únicas que no lo son
+  # —01_schema, que empieza con DROP, y 02_seed— están excluidas más arriba.
   echo "· aplicando $nombre"
   "${MARIADB[@]}" < "$guion"
   "${MARIADB[@]}" -e "INSERT IGNORE INTO migraciones (fichero) VALUES ('$nombre')"
   nuevas=$((nuevas + 1))
 done
 
-if [ "$PRIMERA" = "0" ] && [ "$YA_VIVA" = "1" ]; then
-  echo "primera vez sobre una base ya en marcha: apuntadas como aplicadas, sin ejecutar nada"
-else
-  echo "ampliaciones aplicadas: $nuevas"
-fi
+echo "ampliaciones aplicadas: $nuevas"
+[ "$YA_VIVA" = "1" ] || echo "(base nueva)"

@@ -109,7 +109,7 @@ def guis_de(rol_operativo: str | None, rol_real: str, gui: str | None) -> list[s
     if rol_real == "encargado":
         permitidas |= {"usuarios.html", "carta.html", "ajustes.html", "informe.html",
                        "arqueo.html", "facturas.html", "tpv.html", "kds.html", "recogida.html",
-                       "plano.html", "alergenos.html", "sala.html"}
+                       "plano.html", "alergenos.html", "sala.html", "almacen.html"}
     if gui:
         permitidas.add(gui.split("?")[0])
     return sorted(permitidas)

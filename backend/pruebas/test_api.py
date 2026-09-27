@@ -138,6 +138,23 @@ def test_no_se_factura_lo_no_cobrado(cliente, camarero, pedido_enviado):
                         headers=camarero, json={}).status_code == 409
 
 
+def test_el_encargado_puede_abrir_todas_sus_pantallas(cliente, encargado):
+    """Cada pantalla nueva hay que darla de alta en `guis_de`, o la aplicación echa al menú.
+
+    Ha pasado dos veces (plano.html, alergenos.html y almacen.html): la pantalla funciona, el
+    endpoint contesta, pero la persona entra y se ve rebotada sin saber por qué. Esta prueba
+    compara la lista con los ficheros que hay de verdad en `frontend/`.
+    """
+    from pathlib import Path
+    yo = cliente.get("/api/yo", headers=encargado).json()
+    front = Path(__file__).resolve().parents[2] / "frontend"
+    # Las del cliente y las que se abren sin sesión no cuentan: no son pantallas de trabajo.
+    fuera = {"cliente.html", "recogida.html"}
+    pantallas = {f.name for f in front.glob("*.html")} - fuera
+    faltan = pantallas - set(yo["guis"])
+    assert not faltan, f"pantallas que el encargado no puede abrir: {sorted(faltan)}"
+
+
 # ─────────────── Cocina ───────────────
 def test_la_comanda_llega_a_su_estacion(cliente, camarero, cocina, pedido_enviado):
     plancha = cliente.get("/api/kds?estacion=plancha", headers=cocina).json()

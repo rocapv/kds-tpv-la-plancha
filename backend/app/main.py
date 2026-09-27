@@ -18,6 +18,7 @@ from pydantic import BaseModel, Field
 from .red import es_de_la_lan
 from .auth import (abrir_sesion, cerrar_sesion, cifrar_clave, exige, exige_nivel,
                    usuario, usuario_de_token)
+from . import almacen
 from .db import conn, q, q1
 from .simulacion import simulacion
 
@@ -247,6 +248,45 @@ class Solicitud(BaseModel):
     lineas: list[LineaSolicitada] = Field(min_length=1, max_length=40)
 
 
+class LineaAlbaran(BaseModel):
+    inventario_id: int
+    cantidad: float = Field(gt=0)
+    coste_cent: int | None = Field(None, ge=0)
+
+
+class EntradaAlmacen(BaseModel):
+    """Lo que trae el repartidor: un albarán con su proveedor y sus líneas."""
+    proveedor: str = Field(min_length=1, max_length=60)
+    documento: str | None = Field(None, max_length=40)
+    lineas: list[LineaAlbaran] = Field(min_length=1, max_length=60)
+
+
+class AjusteAlmacen(BaseModel):
+    """Una corrección a mano: merma (se ha caído), recuento (he contado) o ajuste."""
+    cantidad: float                                   # positiva entra, negativa sale
+    motivo: str = "ajuste"
+    nota: str | None = Field(None, max_length=160)
+
+
+class LineaReceta(BaseModel):
+    inventario_id: int
+    cantidad: float = Field(gt=0)
+
+
+class Receta(BaseModel):
+    lineas: list[LineaReceta] = Field(max_length=30)
+
+
+class CajaPuesto(BaseModel):
+    """La caja de un puesto en el plano: dónde está, cuánto ocupa y cómo se llama."""
+    nombre: str | None = Field(None, min_length=1, max_length=40)
+    x: int | None = Field(None, ge=0, le=99)
+    y: int | None = Field(None, ge=0, le=99)
+    ancho: int | None = Field(None, ge=6, le=100)
+    alto: int | None = Field(None, ge=6, le=100)
+    color: str | None = Field(None, pattern=r"^#[0-9a-fA-F]{6}$")
+
+
 class Ajuste(BaseModel):
     valor: str = Field(max_length=200)
 
@@ -419,7 +459,12 @@ async def enviar_a_cocina(pid: int, u: dict = Depends(exige("camarero", "encarga
         n = cur.execute("""UPDATE lineas_pedido SET estado='enviada', enviada_en=NOW()
                            WHERE pedido_id=%s AND estado='pendiente'""", (pid,))
     if n:
+        # El género se descuenta AQUÍ, al entrar en cocina, que es cuando el plato se elabora:
+        # no al apuntarlo (todavía se puede quitar) ni al cobrarlo (para entonces ya se ha
+        # comido). Si el almacén deja algún producto a cero, la carta se entera sola.
+        almacen.consumir_pedido(pid, u["id"])
         await hub.emitir("kds", pedido_id=pid, nuevas=n)
+        await hub.emitir("carta")
         await hub.emitir_publico("recogida")
     return pedido_completo(pid)
 
@@ -459,6 +504,10 @@ async def anular(pid: int, u: dict = Depends(exige("camarero", "cocina", "encarg
     exigir_abierto(pid)
     q("UPDATE lineas_pedido SET estado='anulada' WHERE pedido_id=%s AND estado NOT IN ('servida')", (pid,))
     q("UPDATE pedidos SET estado='anulado', cerrado_en=NOW() WHERE id=%s", (pid,))
+    # Lo que llegó a pasar por cocina vuelve al almacén; lo que se quitó antes de enviarlo nunca
+    # gastó nada, así que devolverlo inventaría género que no existe.
+    almacen.devolver_pedido(pid, u["id"])
+    await hub.emitir("carta")
     await hub.emitir("mesas")
     await hub.emitir("kds")
     await hub.emitir_publico("recogida")
@@ -1336,6 +1385,112 @@ async def editar_alergeno(clave: str, d: CambioAlergeno, u: dict = Depends(exige
     return q1("SELECT * FROM alergenos WHERE clave=%s", (clave,))
 
 
+@app.get("/api/almacen")
+def almacen_listado(u: dict = Depends(exige("encargado"))):
+    """Los artículos con su saldo, su mínimo y para cuántos platos da cada uno."""
+    filas = almacen.listado()
+    for f in filas:
+        f["cuadra"] = almacen.saldo_cuadra(f["id"])["cuadra"]
+    return {"articulos": filas,
+            "descuento_activo": almacen.ajuste_si("inventario_descontar"),
+            "agota_carta": almacen.ajuste_si("inventario_agota_carta")}
+
+
+@app.get("/api/almacen/{aid}/movimientos")
+def almacen_movimientos(aid: int, limite: int = 50, u: dict = Depends(exige("encargado"))):
+    """La historia de un artículo: de dónde salió cada kilo que entró y cada uno que salió."""
+    art = q1("SELECT * FROM inventario WHERE id=%s", (aid,))
+    if not art:
+        raise HTTPException(404, "Ese artículo no existe")
+    movs = q("""SELECT m.*, e.nombre AS quien, a.proveedor, a.numero AS documento
+                FROM movimientos_inventario m
+                JOIN empleados e ON e.id = m.empleado_id
+                LEFT JOIN albaranes a ON a.id = m.albaran_id
+                WHERE m.inventario_id=%s ORDER BY m.id DESC LIMIT %s""",
+             (aid, max(1, min(limite, 500))))
+    return {"articulo": art, "movimientos": movs, **almacen.saldo_cuadra(aid)}
+
+
+@app.post("/api/almacen/entrada", status_code=201)
+async def almacen_entrada(d: EntradaAlmacen, u: dict = Depends(exige("encargado"))):
+    """Entra género: un albarán de proveedor con sus líneas. Es la mitad que faltaba.
+
+    Sin entradas no hay inventario que valga: el saldo solo baja y al tercer día todo está
+    agotado. Si el albarán trae un coste distinto, se actualiza el del artículo (el escandallo
+    y los precios sugeridos se calculan con él).
+    """
+    for l in d.lineas:
+        if not q1("SELECT id FROM inventario WHERE id=%s AND activo", (l.inventario_id,)):
+            raise HTTPException(422, f"El artículo {l.inventario_id} no existe")
+    with conn() as c, c.cursor() as cur:
+        # `numero` y `creado_por` son los nombres que ya tenía la tabla (nació para los
+        # albaranes leídos de una foto); un albarán tecleado a mano es el mismo documento.
+        cur.execute("""INSERT INTO albaranes (proveedor, numero, fecha, creado_por, estado,
+                                              aplicado_por, aplicado_en)
+                       VALUES (%s,%s,CURDATE(),%s,'aplicado',%s,NOW())""",
+                    (d.proveedor, d.documento, u["id"], u["id"]))
+        albaran_id = cur.lastrowid
+        for l in d.lineas:
+            almacen.apuntar(cur, l.inventario_id, l.cantidad, "albaran", u["id"],
+                            f"Albarán de {d.proveedor}", albaran_id)
+            if l.coste_cent is not None:
+                cur.execute("UPDATE inventario SET coste_cent=%s WHERE id=%s",
+                            (l.coste_cent, l.inventario_id))
+    cambios = almacen.revisar_carta()
+    if cambios["repuestos"] or cambios["agotados"]:
+        await hub.emitir("carta")
+    return {"albaran_id": albaran_id, "lineas": len(d.lineas), **cambios}
+
+
+@app.post("/api/almacen/{aid}/ajuste", status_code=201)
+async def almacen_ajuste(aid: int, d: AjusteAlmacen, u: dict = Depends(exige("encargado"))):
+    """Merma, recuento o corrección. Todo queda apuntado con su motivo y su nota."""
+    if d.motivo not in ("merma", "ajuste", "recuento"):
+        raise HTTPException(422, "Motivo no válido")
+    art = q1("SELECT * FROM inventario WHERE id=%s AND activo", (aid,))
+    if not art:
+        raise HTTPException(404, "Ese artículo no existe")
+    cantidad = d.cantidad
+    if d.motivo == "recuento":
+        # En un recuento se dice lo que HAY, no lo que cambia: el apunte es la diferencia.
+        cantidad = float(d.cantidad) - float(art["stock"])
+    if cantidad == 0:
+        return {"ok": True, "sin_cambios": True, "stock": art["stock"]}
+    with conn() as c, c.cursor() as cur:
+        almacen.apuntar(cur, aid, cantidad, d.motivo, u["id"], d.nota)
+    cambios = almacen.revisar_carta()
+    if cambios["repuestos"] or cambios["agotados"]:
+        await hub.emitir("carta")
+    return {"ok": True, "movido": cantidad,
+            "stock": q1("SELECT stock FROM inventario WHERE id=%s", (aid,))["stock"], **cambios}
+
+
+@app.get("/api/productos/{prid}/receta")
+def ver_receta(prid: int, u: dict = Depends(exige("encargado"))):
+    """Qué gasta este plato y para cuántas unidades da el almacén."""
+    if not q1("SELECT id FROM productos WHERE id=%s", (prid,)):
+        raise HTTPException(404, "Producto no encontrado")
+    return {"lineas": almacen.receta(prid), "posibles": almacen.unidades_posibles(prid)}
+
+
+@app.put("/api/productos/{prid}/receta")
+async def poner_receta(prid: int, d: Receta, u: dict = Depends(exige("encargado"))):
+    """Se guarda la receta entera de una vez: lo que no viene, se quita."""
+    if not q1("SELECT id FROM productos WHERE id=%s", (prid,)):
+        raise HTTPException(404, "Producto no encontrado")
+    for l in d.lineas:
+        if not q1("SELECT id FROM inventario WHERE id=%s AND activo", (l.inventario_id,)):
+            raise HTTPException(422, f"El artículo {l.inventario_id} no existe")
+    with conn() as c, c.cursor() as cur:
+        cur.execute("DELETE FROM producto_receta WHERE producto_id=%s", (prid,))
+        for l in d.lineas:
+            cur.execute("""INSERT INTO producto_receta (producto_id, inventario_id, cantidad)
+                           VALUES (%s,%s,%s)""", (prid, l.inventario_id, l.cantidad))
+    cambios = almacen.revisar_carta()
+    await hub.emitir("carta")
+    return {"lineas": len(d.lineas), "posibles": almacen.unidades_posibles(prid), **cambios}
+
+
 @app.get("/api/inventario")
 def buscar_inventario(buscar: str | None = None, u: dict = Depends(usuario)):
     """Búsqueda para el autocompletado de la carta. Desde tres caracteres, que es cuando la
@@ -1749,8 +1904,25 @@ async def mover_empleado(eid: int, d: Destino, u: dict = Depends(exige("encargad
         raise HTTPException(404, "Empleado no encontrado")
     if d.puesto and not q1("SELECT clave FROM puestos WHERE clave=%s", (d.puesto,)):
         raise HTTPException(422, "Ese puesto no está en el plano")
+    antes = q1("""SELECT p.nombre FROM empleados e LEFT JOIN puestos p ON p.clave=e.puesto
+                  WHERE e.id=%s""", (eid,))
     q("UPDATE empleados SET puesto=%s, mapa_x=%s, mapa_y=%s WHERE id=%s",
       (d.puesto, d.x, d.y, eid))
+    nuevo_puesto = q1("SELECT nombre, gui FROM puestos WHERE clave=%s", (d.puesto,)) if d.puesto else None
+
+    # El aviso se GUARDA, no solo se emite: a quien cambian de puesto casi nunca está mirando
+    # la pantalla en ese segundo —lo mueven precisamente porque hace falta en otro sitio—, así
+    # que el aviso tiene que esperarle y seguir ahí cuando llegue. Y va firmado: saber quién te
+    # ha movido es la mitad del aviso.
+    if (antes or {}).get("nombre") != (nuevo_puesto or {}).get("nombre"):
+        q("""INSERT INTO avisos_empleado (empleado_id, texto, detalle, de_quien)
+             VALUES (%s,%s,%s,%s)""",
+          (eid,
+           f"{u['nombre']} te ha puesto en {nuevo_puesto['nombre']}" if nuevo_puesto
+           else f"{u['nombre']} te ha dejado fuera de servicio",
+           f"Tu pantalla ahora es {nuevo_puesto['gui']}" if nuevo_puesto and nuevo_puesto.get("gui")
+           else "Sin pantalla asignada: solo verás el menú",
+           u["id"]))
     await hub.emitir("plantilla", empleado_id=eid, puesto=d.puesto)
     return q1("""SELECT e.id, e.nombre, e.rol, e.puesto, e.mapa_x, e.mapa_y,
                         p.nombre AS puesto_nombre, p.gui, p.rol_operativo
@@ -1763,6 +1935,45 @@ def sitio_en_puesto(p: dict, n: int) -> tuple[int, int]:
     x = p["x"] + 3 + (n % 2) * max(6, p["ancho"] // 2)
     y = p["y"] + 9 + (n // 2) * 8
     return (min(x, p["x"] + p["ancho"] - 4), min(y, p["y"] + p["alto"] - 3))
+
+
+@app.get("/api/mis-avisos")
+def mis_avisos(u: dict = Depends(usuario)):
+    """Lo que esta persona tiene sin leer. Se pide al entrar y cuando algo cambia."""
+    return q("""SELECT a.id, a.texto, a.detalle, a.creado_en, e.nombre AS de_quien
+                FROM avisos_empleado a LEFT JOIN empleados e ON e.id = a.de_quien
+                WHERE a.empleado_id=%s AND a.visto_en IS NULL
+                ORDER BY a.id""", (u["id"],))
+
+
+@app.post("/api/mis-avisos/{aid}/visto")
+def marcar_aviso(aid: int, u: dict = Depends(usuario)):
+    """«Enterado». Solo se pueden marcar los avisos propios."""
+    n = q("UPDATE avisos_empleado SET visto_en=NOW() WHERE id=%s AND empleado_id=%s AND visto_en IS NULL",
+          (aid, u["id"]))
+    return {"ok": True}
+
+
+@app.put("/api/puestos/{clave}")
+async def editar_puesto(clave: str, d: CajaPuesto, u: dict = Depends(exige("encargado"))):
+    """Mueve, estira o renombra la caja de un puesto en el mapa de la cantina.
+
+    El mapa no es un dibujo bonito: dice qué puede hacer cada persona según dónde esté su
+    ficha. Por eso se puede reordenar cuando cambia la sala, y por eso lo guarda el servidor.
+    """
+    p = q1("SELECT * FROM puestos WHERE clave=%s", (clave,))
+    if not p:
+        raise HTTPException(404, "Ese puesto no existe")
+    campos = {k: v for k, v in d.model_dump().items() if v is not None}
+    if not campos:
+        return p
+    if campos.get("x", p["x"]) + campos.get("ancho", p["ancho"]) > 100 or \
+       campos.get("y", p["y"]) + campos.get("alto", p["alto"]) > 100:
+        raise HTTPException(422, "La caja se sale del plano")
+    sets = ", ".join(f"{k}=%s" for k in campos)
+    q(f"UPDATE puestos SET {sets} WHERE clave=%s", (*campos.values(), clave))
+    await hub.emitir("plantilla", puesto=clave)
+    return q1("SELECT * FROM puestos WHERE clave=%s", (clave,))
 
 
 @app.post("/api/plantilla/reparto")
