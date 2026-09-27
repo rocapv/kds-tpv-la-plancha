@@ -118,9 +118,13 @@ MEDIR = r"""
 """
 
 
+TEMA = ["oscuro"]          # lo fija main() antes de recorrer nada
+
+
 def entrar(page, url, pin):
     page.goto(url + "/index.html", wait_until="domcontentloaded")
     page.evaluate("try { localStorage.removeItem('kds_sesion') } catch {}")
+    page.evaluate("t => { try { localStorage.setItem('kds_tema_app', t) } catch {} }", TEMA[0])
     page.reload(wait_until="domcontentloaded")
     page.wait_for_selector("#teclado button", timeout=20000)
     for cifra in pin:
@@ -145,7 +149,10 @@ def main():
     ap.add_argument("--url", default="http://192.168.1.100:8093")
     ap.add_argument("--tanda", default="despues")
     ap.add_argument("--solo", help="solo esta pantalla (p. ej. tpv.html)")
+    ap.add_argument("--tema", choices=("oscuro", "claro"), default="oscuro",
+                    help="el tema claro es otro juego de colores: hay que medirlo aparte")
     a = ap.parse_args()
+    TEMA[0] = a.tema
     salida = AQUI / "_qa" / "gui" / a.tanda
     salida.mkdir(parents=True, exist_ok=True)
     informe = {"url": a.url, "cuando": datetime.now().isoformat(timespec="seconds"), "pantallas": []}
@@ -169,6 +176,8 @@ def main():
                     if a.solo and a.solo not in ruta:
                         continue
                     consola.clear()
+                    page.goto(a.url + ruta, wait_until="domcontentloaded")
+                    page.evaluate("t => { try { localStorage.setItem('kds_tema_app', t) } catch {} }", a.tema)
                     page.goto(a.url + ruta, wait_until="domcontentloaded")
                     try:
                         page.wait_for_load_state("networkidle", timeout=10000)

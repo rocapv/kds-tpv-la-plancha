@@ -69,14 +69,14 @@ button {
   -webkit-tap-highlight-color: transparent;
 }
 button:hover { background: var(--panel3); border-color: var(--borde-fuerte); }
-button:active { transform: translateY(1px); }
+button:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--canto); }
 button:disabled { opacity: .38; cursor: not-allowed; transform: none; }
 button.primario { background: var(--acento); border-color: var(--acento); color: var(--acento-texto); }
-button.primario:hover { background: #f7b45a; }
+button.primario:hover { filter: brightness(1.08); }
 button.ok  { background: var(--ok);  border-color: var(--ok);  color: var(--ok-texto); }
-button.ok:hover { background: #5cdc86; }
+button.ok:hover { filter: brightness(1.08); }
 button.mal { background: var(--mal); border-color: var(--mal); color: var(--mal-texto); }
-button.mal:hover { background: #ea3f46; }
+button.mal:hover { filter: brightness(1.08); }
 button.activa, button.activo { background: var(--acento); border-color: var(--acento); color: var(--acento-texto); }
 button.sutil { background: transparent; border-color: transparent; }
 button.sutil:hover { background: var(--panel2); }
@@ -340,9 +340,9 @@ dialog input:not([type="checkbox"]):not([type="number"]):not([type="color"]) { f
 .comanda .bump:hover { background: var(--borde-fuerte); }
 /* El botón grande lleva el color de lo que va a pasar: ámbar = avanzar, verde = servido */
 .comanda .bump.primario { background: var(--acento); color: var(--acento-texto); }
-.comanda .bump.primario:hover { background: #f7b45a; }
+.comanda .bump.primario:hover { filter: brightness(1.08); }
 .comanda .bump.ok { background: var(--ok); color: var(--ok-texto); }
-.comanda .bump.ok:hover { background: #5cdc86; }
+.comanda .bump.ok:hover { filter: brightness(1.08); }
 .bump-grupo .deshacer { width: 3.2em; min-height: 56px; border-radius: 0; border: 0; background: var(--mal); color: var(--mal-texto); font-size: 1.2rem; }
 .mas-cola { grid-column: 1 / -1; text-align: center; padding: .9rem; border-radius: var(--r);
             background: var(--panel2); border: 1px dashed var(--borde-fuerte); color: var(--tenue); font-weight: 600; }
@@ -592,4 +592,207 @@ body.cliente[data-tema="claro"] {
 /* Movimiento reducido: quien lo pide en el sistema no ve parpadeos ni entradas animadas */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════════════
+   Piezas de interfaz inspiradas en cuatro demos de CodePen. El código es propio —se ha
+   reproducido el efecto, no copiado el fichero—, y el crédito va en cada bloque:
+
+     · sable de carga  ← «Only CSS: Codevember #5 Lightsaber», YusukeNakaya (codepen.io/YusukeNakaya/pen/eerWPq)
+     · interruptor     ← «Faction Toggle: Star Wars Ep. IV–VI», jkantner (codepen.io/jkantner/pen/NWRELjV)
+     · icono de menú   ← «Star Wars Menu Icon», Naito (codepen.io/Naito/pen/pgyOVm)
+     · burbujas        ← «Chat Bubbles in CSS», Founts (codepen.io/Founts/pen/AJyVOr)
+
+   Los emblemas de la Alianza y el Imperio son marcas de Lucasfilm: en su lugar va la
+   iconografía de la estación (el sol y la luna de Vesta-9), que dice lo mismo y no es de nadie.
+   ═══════════════════════════════════════════════════════════════════════════════════════ */
+
+/* ── Tema claro para TODA la aplicación ──────────────────────────────────────────────────
+   Hasta ahora solo la carta del cliente tenía tema claro. Los mismos tokens, otros valores:
+   ninguna regla de más abajo sabe de qué tema se trata, y por eso el cambio es instantáneo. */
+:root[data-tema="claro"] {
+  --fondo: #f4f6f9; --panel: #ffffff; --panel2: #eaeef4; --panel3: #dde3ec;
+  --borde: #ccd4e0; --borde-fuerte: #9aa7b8;
+  --texto: #10151c; --tenue: #46505e; --apagado: #6b7787;
+  --acento: #a35a00; --acento-texto: #ffffff; --acento-suave: #a35a001f;
+  --ok: #10773c; --ok-texto: #ffffff; --ok-suave: #10773c1a; --ok-tinta: #0b5a2c;
+  --mal: #b3232a; --mal-texto: #ffffff; --mal-suave: #b3232a14; --mal-tinta: #8d181e;
+  --aviso: #8a6100; --aviso-texto: #ffffff; --aviso-suave: #8a610014; --aviso-tinta: #6b4b00;
+  --info: #14539e; --info-texto: #ffffff; --info-suave: #14539e14; --info-tinta: #0f3f78;
+  --alerg: #a3341f;
+  --sombra: 0 8px 24px #10151c1f;
+}
+:root[data-tema="claro"] input[type="date"] { color-scheme: light; }
+
+/* ── El sable: se enciende mientras la pantalla espera al servidor ───────────────────────
+   Va abajo a la izquierda, al 30 % del tamaño del original, donde no tapa nada. Solo aparece
+   si la espera pasa de un cuarto de segundo: un parpadeo en cada clic sería ruido, y lo que
+   tiene que decir es «esto está tardando, no te has quedado colgado». */
+#sable-cargando {
+  position: fixed; left: 14px; bottom: 12px; z-index: 70; width: 132px; height: 66px;
+  pointer-events: none; opacity: 0; transition: opacity .25s ease;
+}
+#sable-cargando.encendido { opacity: 1; }
+#sable-cargando .empunadura {
+  position: absolute; left: 2px; bottom: 8px; width: 34px; height: 9px; border-radius: 3px;
+  background: linear-gradient(#e9edf3, #7b8597 60%, #444d5c);
+  box-shadow: 0 1px 2px #0008; transform: rotate(-30deg); transform-origin: left center;
+}
+#sable-cargando .hoja {
+  position: absolute; left: 32px; bottom: 26px; height: 7px; width: 0; border-radius: 4px;
+  transform: rotate(-30deg); transform-origin: left center;
+  background: linear-gradient(90deg, #ffffff, var(--hoja, #58ff9b));
+  box-shadow: 0 0 10px 3px var(--halo, #3ccf6d99), 0 0 26px 8px var(--halo, #3ccf6d55);
+  animation: encender 1.1s cubic-bezier(.3,.9,.4,1) infinite alternate;
+}
+@keyframes encender { from { width: 6px; opacity: .55; } to { width: 92px; opacity: 1; } }
+#sable-cargando .rotulo {
+  position: absolute; left: 4px; bottom: -2px; font-size: 11px; letter-spacing: .08em;
+  text-transform: uppercase; color: var(--tenue); white-space: nowrap;
+}
+/* Quien pide menos movimiento ve el sable quieto y encendido, no parpadeando */
+@media (prefers-reduced-motion: reduce) {
+  #sable-cargando .hoja { animation: none; width: 92px; }
+}
+
+/* ── Interruptor de tema: dos bandos, un pomo que cruza ──────────────────────────────────
+   Mismo mecanismo que el «faction toggle»: etiqueta a cada lado y el emblema viajando de una
+   a otra. Aquí los bandos son el día y la noche de la estación. */
+.faccion {
+  display: inline-flex; align-items: center; gap: 8px; background: transparent;
+  border: 0; padding: 0; min-height: var(--toque); cursor: pointer; color: inherit;
+}
+.faccion .lado { font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--apagado); transition: color .3s; }
+.faccion[aria-pressed="false"] .lado.noche, .faccion[aria-pressed="true"] .lado.dia { color: var(--acento); font-weight: 700; }
+.faccion .carril {
+  position: relative; width: 62px; height: 30px; border-radius: 999px; flex: none;
+  background: var(--panel2); border: 1px solid var(--borde-fuerte); transition: background .3s;
+}
+.faccion .pomo {
+  position: absolute; top: 2px; left: 2px; width: 24px; height: 24px; border-radius: 50%;
+  display: grid; place-items: center; background: var(--panel3);
+  transition: transform .35s cubic-bezier(.4,1.5,.6,1), background .3s;
+  box-shadow: 0 1px 4px #0006;
+}
+.faccion[aria-pressed="true"] .pomo { transform: translateX(32px); background: var(--acento); }
+.faccion .pomo svg { width: 16px; height: 16px; display: block; }
+.faccion .pomo .luna { color: var(--texto); }
+.faccion[aria-pressed="true"] .pomo .luna { display: none; }
+.faccion .pomo .sol { display: none; color: var(--acento-texto); }
+.faccion[aria-pressed="true"] .pomo .sol { display: block; }
+
+/* ── Icono de menú de tres barras desiguales, que se abren al pasar por encima ───────────
+   Las barras están partidas: la parte corta se separa como la empuñadura de una hoja. */
+.sables { display: inline-grid; gap: 4px; width: 26px; flex: none; }
+.sables i { display: block; height: 3px; border-radius: 2px; background: currentColor; transition: width .25s ease, transform .25s ease, box-shadow .25s; }
+.sables i:nth-child(1) { width: 26px; }
+.sables i:nth-child(2) { width: 18px; }
+.sables i:nth-child(3) { width: 22px; }
+button:hover > .sables i, a:hover > .sables i { box-shadow: 0 0 8px var(--acento); }
+button:hover > .sables i:nth-child(1) { width: 18px; }
+button:hover > .sables i:nth-child(2) { width: 26px; }
+button:hover > .sables i:nth-child(3) { width: 14px; }
+
+/* ── Tutorial: burbujas de conversación que explican la pantalla ─────────────────────────
+   La forma de la burbuja (con su pico) es CSS puro, como en el pen de Founts. */
+#tutorial-capa { position: fixed; inset: 0; z-index: 80; background: #05070a99; }
+#tutorial-foco { position: absolute; border-radius: var(--r-sm); box-shadow: 0 0 0 3px var(--acento), 0 0 0 9999px #05070acc; transition: all .3s ease; pointer-events: none; }
+.burbuja {
+  position: absolute; z-index: 81; max-width: 330px; background: var(--panel); color: var(--texto);
+  border: 1px solid var(--borde-fuerte); border-radius: 16px; padding: 14px 16px; box-shadow: var(--sombra);
+  animation: burbuja-entra .28s cubic-bezier(.2,1.3,.4,1) both;
+}
+.burbuja::after {
+  content: ''; position: absolute; width: 16px; height: 16px; background: var(--panel);
+  border-left: 1px solid var(--borde-fuerte); border-bottom: 1px solid var(--borde-fuerte);
+  transform: rotate(45deg);
+}
+.burbuja[data-pico="arriba"]::after { top: -9px; left: 26px; transform: rotate(135deg); }
+.burbuja[data-pico="abajo"]::after { bottom: -9px; left: 26px; }
+.burbuja h4 { font-size: 15px; margin-bottom: 4px; color: var(--acento); }
+.burbuja p { font-size: 15px; line-height: 1.4; color: var(--texto); margin: 0 0 10px; }
+.burbuja .pasos { font-size: 12px; color: var(--apagado); }
+.burbuja .fila { display: flex; gap: 8px; align-items: center; margin: 0; }
+.burbuja button { min-height: 38px; padding: .3rem .8rem; }
+@keyframes burbuja-entra { from { opacity: 0; transform: translateY(10px) scale(.96); } }
+
+/* Los planos son un caso aparte: sus colores vienen de la base de datos (el tinte de cada
+   zona, muro o mesa) y están elegidos para fondo oscuro. Si el texto siguiera al tema, en modo
+   claro quedaría oscuro sobre tinte oscuro: medido, 1,36:1. Aquí manda el dibujo, no el tema. */
+:root[data-tema="claro"] .lienzo .pieza,
+:root[data-tema="claro"] .lienzo .pieza .rotulo small,
+:root[data-tema="claro"] .plano .zona,
+:root[data-tema="claro"] .plano .zona small { color: #f4f7fb; }
+:root[data-tema="claro"] .lienzo { background-color: #2a3140; }
+:root[data-tema="claro"] .plano { background: #2a3140; }
+
+/* «Esperando cuenta» en modo claro: el ámbar del tema sobre el gris de la mesa ocupada se
+   quedaba en 4,05:1. Un punto más oscuro y pasa. */
+:root[data-tema="claro"] .mesa.srv-esperando_cuenta .srv { color: #7a4200; }
+
+/* ═══ Botones con canto: se hunden al pulsarlos ═══════════════════════════════════════════
+   Efecto de «Chunky 3D Buttons» de Andrew Fisher (codepen.io/Andrew-Fisher-the-decoder/pen/raMZQNe),
+   rehecho con código propio. En una pantalla táctil no hay clic ni resistencia: el canto que
+   desaparece al pulsar es la única confirmación física de que el dedo ha entrado, y en una
+   barra con ruido eso vale más que un sonido.
+
+   El canto se CALCULA a partir del color del propio botón (`color-mix`), no se escribe a mano:
+   así vale para los dos temas y para cualquier color que se le ponga mañana. Esa lección ya la
+   dio el modo claro, donde tres hover escritos a fuego dejaron el texto en 1,81:1. */
+button {
+  --canto: color-mix(in srgb, var(--panel2) 55%, #000);
+  box-shadow: 0 4px 0 var(--canto);
+  transition: background-color .12s, border-color .12s, transform .08s, box-shadow .08s;
+}
+button.primario { --canto: color-mix(in srgb, var(--acento) 62%, #000); }
+button.ok       { --canto: color-mix(in srgb, var(--ok) 62%, #000); }
+button.mal      { --canto: color-mix(in srgb, var(--mal) 62%, #000); }
+button.activa, button.activo { --canto: color-mix(in srgb, var(--acento) 62%, #000); }
+button:disabled { box-shadow: 0 4px 0 var(--canto); }
+
+/* Sin canto: los que no son «piezas» sino adornos o controles metidos en otra cosa. */
+button.sutil, .simulacion button, .faccion, .tema,
+.comanda header .deshacer, .comanda header .borrar,
+.linea button, .pago-hecho button, #mandos button {
+  box-shadow: none;
+}
+button.sutil:active, .simulacion button:active, .faccion:active,
+.comanda header .deshacer:active, .comanda header .borrar:active,
+.linea button:active { transform: translateY(1px); box-shadow: none; }
+
+/* El botón grande del KDS y el teclado del PIN son los que más se tocan: canto más alto. */
+.comanda .bump, .bump-grupo .deshacer { --canto: color-mix(in srgb, var(--panel3) 45%, #000); box-shadow: 0 5px 0 var(--canto); }
+.comanda .bump.primario { --canto: color-mix(in srgb, var(--acento) 62%, #000); }
+.comanda .bump.ok { --canto: color-mix(in srgb, var(--ok) 62%, #000); }
+.bump-grupo .deshacer { --canto: color-mix(in srgb, var(--mal) 62%, #000); }
+.teclado button { --canto: color-mix(in srgb, var(--panel2) 50%, #000); box-shadow: 0 5px 0 var(--canto); }
+/* El grupo del KDS va pegado abajo: el canto se queda dentro de la tarjeta. */
+.bump-grupo { margin-bottom: 5px; }
+
+@media (prefers-reduced-motion: reduce) {
+  button:active { transform: none; }
+}
+
+/* ── Aviso personal: «te han cambiado de puesto» ─────────────────────────────────────────
+   Arriba del todo, cruzando la pantalla, y no se va solo: se queda hasta que la persona
+   pulsa «Enterado». Un cambio de puesto cambia lo que puedes hacer; enterarse no es opcional. */
+#avisos-personales { position: fixed; top: 0; left: 0; right: 0; z-index: 90; display: grid; gap: 2px; }
+.aviso-personal {
+  display: flex; align-items: center; gap: 12px; padding: 12px 16px;
+  background: var(--acento); color: var(--acento-texto); box-shadow: var(--sombra);
+  animation: baja .3s cubic-bezier(.2,1.2,.4,1) both;
+}
+.aviso-personal .ico { font-size: 22px; }
+.aviso-personal b { display: block; font-size: 1rem; }
+.aviso-personal small { display: block; opacity: .85; font-size: .88rem; }
+.aviso-personal > div { flex: 1; min-width: 0; }
+.aviso-personal button { background: var(--acento-texto); color: var(--acento); border-color: transparent; --canto: #0006; }
+@keyframes baja { from { transform: translateY(-100%); } }
+
+/* Modo edición del mapa de la cantina: las cajas dejan de ser decorado y se pueden coger. */
+.plano.editando .zona { pointer-events: auto; cursor: grab; background: #ffffff14; border-style: solid; }
+.plano.editando .zona.moviendo { cursor: grabbing; box-shadow: var(--sombra); z-index: 6; }
+.plano .zona .tirador {
+  position: absolute; right: -7px; bottom: -7px; width: 16px; height: 16px; border-radius: 4px;
+  background: var(--acento); cursor: nwse-resize; pointer-events: auto;
 }

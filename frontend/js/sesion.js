@@ -85,10 +85,42 @@ function mandarASuPuesto(yo) {
 function vigilarPuesto(yo) {
   window.addEventListener('evento-ws', async e => {
     if (e.detail?.tipo !== 'plantilla' || e.detail.empleado_id !== yo.id) return;
+    await mirarAvisos();
     const ahora = await api('/yo').catch(() => null);
     if (!ahora) return;
-    if (!puedeEstarAqui(ahora)) mandarASuPuesto(ahora);
-    else aviso(`Ahora estás en ${ahora.puesto_nombre || 'ningún puesto'}`, 'info');
+    // Se avisa ANTES de mandarle a otra pantalla: si se le mueve la pantalla debajo de los pies
+    // sin decirle nada, lo que ve es que el TPV «se ha vuelto loco».
+    if (!puedeEstarAqui(ahora)) setTimeout(() => mandarASuPuesto(ahora), 2500);
+  });
+  mirarAvisos();
+}
+
+// ── Avisos que esperan: «te han cambiado de puesto» ───────────────────────────────────
+// No es un mensajito de tres segundos: es una tira que se queda hasta que la persona dice
+// «enterado». A quien mueven casi nunca está mirando la pantalla en ese instante.
+async function mirarAvisos() {
+  let lista = [];
+  try { lista = await api('/mis-avisos'); } catch { return; }
+  if (!lista.length) return;
+  let caja = document.querySelector('#avisos-personales');
+  if (!caja) {
+    caja = document.createElement('div');
+    caja.id = 'avisos-personales';
+    document.body.appendChild(caja);
+  }
+  caja.innerHTML = lista.map(a => `
+    <div class="aviso-personal" data-aviso="${a.id}">
+      <span class="ico">📣</span>
+      <div>
+        <b>${esc(a.texto)}</b>
+        ${a.detalle ? `<small>${esc(a.detalle)}</small>` : ''}
+      </div>
+      <button class="primario" data-visto="${a.id}">Enterado</button>
+    </div>`).join('');
+  caja.querySelectorAll('[data-visto]').forEach(b => b.onclick = async () => {
+    await api(`/mis-avisos/${b.dataset.visto}/visto`, { method: 'POST' }).catch(() => {});
+    b.closest('.aviso-personal').remove();
+    if (!caja.querySelector('.aviso-personal')) caja.remove();
   });
 }
 
@@ -179,6 +211,69 @@ function pedirPin(mensaje = '') {
 }
 
 /** Pone «Nombre (rol)», los mandos de la simulación y el botón de salir en la barra superior. */
+// ── Tema claro / oscuro, en TODAS las pantallas ────────────────────────────────────────
+// Mecanismo tomado del «Faction Toggle» de jkantner (CodePen), rehecho con código propio: dos
+// bandos con su etiqueta y un pomo que cruza. Los bandos aquí son el día y la noche de la
+// estación; los emblemas de la Alianza y el Imperio son marcas de Lucasfilm y no pintan nada
+// en un TPV. El tema se guarda por pantalla: la tableta de la barra y la de cocina pueden
+// tener luces distintas, que no están en la misma sala.
+const LLAVE_TEMA_APP = 'kds_tema_app';
+
+function aplicarTemaApp(tema) {
+  document.documentElement.dataset.tema = tema;
+  try { localStorage.setItem(LLAVE_TEMA_APP, tema); } catch {}
+  document.querySelectorAll('.faccion').forEach(b => b.setAttribute('aria-pressed', tema === 'claro'));
+}
+
+(function temaInicialApp() {
+  let t = null;
+  try { t = localStorage.getItem(LLAVE_TEMA_APP); } catch {}
+  if (t !== 'claro' && t !== 'oscuro') t = 'oscuro';
+  // Sin preferencia guardada, OSCURO. No se sigue al sistema a propósito: estas pantallas
+  // viven en una cocina y en una barra con poca luz, y el portátil de quien la abra por
+  // primera vez no sabe nada de eso. Quien quiera claro lo pulsa una vez y se recuerda.
+  document.documentElement.dataset.tema = t;
+})();
+
+function interruptorTema() {
+  const b = document.createElement('button');
+  b.className = 'faccion';
+  b.type = 'button';
+  b.title = 'Cambiar entre pantalla oscura y clara';
+  b.setAttribute('aria-pressed', document.documentElement.dataset.tema === 'claro');
+  b.innerHTML = `
+    <span class="lado noche">Noche</span>
+    <span class="carril"><span class="pomo">
+      <svg class="luna" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"/></svg>
+      <svg class="sol" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="12" cy="12" r="5"/><path d="M12 1v3M12 20v3M1 12h3M20 12h3M4 4l2 2M18 18l2 2M20 4l-2 2M6 18l-2 2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+    </span></span>
+    <span class="lado dia">Día</span>`;
+  b.onclick = () => aplicarTemaApp(document.documentElement.dataset.tema === 'claro' ? 'oscuro' : 'claro');
+  return b;
+}
+
+// ── Botón de tutorial: se carga solo cuando alguien lo pide ────────────────────────────
+function botonTutorial() {
+  const b = document.createElement('button');
+  b.className = 'sutil';
+  b.type = 'button';
+  b.textContent = '?';
+  b.title = 'Explicarme esta pantalla';
+  b.style.minWidth = '40px';
+  b.onclick = async () => {
+    if (!window.tutorial) {
+      await new Promise((ok, mal) => {
+        const s = document.createElement('script');
+        s.src = '/js/tutorial.js?v=' + Date.now();
+        s.onload = ok; s.onerror = mal;
+        document.head.appendChild(s);
+      }).catch(() => aviso('No se ha podido cargar el tutorial', 'error'));
+    }
+    window.tutorial?.empezar(PANTALLA);
+  };
+  return b;
+}
+
 function pintarBarraSesion(yo) {
   const barra = document.querySelector('header.barra');
   if (!barra || barra.querySelector('.sesion')) return;
@@ -190,7 +285,7 @@ function pintarBarraSesion(yo) {
   const boton = document.createElement('button');
   boton.textContent = 'Salir';
   boton.onclick = salir;
-  hueco.after(span, mandosSimulacion(yo), boton);
+  hueco.after(span, mandosSimulacion(yo), botonTutorial(), interruptorTema(), boton);
   ponerVolverAlMenu(barra);
 }
 
@@ -202,7 +297,9 @@ function ponerVolverAlMenu(barra) {
   const enlace = document.createElement('a');
   enlace.href = '/';
   enlace.dataset.menu = '1';
-  enlace.innerHTML = '<button title="Volver al menú principal sin cerrar la sesión">◀ Menú</button>';
+  // Icono de tres barras desiguales, del pen «Star Wars Menu Icon» de Naito, rehecho en CSS.
+  enlace.innerHTML = '<button title="Volver al menú principal sin cerrar la sesión">'
+                   + '<span class="sables"><i></i><i></i><i></i></span> Menú</button>';
   barra.prepend(enlace);
 }
 

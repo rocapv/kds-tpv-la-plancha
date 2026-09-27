@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Almacén · Cantina Vesta-9</title>
+<link rel="stylesheet" href="/css/estilo.css?v=__V__">
+</head>
+<body>
+<header class="barra">
+  <a href="/"><button><span class="sables"><i></i><i></i><i></i></span> Menú</button></a>
+  <h1>Almacén</h1>
+  <span class="hueco"></span>
+  <button id="b-entrada" class="primario">Entrada de proveedor</button>
+  <span id="conexion" class="conexion"></span>
+</header>
+
+<main class="informe">
+  <p class="tenue">El TPV no puede saber cuánto queda de algo si nadie apunta lo que <b>entra</b> del
+  proveedor y lo que <b>sale</b> al venderlo. Aquí está ese libro: cada kilo tiene su origen y su
+  destino, y lo que se queda a cero <b>se cae solo de la carta</b>.</p>
+
+  <section class="kpis" id="kpis"></section>
+
+  <div class="caja">
+    <h3>Artículos</h3>
+    <table id="tabla" class="fichas"></table>
+  </div>
+
+  <div class="caja" id="caja-movs" hidden style="margin-top:.8rem">
+    <div class="cab-cat">
+      <h3 id="m-titulo">Movimientos</h3>
+      <button id="m-cerrar" class="sutil">✕ Cerrar</button>
+    </div>
+    <p id="m-cuadre" class="tenue"></p>
+    <table id="movimientos"></table>
+  </div>
+</main>
+
+<dialog id="d-entrada">
+  <h3>Entrada de proveedor</h3>
+  <p class="tenue">Lo que trae el repartidor. Queda como albarán, con su fecha y quién lo recibió.</p>
+  <div class="fila">
+    <input id="e-proveedor" placeholder="Proveedor" maxlength="60" style="flex:1">
+    <input id="e-documento" placeholder="Nº de albarán (opcional)" maxlength="40" style="width:14em">
+  </div>
+  <div id="e-lineas"></div>
+  <div class="fila"><button id="e-mas">+ Añadir línea</button></div>
+  <div class="fila"><button id="e-cancelar">Cancelar</button><button id="e-ok" class="primario">Dar entrada</button></div>
+</dialog>
+
+<dialog id="d-ajuste">
+  <h3 id="a-titulo">Corregir existencias</h3>
+  <p class="tenue">Una merma (se ha caído, se ha estropeado) o un recuento: lo que de verdad hay.</p>
+  <div class="fila" id="a-motivos">
+    <button data-motivo="merma" class="activa">Merma</button>
+    <button data-motivo="recuento">Recuento</button>
+  </div>
+  <label class="campo" id="a-etiqueta">Cantidad que se pierde
+    <input id="a-cantidad" type="number" step="0.01" min="0">
+  </label>
+  <label class="campo">Nota <input id="a-nota" maxlength="160" placeholder="Por qué"></label>
+  <div class="fila"><button id="a-cancelar">Cancelar</button><button id="a-ok" class="primario">Apuntar</button></div>
+</dialog>
+
+<script src="/js/comun.js?v=__V__"></script>
+<script src="/js/sesion.js?v=__V__"></script>
+<script src="/js/almacen.js?v=__V__"></script>
+</body>
+</html>

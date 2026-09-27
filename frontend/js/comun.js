@@ -3,6 +3,35 @@ const euro = c => (c / 100).toLocaleString('es-ES', { style: 'currency', currenc
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
 
+// ── El sable: avisa de que la pantalla está esperando al servidor ──────────────────────
+// Efecto tomado de «Only CSS: Codevember #5 Lightsaber» de YusukeNakaya (CodePen), rehecho con
+// código propio. Se enciende SOLO si la espera pasa de un cuarto de segundo: encenderlo en cada
+// clic sería ruido, y lo que tiene que decir es «esto está tardando, no te has quedado colgado».
+let enVuelo = 0, temporizadorSable = null;
+
+function sable() {
+  let s = document.querySelector('#sable-cargando');
+  if (!s) {
+    s = document.createElement('div');
+    s.id = 'sable-cargando';
+    s.setAttribute('aria-hidden', 'true');       // es decorativo: lo que importa va en aria-busy
+    s.innerHTML = '<span class="empunadura"></span><span class="hoja"></span><span class="rotulo">consultando…</span>';
+    document.body.appendChild(s);
+  }
+  return s;
+}
+
+function esperando(cuantas) {
+  enVuelo = Math.max(0, enVuelo + cuantas);
+  document.body.setAttribute('aria-busy', enVuelo > 0 ? 'true' : 'false');
+  if (enVuelo > 0) {
+    if (!temporizadorSable) temporizadorSable = setTimeout(() => sable().classList.add('encendido'), 250);
+  } else {
+    clearTimeout(temporizadorSable); temporizadorSable = null;
+    sable().classList.remove('encendido');
+  }
+}
+
 // Llamada directa al servidor. `opciones.clave` es la clave de idempotencia: repetir una
 // petición con la misma clave NO repite el trabajo, devuelve la respuesta de la primera vez.
 // Por eso el TPV sin red puede reenviar sin miedo lo que apuntó mientras estaba caído.
@@ -12,6 +41,7 @@ async function apiRed(ruta, opciones = {}) {
   if (t) cabeceras.Authorization = 'Bearer ' + t;
   if (opciones.clave) cabeceras['Idempotency-Key'] = opciones.clave;
   let r;
+  esperando(+1);
   try {
     r = await fetch('/api' + ruta, {
       headers: cabeceras,
@@ -25,6 +55,8 @@ async function apiRed(ruta, opciones = {}) {
     error.red = true;
     error.causa = fallo;
     throw error;
+  } finally {
+    esperando(-1);                 // pase lo que pase, el sable se apaga
   }
   const datos = await r.json().catch(() => ({}));
   if (!r.ok) {
