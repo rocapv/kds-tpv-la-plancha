@@ -84,8 +84,17 @@ if echo "$CAMBIADOS" | grep -qE '^deploy/raspa/.*\.conf$'; then
   echo "$CAMBIADOS" | grep -E '^deploy/raspa/.*\.conf$' | sed 's/^/    /'
 fi
 
-if ! curl -fsS --max-time 10 http://127.0.0.1:8092/api/salud >/dev/null; then
-  echo "✋ la API no responde tras actualizar" >&2
+# La comprobación de salud REINTENTA. Con un solo intento, en un Pi cargado el arranque tarda
+# más que la espera y se deshacía un despliegue que estaba perfectamente: el remedio era peor
+# que la enfermedad, porque la vuelta atrás reinicia el servicio OTRA vez y tira las sesiones
+# de quien esté trabajando (pasó el 28/09 con alguien conectado desde fuera).
+sano=0
+for intento in 1 2 3 4 5 6; do
+  if curl -fsS --max-time 8 http://127.0.0.1:8092/api/salud >/dev/null; then sano=1; break; fi
+  sleep 3
+done
+if [ "$sano" != "1" ]; then
+  echo "✋ la API no responde tras actualizar (6 intentos en ~30 s)" >&2
   deshacer
 fi
 
