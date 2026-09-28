@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Análisis de la competencia y de los clientes potenciales · KDS + TPV</title>
+<meta name="description" content="Estudio de la competencia y de los clientes potenciales del sistema KDS + TPV. Proyecto Intermodular I, 1.º CFGS ASIR.">
+<style>
+  /* ---- Formato exigido por la guía del módulo: Arial 12, justificado, interlineado 1,5, márgenes 2,5 cm ---- */
+  :root {
+    --tinta: #111111;
+    --tinta-2: #444444;
+    --tinta-3: #6b6b6b;
+    --regla: #9a9a9a;
+    --regla-suave: #d9d9d9;
+    --fondo: #ffffff;
+    --acento: #1f4e79;         /* azul académico para títulos */
+    --serie: #2a78d6;          /* barras (una sola serie) */
+    --serie-gris: #b9b8b1;     /* resto de barras cuando se resalta una */
+    --rejilla: #e1e0d9;
+    --eje: #c3c2b7;
+    --fila-alt: #f4f4f2;
+  }
+  html, body { margin: 0; padding: 0; background: #d7d7d7; color: var(--tinta); }
+  body { font-family: Arial, Helvetica, sans-serif; font-size: 12pt; line-height: 1.5; }
+
+  /* --- Páginas --- */
+  .pagina {
+    position: relative; width: 210mm; height: 297mm; margin: 8mm auto; background: var(--fondo);
+    box-shadow: 0 2px 10px rgba(0,0,0,.25); overflow: hidden; page-break-after: always; break-after: page;
+  }
+  .pagina:last-child { page-break-after: auto; break-after: auto; }
+  .cabecera { position: absolute; top: 9mm; left: 25mm; width: 160mm; height: 19mm; }
+  .cabecera img { width: 160mm; height: auto; display: block; }
+  .cuerpo { position: absolute; top: 33mm; left: 25mm; width: 160mm; height: 241mm; overflow: hidden; }
+  .pie { position: absolute; top: 279mm; left: 25mm; width: 160mm; height: 8mm; font-size: 10pt; color: var(--tinta-2);
+         border-top: 0.5pt solid var(--regla-suave); padding-top: 1.5mm; display: flex; justify-content: space-between; line-height: 1.2; }
+  .pagina.portada .pie { visibility: hidden; }
+
+  /* --- Texto --- */
+  #fuente { display: none; }
+  .cuerpo p { margin: 0 0 8pt 0; text-align: justify; hyphens: auto; -webkit-hyphens: auto; }
+  .cuerpo h1 { font-size: 16pt; color: var(--acento); margin: 14pt 0 10pt 0; line-height: 1.25; text-align: left;
+               border-bottom: 1pt solid var(--acento); padding-bottom: 3pt; }
+  .cuerpo h2 { font-size: 13pt; color: var(--acento); margin: 12pt 0 6pt 0; line-height: 1.3; text-align: left; }
+  .cuerpo h3 { font-size: 12pt; margin: 10pt 0 4pt 0; line-height: 1.3; text-align: left; font-style: italic; }
+  .cuerpo ul, .cuerpo ol { margin: 0 0 8pt 0; padding-left: 7mm; text-align: justify; }
+  .cuerpo li { margin-bottom: 3pt; }
+  .cita { margin: 4pt 0 10pt 12mm; padding-left: 4mm; border-left: 1.5pt solid var(--regla-suave); color: var(--tinta-2); }
+  .nota-metod { font-size: 10.5pt; color: var(--tinta-2); border: 0.5pt solid var(--regla-suave); padding: 3mm 4mm; margin: 0 0 10pt 0; text-align: justify; }
+  .nota-metod p { margin: 0 0 4pt 0; }
+  strong { font-weight: bold; }
+
+  /* --- Tablas --- */
+  .tabla { margin: 6pt 0 12pt 0; }
+  .tcap { font-size: 9pt; margin: 0 0 3pt 0; text-align: left; line-height: 1.3; }
+  .tcap b { font-weight: bold; }
+  .tcap i { font-style: italic; }
+  .tabla table { width: 100%; border-collapse: collapse; font-size: 9.5pt; line-height: 1.25; page-break-inside: auto; }
+  .tabla th, .tabla td { border: 0.5pt solid var(--regla); padding: 2.5pt 4pt; vertical-align: top; text-align: left; }
+  .tabla th { background: #e8eef5; font-weight: bold; }
+  .tabla tbody tr:nth-child(even) td { background: var(--fila-alt); }
+  .tabla td.num, .tabla th.num { text-align: right; font-variant-numeric: tabular-nums; }
+  .tabla td.num { white-space: nowrap; }
+  .tabla td.c, .tabla th.c { text-align: center; }
+  .tabla .compacta { font-size: 8.5pt; }
+  .tabla .compacta th, .tabla .compacta td { padding: 2pt 3pt; }
+  .tnota { font-size: 9pt; color: var(--tinta-2); margin: 3pt 0 0 0; text-align: justify; line-height: 1.3; }
+  .tabla tr.destacada td { background: #fff3e0 !important; font-weight: bold; }
+
+  /* --- Figuras --- */
+  .figura { margin: 6pt 0 12pt 0; text-align: center; }
+  .figura .fcap { font-size: 9pt; text-align: left; margin: 0 0 3pt 0; line-height: 1.3; }
+  .figura img, .figura svg { max-width: 100%; height: auto; display: block; margin: 0 auto; }
+  .figura .fnota { font-size: 9pt; color: var(--tinta-2); text-align: justify; margin: 3pt 0 0 0; line-height: 1.3; }
+  .viz { font-family: Arial, Helvetica, sans-serif; }
+  .viz .eje-txt { font-size: 10px; fill: var(--tinta-3); }
+  .viz .etq { font-size: 11px; fill: var(--tinta); }
+  .viz .etq-b { font-size: 11px; fill: var(--tinta); font-weight: bold; }
+  .viz .val { font-size: 10px; fill: var(--tinta-2); font-variant-numeric: tabular-nums; }
+  .viz .rej { stroke: var(--rejilla); stroke-width: 1; }
+  .viz .eje { stroke: var(--eje); stroke-width: 1; }
+  .viz .barra { fill: var(--serie); }
+  .viz .barra-gris { fill: var(--serie-gris); }
+  .viz .punto { fill: var(--serie); }
+  .viz .punto-yo { fill: #c0392b; }
+  .viz .anillo { stroke: #fff; stroke-width: 2; }
+
+  /* --- Portada --- */
+  .portada .cuerpo { text-align: center; }
+  .portada-bloque { position: absolute; top: 40mm; left: 0; width: 160mm; }
+  .portada .titulo { font-size: 24pt; font-weight: bold; color: var(--acento); line-height: 1.25; margin: 0 0 8mm 0; }
+  .portada .subtitulo { font-size: 15pt; color: var(--tinta-2); line-height: 1.35; margin: 0 0 22mm 0; }
+  .portada .ciclo { font-size: 12.5pt; line-height: 1.6; margin: 0 0 16mm 0; }
+  .portada .autor { font-size: 13pt; line-height: 1.7; }
+  .portada .filete { width: 40mm; border-top: 2pt solid var(--acento); margin: 10mm auto; }
+  .portada .compl { position: absolute; top: 215mm; left: 0; width: 160mm; font-size: 10.5pt; color: var(--tinta-2); line-height: 1.4; }
+
+  /* --- Índices --- */
+  .indice .entrada { display: flex; align-items: baseline; margin: 0 0 3pt 0; line-height: 1.35; }
+  .indice .entrada.n2 { padding-left: 7mm; font-size: 11pt; }
+  .indice .entrada.n3 { padding-left: 14mm; font-size: 10.5pt; }
+  .indice .txt { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 140mm; }
+  .indice .puntos { flex: 1; border-bottom: 1px dotted var(--regla); margin: 0 2mm; transform: translateY(-3pt); }
+  .indice .pag { width: 9mm; text-align: right; font-variant-numeric: tabular-nums; }
+  .resumen-idioma { font-weight: bold; }
+  .palabras { margin-top: 4pt; }
+
+  /* --- Referencias APA: sangría francesa --- */
+  .ref { margin: 0 0 6pt 0; padding-left: 12mm; text-indent: -12mm; text-align: left; line-height: 1.4; font-size: 11pt; word-break: break-word; }
+  .anexo-codigo { font-family: Consolas, "Courier New", monospace; font-size: 9pt; line-height: 1.3; background: #f4f4f2; border: 0.5pt solid var(--regla-suave); padding: 3mm; margin: 0 0 10pt 0; white-space: pre-wrap; }
+
+  @page { size: A4 portrait; margin: 0; }
+  @media print {
+    html, body { background: #fff; }
+    .pagina { margin: 0; box-shadow: none; width: 210mm; height: 297mm; }
+    * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+  #aviso-pantalla { position: fixed; right: 10px; bottom: 10px; font-size: 11px; color: #333; background: #fff8dc; border: 1px solid #c9a227; padding: 4px 8px; z-index: 9; }
+  @media print { #aviso-pantalla { display: none; } }
+</style>
+</head>
+<body>
+
+<!-- ============================================================ -->
+<!--  FUENTE: todo el contenido, en orden. El paginador lo reparte en páginas A4. -->
+<!-- ============================================================ -->
+<div id="fuente">
+
+<!-- ---------------- Portada ---------------- -->
+<div class="salto" data-tipo="portada"></div>
+<div class="portada-bloque">
+  <p class="titulo">Análisis de la competencia<br>y de los clientes potenciales</p>
+  <p class="subtitulo">Sistema KDS + TPV autoalojado<br>para la hostelería independiente</p>
+  <div class="filete"></div>
+  <p class="ciclo">Proyecto Intermodular I<br>1.º CFGS Administración de Sistemas Informáticos en Red<br>IES Conselleria · València</p>
+  <p class="autor">Autores: Riches Manuel y Roca<br>Septiembre de 2026</p>
+</div>
+<p class="compl">Documento complementario a la memoria del proyecto. Responde a dos preguntas del guion del módulo: quién ofrece hoy lo mismo que el sistema desarrollado (análisis del entorno específico y de la competencia) y quién lo compraría (análisis de la demanda, <i>target</i> y <i>early adopter</i>).</p>
+
+<!-- ---------------- Resumen ---------------- -->
+<div class="salto"></div>
+<h1>Abstract / Resum / Resumen</h1>
+<p><span class="resumen-idioma">English.</span> This report studies the competitive landscape and the potential customers of a self-hosted point-of-sale (POS) and kitchen display system (KDS) for small, independent restaurants in Spain. Thirteen commercial products were reviewed from public price lists and six real demonstrations were analysed frame by frame. Every product covers the basic functionality, but almost all of them charge per terminal or per screen. The potential customer is the independent restaurant with a kitchen divided into stations; a simulated census of one hundred fictitious venues in València is used to size the opportunity and to rank prospects.</p>
+<p><span class="resumen-idioma">Valencià.</span> Aquest informe estudia la competència i els clients potencials d'un sistema autoallotjat de punt de venda (TPV) i de pantalles de cuina (KDS) per a la restauració independent xicoteta a Espanya. S'han revisat tretze productes comercials a partir de les seues tarifes públiques i s'han analitzat sis demostracions reals fotograma a fotograma. Tots cobreixen la funcionalitat bàsica, però quasi tots cobren per terminal o per pantalla. El client potencial és el local independent amb cuina dividida en estacions; un cens simulat de cent locals ficticis de València serveix per a dimensionar l'oportunitat i ordenar els candidats.</p>
+<p><span class="resumen-idioma">Castellano.</span> Este informe estudia la competencia y los clientes potenciales de un sistema autoalojado de punto de venta (TPV) y de pantallas de cocina (KDS) para la restauración independiente pequeña en España. Se han revisado trece productos comerciales a partir de sus tarifas públicas y se han analizado seis demostraciones reales fotograma a fotograma. Todos cubren la funcionalidad básica, pero casi todos cobran por terminal o por pantalla. El cliente potencial es el local independiente con cocina dividida en estaciones; un censo simulado de cien locales ficticios de València sirve para dimensionar la oportunidad y ordenar los candidatos.</p>
+<!-- ---------------- Índices (los rellena el paginador) ---------------- -->
+<div class="salto"></div>
+<h1 data-sin-indice="1">Índice</h1>
+<div class="indice" id="indice-general"></div>
+<div class="salto"></div>
+<h1 data-sin-indice="1">Índice de tablas</h1>
+<div class="indice" id="indice-tablas"></div>
+<h1 data-sin-indice="1">Índice de figuras</h1>
+<div class="indice" id="indice-figuras"></div>
+
+<!-- ---------------- 1. Introducción ---------------- -->
+<div class="salto"></div>
+<h1 id="s1">1. Introducción y objeto del documento</h1>
+<p>La guía del módulo de Proyecto Intermodular pide estudiar «la oferta empresarial del sector en la zona, la competencia y el contexto en el que se va a desarrollar el proyecto», así como «las demandas de consumidores y/o usuarios y/o empresas de ese producto», describiendo al <i>target</i> y al <i>early adopter</i> (IES Conselleria, 2025, apartado 4). Este documento desarrolla esos dos puntos para el sistema KDS + TPV construido en el proyecto, con más profundidad de la que cabe en el apartado 2 de la memoria.</p>
+<p>El sistema analizado es un punto de venta (TPV) para sala y un conjunto de pantallas de cocina (KDS, <i>Kitchen Display System</i>) que se comunican en tiempo real, servido como aplicación web desde un servidor propio en la red del local. Su rasgo diferencial no es funcional sino económico y arquitectónico: cada pantalla de cocina es una página abierta en un navegador, de modo que añadir una estación no añade una licencia. Todo lo que sigue gira en torno a comprobar si ese rasgo tiene valor frente a lo que ya existe y para quién lo tiene.</p>
+<p>El documento se organiza en dos bloques. El primero (apartados 3 y 4) describe el sector y analiza la competencia en tres niveles: la estructura del mercado español, el líder mundial como referencia y los productos concretos, doce de ellos por sus tarifas públicas y seis por observación directa de sus demostraciones. El segundo bloque (apartado 5) identifica a los clientes potenciales: perfil del comprador, segmentación por tipo de local, dimensionamiento del mercado y un censo simulado de cien establecimientos de València que permite ordenar los candidatos con un criterio explícito. Los apartados 6 y 7 recogen la matriz DAFO frente al mercado y las conclusiones.</p>
+
+<!-- ---------------- 2. Metodología ---------------- -->
+<h1 id="s2">2. Metodología y fuentes</h1>
+<p>Se han combinado fuentes secundarias y primarias, siguiendo el criterio de evaluación de fuentes propuesto en el manual del módulo (actualidad, relevancia, autoridad, precisión y propósito).</p>
+<h2 id="s2-1">2.1. Fuentes secundarias</h2>
+<p>Las magnitudes del sector proceden de estadística pública (Instituto Nacional de Estadística, Directorio Central de Empresas y encuesta TIC) y de los anuarios sectoriales de la patronal (Anuario de Hostelería de España; UVE Data Market Horeca). Las tarifas de los productos se han tomado de las páginas de precios de los fabricantes y, cuando no las publican, de comparadores independientes, indicándolo en cada caso. La normativa se cita por su publicación en el BOE y en el DOUE. Todos los enlaces se consultaron entre el 21 y el 24 de septiembre de 2026.</p>
+<h2 id="s2-2">2.2. Fuentes primarias: observación de demostraciones</h2>
+<p>Las tablas de precios no dicen cómo funciona un producto. Para ver la competencia por dentro se han analizado seis vídeos de demostración de productos reales (STARPOS, TMBill, Loyverse, Epos Now, Revel Systems y Kibsi) con una cadena de tratamiento reproducible: descarga del vídeo, extracción de diez fotogramas por segundo, transcripción automática del audio con un modelo de reconocimiento de voz ejecutado en local y selección de los fotogramas en los que la pantalla cambia de verdad, medida como diferencia entre imágenes consecutivas. El detalle técnico está en el anexo II. El material de terceros (vídeos, fotogramas, transcripciones) no se conserva en el repositorio del proyecto; los seis documentos de análisis resultantes sí.</p>
+<h2 id="s2-3">2.3. Datos simulados y su tratamiento</h2>
+<p>No se ha realizado trabajo de campo con establecimientos reales. Para dimensionar el mercado y ensayar un criterio de priorización comercial se ha generado un censo de cien locales ficticios de la ciudad de València con un programa de semilla fija, de modo que las cifras son reproducibles y coinciden con el mapa interactivo que acompaña al proyecto. Los barrios son reales; los locales, sus nombres, ubicaciones y cifras no lo son, y así se advierte en cada tabla que los usa. El censo no es una previsión de ventas: es una herramienta para razonar con números explícitos sobre qué tipo de local se beneficia más del sistema.</p>
+<div class="nota-metod">
+<p><b>Nota sobre el rigor de las cifras.</b> Todo dato numérico lleva su fuente y su año. Lo que no ha podido verificarse en una fuente identificable se marca como «no verificado» y no se afirma. Las estimaciones propias se señalan como tales y se explica el procedimiento. Las cifras en dólares corresponden al mercado estadounidense y no se trasladan a España sin advertirlo.</p>
+</div>
+
+<!-- ---------------- 3. Contexto ---------------- -->
+<h1 id="s3">3. El sector: contexto del mercado</h1>
+<h2 id="s3-1">3.1. Tamaño y estructura</h2>
+<p>La restauración española es un sector grande y atomizado. En 2024 se contaban 280.403 establecimientos de hostelería, de los que el 93 % eran locales independientes frente a un 7,5 % de restauración organizada (Profesional Horeca, 2025). Ese tejido se inserta en una economía de microempresas: el 81,6 % de las empresas españolas tiene dos asalariados o menos (Instituto Nacional de Estadística [INE], 2025a). En la Comunitat Valenciana, tercera comunidad por número de bares y restaurantes, hay 31.186 establecimientos, uno por cada 174 habitantes, y 13.698 en la provincia de València (El Periòdic, 2025).</p>
+<div class="tabla" id="t1">
+<p class="tcap"><b>Tabla 1.</b> <i>Magnitudes verificadas del sector de la hostelería en España</i></p>
+<table>
+<thead><tr><th style="width:44%">Magnitud</th><th style="width:24%">Valor</th><th>Fuente y año</th></tr></thead>
+<tbody>
+<tr><td>Establecimientos de hostelería en España</td><td>280.403 (+1,6 %)</td><td>UVE Data Market Horeca 2025, vía Profesional Horeca (2025)</td></tr>
+<tr><td>Hostelería independiente / restauración organizada</td><td>93 % / 7,5 %</td><td>Ídem</td></tr>
+<tr><td>Empleo en hostelería (media 2025)</td><td>1,89 millones; 8,6 % del empleo</td><td>Anuario de Hostelería de España, vía Hosteltur (2026)</td></tr>
+<tr><td>Facturación 2025 respecto a 2024</td><td>+2 % a +4 %</td><td>Ídem</td></tr>
+<tr><td>Rentabilidad de la restauración (hasta septiembre de 2025)</td><td>−0,9 %</td><td>Ídem</td></tr>
+<tr><td>Empresas activas en España</td><td>3,31 millones</td><td>INE, DIRCE a 1/1/2025 (2025a)</td></tr>
+<tr><td>Empresas con dos asalariados o menos</td><td>81,6 %</td><td>Ídem</td></tr>
+<tr><td>Bares y restaurantes en la Comunitat Valenciana</td><td>31.186 (un bar por cada 174 habitantes)</td><td>El Periòdic (2025), sobre el Anuario 2024</td></tr>
+<tr><td>Establecimientos Horeca en la provincia de València</td><td>13.698</td><td>Ídem</td></tr>
+</tbody></table>
+<p class="tnota"><i>Nota.</i> El DIRCE no desglosa asalariados para el epígrafe de servicios de comidas y bebidas, por lo que el porcentaje de locales de restauración con menos de diez empleados no ha podido verificarse en fuente primaria. Elaboración propia a partir de las fuentes citadas.</p>
+</div>
+<p>Dos lecturas importan para lo que sigue. La primera es la atomización: el cliente típico de un TPV en España no es una cadena con departamento de sistemas, sino un local de tres o cuatro personas sin nadie que sepa de informática. La segunda es la tijera entre ingresos y margen: un sector que factura más y gana menos (rentabilidad del −0,9 % en 2025 frente a una facturación que crece entre el 2 % y el 4 %) juzga una herramienta por lo que ahorra, no por su lista de funciones.</p>
+<h2 id="s3-2">3.2. Digitalización: mucho cobro, poca cocina</h2>
+<p>Conviene ser prudente con las cifras de «digitalización hostelera» que circulan, porque casi todas proceden de estudios encargados por fabricantes de TPV. La estadística pública dice que el 84,5 % de las empresas tiene sitio web y el 26,6 % vendió por comercio electrónico (INE, 2025b), sin desglose verificable aquí para la hostelería de menos de diez empleados. Un fabricante sitúa entre el 65 % y el 70 % los pagos en España por medios digitales, a partir de 8.000 clientes propios (El Independiente, 2026): es un indicio, no una estadística.</p>
+<p>Lo que sí sostienen las fuentes y las seis observaciones directas es una asimetría cualitativa. La digitalización de la hostelería española se ha concentrado en el cobro (datáfono, TPV, carta por código QR) y apenas ha llegado a la producción: entre la caja y el fogón siguen mandando el papel y la voz. Ese tramo, de la comanda al plato, es exactamente el que cubre un KDS.</p>
+<h2 id="s3-3">3.3. La normativa que condiciona la demanda</h2>
+<p>Buena parte de la demanda de TPV en España no nace del deseo de modernizarse sino de obligaciones legales. La tabla 2 resume las normas que afectan al diseño del sistema y a la decisión de compra del cliente, con el estado del proyecto frente a cada una.</p>
+<div class="tabla" id="t2">
+<p class="tcap"><b>Tabla 2.</b> <i>Normativa que condiciona la demanda de sistemas de punto de venta</i></p>
+<table>
+<thead><tr><th style="width:24%">Norma</th><th style="width:34%">Qué exige</th><th style="width:22%">Efecto en la demanda</th><th>Estado del proyecto</th></tr></thead>
+<tbody>
+<tr><td>Ley 11/2021 antifraude (art. 29.2.j LGT)</td><td>Prohíbe el software de facturación capaz de ocultar o alterar operaciones («doble uso»)</td><td>Obliga a un registro de ventas íntegro y trazable</td><td>Cumple: numeración correlativa sin huecos garantizada en la transacción</td></tr>
+<tr><td>RD 1007/2023 (Verifactu), aplazado por el RDL 15/2025</td><td>Registro por factura, encadenamiento por huella, firma, trazabilidad y remisión opcional a la AEAT</td><td>Obliga a revisar el sistema antes del 1/1/2027 (sociedades) y del 1/7/2027 (resto)</td><td><b>No cumple</b>: sin huella, firma ni remisión. Línea de trabajo</td></tr>
+<tr><td>Ley 18/2022 «Crea y Crece» y RD 238/2026</td><td>Factura electrónica obligatoria entre empresas (formatos EN 16931); excluye las facturas simplificadas</td><td>Afecta al bar sobre todo como receptor de facturas de proveedores</td><td>Prioridad en el tique y la factura simplificada, que sí emite</td></tr>
+<tr><td>Reglamento (UE) 1169/2011 y RD 126/2015</td><td>Información de los catorce alérgenos, también en alimentos sin envasar</td><td>El alérgeno es un dato obligatorio del producto</td><td>Cumple: el alérgeno viaja de la carta al TPV, al tique y a la cocina</td></tr>
+<tr><td>RGPD y LO 3/2018</td><td>Minimización y protección de datos desde el diseño</td><td>Autoalojar simplifica la cadena de encargados</td><td>Cumple en diseño: la pantalla pública solo expone números y tiempos</td></tr>
+</tbody></table>
+<p class="tnota"><i>Nota.</i> Plazos de Verifactu verificados a septiembre de 2026 (Garrigues, 2025). Elaboración propia.</p>
+</div>
+<p>La lectura es doble y hay que decirla sin maquillaje: el calendario de Verifactu es la oportunidad de mercado más clara, porque cientos de miles de locales deberán revisar su sistema antes de julio de 2027, y a la vez es el requisito que el sistema desarrollado todavía no cumple.</p>
+
+<!-- ---------------- 4. Competencia ---------------- -->
+<h1 id="s4">4. Análisis de la competencia</h1>
+<h2 id="s4-1">4.1. Estructura del mercado: tres capas</h2>
+<p>El mercado español de TPV para hostelería se organiza en tres capas que conviven y compiten por el mismo local pequeño, con modelos de negocio distintos (tabla 3).</p>
+<div class="tabla" id="t3">
+<p class="tcap"><b>Tabla 3.</b> <i>Las tres capas del mercado español de TPV para hostelería</i></p>
+<table>
+<thead><tr><th style="width:22%">Capa</th><th style="width:30%">Productos representativos</th><th style="width:24%">Modelo de ingreso</th><th>Rasgo dominante</th></tr></thead>
+<tbody>
+<tr><td>Software español clásico de licencia</td><td>Glop, Ágora (IGT), Cuiner, Camarero10, STARPOS</td><td>Licencia por terminal, perpetua o mensual, más mantenimiento</td><td>Heredero del TPV Windows instalado en el local; el KDS es un módulo</td></tr>
+<tr><td>Plataformas en la nube</td><td>Oracle MICROS Simphony, Revo XEF, Last.app, Lightspeed, Square, Epos Now, Revel</td><td>Suscripción por terminal o por local; comisión por pago; alta</td><td>Venden la integración con reparto y pagos; los datos salen del local</td></tr>
+<tr><td>Gratuito con monetización indirecta</td><td>Loyverse, TMBill</td><td>Complementos de pago (histórico, inventario, empleados) y datos</td><td>El KDS es gratuito a cambio de que los datos residan en su nube</td></tr>
+</tbody></table>
+<p class="tnota"><i>Nota.</i> Elaboración propia a partir de las tarifas públicas consultadas en septiembre de 2026 y de los análisis de producto del apartado 4.4.</p>
+</div>
+<p>La figura 1 sitúa los productos en dos ejes que resumen las decisiones que más afectan a un local pequeño: cuánto cuesta añadir una pantalla de cocina y dónde residen los datos. El posicionamiento es cualitativo, deducido de las tarifas y de la arquitectura de cada producto, y sirve para ver de un vistazo el hueco que ocupa el sistema desarrollado: pantalla adicional sin coste de licencia y datos dentro del local.</p>
+<div class="figura" id="f1">
+<p class="fcap"><b>Figura 1.</b> <i>Mapa de posicionamiento de la competencia frente al sistema desarrollado</i></p>
+<svg class="viz" viewBox="0 0 600 380" width="600" height="380" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Mapa de posicionamiento cualitativo de catorce productos">
+  <!-- rejilla -->
+  <line class="rej" x1="70" y1="20" x2="570" y2="20"/><line class="rej" x1="70" y1="95" x2="570" y2="95"/>
+  <line class="rej" x1="70" y1="170" x2="570" y2="170"/><line class="rej" x1="70" y1="245" x2="570" y2="245"/>
+  <line class="rej" x1="195" y1="20" x2="195" y2="320"/><line class="rej" x1="320" y1="20" x2="320" y2="320"/>
+  <line class="rej" x1="445" y1="20" x2="445" y2="320"/><line class="rej" x1="570" y1="20" x2="570" y2="320"/>
+  <!-- ejes -->
+  <line class="eje" x1="70" y1="320" x2="570" y2="320"/><line class="eje" x1="70" y1="20" x2="70" y2="320"/>
+  <text class="eje-txt" x="320" y="350" text-anchor="middle">Coste de la pantalla de cocina adicional (de nulo a alto)</text>
+  <text class="eje-txt" x="75" y="335" text-anchor="start">nulo</text><text class="eje-txt" x="565" y="335" text-anchor="end">alto</text>
+  <text class="eje-txt" transform="translate(28,170) rotate(-90)" text-anchor="middle">Ubicación de los datos (del local a la nube)</text>
+  <text class="eje-txt" x="62" y="320" text-anchor="end">local</text><text class="eje-txt" x="62" y="24" text-anchor="end">nube</text>
+  <!-- puntos (x: 70 + v*50 ; y: 320 - v*30) -->
+  <circle class="punto anillo" cx="195" cy="284" r="5"/><text class="etq" x="204" y="288">Glop</text>
+  <circle class="punto anillo" cx="250" cy="266" r="5"/><text class="etq" x="259" y="270">STARPOS</text>
+  <circle class="punto anillo" cx="280" cy="224" r="5"/><text class="etq" x="289" y="228">Ágora</text>
+  <circle class="punto anillo" cx="310" cy="170" r="5"/><text class="etq" x="319" y="174">Cuiner</text>
+  <circle class="punto anillo" cx="120" cy="44" r="5"/><text class="etq" x="129" y="48">Loyverse</text>
+  <circle class="punto anillo" cx="250" cy="62" r="5"/><text class="etq" x="259" y="66">Square</text>
+  <circle class="punto anillo" cx="320" cy="80" r="5"/><text class="etq" x="320" y="70" text-anchor="middle">TMBill</text>
+  <circle class="punto anillo" cx="350" cy="104" r="5"/><text class="etq" x="359" y="108">Camarero10</text>
+  <circle class="punto anillo" cx="390" cy="62" r="5"/><text class="etq" x="399" y="66">Revo XEF</text>
+  <circle class="punto anillo" cx="440" cy="122" r="5"/><text class="etq" x="449" y="126">Epos Now</text>
+  <circle class="punto anillo" cx="470" cy="56" r="5"/><text class="etq" x="479" y="60">Last.app</text>
+  <circle class="punto anillo" cx="510" cy="38" r="5"/><text class="etq" x="500" y="42" text-anchor="end">Lightspeed</text>
+  <circle class="punto anillo" cx="530" cy="140" r="5"/><text class="etq" x="520" y="144" text-anchor="end">Oracle MICROS Simphony</text>
+  <circle class="punto anillo" cx="400" cy="212" r="5"/><text class="etq" x="409" y="216">Revel Systems</text>
+  <circle class="punto-yo anillo" cx="100" cy="302" r="6"/><text class="etq-b" x="110" y="306">Este proyecto</text>
+</svg>
+<p class="fnota"><i>Nota.</i> Posicionamiento cualitativo, elaboración propia. Eje horizontal: coste de licencia o suscripción de una pantalla de cocina adicional, según las tarifas de la tabla 5. Eje vertical: dónde residen los datos de ventas (servidor en el local, mixto o nube del proveedor). Revel Systems corre en iPad con <i>back office</i> en la nube; Cuiner y Ágora ofrecen ambas modalidades.</p>
+</div>
+
+<h2 id="s4-2">4.2. El líder como referencia: Oracle MICROS Simphony</h2>
+<p>Un análisis de competencia que solo mirase productos de tamaño parecido al proyecto sería incompleto. El líder mundial del punto de venta en hostelería es Oracle MICROS Simphony, y estudiarlo sirve para medir lo que el proyecto hace igual, lo que hace distinto y, sobre todo, lo que no hace.</p>
+<div class="tabla" id="t4">
+<p class="tcap"><b>Tabla 4.</b> <i>Ficha de Oracle MICROS Simphony</i></p>
+<table>
+<thead><tr><th style="width:34%">Dato</th><th style="width:36%">Valor</th><th>Fuente</th></tr></thead>
+<tbody>
+<tr><td>Origen</td><td>MICROS Systems, comprada por Oracle el 23/6/2014 por unos 5.300 millones de dólares</td><td>Oracle (2014)</td></tr>
+<tr><td>Implantación de MICROS en 2014</td><td>330.000 sitios de clientes en 180 países; más de 6.600 empleados</td><td>Ídem</td></tr>
+<tr><td>Dimensión de Oracle hoy</td><td>Unos 141.000 empleados; 67.357 millones de dólares de ingresos (ejercicio cerrado el 31/5/2026)</td><td>Oracle (2026a); Macrotrends (2026)</td></tr>
+<tr><td>Arquitectura del KDS</td><td>Servicio Windows (<i>KDS Controller</i>) que hace de puente entre el TPV y las pantallas; un controlador por cocina independiente; el respaldo, en otra máquina</td><td>Oracle (2026b)</td></tr>
+<tr><td>Canales de entrada</td><td>Sala, quiosco, <i>drive-thru</i>, web, móvil y plataformas de reparto</td><td>Oracle (2026c)</td></tr>
+<tr><td>Precio</td><td>Sin tarifa pública. Comparadores: Essentials desde 55 $/mes y Plus desde 75 $/mes por estación; terminal 2.500–8.000 $; instalación 500–8.000 $; 2,4–2,9 % por pago; KDS como módulo aparte sin importe publicado</td><td>Loman (2026); TrustRadius (2026)</td></tr>
+</tbody></table>
+<p class="tnota"><i>Nota.</i> Las cifras de precio corresponden al mercado estadounidense y no son trasladables a España sin más. Elaboración propia.</p>
+</div>
+<p>Dos conclusiones se extraen del líder. La primera es de arquitectura: Simphony coloca la lógica de la cocina en un servicio central y trata las pantallas como clientes ligeros, la misma decisión que adopta el sistema desarrollado, donde la lógica vive en el servidor y cualquier tableta con navegador hace de KDS. La segunda es de modelo de negocio: la cuota es por estación y el KDS es un módulo facturable, de modo que un local con cuatro estaciones de cocina paga cuatro veces. Es una respuesta proporcionada a una cadena de mil locales y desproporcionada para un bar de barrio, y ahí está la grieta que este proyecto aprovecha.</p>
+<p>Lo que Oracle hace y el proyecto no está también identificado: gestión multilocal con carta centralizada, integración con plataformas de reparto, soporte 24 horas con responsabilidad contractual, fiscalidad de 180 países y cuarenta años de casos límite ya resueltos. No reconocerlo sería vender humo ante el tribunal.</p>
+
+<h2 id="s4-3">4.3. Productos presentes en España: tarifas y modelo de precio</h2>
+<p>La tabla 5 recoge los trece productos con KDS revisados a partir de sus tarifas públicas. Cuando el fabricante no publica precio se indica, porque esa opacidad es en sí un dato: obliga al local pequeño a negociar sin referencia.</p>
+<div class="tabla" id="t5">
+<p class="tcap"><b>Tabla 5.</b> <i>Trece productos con KDS presentes en España: modelo de precio y punto débil para un local pequeño</i></p>
+<table class="compacta">
+<thead><tr><th style="width:15%">Producto (país)</th><th style="width:37%">Modelo de precio (fuente y fecha)</th><th style="width:15%">¿KDS aparte?</th><th style="width:8%">¿Nube?</th><th>Punto débil para un local pequeño</th></tr></thead>
+<tbody>
+<tr><td>Oracle MICROS Simphony (EE. UU.)</td><td>Sin tarifa pública; se cotiza. Comparadores: desde 55 $/mes por estación; terminal 2.500–8.000 $; 2,4–2,9 % por pago (Loman y TrustRadius, 9/2026)</td><td>Sí, módulo aparte; importe no publicado</td><td>Sí, con controlador Windows en el local</td><td>Pensado para cadenas: cuota por estación y un equipo Windows por cocina</td></tr>
+<tr><td>Revo XEF (ES)</td><td>Sin precio público: remite al distribuidor (9/2026)</td><td>Módulo de la suite</td><td>Sí</td><td>Opacidad de precio y coste por terminal</td></tr>
+<tr><td>Glop (ES)</td><td>Desde 19,90 €/mes o unos 299 € en pago único; Mini desde 199 € y Pro desde 399 € sin IVA (VentaTPV, 2026)</td><td>Módulo de cocina</td><td>No: instalación local</td><td>Windows obligatorio; cada pantalla añade licencia</td></tr>
+<tr><td>Ágora / IGT (ES)</td><td>Desde 32 €/mes; también licencia perpetua por terminal (Ágora TPV, 2026)</td><td>Incluido como monitor de cocina</td><td>Opcional</td><td>Modelo por terminal: cada puesto suma</td></tr>
+<tr><td>Cuiner (ES)</td><td>Sin precio público; se cotiza por local (reservas desde 22 €/mes)</td><td>Módulo de cocina</td><td>Mixto</td><td>Precio no transparente; funciones troceadas</td></tr>
+<tr><td>Camarero10 (ES)</td><td>Sin precio oficial; comparadores: 30–50 €/mes (TPV Hostelería, 2026)</td><td>Módulo</td><td>Sí</td><td>Coste final dependiente de los módulos</td></tr>
+<tr><td>Lightspeed (CA)</td><td>69–399 $/mes según plan, tarifa de EE. UU.; precio en euros no verificado</td><td>Sí: unos 30 $ por pantalla y mes (UpMenu, 2026)</td><td>Sí</td><td>El coste por pantalla castiga la cocina por estaciones</td></tr>
+<tr><td>Square (EE. UU.)</td><td>Plan gratuito o 59 €/mes más IVA por punto de venta; 1,25 % + 0,05 € por pago presencial (Square, 2026)</td><td>Existe; coste separado no publicado en España</td><td>Sí</td><td>El coste real está en la comisión, no en la cuota</td></tr>
+<tr><td>Loyverse (LV / EE. UU.)</td><td>TPV, panel, KDS y pantalla de cliente gratuitos; complementos de 5 a 25 €/mes por tienda (Loyverse, 2026)</td><td>No: gratuito</td><td>Sí: datos en su nube</td><td>Los datos salen del local; el histórico completo se paga</td></tr>
+<tr><td>TMBill (IN)</td><td>Sin precio público en euros</td><td>Aplicación aparte (Windows y Android)</td><td>Sí</td><td>No orientado al mercado español: soporte, idioma, fiscalidad</td></tr>
+<tr><td>Epos Now (RU / ES)</td><td>Sin precio público en España; cotización personalizada (en EE. UU., 39 $/mes o 449 $ por 12 meses)</td><td>Complemento de su tienda de aplicaciones</td><td>Sí</td><td>Paquete con hardware y permanencia; precio opaco</td></tr>
+<tr><td>Last.app (ES)</td><td>Starter 50 €, Growth 95 €, Unlimited 175 €/mes con pago anual, más 500 € de alta (Last.app, 2026)</td><td>Sí: 35 €/mes por local, en ningún plan</td><td>Sí</td><td>Alta de 500 € y KDS de pago antes de vender nada</td></tr>
+<tr><td>Ordatic (ES)</td><td>39 €/mes (300 pedidos) a 149 €/mes sin límite (comparadores, 2026)</td><td>No es TPV: integrador de reparto</td><td>Sí</td><td>Resuelve solo el reparto</td></tr>
+<tr class="destacada"><td>Este proyecto</td><td>Sin licencia: coste de implantación (3.480 € para un local de 13 mesas y cuatro pantallas) y mantenimiento estimado de 400 €/año</td><td>No: cada pantalla es una página web</td><td>No: servidor en el local</td><td>Sin soporte comercial ni conformidad con Verifactu</td></tr>
+</tbody></table>
+<p class="tnota"><i>Nota.</i> Las cifras en dólares son del mercado estadounidense. Cuando la fuente es un comparador y no el fabricante se indica, porque los comparadores no siempre actualizan tarifas. Elaboración propia con datos consultados entre el 21 y el 24 de septiembre de 2026.</p>
+</div>
+<p>Tres patrones se repiten con independencia del fabricante. Primero, la unidad de facturación es el terminal o la pantalla. Segundo, el KDS casi nunca está incluido: de trece productos, solo Loyverse lo regala, y a cambio los datos salen del local. Tercero, el precio no es público en cinco de los doce productos comerciales, lo que sitúa al comprador pequeño en inferioridad al negociar.</p>
+
+<h2 id="s4-4">4.4. Análisis funcional por observación directa</h2>
+<p>Las tarifas no muestran cómo se comporta un producto en cocina. Por eso se han estudiado seis demostraciones reales, elegidas para cubrir las tres capas del mercado y un caso ajeno al TPV que ataca el mismo problema desde otro instrumento (tabla 6).</p>
+<div class="tabla" id="t6">
+<p class="tcap"><b>Tabla 6.</b> <i>Demostraciones analizadas: ficha de las fuentes primarias</i></p>
+<table class="compacta">
+<thead><tr><th style="width:14%">Producto</th><th style="width:24%">Vídeo y canal</th><th style="width:11%">Fecha</th><th style="width:9%">Duración</th><th style="width:16%">Tipo de captura</th><th>Qué aporta al estudio</th></tr></thead>
+<tbody>
+<tr><td>STARPOS</td><td>«KDS desde punto de venta Windows», Capacitación y asesorías Mys inventarios</td><td>3/9/2026</td><td>2 min 51 s</td><td>Cámara apuntando al monitor (0 % de fotogramas repetidos)</td><td>KDS empotrado en un TPV Windows; contador sin aviso de color</td></tr>
+<tr><td>TMBill</td><td>«Kitchen Display System — KDS &amp; Token Management System», TMBill</td><td>3/3/2023</td><td>15 min 18 s</td><td>Captura de pantalla (95 %)</td><td>Ecosistema completo: camarero móvil, autopedido, KDS Windows y Android</td></tr>
+<tr><td>Loyverse</td><td>«Curso Loyverse TPV GRATIS, parte 5», Bytechip Soluciones Tecnológicas</td><td>21/5/2023</td><td>7 min 27 s</td><td>Captura de pantalla (90 %)</td><td>El KDS tratado como una impresora más; emparejamiento por IP</td></tr>
+<tr><td>Epos Now</td><td>«Comandas en KDS (Kitchen Display System)», Epos Now ES</td><td>10/10/2025</td><td>47 s</td><td>Captura de pantalla (86 %), sin voz</td><td>El instante en que la comanda pasa del TPV a la cocina</td></tr>
+<tr><td>Revel Systems</td><td>«Revel's Kitchen Display System (KDS)», Mac4U IT Services</td><td>26/9/2018</td><td>52 s</td><td>Mixto (38 %)</td><td>Pantalla real del KDS y ficha de producto del <i>back office</i></td></tr>
+<tr><td>Kibsi</td><td>«Restaurant Computer Vision AI», Kibsi</td><td>28/10/2022</td><td>36 s</td><td>Mixto (31,8 %), sin voz</td><td>Visión por computador aplicada a la sala; no es un TPV</td></tr>
+</tbody></table>
+<p class="tnota"><i>Nota.</i> El porcentaje de fotogramas prácticamente idénticos al anterior distingue una captura de pantalla por software (más del 90 %) de una grabación con cámara (cerca del 0 %) y de un montaje mixto. Elaboración propia; método en el anexo II.</p>
+</div>
+<h3>STARPOS: el KDS dentro del TPV</h3>
+<p>El KDS de STARPOS es una opción del menú del propio TPV Windows: muestra las comandas en tres columnas por estado (generadas, en preparación, despachadas) con botones de iniciar y despachar por producto o por comanda, y un filtro por fechas. Dos observaciones. La primera es estructural: ver las comandas exige un equipo Windows con el punto de venta instalado, no un cliente ligero, así que cada estación de cocina es otra licencia y otro equipo. La segunda es visible en su propia demostración: una comanda marca 360 minutos en el contador sin ningún aviso de color; un número así ya no informa. De ahí nacen los umbrales de aviso del proyecto (amarillo a los 8 minutos, rojo a los 15). Su filtro por fechas dentro de la pantalla de cocina, en cambio, es un acierto que merece copiarse.</p>
+<h3>TMBill: el ecosistema completo</h3>
+<p>TMBill vende un ecosistema: aplicación de camarero en el móvil, autopedido del cliente, pedidos digitales y KDS en Windows y en Android, con la carta mostrando el tiempo de preparación previsto por producto. Su valor no está en la pantalla de cocina sino en que la comanda puede entrar por cuatro caminos y todos acaban en la misma cola. La demostración dedica nueve de sus quince minutos a instalar y configurar, lo que confirma por contraste la ventaja de un KDS que es una dirección web. De este análisis salieron dos piezas que el proyecto añadió después: la versión móvil del TPV para el camarero y la carta del cliente en su propio teléfono tras el código QR de la mesa.</p>
+<h3>Loyverse: el KDS como impresora</h3>
+<p>Loyverse, el TPV gratuito más extendido en la hostelería pequeña, toma una decisión de diseño que ningún otro producto analizado adopta: el KDS no se configura en un apartado de cocina sino en «Impresoras», como un destino de impresión más al que se asignan categorías de producto. Eso simplifica el encaminamiento (cocina ve la comida, barra vería las bebidas) sin código nuevo. Su punto débil también es visible: el emparejamiento se hace tecleando la dirección IP de la tableta, y el propio presentador se equivoca y pierde un minuto sin entender por qué no conecta. Un KDS que es una página web evita ese problema de raíz. La pantalla del cliente, donde el propio cliente teclea su correo para recibir el recibo, es una idea trasladable a la carta web del proyecto.</p>
+<h3>Epos Now: el instante de la comanda</h3>
+<p>El vídeo de Epos Now, de 47 segundos y sin narración, enseña la pantalla partida en dos: TPV a la derecha y KDS a la izquierda. Al pulsar «pedir» la comanda aparece en cocina antes de que el camarero levante el dedo, con una casilla por línea de producto, un cronómetro que arranca en la tarjeta y la hora de entrada. De aquí salen tres confirmaciones de diseño: enviar a cocina es un acto distinto de cobrar; la unidad de trabajo es la línea, no la comanda; y el estado de reposo también comunica («no hay comandas» con una marca, que distingue «todo servido» de «la pantalla se ha colgado»). Un detalle menor pero revelador: su TPV está en español y su KDS sigue en inglés, síntoma de un producto grande traducido a medias.</p>
+<h3>Revel Systems: la ficha del producto decide la cocina</h3>
+<p>El vídeo de Revel es publicidad de un TPV para iPad, pero contiene dos fotogramas valiosos. El primero es la pantalla real del KDS con tres comandas en tres estados: cronómetro por comanda, estado por línea y un botón de cierre que solo se activa cuando todas las líneas están completas, de modo que no se puede dar por servida una comanda a la que le falta algo. El segundo es la ficha de producto del <i>back office</i>, donde se configura el nombre corto para cocina, el color y la estación destino. La lección es que el encaminamiento a estaciones se decide en el dato del producto, no en la pantalla de cocina; el modelo de datos del proyecto lo hace así.</p>
+<h3>Kibsi: la mesa como fuente de datos</h3>
+<p>Kibsi no vende un TPV sino una plataforma de visión por computador, y su demostración aplicada a un restaurante ataca el mismo problema desde el otro lado: en vez de que el camarero teclee, una cámara del techo deduce el estado de cada mesa y cronometra la visita entera en seis tramos (espera de mesa, saludo, comanda, comida, sobremesa, pago). Lo que se aprovecha son las preguntas de su panel, no el instrumento: el proyecto ya guardaba cuatro de esos seis tramos como marcas de tiempo, y a partir de este análisis añadió la pantalla «Sala en vivo», con ocupación y alertas por cliente que espera y no solo por plato que tarda. La visión por computador en sí se descartó por coste, calibración y datos personales de clientes filmados.</p>
+<p>La tabla 7 sintetiza las funciones observadas y las contrasta con el sistema desarrollado.</p>
+<div class="tabla" id="t7">
+<p class="tcap"><b>Tabla 7.</b> <i>Matriz funcional comparativa de los productos observados y el sistema desarrollado</i></p>
+<table class="compacta">
+<thead><tr><th style="width:24%">Función</th><th class="c">STARPOS</th><th class="c">TMBill</th><th class="c">Loyverse</th><th class="c">Epos Now</th><th class="c">Revel</th><th class="c">Este proyecto</th></tr></thead>
+<tbody>
+<tr><td>Encaminamiento por estación de cocina</td><td class="c">No (una pantalla)</td><td class="c">Sí</td><td class="c">Por categorías</td><td class="c">Sí</td><td class="c">Por producto</td><td class="c">Sí, por producto</td></tr>
+<tr><td>Cronómetro por comanda y aviso por color</td><td class="c">Contador sin color</td><td class="c">Verde y rojo</td><td class="c">Cronómetro</td><td class="c">Cronómetro</td><td class="c">Cronómetro</td><td class="c">8 y 15 min</td></tr>
+<tr><td>Estado por línea de producto</td><td class="c">Sí</td><td class="c">No obs.</td><td class="c">Tachado</td><td class="c">Casilla</td><td class="c">Sí</td><td class="c">Sí</td></tr>
+<tr><td>Deshacer un estado</td><td class="c">No obs.</td><td class="c">No obs.</td><td class="c">No obs.</td><td class="c"><i>Recall</i></td><td class="c">No obs.</td><td class="c">Sí</td></tr>
+<tr><td>Pedido del cliente desde su móvil (QR)</td><td class="c">No</td><td class="c">Sí</td><td class="c">No</td><td class="c">No obs.</td><td class="c">No obs.</td><td class="c">Sí, con aceptación del camarero</td></tr>
+<tr><td>TPV del camarero en el móvil</td><td class="c">Tableta</td><td class="c">Sí</td><td class="c">Móvil</td><td class="c">No obs.</td><td class="c">iPad</td><td class="c">Sí</td></tr>
+<tr><td>Trabajo sin red en el TPV</td><td class="c">No obs.</td><td class="c">No obs.</td><td class="c">No obs.</td><td class="c">No obs.</td><td class="c">Estaciones caídas visibles</td><td class="c">Sí, con reenvío sin duplicados</td></tr>
+<tr><td>Sistema operativo exigido en cocina</td><td class="c">Windows</td><td class="c">Windows o Android</td><td class="c">Android</td><td class="c">Propio</td><td class="c">iOS</td><td class="c">Cualquier navegador</td></tr>
+<tr><td>Coste de la pantalla adicional</td><td class="c">Licencia y equipo</td><td class="c">Aplicación</td><td class="c">Gratuito</td><td class="c">Complemento</td><td class="c">Licencia</td><td class="c">Solo la pantalla</td></tr>
+</tbody></table>
+<p class="tnota"><i>Nota.</i> «No obs.» significa que la función no aparece en la demostración analizada, no que el producto carezca de ella. Elaboración propia a partir de los seis análisis de producto.</p>
+</div>
+
+<h2 id="s4-5">4.5. El coste comparado y la grieta del mercado</h2>
+<p>El patrón de cobrar por pantalla no es casual: el KDS es el único componente del sistema que se multiplica de forma natural. Un local tiene una caja y quizá dos comanderos, pero puede tener cuatro, cinco o seis pantallas si su cocina está bien dividida en estaciones. Cobrar por pantalla convierte una buena práctica de organización en un coste creciente y penaliza justo la conducta que el propio producto dice fomentar: el local acaba juntando dos estaciones en una sola pantalla, con menos claridad y más errores. La decisión técnica la toma la factura, no la cocina.</p>
+<p>La tabla 8 y la figura 2 comparan el coste a cinco años para el local de referencia de la memoria (13 mesas, dos terminales de sala y cuatro pantallas de cocina).</p>
+<div class="tabla" id="t8">
+<p class="tcap"><b>Tabla 8.</b> <i>Coste comparado a cinco años para un local de 13 mesas con dos terminales y cuatro pantallas de cocina</i></p>
+<table>
+<thead><tr><th style="width:40%">Solución</th><th style="width:20%">Año 1</th><th style="width:20%">Años 2 a 5</th><th class="num">Total a 5 años</th></tr></thead>
+<tbody>
+<tr class="destacada"><td>Este proyecto (autoalojado)</td><td>3.480 €</td><td>400 €/año</td><td class="num">5.080 €</td></tr>
+<tr><td>TPV con licencia perpetua (seis puestos)</td><td>≈ 3.000 € más hardware</td><td>≈ 600 €/año</td><td class="num">≈ 7.000 €</td></tr>
+<tr><td>TPV por suscripción (dos terminales y cuatro KDS)</td><td>≈ 1.500 € de hardware más 2.880 €/año</td><td>2.880 €/año</td><td class="num">≈ 15.900 €</td></tr>
+</tbody></table>
+<p class="tnota"><i>Nota.</i> Estimación de la memoria del proyecto a partir de las tarifas de la tabla 5 (Riches Manuel y Roca, 2026a). El presupuesto de implantación incluye servidor, tabletas, pantallas, red, SAI y 80 horas de desarrollo e implantación.</p>
+</div>
+<div class="figura" id="f2">
+<p class="fcap"><b>Figura 2.</b> <i>Coste total a cinco años de las tres soluciones para el local de referencia</i></p>
+<svg class="viz" viewBox="0 0 600 250" width="600" height="250" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Coste a cinco años: este proyecto 5.080 euros, licencia perpetua unos 7.000, suscripción unos 15.900">
+  <!-- escala: 0..16000 € en 180 px (y = 200 - v/16000*180); rejilla cada 4.000 -->
+  <line class="rej" x1="80" y1="155" x2="580" y2="155"/><text class="eje-txt" x="72" y="159" text-anchor="end">4.000 €</text>
+  <line class="rej" x1="80" y1="110" x2="580" y2="110"/><text class="eje-txt" x="72" y="114" text-anchor="end">8.000 €</text>
+  <line class="rej" x1="80" y1="65" x2="580" y2="65"/><text class="eje-txt" x="72" y="69" text-anchor="end">12.000 €</text>
+  <line class="rej" x1="80" y1="20" x2="580" y2="20"/><text class="eje-txt" x="72" y="24" text-anchor="end">16.000 €</text>
+  <line class="eje" x1="80" y1="200" x2="580" y2="200"/>
+  <!-- columnas de 24 px, extremo redondeado arriba y recto en la base -->
+  <path class="barra" d="M148,200 V146.9 a4,4 0 0 1 4,-4 h16 a4,4 0 0 1 4,4 V200 Z"/>
+  <text class="val" x="160" y="136" text-anchor="middle">5.080 €</text>
+  <text class="etq" x="160" y="222" text-anchor="middle">Este proyecto</text>
+  <path class="barra-gris" d="M318,200 V125.3 a4,4 0 0 1 4,-4 h16 a4,4 0 0 1 4,4 V200 Z"/>
+  <text class="val" x="330" y="114" text-anchor="middle">≈ 7.000 €</text>
+  <text class="etq" x="330" y="222" text-anchor="middle">Licencia perpetua</text>
+  <path class="barra-gris" d="M488,200 V25.1 a4,4 0 0 1 4,-4 h16 a4,4 0 0 1 4,4 V200 Z"/>
+  <text class="val" x="500" y="14" text-anchor="middle">≈ 15.900 €</text>
+  <text class="etq" x="500" y="222" text-anchor="middle">Suscripción</text>
+</svg>
+<p class="fnota"><i>Nota.</i> Datos de la tabla 8. Se resalta la solución del proyecto; las otras dos se muestran en gris para facilitar la comparación. Elaboración propia.</p>
+</div>
+<p>El ahorro no está en el software, que en todos los casos acaba siendo barato, sino en no pagar por pantalla. Tres consecuencias se siguen de la arquitectura elegida. La pantalla adicional deja de tener licencia: cuesta lo que cuesta la pantalla, 180 euros con soporte en el presupuesto de la memoria, pago único. Los datos se quedan dentro del local, lo que no exime de cumplir el RGPD pero elimina un encargado del tratamiento de la cadena. Y el sistema operativo deja de importar: sirve una tableta vieja, un portátil reutilizado o un mini PC con una pantalla de segunda mano, sin nada que instalar ni actualizar en las pantallas.</p>
+
+<h2 id="s4-6">4.6. Posicionamiento del proyecto frente a la competencia</h2>
+<p>El proyecto no compite en funciones, porque el mercado está cubierto en lo básico: comanda, estados, despacho, cobro y factura. Compite en una afirmación estructural, demostrable con la tabla 8: en un local pequeño, el número de pantallas de cocina debería ser una decisión de cocina y no de tesorería. Su propuesta de valor se resume en tres puntos: sin cuota por terminal, datos dentro del local y hardware libre.</p>
+<p>Con la misma franqueza hay que enumerar lo que falta para que sea un producto y no un proyecto: conformidad con el RD 1007/2023, integración de pagos y de plataformas de reparto, gestión multilocal y, sobre todo, alguien que dé soporte con un tiempo de respuesta comprometido. El mercado compra soporte tanto como software, y en ese terreno los competidores consolidados tienen distribución capilar y el proyecto tiene a su autor.</p>
+
+<!-- ---------------- 5. Clientes potenciales ---------------- -->
+<h1 id="s5">5. Clientes potenciales</h1>
+<h2 id="s5-1">5.1. Perfil del comprador</h2>
+<p>El comprador de un TPV en la hostelería independiente es el propietario o el encargado del local, que decide solo, sin departamento de sistemas ni proceso de compra formal. Compra cuando algo le duele: una inspección, un descuadre de caja, un servicio de viernes en que la cocina se desbordó, o un cambio de normativa que le obliga. Juzga por lo que ahorra y por el miedo a que falle en hora punta, y valora la cercanía de quien lo instala más que la marca. Es un comprador sensible al coste recurrente, porque el 93 % de los establecimientos son independientes y su margen se estrecha (apartado 3.1).</p>
+<h2 id="s5-2">5.2. Segmentación por tipo de local</h2>
+<p>No todos los locales pequeños tienen el mismo problema. La segmentación de la tabla 9 es elaboración propia a partir del flujo de trabajo observado y del funcionamiento de los productos analizados; no procede de un estudio con muestra estadística.</p>
+<div class="tabla" id="t9">
+<p class="tcap"><b>Tabla 9.</b> <i>Segmentos de la restauración pequeña y necesidad dominante</i></p>
+<table>
+<thead><tr><th style="width:20%">Segmento</th><th style="width:27%">Servicio</th><th style="width:28%">Qué necesita</th><th>Valor del KDS</th></tr></thead>
+<tbody>
+<tr><td>Bar de barrio</td><td>Barra, rotación alta, tique bajo, cocina mínima</td><td>Cobrar rápido, dividir cuentas, cerrar caja sin descuadres</td><td>Bajo o medio: basta una pantalla de pase; el valor está en el TPV</td></tr>
+<tr><td>Hamburguesería y comida rápida</td><td>Picos cortos y densos, cocina por estaciones, mucho «para llevar»</td><td>Que cada línea llegue a su estación y el retraso se vea</td><td>Alto: caso canónico y el del proyecto</td></tr>
+<tr><td>Arrocería y restaurante de mantel</td><td>Pocas comandas, cocciones largas y desiguales</td><td>Sincronizar el pase para que los platos salgan a la vez</td><td>Alto, con otra lógica: importa el pase, no la velocidad</td></tr>
+<tr><td>Cafetería</td><td>Mostrador, producto preelaborado</td><td>Cobro ágil y control de caja</td><td>Bajo: una pantalla de recogida aporta más</td></tr>
+<tr><td><i>Dark kitchen</i></td><td>Sin sala; pedidos de plataformas</td><td>Agregar varias plataformas en una cola de producción</td><td>Muy alto, pero la pieza crítica es la integración, que el proyecto no cubre</td></tr>
+<tr><td>Cantina y comedor colectivo</td><td>Servicio concentrado en una franja; menú cerrado; clientela fija</td><td>Ritmo de salida y tablón de recogida; sin necesidad de reparto</td><td>Alto: sin plataformas ni pagos integrados, es el segmento que el sistema cubre entero</td></tr>
+</tbody></table>
+<p class="tnota"><i>Nota.</i> Elaboración propia (2026). El valor del KDS crece con el número de estaciones y con la densidad del pico de servicio.</p>
+</div>
+<p>El valor del KDS crece con el número de estaciones de cocina y con la densidad del pico de servicio. Por eso acierta el proyecto al elegir como caso una hamburguesería de cuatro estaciones, donde la diferencia entre papel y pantalla es máxima, y por eso debe reconocer que en una cafetería de mostrador aporta poco. El segmento de cantinas y comedores colectivos, añadido a raíz de la demostración del proyecto (ambientada en una cantina), merece atención por una razón práctica: es el único en el que ninguna de las carencias del sistema (reparto, pagos integrados, multilocal) pesa en la decisión.</p>
+<h2 id="s5-3">5.3. Target y early adopter</h2>
+<p><b>Target.</b> Locales de restauración de uno a tres establecimientos, con 10 a 40 mesas y cocina dividida en estaciones, que ya usan un TPV para cobrar pero llevan la cocina a voces o con comandero de papel. Ticket medio entre 12 y 35 euros; plantilla de 3 a 10 personas; propietario que decide.</p>
+<p><b>Early adopter.</b> El local con dueño joven y perfil técnico, que ya usa tabletas para otras cosas, ha probado un TPV gratuito en la nube y ha tropezado con sus límites (histórico de pago, datos fuera, cuota por empleado), y acepta un sistema autoalojado a cambio de no pagar cuota por pantalla. Tolera un producto sin soporte 24 horas porque entiende lo que tiene entre manos y valora poder leer el código.</p>
+<p><b>Quien no es cliente.</b> La cadena con departamento de sistemas (compra Simphony o Revo con distribuidor), la <i>dark kitchen</i> que vive de tres plataformas de reparto (necesita la integración que el proyecto no tiene) y el bar de barra sin cocina (el TPV gratuito le basta).</p>
+<h2 id="s5-4">5.4. Dimensionamiento del mercado</h2>
+<p>La tabla 10 reduce el mercado en tres niveles, del universo al alcance realista de una persona. Solo el primer nivel está verificado en fuentes; los otros dos son hipótesis explícitas cuyo único valor es hacer discutible el número.</p>
+<div class="tabla" id="t10">
+<p class="tcap"><b>Tabla 10.</b> <i>Dimensionamiento del mercado: del universo al alcance realista</i></p>
+<table>
+<thead><tr><th style="width:22%">Nivel</th><th style="width:22%">Cifra</th><th>Cómo se obtiene y qué fiabilidad tiene</th></tr></thead>
+<tbody>
+<tr><td>Mercado total (España)</td><td class="num">280.403 establecimientos</td><td>Verificado: UVE Data Market Horeca 2025 (Profesional Horeca, 2025)</td></tr>
+<tr><td>Mercado total (Comunitat Valenciana / provincia de València)</td><td class="num">31.186 / 13.698</td><td>Verificado: Anuario 2024 (El Periòdic, 2025)</td></tr>
+<tr><td>Mercado accesible: locales de la provincia con cocina por estaciones y entre 10 y 40 mesas</td><td class="num">≈ 3.000 a 4.000</td><td><b>Hipótesis</b>: entre el 22 % y el 29 % de los 13.698. No existe fuente primaria; se toma como referencia la proporción de locales con tres o más estaciones del censo simulado (apartado 5.5), que es un dato construido, no observado</td></tr>
+<tr><td>Alcance realista en el primer año</td><td class="num">8 a 12 implantaciones</td><td><b>Hipótesis</b>: una persona a tiempo parcial; cada implantación consume unas 80 horas (presupuesto de la memoria), más soporte de los ya instalados</td></tr>
+</tbody></table>
+<p class="tnota"><i>Nota.</i> Elaboración propia. Las dos últimas filas no son previsiones sino supuestos de trabajo, y se presentan para que el tribunal pueda discutirlos.</p>
+</div>
+<h2 id="s5-5">5.5. Censo simulado de cien locales de València</h2>
+<p>Para pasar de los segmentos a candidatos concretos se ha generado un censo de cien locales ficticios repartidos por dieciocho barrios reales de València, con semilla fija para que las cifras sean reproducibles. Cada local lleva inmueble (superficie, plantas, mesas, terraza), cocina (estaciones, pase, potencia, cámara), servicio (comandas en hora punta, tique medio, «para llevar», plataformas) y, deducido de todo ello, el equipamiento que necesitaría y una puntuación de encaje con el sistema. Ninguna cifra de hardware se sortea: se calcula con reglas explícitas (anexo I), porque un presupuesto sorteado no se puede defender ante un cliente ni ante un tribunal. La figura 3 muestra el mapa interactivo que acompaña al proyecto.</p>
+<div class="figura" id="f3">
+<p class="fcap"><b>Figura 3.</b> <i>Mapa de mercado simulado: cien locales ficticios en la ciudad de València</i></p>
+<img src="__IMG_MAPA__" alt="Captura del mapa interactivo con cien marcadores de colores sobre el plano de València y un panel de totales">
+<p class="fnota"><i>Nota.</i> Captura de <i>mapa_mercado.html</i> (Riches Manuel y Roca, 2026b). Cada marcador es un local ficticio coloreado por tipo; el panel lateral suma el hardware necesario y compara el coste anual de licencias. Cartografía base de OpenStreetMap. Todos los establecimientos son inventados.</p>
+</div>
+<p>La puntuación de encaje (0 a 100) premia lo que hace valioso al sistema frente a la competencia: número total de terminales (porque es el multiplicador del coste ajeno), número de estaciones, volumen en hora punta, trabajo con plataformas de reparto, existencia de pase y modelo de <i>dark kitchen</i>; penaliza el volumen bajo y la cocina sin sitio para más de una pantalla. La tabla 11 resume el censo por tipo de local y la figura 4 ordena los tipos por encaje medio.</p>
+<div class="tabla" id="t11">
+<p class="tcap"><b>Tabla 11.</b> <i>Censo simulado por tipo de local: equipamiento deducido y encaje medio</i></p>
+<table class="compacta">
+<thead><tr><th style="width:17%">Tipo de local</th><th class="num">Locales</th><th class="num">Estaciones</th><th class="num">Pantallas de cocina</th><th class="num">Puestos de TPV</th><th class="num">Comandas en punta</th><th class="num">Tique medio</th><th class="num">Implantación</th><th class="num">Encaje</th></tr></thead>
+<tbody>
+<tr><td>Bar de barrio</td><td class="num">24</td><td class="num">3,5</td><td class="num">2,8</td><td class="num">2,8</td><td class="num">52</td><td class="num">13,6 €</td><td class="num">4.098 €</td><td class="num">75,4</td></tr>
+<tr><td>Gastrobar</td><td class="num">14</td><td class="num">3,9</td><td class="num">3,9</td><td class="num">3,2</td><td class="num">120</td><td class="num">33,9 €</td><td class="num">5.859 €</td><td class="num">86,4</td></tr>
+<tr><td>Pizzería</td><td class="num">12</td><td class="num">3,0</td><td class="num">3,2</td><td class="num">2,9</td><td class="num">84</td><td class="num">19,7 €</td><td class="num">4.974 €</td><td class="num">82,0</td></tr>
+<tr><td>Hamburguesería</td><td class="num">10</td><td class="num">3,2</td><td class="num">2,8</td><td class="num">2,5</td><td class="num">64</td><td class="num">15,6 €</td><td class="num">4.028 €</td><td class="num">73,2</td></tr>
+<tr><td>Asiático</td><td class="num">10</td><td class="num">3,4</td><td class="num">3,2</td><td class="num">2,7</td><td class="num">86</td><td class="num">20,5 €</td><td class="num">4.836 €</td><td class="num">79,0</td></tr>
+<tr><td>Cafetería</td><td class="num">9</td><td class="num">3,1</td><td class="num">2,3</td><td class="num">2,9</td><td class="num">49</td><td class="num">10,1 €</td><td class="num">3.962 €</td><td class="num">66,6</td></tr>
+<tr><td>Arrocería</td><td class="num">8</td><td class="num">3,3</td><td class="num">3,5</td><td class="num">3,2</td><td class="num">134</td><td class="num">30,1 €</td><td class="num">5.895 €</td><td class="num">86,8</td></tr>
+<tr><td>Taberna</td><td class="num">7</td><td class="num">3,3</td><td class="num">2,7</td><td class="num">2,7</td><td class="num">59</td><td class="num">18,6 €</td><td class="num">3.884 €</td><td class="num">71,6</td></tr>
+<tr><td><i>Dark kitchen</i></td><td class="num">6</td><td class="num">3,7</td><td class="num">3,2</td><td class="num">2,3</td><td class="num">53</td><td class="num">13,0 €</td><td class="num">3.640 €</td><td class="num">89,3</td></tr>
+<tr class="destacada"><td>Total o media</td><td class="num">100</td><td class="num">3,41</td><td class="num">3,06 (306)</td><td class="num">2,85 (285)</td><td class="num">77</td><td class="num">—</td><td class="num">4.606 € (460.560 €)</td><td class="num">78,6</td></tr>
+</tbody></table>
+<p class="tnota"><i>Nota.</i> Todas las columnas numéricas salvo «Locales» son medias por local. Datos ficticios generados con <i>generar_locales.py</i> (semilla 2026). Entre paréntesis, la suma de los cien locales. El coste de implantación es hardware y una jornada de instalación, a precios de catálogo genérico de 2026, y se paga una sola vez. Elaboración propia.</p>
+</div>
+<div class="figura" id="f4">
+<p class="fcap"><b>Figura 4.</b> <i>Encaje medio del sistema por tipo de local en el censo simulado</i></p>
+<svg class="viz" viewBox="0 0 600 310" width="600" height="310" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Barras horizontales del encaje medio por tipo de local, de 89,3 en dark kitchen a 66,6 en cafetería">
+  <!-- escala: 0..100 en 400 px desde x=150 -->
+  <line class="rej" x1="150" y1="10" x2="150" y2="280"/><line class="rej" x1="250" y1="10" x2="250" y2="280"/>
+  <line class="rej" x1="350" y1="10" x2="350" y2="280"/><line class="rej" x1="450" y1="10" x2="450" y2="280"/><line class="rej" x1="550" y1="10" x2="550" y2="280"/>
+  <line class="eje" x1="150" y1="280" x2="550" y2="280"/>
+  <text class="eje-txt" x="150" y="295" text-anchor="middle">0</text><text class="eje-txt" x="250" y="295" text-anchor="middle">25</text>
+  <text class="eje-txt" x="350" y="295" text-anchor="middle">50</text><text class="eje-txt" x="450" y="295" text-anchor="middle">75</text><text class="eje-txt" x="550" y="295" text-anchor="middle">100</text>
+  <!-- filas de 30 px; barra de 16 px con extremo redondeado -->
+  <text class="etq" x="140" y="29" text-anchor="end">Dark kitchen</text><path class="barra" d="M150,17 h353.2 a4,4 0 0 1 4,4 v8 a4,4 0 0 1 -4,4 H150 Z"/>
+  <text class="etq" x="140" y="59" text-anchor="end">Arrocería</text><path class="barra" d="M150,47 h343.2 a4,4 0 0 1 4,4 v8 a4,4 0 0 1 -4,4 H150 Z"/>
+  <text class="etq" x="140" y="89" text-anchor="end">Gastrobar</text><path class="barra" d="M150,77 h341.6 a4,4 0 0 1 4,4 v8 a4,4 0 0 1 -4,4 H150 Z"/>
+  <text class="etq" x="140" y="119" text-anchor="end">Pizzería</text><path class="barra" d="M150,107 h324.0 a4,4 0 0 1 4,4 v8 a4,4 0 0 1 -4,4 H150 Z"/>
+  <text class="etq" x="140" y="149" text-anchor="end">Asiático</text><path class="barra" d="M150,137 h312.0 a4,4 0 0 1 4,4 v8 a4,4 0 0 1 -4,4 H150 Z"/>
+  <text class="etq" x="140" y="179" text-anchor="end">Bar de barrio</text><path class="barra" d="M150,167 h297.6 a4,4 0 0 1 4,4 v8 a4,4 0 0 1 -4,4 H150 Z"/>
+  <text class="etq" x="140" y="209" text-anchor="end">Hamburguesería</text><path class="barra" d="M150,197 h288.8 a4,4 0 0 1 4,4 v8 a4,4 0 0 1 -4,4 H150 Z"/>
+  <text class="etq" x="140" y="239" text-anchor="end">Taberna</text><path class="barra" d="M150,227 h282.4 a4,4 0 0 1 4,4 v8 a4,4 0 0 1 -4,4 H150 Z"/>
+  <text class="etq" x="140" y="269" text-anchor="end">Cafetería</text><path class="barra" d="M150,257 h262.4 a4,4 0 0 1 4,4 v8 a4,4 0 0 1 -4,4 H150 Z"/>
+  <!-- valores en el extremo -->
+  <text class="val" x="513" y="29">89,3</text><text class="val" x="503" y="59">86,8</text><text class="val" x="502" y="89">86,4</text>
+  <text class="val" x="484" y="119">82,0</text><text class="val" x="472" y="149">79,0</text><text class="val" x="458" y="179">75,4</text>
+  <text class="val" x="449" y="209">73,2</text><text class="val" x="442" y="239">71,6</text><text class="val" x="422" y="269">66,6</text>
+</svg>
+<p class="fnota"><i>Nota.</i> Encaje de 0 a 100 según las reglas del anexo I; media de los locales de cada tipo en el censo simulado (datos ficticios). Elaboración propia.</p>
+</div>
+<p>Tres resultados del censo son relevantes para la estrategia comercial. Primero, el 86 % de los locales necesita cinco o más terminales entre pantallas y puestos de TPV, y ahí es donde la licencia por terminal de la competencia se vuelve cara: sumados los cien locales salen 591 terminales, que a una cuota media de 240 euros por terminal y año suponen 141.840 euros anuales, frente a 46.800 euros con una licencia por local de 468 euros; la diferencia, 95.040 euros al año, es el argumento comercial del proyecto. Segundo, el encaje es alto (70 o más) en 72 locales, medio en 25 y bajo en 3, lo que indica que el filtro debe ser de prioridad, no de exclusión. Tercero, el tipo de local ordena mejor que el barrio: la diferencia entre <i>dark kitchen</i> (89,3) y cafetería (66,6) es de 23 puntos, mientras que entre barrios la dispersión se explica por la mezcla de tipos que toca a cada uno.</p>
+<div class="tabla" id="t12">
+<p class="tcap"><b>Tabla 12.</b> <i>Los diez locales ficticios con mayor encaje del censo simulado</i></p>
+<table class="compacta">
+<thead><tr><th style="width:24%">Local (ficticio)</th><th style="width:13%">Tipo</th><th style="width:13%">Barrio</th><th class="num">Estaciones</th><th class="num">Pantallas</th><th class="num">TPV</th><th class="num">Punta</th><th class="num">Implantación</th><th class="num">Encaje</th></tr></thead>
+<tbody>
+<tr><td>Gastrobar Fusta Nou</td><td>Gastrobar</td><td>Jesús</td><td class="num">5</td><td class="num">5</td><td class="num">4</td><td class="num">117</td><td class="num">7.250 €</td><td class="num">100</td></tr>
+<tr><td>Cuina Garbí de Baix</td><td><i>Dark kitchen</i></td><td>Benicalap</td><td class="num">5</td><td class="num">4</td><td class="num">2</td><td class="num">59</td><td class="num">3.760 €</td><td class="num">100</td></tr>
+<tr><td>Cuina Manesa 21</td><td><i>Dark kitchen</i></td><td>Patraix</td><td class="num">3</td><td class="num">4</td><td class="num">2</td><td class="num">70</td><td class="num">3.760 €</td><td class="num">100</td></tr>
+<tr><td>Obrador Carnestoltes Nou</td><td><i>Dark kitchen</i></td><td>Algirós</td><td class="num">4</td><td class="num">3</td><td class="num">3</td><td class="num">49</td><td class="num">4.030 €</td><td class="num">100</td></tr>
+<tr><td>Cuina Bufanda Nou</td><td><i>Dark kitchen</i></td><td>Benimaclet</td><td class="num">5</td><td class="num">4</td><td class="num">2</td><td class="num">62</td><td class="num">3.760 €</td><td class="num">98</td></tr>
+<tr><td>Forn Regalèssia Petit</td><td>Pizzería</td><td>Algirós</td><td class="num">4</td><td class="num">4</td><td class="num">2</td><td class="num">77</td><td class="num">5.030 €</td><td class="num">98</td></tr>
+<tr><td>Arrosseria Cresol &amp; Co.</td><td>Arrocería</td><td>Campanar</td><td class="num">4</td><td class="num">4</td><td class="num">5</td><td class="num">123</td><td class="num">7.780 €</td><td class="num">98</td></tr>
+<tr><td>Bodega Andana de Baix</td><td>Taberna</td><td>L'Olivereta</td><td class="num">4</td><td class="num">4</td><td class="num">3</td><td class="num">80</td><td class="num">4.710 €</td><td class="num">98</td></tr>
+<tr><td>Gastrobar Perolet Vell</td><td>Gastrobar</td><td>La Saïdia</td><td class="num">4</td><td class="num">4</td><td class="num">3</td><td class="num">112</td><td class="num">5.600 €</td><td class="num">98</td></tr>
+<tr><td>Cafè Xaloc 21</td><td>Cafetería</td><td>Benimaclet</td><td class="num">4</td><td class="num">4</td><td class="num">4</td><td class="num">78</td><td class="num">5.660 €</td><td class="num">98</td></tr>
+</tbody></table>
+<p class="tnota"><i>Nota.</i> Todos los nombres son inventados y se construyeron combinando piezas que no coinciden con ninguna marca existente; cualquier parecido con un negocio real es casualidad. «Punta»: comandas en la hora punta. Datos de <i>locales.json</i> (Riches Manuel y Roca, 2026b). Elaboración propia.</p>
+</div>
+<p>La lista tiene un aviso incorporado: las cuatro <i>dark kitchen</i> que encabezan el censo puntúan alto porque el algoritmo premia el trabajo con plataformas de reparto, pero ese es precisamente el segmento en que el proyecto carece de la integración decisiva (apartado 5.2). En una campaña real habría que aplicar la corrección de la tabla 13 antes de llamar a nadie.</p>
+<h2 id="s5-6">5.6. Criterios de priorización comercial</h2>
+<div class="tabla" id="t13">
+<p class="tcap"><b>Tabla 13.</b> <i>Criterios de priorización comercial y orden de aproximación a los segmentos</i></p>
+<table>
+<thead><tr><th style="width:26%">Criterio</th><th style="width:36%">Por qué</th><th>Orden de aproximación resultante</th></tr></thead>
+<tbody>
+<tr><td>Cinco o más terminales entre pantallas y TPV</td><td>Es donde la licencia por terminal de la competencia duele y el ahorro se demuestra con una factura</td><td rowspan="5">1.º Gastrobares y arrocerías con pase (encaje 86, tique alto, volumen alto).<br>2.º Pizzerías y restaurantes asiáticos (cocina por estaciones, volumen medio-alto).<br>3.º Hamburgueserías y bares de barrio con cocina (el volumen del mercado).<br>4.º Cantinas y comedores colectivos (sin carencias que pesen).<br>5.º Cafeterías (solo con pantalla de recogida).<br>Excluidas hasta tener integración de reparto: <i>dark kitchens</i>.</td></tr>
+<tr><td>Cuatro o más estaciones de cocina</td><td>El encaminamiento por estación es lo que sustituye al papel; con dos estaciones no hay nada que encaminar</td></tr>
+<tr><td>Setenta o más comandas en hora punta</td><td>Por debajo de 25 el local se apaña con comanda de voz; por encima de 70 el tiempo por plato se nota en caja</td></tr>
+<tr><td>Existencia de pase</td><td>La pantalla de pase, que ve el pedido entero mientras las estaciones ven su parte, es la función más diferencial</td></tr>
+<tr><td>Sin dependencia de plataformas de reparto</td><td>Corrige el sesgo del censo: sin integración, el local de reparto no puede adoptar el sistema</td></tr>
+</tbody></table>
+<p class="tnota"><i>Nota.</i> Elaboración propia a partir de las reglas de encaje del anexo I y de las carencias reconocidas en el apartado 4.6.</p>
+</div>
+<p>En cuanto a los canales de llegada, el comprador descrito en el apartado 5.1 no busca software en internet: se lo recomienda quien le vende el género o quien le instaló la red. Por eso los canales realistas para un producto sin fuerza comercial son tres: la instalación de referencia visitable (un local que funcione y enseñe el sistema en servicio), el instalador de redes o de TPV de proximidad que quiera ofrecer una alternativa sin cuota, y las asociaciones sectoriales y mayoristas del canal Horeca, que reúnen al cliente objetivo y organizan jornadas de digitalización. Una cuarta vía, adecuada a un proyecto nacido en un centro educativo, es la cantina del propio centro como piloto: cumple el perfil del segmento sexto de la tabla 9 y permite medir el sistema con usuarios reales sin riesgo comercial.</p>
+<h2 id="s5-7">5.7. Ecosistema: proveedores y aliados del cliente</h2>
+<p>Un TPV se apoya en cuatro cadenas de suministro del local, y conocerlas importa porque condicionan decisiones técnicas y porque son también vías de llegada al cliente (tabla 14).</p>
+<div class="tabla" id="t14">
+<p class="tcap"><b>Tabla 14.</b> <i>Ecosistema del cliente: proveedores del sector y su relación con el sistema</i></p>
+<table>
+<thead><tr><th style="width:16%">Cadena</th><th style="width:34%">Actores principales en España</th><th>Relación con el sistema desarrollado</th></tr></thead>
+<tbody>
+<tr><td>Alimentación</td><td>Makro (37 centros; líder por superficie en la Comunitat Valenciana), GM Cash / Transgourmet (74 centros, más de 200.000 clientes), Bidfood</td><td>Indirecta pero real: el albarán del proveedor es la entrada natural del escandallo y del control de existencias, ya iniciado en el módulo de almacén</td></tr>
+<tr><td>Hardware</td><td>Epson y Star Micronics (impresoras de tiques), Elo (pantallas táctiles), Sunmi (terminales Android)</td><td>El sistema no depende de la impresora: el tique se dibuja en pantalla y se descarga, lo que elimina el controlador como punto de fallo y como atadura de marca</td></tr>
+<tr><td>Pagos</td><td>Redsys (pasarela de la banca), SumUp (datáfono sin cuota), Stripe y Adyen (adquirentes de las plataformas que integran el pago)</td><td>El sistema registra el método de pago pero no procesa el cobro: limitación deliberada y garantía de independencia frente al modelo de comisión</td></tr>
+<tr><td>Reparto</td><td>Glovo, Uber Eats, Just Eat</td><td>No integrado. Es el límite de mercado más claro: decisivo para la <i>dark kitchen</i>, irrelevante para el bar de barrio</td></tr>
+</tbody></table>
+<p class="tnota"><i>Nota.</i> Datos de Makro y GM Cash según Inforetail (2025) y GM Cash (2026); el número de plataformas logísticas de Bidfood en España no ha podido verificarse. Elaboración propia.</p>
+</div>
+
+<!-- ---------------- 6. DAFO ---------------- -->
+<h1 id="s6">6. DAFO y CAME frente al mercado</h1>
+<p>La matriz DAFO de la memoria mira al local simulado. La de la tabla 15 mira al mercado descrito en este documento, y la tabla 16 convierte cada cuadrante en una acción comercial.</p>
+<div class="tabla" id="t15">
+<p class="tcap"><b>Tabla 15.</b> <i>Matriz DAFO del proyecto frente al mercado</i></p>
+<table>
+<thead><tr><th style="width:12%"></th><th style="width:44%">Favorable</th><th>Desfavorable</th></tr></thead>
+<tbody>
+<tr><td><b>Interno</b></td><td><b>Fortalezas.</b> El número de pantallas no es variable de coste, justo donde el mercado cobra. Funciona en cualquier navegador: no impone sistema operativo ni marca. Los datos no salen del local, lo que simplifica la cadena del RGPD. Código auditable</td><td><b>Debilidades.</b> No cumple aún el RD 1007/2023, el requisito que decidirá compras en 2027 y 2028. No integra pagos ni plataformas de reparto. No hay soporte ni red comercial, y el mercado compra soporte tanto como software</td></tr>
+<tr><td><b>Externo</b></td><td><b>Oportunidades.</b> Dos oleadas normativas obligan a renovar antes de julio de 2027. El 93 % de establecimientos independientes es sensible al coste recurrente. El hardware táctil barato abarata la pantalla adicional</td><td><b>Amenazas.</b> Competidores consolidados con distribución capilar. Modelos gratuitos como Loyverse neutralizan la ventaja de precio. Concentración en suites que incluyen pagos y reparto</td></tr>
+</tbody></table>
+<p class="tnota"><i>Nota.</i> Elaboración propia. Conviene no maquillar la coincidencia entre una debilidad y una oportunidad: la misma normativa que abre el mercado es la que el sistema todavía no cumple.</p>
+</div>
+<div class="tabla" id="t16">
+<p class="tcap"><b>Tabla 16.</b> <i>Estrategia CAME comercial</i></p>
+<table>
+<thead><tr><th style="width:22%">Estrategia</th><th>Acción concreta</th></tr></thead>
+<tbody>
+<tr><td><b>Corregir</b> (debilidades)</td><td>Priorizar la adaptación a Verifactu (huella encadenada y firma) sobre cualquier función nueva; ofrecer un contrato de soporte con horario y tiempo de respuesta definidos, aunque sea de una persona</td></tr>
+<tr><td><b>Afrontar</b> (amenazas)</td><td>No competir con Loyverse en precio sino en propiedad del dato y en histórico sin cuota; no competir con Simphony en funciones sino en tamaño de cliente</td></tr>
+<tr><td><b>Mantener</b> (fortalezas)</td><td>Conservar la arquitectura web sin instalación en las pantallas y el servidor en el local; documentar el ahorro por terminal con la factura de cada cliente instalado</td></tr>
+<tr><td><b>Explotar</b> (oportunidades)</td><td>Dirigirse primero a gastrobares, arrocerías y cantinas; usar el calendario de Verifactu como motivo de contacto en el primer semestre de 2027</td></tr>
+</tbody></table>
+<p class="tnota"><i>Nota.</i> Elaboración propia.</p>
+</div>
+
+<!-- ---------------- 7. Conclusiones ---------------- -->
+<h1 id="s7">7. Conclusiones</h1>
+<p>Sobre la competencia, el estudio concluye que el mercado está cubierto en funcionalidad y que ningún producto revisado hace algo que el sistema desarrollado no haga en lo esencial de la cocina: comanda, estados, encaminamiento y cronómetro. La diferencia está en el modelo de precio, no en la función. Doce de los trece productos cobran por terminal o por pantalla, o regalan el KDS a cambio de los datos, y el líder mundial confirma el patrón con una arquitectura que exige un equipo Windows por cocina. Ese patrón penaliza precisamente al local que más se beneficia de un KDS, el que divide su cocina en estaciones, y ahí está el hueco.</p>
+<p>Sobre los clientes, el estudio concluye que el comprador es el propietario de un local independiente sin departamento de sistemas, y que el valor del sistema crece con el número de estaciones y con la densidad del pico de servicio. El censo simulado, con todas las cautelas de un dato construido, ordena los segmentos de forma consistente con esa regla: gastrobares, arrocerías, pizzerías y asiáticos primero; bares y hamburgueserías como volumen; cafeterías al final; y las <i>dark kitchen</i> excluidas mientras falte la integración con el reparto. El segmento de cantinas y comedores colectivos, poco visible en el mercado, es el único en el que ninguna carencia del sistema pesa.</p>
+<p>Sobre la viabilidad, el documento deja dicho con la misma franqueza lo que separa al proyecto de un producto: conformidad con el RD 1007/2023, integración de pagos y reparto, y alguien que dé soporte. Ninguna de las tres es un obstáculo técnico; son trabajo, y la primera tiene fecha: julio de 2027.</p>
+<h2 id="s7-1">7.1. Limitaciones del estudio</h2>
+<p>No se ha podido verificar, y por tanto no se afirma: el porcentaje de establecimientos de restauración con menos de diez empleados en fuente primaria del INE; el desglose sectorial de la encuesta TIC para la hostelería pequeña; el precio en euros de Lightspeed y de Epos Now para España; el coste separado del KDS de Square; la tarifa oficial de Revo XEF, Cuiner, Camarero10 y TMBill; el número de plataformas logísticas de Bidfood; y cualquier cifra sobre el porcentaje de comandas erróneas en hostelería. El censo de locales es simulado y no sustituye al trabajo de campo; el dimensionamiento del mercado accesible es una hipótesis. Cuatro de las seis demostraciones se analizaron sin conservar la dirección del vídeo en el repositorio, por tratarse de contenido de terceros, y se citan por título, canal y fecha.</p>
+
+<!-- ---------------- 8. Referencias ---------------- -->
+<h1 id="s8">8. Referencias bibliográficas</h1>
+<p>Formato APA, 7.ª edición, con sangría francesa. Enlaces consultados entre el 21 y el 24 de septiembre de 2026.</p>
+<p class="ref">Ágora TPV. (2026). <i>Precios de software TPV y suscripciones</i>. https://www.agorapos.com/pricing/</p>
+<p class="ref">Bytechip Soluciones Tecnológicas. (2023, 21 de mayo). <i>Curso Loyverse TPV GRATIS, parte 5: configurando el visor y la impresora de cocina digital</i> [Vídeo]. YouTube.</p>
+<p class="ref">Capacitación y asesorías Mys inventarios. (2026, 3 de septiembre). <i>KDS desde punto de venta Windows</i> [Vídeo]. YouTube.</p>
+<p class="ref">El Independiente. (2026, 21 de mayo). <i>La digitalización silenciosa impulsa el uso del software TPV en la hostelería española</i>. https://www.elindependiente.com/eli/2026/05/21/la-digitalizacion-silenciosa-impulsa-el-uso-del-software-tpv-en-la-hosteleria-espanola/</p>
+<p class="ref">El Periòdic. (2025, 27 de mayo). <i>Un bar cada 174 valencianos: la Comunitat Valenciana, tercera con más bares y restaurantes</i>. https://www.elperiodic.com/cada-valencianos-comunitat-valenciana-tercera-bares-restaurantes_1018629</p>
+<p class="ref">Epos Now ES. (2025, 10 de octubre). <i>Comandas en KDS (Kitchen Display System)</i> [Vídeo]. YouTube.</p>
+<p class="ref">Garrido Abogados. (2026). <i>Real Decreto 238/2026: se aprueba el desarrollo reglamentario de la factura electrónica</i>. https://garrido.es/real-decreto-238-2026-aprueba-el-desarrollo-reglamentario-de-la-factura-electronica/</p>
+<p class="ref">Garrigues. (2025, diciembre). <i>Se retrasa la entrada en vigor de Veri*factu</i>. https://www.garrigues.com/es_ES/noticia/retrasa-entrada-vigor-verifactu</p>
+<p class="ref">GM Cash / Transgourmet Ibérica. (2026). <i>Quiénes somos</i>. https://www.gmcash.es/quienes-somos/</p>
+<p class="ref">Hosteltur. (2026, 5 de enero). <i>La hostelería alcanza los 1,89 millones de empleados en 2025 pero ve amenazada su rentabilidad</i>. https://www.hosteltur.com/173449_la-hosteleria-alcanza-los-189-millones-de-empleados-en-2025-pero-ve-amenazada-su-rentabilidad.html</p>
+<p class="ref">IES Conselleria. (2025). <i>Guía para la elaboración del módulo: Proyecto intermodular de 2.º curso. CCFF grado medio y superior LFP 2025-2026</i>. Documento interno del centro.</p>
+<p class="ref">Inforetail. (2025). <i>Makro y GM Cash lideran el cash &amp; carry en tres comunidades autónomas</i>. https://www.revistainforetail.com/</p>
+<p class="ref">Instituto Nacional de Estadística. (2025a, 11 de diciembre). <i>Directorio Central de Empresas (DIRCE). Datos a 1 de enero de 2025</i> [Nota de prensa]. https://www.ine.es/dyngs/Prensa/DIRCE2025.htm</p>
+<p class="ref">Instituto Nacional de Estadística. (2025b). <i>Encuesta sobre el uso de TIC y del comercio electrónico en las empresas. Año 2024 – primer trimestre de 2025</i> [Nota de prensa]. https://www.ine.es/dyngs/Prensa/ETICCE20241T2025.htm</p>
+<p class="ref">Kibsi. (2022, 28 de octubre). <i>Restaurant Computer Vision AI</i> [Vídeo]. YouTube. https://www.youtube.com/watch?v=i_mL3LT0lDg</p>
+<p class="ref">Last.app. (2026). <i>Un precio para cada restaurante</i>. https://www.last.app/precios</p>
+<p class="ref">Loman. (2026). <i>Micros pricing</i>. https://loman.ai/blog/micros-pricing</p>
+<p class="ref">Loyverse. (2026). <i>Precios</i>. https://loyverse.com/es/pricing</p>
+<p class="ref">Mac4U IT Services. (2018, 26 de septiembre). <i>Revel's Kitchen Display System (KDS)</i> [Vídeo]. YouTube. https://www.youtube.com/watch?v=5vVwk86Gasg</p>
+<p class="ref">Macrotrends. (2026). <i>Oracle revenue 2010-2026</i>. https://www.macrotrends.net/stocks/charts/ORCL/oracle/revenue</p>
+<p class="ref">Makro España. (2026). <i>Cash and carry</i>. https://www.makro.es/compra-como-quieras/cash-and-carry</p>
+<p class="ref">Oracle. (2014, 23 de junio). <i>Oracle buys MICROS Systems</i> [Nota de prensa]. https://www.oracle.com/corporate/pressrelease/oracle-buys-micros-systems-062314.html</p>
+<p class="ref">Oracle. (2026a). <i>Form 10-K for the fiscal year ended May 31, 2026</i>. U.S. Securities and Exchange Commission. https://www.sec.gov/Archives/edgar/data/0001341439/000119312526277521/orcl-20260531.htm</p>
+<p class="ref">Oracle. (2026b). <i>Kitchen Display System Controller</i>. Simphony documentation. https://docs.oracle.com/en/industries/food-beverage/simphony/simcm/t_shared_services_overview_kdsc.htm</p>
+<p class="ref">Oracle. (2026c). <i>Kitchen display systems</i>. https://www.oracle.com/food-beverage/restaurant-pos-systems/kds-kitchen-display-systems/</p>
+<p class="ref">Profesional Horeca. (2025, junio). <i>La hostelería en España en 2025: 280.400 establecimientos, transformación y consolidación</i>. https://www.profesionalhoreca.com/la-hosteleria-en-espana-en-2025-280-400-establecimientos-transformacion-y-consolidacion/</p>
+<p class="ref">Riches Manuel y Roca. (2026a). <i>Sistema KDS + TPV para hostelería: memoria del proyecto</i> [Documento del repositorio, docs/MEMORIA.md]. Proyecto Intermodular I, IES Conselleria.</p>
+<p class="ref">Riches Manuel y Roca. (2026b). <i>Informe de mercado y análisis de producto</i> [Documentos del repositorio: docs/INFORME_MERCADO.md, docs/ANALISIS_KDS_*.md y docs/mercado/]. Proyecto Intermodular I, IES Conselleria.</p>
+<p class="ref">Square. (2026). <i>Precios de Square en España</i>. https://squareup.com/es/es/pricing</p>
+<p class="ref">TMBill. (2023, 3 de marzo). <i>Kitchen Display System — KDS &amp; Token Management System for Restaurants, Café &amp; QSR</i> [Vídeo]. YouTube.</p>
+<p class="ref">TPV Hostelería. (2026). <i>Camarero10: reseñas y opiniones</i>. https://tpvhosteleria.org/camarero10/</p>
+<p class="ref">TrustRadius. (2026). <i>Oracle Simphony pricing</i>. https://www.trustradius.com/products/oracle-simphony/pricing</p>
+<p class="ref">UpMenu. (2026). <i>Lightspeed POS pricing for restaurants: fees and hidden costs</i>. https://www.upmenu.com/blog/lightspeed-pos-pricing/</p>
+<p class="ref">VentaTPV. (2026). <i>Software Glop TPV: precios, versiones y características</i>. https://ventatpv.com/content/34-tpv-glop</p>
+<h2 id="s8-1">8.1. Normativa consultada</h2>
+<p class="ref">Ley 11/2021, de 9 de julio, de medidas de prevención y lucha contra el fraude fiscal. <i>BOE</i>, 164. https://www.boe.es/buscar/act.php?id=BOE-A-2021-11473</p>
+<p class="ref">Ley 18/2022, de 28 de septiembre, de creación y crecimiento de empresas. <i>BOE</i>, 234. https://www.boe.es/buscar/act.php?id=BOE-A-2022-15818</p>
+<p class="ref">Ley Orgánica 3/2018, de 5 de diciembre, de Protección de Datos Personales y garantía de los derechos digitales. <i>BOE</i>, 294. https://www.boe.es/buscar/act.php?id=BOE-A-2018-16673</p>
+<p class="ref">Real Decreto 126/2015, de 27 de febrero, por el que se aprueba la norma general relativa a la información alimentaria de los alimentos que se presenten sin envasar. <i>BOE</i>, 54. https://www.boe.es/buscar/act.php?id=BOE-A-2015-2293</p>
+<p class="ref">Real Decreto 238/2026, de 31 de marzo, por el que se desarrolla la factura electrónica entre empresarios y profesionales. <i>BOE</i>.</p>
+<p class="ref">Real Decreto 1007/2023, de 5 de diciembre, por el que se aprueba el Reglamento de requisitos de los sistemas informáticos de facturación. <i>BOE</i>, 291. https://www.boe.es/buscar/act.php?id=BOE-A-2023-24840</p>
+<p class="ref">Real Decreto-ley 15/2025, de 2 de diciembre, por el que se aplaza la entrada en vigor de los requisitos de los sistemas informáticos de facturación. <i>BOE</i>, 3 de diciembre de 2025.</p>
+<p class="ref">Reglamento (UE) n.º 1169/2011 del Parlamento Europeo y del Consejo, de 25 de octubre de 2011, sobre la información alimentaria facilitada al consumidor. <i>DOUE</i>, L 304. https://eur-lex.europa.eu/legal-content/ES/TXT/?uri=CELEX%3A32011R1169</p>
+<p class="ref">Reglamento (UE) 2016/679 del Parlamento Europeo y del Consejo, de 27 de abril de 2016, relativo a la protección de las personas físicas en lo que respecta al tratamiento de datos personales (RGPD). <i>DOUE</i>, L 119. https://eur-lex.europa.eu/legal-content/ES/TXT/?uri=CELEX%3A32016R0679</p>
+
+<!-- ---------------- Anexos ---------------- -->
+<div class="salto"></div>
+<h1 id="a1">Anexo I. Reglas de cálculo del censo simulado</h1>
+<p>El generador del censo (<i>generar_locales.py</i>, semilla 2026) sortea únicamente las características del inmueble, de la cocina y del servicio dentro de rangos plausibles por tipo de local. El equipamiento y la puntuación de encaje se deducen con las reglas siguientes, transcritas del propio programa.</p>
+<h3>Equipamiento</h3>
+<ul>
+<li><b>Pantallas de cocina:</b> una por cada dos estaciones contiguas, porque el cocinero levanta la vista y no camina; una más a partir de 60 comandas en hora punta, porque dos personas miran a la vez; y una más si hay pase, porque quien monta los platos ve el pedido completo mientras las estaciones ven su parte.</li>
+<li><b>Puestos de TPV:</b> uno por cada 18 mesas atendidas (interior y terraza), más uno propio para la barra y otro si hay «para llevar», porque esos cobros no pueden esperar al camarero de sala.</li>
+<li><b>Tabletas de camarero:</b> una por cada 12 mesas; por debajo de 8 mesas se comanda desde el TPV fijo.</li>
+<li><b>Impresoras:</b> una de tiques siempre, más una de cocina solo si no hay pantalla que cubra todas las estaciones o si se trabaja con plataformas de reparto (la etiqueta del repartidor se imprime).</li>
+<li><b>Red:</b> cableada cuando hay tabletas y más de una planta o más de 160 m²; en el resto, wifi.</li>
+<li><b>Coste de implantación:</b> 420 € por pantalla táctil con soporte, 690 € por puesto de TPV con cajón y periféricos, 260 € por tableta, 180 € por impresora, 140 € por punto de red cableado (o 90 € de wifi) y 250 € de jornada de instalación y formación. Precios de catálogo genérico de 2026, redondeados a la decena.</li>
+</ul>
+<h3>Puntuación de encaje (0 a 100)</h3>
+<ul>
+<li>Hasta 40 puntos por terminales totales (7 por terminal), porque son el multiplicador del coste de la competencia.</li>
+<li>5 puntos por estación de cocina.</li>
+<li>18 puntos con 70 o más comandas en punta; 11 con 40 o más; −12 con menos de 25.</li>
+<li>12 puntos si trabaja con plataformas de reparto; 8 si tiene pase; 10 si es <i>dark kitchen</i>.</li>
+<li>−8 puntos si la cocina tiene menos de 18 m², por falta de sitio para más de una pantalla.</li>
+</ul>
+<p>Los totales del censo son 306 pantallas de cocina, 285 puestos de TPV, 135 tabletas y 184 impresoras, con un coste de implantación agregado de 460.560 euros. El mapa compara además dos modelos de licencia sobre los 591 terminales: 240 euros por terminal y año (141.840 euros) frente a 468 euros por local y año (46.800 euros).</p>
+
+<h1 id="a2">Anexo II. Método de análisis de las demostraciones</h1>
+<p>Los seis vídeos se han tratado con la misma cadena, sin cambiar parámetros entre análisis para que los resultados sean comparables:</p>
+<ol>
+<li><b>Descarga</b> con <i>yt-dlp</i> desde un equipo dedicado, para no agotar la cuota de consultas a la plataforma desde el equipo de trabajo.</li>
+<li><b>Fotogramas</b> a 10 por segundo con <i>ffmpeg</i>, escalados a 960 píxeles de ancho; entre 360 y 9.175 imágenes por vídeo.</li>
+<li><b>Audio</b> extraído a WAV mono de 16 kHz y <b>transcripción</b> con <i>faster-whisper</i> (modelo <i>medium</i>) en la GPU del equipo de trabajo, con la opción de transcripción multilingüe activada; sin ella el modelo traduce en lugar de transcribir, lo que se comprobó en el vídeo en hindi de TMBill.</li>
+<li><b>Fotogramas clave:</b> diferencia media entre imágenes consecutivas; los picos marcan los momentos en que la pantalla cambia. Entre 10 y 24 fotogramas por vídeo, revisados a mano.</li>
+<li><b>Caracterización previa:</b> el porcentaje de fotogramas prácticamente idénticos al anterior distingue una captura de pantalla (más del 90 %) de una grabación con cámara (cerca del 0 %) y de un montaje mixto (30 a 40 %), y dice de antemano cuántos fotogramas conviene mirar.</li>
+</ol>
+<p>Dos comprobaciones de método merecen constancia. En los vídeos sin voz (Epos Now y Kibsi) la transcripción devolvió cero segmentos; antes de darlo por bueno se midió el nivel de audio (había señal) y se repitió sin filtro de voz (el modelo devolvió solo el símbolo de nota musical). En los vídeos mixtos, los picos de diferencia apuntan a transiciones y fundidos, no a pantallas nuevas, por lo que hay que mirar más fotogramas de los que propone el algoritmo.</p>
+
+</div><!-- /fuente -->
+
+<div id="documento"></div>
+<div id="aviso-pantalla">Vista previa paginada · Ctrl+P para imprimir en PDF (A4, márgenes 0, gráficos de fondo)</div>
+
+<script>
+(function () {
+  const AUTOR = 'Riches Manuel y Roca';
+  const CABECERA = '__IMG_CABECERA__';
+  const fuente = document.getElementById('fuente');
+  const doc = document.getElementById('documento');
+  const paginas = [];
+
+  function nuevaPagina(tipo) {
+    const pg = document.createElement('div');
+    pg.className = 'pagina' + (tipo === 'portada' ? ' portada' : '');
+    pg.innerHTML = '<div class="cabecera"><img src="' + CABECERA + '" alt="Conselleria d\'Educació, IES Conselleria, fondos europeos"></div>' +
+                   '<div class="cuerpo"></div><div class="pie"><span>' + AUTOR + '</span><span class="numpag"></span></div>';
+    doc.appendChild(pg);
+    paginas.push(pg);
+    return pg.querySelector('.cuerpo');
+  }
+  function desborda(c) { return c.scrollHeight > c.clientHeight + 0.5; }
+  function esTitulo(el) { return el && /^H[123]$/.test(el.tagName); }
+
+  // Divide un párrafo por palabras: devuelve [parte1, parte2] o null si no compensa
+  function partirParrafo(p, cont) {
+    const palabras = p.innerHTML.split(/(\s+)/);          // conserva separadores
+    const tokens = palabras.filter(t => t.length);
+    if (tokens.length < 40) return null;
+    const prueba = p.cloneNode(false);
+    cont.appendChild(prueba);
+    let lo = 0, hi = tokens.length;                        // buscamos el mayor n que cabe
+    while (lo < hi) {
+      const mid = Math.ceil((lo + hi) / 2);
+      prueba.innerHTML = tokens.slice(0, mid).join('');
+      if (desborda(cont)) hi = mid - 1; else lo = mid;
+    }
+    cont.removeChild(prueba);
+    // cortar en un límite de palabra que no rompa etiquetas: retroceder hasta un espacio fuera de < >
+    let n = lo;
+    while (n > 0 && /[<>]/.test(tokens[n - 1])) n--;
+    const a = tokens.slice(0, n).join('').trim(), b = tokens.slice(n).join('').trim();
+    if (a.length < 160 || b.length < 100) return null;     // menos de ~2 líneas a un lado: no partir
+    if ((a.match(/</g) || []).length !== (a.match(/>/g) || []).length) return null; // etiqueta abierta
+    const p1 = p.cloneNode(false), p2 = p.cloneNode(false);
+    p1.innerHTML = a; p2.innerHTML = b; p2.classList.add('continuacion');
+    return [p1, p2];
+  }
+
+  // Divide un bloque de tabla por filas: devuelve [parte1, parte2] o null
+  function partirTabla(bloque, cont) {
+    const tabla = bloque.querySelector('table');
+    const tbody = tabla && tabla.querySelector('tbody');
+    if (!tbody) return null;
+    const filas = Array.from(tbody.rows);
+    if (filas.length < 4) return null;
+    const resto = bloque.cloneNode(true);                  // segunda parte, misma estructura
+    const cap = resto.querySelector('.tcap');
+    if (cap && !/continuación/.test(cap.textContent)) cap.innerHTML = cap.innerHTML.replace(/<\/b>/, '</b> (continuación)');
+    const rtbody = resto.querySelector('tbody');
+    const nota = bloque.querySelector('.tnota');
+    cont.appendChild(bloque);
+    const altoTabla = bloque.offsetHeight, altoPagina = cont.clientHeight;
+    if (nota) nota.style.display = 'none';                 // la nota va con la última parte
+    let quitadas = [];
+    while (desborda(cont) && tbody.rows.length > 3) {
+      quitadas.unshift(tbody.rows[tbody.rows.length - 1]);
+      tbody.deleteRow(tbody.rows.length - 1);
+    }
+    // Solo compensa partir una tabla larga (más de media página) o cuando se queda la mayor parte:
+    // una tabla corta partida en dos deja tres filas huérfanas y un hueco en la página siguiente.
+    const quedan = tbody.rows.length, total = quedan + quitadas.length;
+    // Se parte solo si a cada lado quedan al menos tres filas; si no, la tabla entera pasa de página
+    // (salvo que no quepa entera en una página, en cuyo caso no hay más remedio que partirla).
+    const cabeEnPagina = altoTabla <= altoPagina * 0.97;
+    const compensa = (quedan >= 3 && quitadas.length >= 3) || !cabeEnPagina;
+    if (desborda(cont) || quitadas.length === 0 || !compensa) {   // deshacer
+      quitadas.forEach(r => tbody.appendChild(r));
+      if (nota) nota.style.display = '';
+      cont.removeChild(bloque);
+      return null;
+    }
+    rtbody.innerHTML = '';
+    quitadas.forEach(r => rtbody.appendChild(r));
+    cont.removeChild(bloque);
+    if (nota) nota.remove();                               // la nota ya está clonada en `resto`
+    return [bloque, resto];
+  }
+
+  // Divide una lista por elementos
+  function partirLista(lista, cont) {
+    const items = Array.from(lista.children);
+    if (items.length < 3) return null;
+    cont.appendChild(lista);
+    const quitados = [];
+    while (desborda(cont) && lista.children.length > 1) {
+      quitados.unshift(lista.lastElementChild); lista.removeChild(lista.lastElementChild);
+    }
+    if (desborda(cont) || quitados.length === 0) { quitados.forEach(i => lista.appendChild(i)); cont.removeChild(lista); return null; }
+    const resto = lista.cloneNode(false); quitados.forEach(i => resto.appendChild(i));
+    if (lista.tagName === 'OL') resto.setAttribute('start', String(lista.children.length + 1));
+    cont.removeChild(lista);
+    return [lista, resto];
+  }
+
+  function esFlotante(el) { return el && (el.classList.contains('tabla') || el.classList.contains('figura')); }
+  // Lo que puede rellenar el hueco de un flotante aplazado: texto y títulos de subapartado.
+  // Un título de apartado (h1) no: la tabla de un apartado no debe aparecer dentro del siguiente.
+  function esTexto(el) { return el && (el.tagName === 'P' || el.tagName === 'UL' || el.tagName === 'OL' || el.tagName === 'H2' || el.tagName === 'H3') && !el.classList.contains('salto'); }
+
+  // Tablas y figuras se comportan como flotantes (como en LaTeX): si no caben en el hueco que queda,
+  // el texto que las sigue rellena la página y ellas abren la siguiente. Así no quedan medias páginas
+  // en blanco. Solo se aplaza un flotante a la vez, para conservar el orden de numeración.
+  function paginar() {
+    const cola = Array.from(fuente.children);
+    let cont = null;
+    const flotantes = [];                                  // aplazados, en orden de numeración
+    function paginaNueva(tipo) {
+      cont = nuevaPagina(tipo);
+      // se colocan los aplazados que quepan, siempre en orden; el primero entra aunque no quepa
+      while (flotantes.length) {
+        cont.appendChild(flotantes[0]);
+        if (desborda(cont) && cont.childElementCount > 1) { cont.removeChild(flotantes[0]); break; }
+        flotantes.shift();
+      }
+    }
+    while (cola.length) {
+      const b = cola.shift();
+      if (b.classList.contains('salto')) {
+        while (flotantes.length) paginaNueva();            // los pendientes van antes del salto
+        cont = nuevaPagina(b.dataset.tipo);
+        continue;
+      }
+      if (!cont) paginaNueva();
+      if (flotantes.length && esFlotante(b)) { flotantes.push(b); continue; }        // se respeta el orden
+      if (flotantes.length && !esTexto(b)) { cola.unshift(b); paginaNueva(); continue; } // h1: se vacía la cola
+      cont.appendChild(b);
+      if (!desborda(cont)) continue;
+      cont.removeChild(b);
+      const solo = cont.childElementCount === 0;
+      let partes = null;
+      if (b.tagName === 'P') partes = partirParrafo(b, cont);
+      else if (b.classList.contains('tabla')) partes = partirTabla(b, cont);
+      else if (b.tagName === 'UL' || b.tagName === 'OL') partes = partirLista(b, cont);
+      if (partes) { cont.appendChild(partes[0]); cola.unshift(partes[1]); continue; }
+      if (solo) { cont.appendChild(b); continue; }         // no cabe ni partido: se fuerza (no debería ocurrir)
+      // ¿aplazar el flotante? Solo si queda un hueco apreciable y lo que sigue es texto que puede rellenarlo
+      const ultimo = cont.lastElementChild;
+      const hueco = cont.clientHeight - (ultimo ? ultimo.offsetTop + ultimo.offsetHeight : 0);
+      if (esFlotante(b) && hueco > cont.clientHeight * 0.18 && esTexto(cola[0])) {
+        flotantes.push(b);
+        continue;
+      }
+      // pasa a la página siguiente, arrastrando títulos huérfanos al final de la actual
+      const arrastre = [];
+      while (cont.lastElementChild && esTitulo(cont.lastElementChild)) arrastre.unshift(cont.removeChild(cont.lastElementChild));
+      paginaNueva();
+      arrastre.forEach(t => cont.appendChild(t));
+      cola.unshift(b);
+    }
+    while (flotantes.length) paginaNueva();
+    paginas.forEach((pg, i) => { pg.querySelector('.numpag').textContent = String(i + 1); });
+  }
+
+  function paginaDe(el) { const pg = el.closest('.pagina'); return pg ? paginas.indexOf(pg) + 1 : 0; }
+
+  function entrada(nivel, texto, num) {
+    return '<div class="entrada ' + nivel + '"><span class="txt">' + texto + '</span><span class="puntos"></span><span class="pag">' + num + '</span></div>';
+  }
+  function rellenarIndices(previo) {
+    const ig = document.getElementById('indice-general');
+    const it = document.getElementById('indice-tablas');
+    const ifi = document.getElementById('indice-figuras');
+    let g = '', t = '', f = '';
+    const raiz = previo ? fuente : doc;
+    raiz.querySelectorAll('h1, h2').forEach(h => {
+      if (h.dataset.sinIndice) return;
+      g += entrada(h.tagName === 'H1' ? 'n1' : 'n2', h.textContent, previo ? '00' : paginaDe(h));
+    });
+    raiz.querySelectorAll('.tabla > .tcap').forEach(c => {
+      if (/continuación/.test(c.textContent)) return;
+      t += entrada('n1', c.textContent.replace(/\s+/g, ' ').trim(), previo ? '00' : paginaDe(c));
+    });
+    raiz.querySelectorAll('.figura > .fcap').forEach(c => {
+      f += entrada('n1', c.textContent.replace(/\s+/g, ' ').trim(), previo ? '00' : paginaDe(c));
+    });
+    ig.innerHTML = g; it.innerHTML = t; ifi.innerHTML = f;
+  }
+
+  function construir() {
+    rellenarIndices(true);        // con números provisionales para reservar el espacio
+    paginar();
+    rellenarIndices(false);       // los índices ya están dentro de páginas: se rellenan in situ
+    document.body.dataset.paginas = String(paginas.length);
+    const m = /[?&]pagina=(\d+)/.exec(location.search);     // ?pagina=N: enseña solo esa página (capturas de revisión)
+    if (m) {
+      paginas.forEach((pg, i) => { if (i + 1 !== +m[1]) pg.style.display = 'none'; else pg.style.margin = '0'; });
+      document.body.style.background = '#fff';
+      document.getElementById('aviso-pantalla').style.display = 'none';
+    }
+    if (/[?&]print=1/.test(location.search)) setTimeout(() => window.print(), 1200);
+  }
+  if (document.readyState === 'complete') construir(); else window.addEventListener('load', construir);
+})();
+</script>
+</body>
+</html>
