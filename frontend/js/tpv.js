@@ -350,6 +350,72 @@ function elegirMetodo(m) {
   metodoCobro = m;
   $('#c-metodos').querySelectorAll('[data-m]').forEach(b => b.className = b.dataset.m === m ? 'primario' : '');
   $('#c-efectivo').hidden = m !== 'efectivo';
+  pintarTarjeta(m === 'tarjeta');
+}
+
+// ── La tarjeta 3D del cobro ──────────────────────────────────────────────────────────────
+// Efecto de «3D card» de robin-dela (CodePen), rehecho con código propio: se inclina siguiendo
+// al puntero y el brillo la cruza al revés.
+//
+// Los datos son INVENTADOS en cada cobro y la tarjeta lleva su sello de «simulación». Este TPV
+// no lee tarjetas, no las guarda y no habla con ninguna pasarela: solo apunta que se pagó con
+// una. Pintar aquí algo con pinta de tarjeta real haría creer que el sistema tiene los datos
+// del cliente, y no los tiene ni debe tenerlos.
+const TITULARES = ['A. NAVARRO', 'J. SEGURA', 'M. ITURBE', 'L. CAMPOS', 'R. VILLENA', 'T. ARANDA'];
+const MARCAS = ['VESTA PAY', 'ORBITAL', 'CINTURÓN'];
+const alAzar = a => a[Math.floor(Math.random() * a.length)];
+
+function datosInventados() {
+  const ultimos = String(Math.floor(Math.random() * 10000)).padStart(4, '0');
+  const mes = String(1 + Math.floor(Math.random() * 12)).padStart(2, '0');
+  const anyo = String(new Date().getFullYear() % 100 + 1 + Math.floor(Math.random() * 4));
+  return { ultimos, caduca: `${mes}/${anyo}`, titular: alAzar(TITULARES), marca: alAzar(MARCAS) };
+}
+
+function pintarTarjeta(visible) {
+  const caja = $('#c-tarjeta');
+  if (!caja) return;
+  caja.hidden = !visible;
+  if (!visible) { caja.innerHTML = ''; return; }
+  const d = datosInventados();
+  caja.innerHTML = `
+    <div class="tarjeta3d" id="la-tarjeta">
+      <span class="falsa">simulación</span>
+      <span class="chip"></span>
+      <div class="pan">•••• •••• •••• ${d.ultimos}</div>
+      <div class="pie">
+        <span><small>Titular</small><b>${esc(d.titular)}</b></span>
+        <span><small>Caduca</small><b>${d.caduca}</b></span>
+        <span class="marca">${esc(d.marca)}</span>
+      </div>
+    </div>`;
+
+  // La inclinación sigue al puntero sobre el diálogo. Con el dedo también: en la tableta se
+  // arrastra por encima y la tarjeta acompaña, que es justo lo que hace gracia enseñar.
+  const tarjeta = caja.querySelector('.tarjeta3d');
+  const dialogo = $('#d-cobro');
+  const mover = e => {
+    const r = tarjeta.getBoundingClientRect();
+    const x = (e.clientX - r.left) / r.width - .5;
+    const y = (e.clientY - r.top) / r.height - .5;
+    tarjeta.classList.add('siguiendo');
+    tarjeta.style.setProperty('--ry', (x * 18).toFixed(2) + 'deg');
+    tarjeta.style.setProperty('--rx', (-y * 14).toFixed(2) + 'deg');
+    tarjeta.style.setProperty('--bx', (50 + x * 90) + '%');
+    tarjeta.style.setProperty('--by', (30 + y * 80) + '%');
+  };
+  const soltar = () => {
+    tarjeta.classList.remove('siguiendo');
+    tarjeta.style.setProperty('--ry', '0deg'); tarjeta.style.setProperty('--rx', '0deg');
+    tarjeta.style.setProperty('--bx', '50%'); tarjeta.style.setProperty('--by', '0%');
+  };
+  dialogo.addEventListener('pointermove', mover);
+  dialogo.addEventListener('pointerleave', soltar);
+  // Al cerrar el diálogo se quitan los oyentes: si no, cada cobro dejaría uno más pegado.
+  dialogo.addEventListener('close', () => {
+    dialogo.removeEventListener('pointermove', mover);
+    dialogo.removeEventListener('pointerleave', soltar);
+  }, { once: true });
 }
 $('#c-metodos').querySelectorAll('[data-m]').forEach(b => b.onclick = () => elegirMetodo(b.dataset.m));
 

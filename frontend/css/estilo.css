@@ -796,3 +796,51 @@ button.sutil:active, .simulacion button:active, .faccion:active,
   position: absolute; right: -7px; bottom: -7px; width: 16px; height: 16px; border-radius: 4px;
   background: var(--acento); cursor: nwse-resize; pointer-events: auto;
 }
+
+/* ═══ Tarjeta 3D del cobro ════════════════════════════════════════════════════════════════
+   Efecto de «3D card» de robin-dela (codepen.io/robin-dela/pen/jVddbq), rehecho con código
+   propio: la tarjeta se inclina siguiendo al puntero y un brillo la cruza al revés, que es lo
+   que da la sensación de relieve.
+
+   Los datos son INVENTADOS y la tarjeta lo dice encima. Esto es un TPV de verdad: el sistema
+   no lee tarjetas, no las guarda y no habla con ninguna pasarela —solo apunta que se pagó con
+   una—. Una tarjeta con pinta de real en esta pantalla haría creer a alguien que el sistema
+   tiene los datos del cliente, y la foto de esa pantalla parecería lo que no es. */
+.tarjeta3d-caja { perspective: 900px; display: grid; place-items: center; margin: .8rem 0 .2rem; }
+.tarjeta3d {
+  position: relative; width: 320px; height: 196px; border-radius: 16px; padding: 18px 20px;
+  display: flex; flex-direction: column; justify-content: space-between;
+  background: linear-gradient(135deg, #2b3a55, #16202f 55%, #24405e);
+  border: 1px solid #ffffff26; color: #eef2f7; overflow: hidden;
+  box-shadow: 0 18px 34px #00000070;
+  transform: rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
+  transition: transform .25s ease;
+  will-change: transform;
+}
+.tarjeta3d.siguiendo { transition: transform .06s linear; }
+/* El brillo va al revés que la inclinación: es lo que hace que parezca una superficie y no un dibujo */
+.tarjeta3d::after {
+  content: ''; position: absolute; inset: -40%; pointer-events: none;
+  background: radial-gradient(circle at var(--bx, 50%) var(--by, 0%), #ffffff40, transparent 45%);
+  transition: background .1s linear;
+}
+.tarjeta3d .chip {
+  width: 44px; height: 32px; border-radius: 6px;
+  background: linear-gradient(135deg, #e6c06a, #a9832f 60%, #f0d896);
+  box-shadow: inset 0 0 0 1px #00000033;
+}
+.tarjeta3d .pan {
+  font: 700 21px/1 var(--mono); letter-spacing: .09em; font-variant-numeric: tabular-nums;
+  text-shadow: 0 1px 2px #0008;
+}
+.tarjeta3d .pie { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; }
+.tarjeta3d .pie small { display: block; font-size: 9px; letter-spacing: .12em; text-transform: uppercase; opacity: .65; }
+.tarjeta3d .pie b { font-size: 13px; font-weight: 600; letter-spacing: .06em; }
+.tarjeta3d .marca { font-size: 14px; font-weight: 800; letter-spacing: .1em; opacity: .9; align-self: flex-end; }
+.tarjeta3d .falsa {
+  position: absolute; top: 10px; right: -34px; transform: rotate(35deg);
+  background: var(--mal); color: var(--mal-texto); font-size: 10px; font-weight: 800;
+  letter-spacing: .1em; padding: 3px 38px; text-transform: uppercase;
+}
+@media (prefers-reduced-motion: reduce) { .tarjeta3d, .tarjeta3d.siguiendo { transition: none; transform: none; } }
+@media (max-width: 420px) { .tarjeta3d { width: 270px; height: 168px; } .tarjeta3d .pan { font-size: 18px; } }
