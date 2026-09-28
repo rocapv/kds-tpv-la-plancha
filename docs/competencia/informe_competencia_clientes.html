@@ -21,7 +21,7 @@
     --fila-alt: #f4f4f2;
   }
   html, body { margin: 0; padding: 0; background: #d7d7d7; color: var(--tinta); }
-  body { font-family: Arial, Helvetica, sans-serif; font-size: 12pt; line-height: 1.5; }
+  body { font-family: Arial, Helvetica, sans-serif; font-size: 12pt; line-height: 1.5; hyphens: manual; -webkit-hyphens: manual; overflow-wrap: normal; word-break: normal; }
 
   /* --- Páginas --- */
   .pagina {
@@ -38,13 +38,13 @@
 
   /* --- Texto --- */
   #fuente { display: none; }
-  .cuerpo p { margin: 0 0 8pt 0; text-align: justify; hyphens: auto; -webkit-hyphens: auto; }
+  .cuerpo p { margin: 0 0 8pt 0; text-align: justify; }
   .cuerpo h1 { font-size: 16pt; color: var(--acento); margin: 14pt 0 10pt 0; line-height: 1.25; text-align: left;
                border-bottom: 1pt solid var(--acento); padding-bottom: 3pt; }
   .cuerpo h2 { font-size: 13pt; color: var(--acento); margin: 12pt 0 6pt 0; line-height: 1.3; text-align: left; }
   .cuerpo h3 { font-size: 12pt; margin: 10pt 0 4pt 0; line-height: 1.3; text-align: left; font-style: italic; }
   .cuerpo ul, .cuerpo ol { margin: 0 0 8pt 0; padding-left: 7mm; text-align: justify; }
-  .cuerpo li { margin-bottom: 3pt; text-align: justify; hyphens: auto; }
+  .cuerpo li { margin-bottom: 3pt; text-align: justify; }
   .cita { margin: 4pt 0 10pt 12mm; padding-left: 4mm; border-left: 1.5pt solid var(--regla-suave); color: var(--tinta-2); }
   .nota-metod { font-size: 10.5pt; color: var(--tinta-2); border: 0.5pt solid var(--regla-suave); padding: 3mm 4mm; margin: 0 0 10pt 0; text-align: justify; }
   .nota-metod p { margin: 0 0 4pt 0; }
@@ -57,7 +57,7 @@
   .tcap i { font-style: italic; }
   .tabla table { width: 100%; border-collapse: collapse; font-size: 9.5pt; line-height: 1.25; page-break-inside: auto; }
   .tabla th, .tabla td { border: 0.5pt solid var(--regla); padding: 2.5pt 4pt; vertical-align: top; text-align: left; }
-  .tabla td { text-align: justify; hyphens: auto; -webkit-hyphens: auto; }
+  .tabla td { text-align: justify; }
   .tabla th { background: #e8eef5; font-weight: bold; }
   .tabla tbody tr:nth-child(even) td { background: var(--fila-alt); }
   .tabla td.num, .tabla th.num { text-align: right; font-variant-numeric: tabular-nums; }
@@ -94,7 +94,7 @@
   .portada .ciclo { font-size: 12.5pt; line-height: 1.6; margin: 0 0 16mm 0; }
   .portada .autor { font-size: 13pt; line-height: 1.7; }
   .portada .filete { width: 40mm; border-top: 2pt solid var(--acento); margin: 10mm auto; }
-  .portada .compl { position: absolute; top: 215mm; left: 0; width: 160mm; font-size: 10.5pt; color: var(--tinta-2); line-height: 1.4; text-align: justify; hyphens: auto; }
+  .portada .compl { position: absolute; top: 215mm; left: 0; width: 160mm; font-size: 10.5pt; color: var(--tinta-2); line-height: 1.4; text-align: justify; }
 
   /* --- Índices --- */
   .indice .entrada { display: flex; align-items: baseline; margin: 0 0 3pt 0; line-height: 1.35; }
@@ -107,7 +107,9 @@
   .palabras { margin-top: 4pt; }
 
   /* --- Referencias APA: sangría francesa --- */
-  .ref { margin: 0 0 6pt 0; padding-left: 12mm; text-indent: -12mm; text-align: justify; hyphens: auto; line-height: 1.4; font-size: 11pt; word-break: break-word; }
+  .ref { margin: 0 0 6pt 0; padding-left: 12mm; text-indent: -12mm; text-align: justify; line-height: 1.4; font-size: 11pt;  }
+  .url { font-size: 9pt; display: block; text-indent: 0; text-align: left; }
+  .url .nb { white-space: nowrap; }
   .anexo-codigo { font-family: Consolas, "Courier New", monospace; font-size: 9pt; line-height: 1.3; background: #f4f4f2; border: 0.5pt solid var(--regla-suave); padding: 3mm; margin: 0 0 10pt 0; white-space: pre-wrap; }
 
   @page { size: A4 portrait; margin: 0; }
@@ -558,50 +560,50 @@
 <!-- ---------------- 8. Referencias ---------------- -->
 <h1 id="s8">8. Referencias bibliográficas</h1>
 <p>Formato APA, 7.ª edición, con sangría francesa. Enlaces consultados entre el 21 y el 24 de septiembre de 2026.</p>
-<p class="ref">Ágora TPV. (2026). <i>Precios de software TPV y suscripciones</i>. https://www.agorapos.com/pricing/</p>
+<p class="ref">Ágora TPV. (2026). <i>Precios de software TPV y suscripciones</i>. <span class="url"><span class="nb">https:/</span><wbr><span class="nb">/</span><wbr><span class="nb">www.agorapos.com/</span><wbr><span class="nb">pricing/</span></span></p>
 <p class="ref">Bytechip Soluciones Tecnológicas. (2023, 21 de mayo). <i>Curso Loyverse TPV GRATIS, parte 5: configurando el visor y la impresora de cocina digital</i> [Vídeo]. YouTube.</p>
 <p class="ref">Capacitación y asesorías Mys inventarios. (2026, 3 de septiembre). <i>KDS desde punto de venta Windows</i> [Vídeo]. YouTube.</p>
-<p class="ref">El Independiente. (2026, 21 de mayo). <i>La digitalización silenciosa impulsa el uso del software TPV en la hostelería española</i>. https://www.elindependiente.com/eli/2026/05/21/la-digitalizacion-silenciosa-impulsa-el-uso-del-software-tpv-en-la-hosteleria-espanola/</p>
-<p class="ref">El Periòdic. (2025, 27 de mayo). <i>Un bar cada 174 valencianos: la Comunitat Valenciana, tercera con más bares y restaurantes</i>. https://www.elperiodic.com/cada-valencianos-comunitat-valenciana-tercera-bares-restaurantes_1018629</p>
+<p class="ref">El Independiente. (2026, 21 de mayo). <i>La digitalización silenciosa impulsa el uso del software TPV en la hostelería española</i>. <span class="url"><span class="nb">https:/</span><wbr><span class="nb">/</span><wbr><span class="nb">www.elindependiente.com/</span><wbr><span class="nb">eli/</span><wbr><span class="nb">2026/</span><wbr><span class="nb">05/</span><wbr><span class="nb">21/</span><wbr><span class="nb">la-digitalizacion-silenciosa-impulsa-el-uso-del-software-tpv-en-la-hosteleria-espanola/</span></span></p>
+<p class="ref">El Periòdic. (2025, 27 de mayo). <i>Un bar cada 174 valencianos: la Comunitat Valenciana, tercera con más bares y restaurantes</i>. <span class="url"><span class="nb">https:/</span><wbr><span class="nb">/</span><wbr><span class="nb">www.elperiodic.com/</span><wbr><span class="nb">cada-valencianos-comunitat-valenciana-tercera-bares-restaurantes_1018629</span></span></p>
 <p class="ref">Epos Now ES. (2025, 10 de octubre). <i>Comandas en KDS (Kitchen Display System)</i> [Vídeo]. YouTube.</p>
-<p class="ref">Garrido Abogados. (2026). <i>Real Decreto 238/2026: se aprueba el desarrollo reglamentario de la factura electrónica</i>. https://garrido.es/real-decreto-238-2026-aprueba-el-desarrollo-reglamentario-de-la-factura-electronica/</p>
-<p class="ref">Garrigues. (2025, diciembre). <i>Se retrasa la entrada en vigor de Veri*factu</i>. https://www.garrigues.com/es_ES/noticia/retrasa-entrada-vigor-verifactu</p>
-<p class="ref">GM Cash / Transgourmet Ibérica. (2026). <i>Quiénes somos</i>. https://www.gmcash.es/quienes-somos/</p>
-<p class="ref">Hosteltur. (2026, 5 de enero). <i>La hostelería alcanza los 1,89 millones de empleados en 2025 pero ve amenazada su rentabilidad</i>. https://www.hosteltur.com/173449_la-hosteleria-alcanza-los-189-millones-de-empleados-en-2025-pero-ve-amenazada-su-rentabilidad.html</p>
+<p class="ref">Garrido Abogados. (2026). <i>Real Decreto 238/2026: se aprueba el desarrollo reglamentario de la factura electrónica</i>. <span class="url"><span class="nb">https:/</span><wbr><span class="nb">/</span><wbr><span class="nb">garrido.es/</span><wbr><span class="nb">real-decreto-238-2026-aprueba-el-desarrollo-reglamentario-de-la-factura-electronica/</span></span></p>
+<p class="ref">Garrigues. (2025, diciembre). <i>Se retrasa la entrada en vigor de Veri*factu</i>. <span class="url"><span class="nb">https:/</span><wbr><span class="nb">/</span><wbr><span class="nb">www.garrigues.com/</span><wbr><span class="nb">es_ES/</span><wbr><span class="nb">noticia/</span><wbr><span class="nb">retrasa-entrada-vigor-verifactu</span></span></p>
+<p class="ref">GM Cash / Transgourmet Ibérica. (2026). <i>Quiénes somos</i>. <span class="url"><span class="nb">https:/</span><wbr><span class="nb">/</span><wbr><span class="nb">www.gmcash.es/</span><wbr><span class="nb">quienes-somos/</span></span></p>
+<p class="ref">Hosteltur. (2026, 5 de enero). <i>La hostelería alcanza los 1,89 millones de empleados en 2025 pero ve amenazada su rentabilidad</i>. <span class="url" style="font-size:7.8pt"><span class="nb">https:/</span><wbr><span class="nb">/</span><wbr><span class="nb">www.hosteltur.com/</span><wbr><span class="nb">173449_la-hosteleria-alcanza-los-189-millones-de-empleados-en-2025-pero-ve-amenazada-su-rentabilidad.html</span></span></p>
 <p class="ref">IES Conselleria. (2025). <i>Guía para la elaboración del módulo: Proyecto intermodular de 2.º curso. CCFF grado medio y superior LFP 2025-2026</i>. Documento interno del centro.</p>
-<p class="ref">Inforetail. (2025). <i>Makro y GM Cash lideran el cash &amp; carry en tres comunidades autónomas</i>. https://www.revistainforetail.com/</p>
-<p class="ref">Instituto Nacional de Estadística. (2025a, 11 de diciembre). <i>Directorio Central de Empresas (DIRCE). Datos a 1 de enero de 2025</i> [Nota de prensa]. https://www.ine.es/dyngs/Prensa/DIRCE2025.htm</p>
-<p class="ref">Instituto Nacional de Estadística. (2025b). <i>Encuesta sobre el uso de TIC y del comercio electrónico en las empresas. Año 2024 – primer trimestre de 2025</i> [Nota de prensa]. https://www.ine.es/dyngs/Prensa/ETICCE20241T2025.htm</p>
-<p class="ref">Kibsi. (2022, 28 de octubre). <i>Restaurant Computer Vision AI</i> [Vídeo]. YouTube. https://www.youtube.com/watch?v=i_mL3LT0lDg</p>
-<p class="ref">Last.app. (2026). <i>Un precio para cada restaurante</i>. https://www.last.app/precios</p>
-<p class="ref">Loman. (2026). <i>Micros pricing</i>. https://loman.ai/blog/micros-pricing</p>
-<p class="ref">Loyverse. (2026). <i>Precios</i>. https://loyverse.com/es/pricing</p>
-<p class="ref">Mac4U IT Services. (2018, 26 de septiembre). <i>Revel's Kitchen Display System (KDS)</i> [Vídeo]. YouTube. https://www.youtube.com/watch?v=5vVwk86Gasg</p>
-<p class="ref">Macrotrends. (2026). <i>Oracle revenue 2010-2026</i>. https://www.macrotrends.net/stocks/charts/ORCL/oracle/revenue</p>
-<p class="ref">Makro España. (2026). <i>Cash and carry</i>. https://www.makro.es/compra-como-quieras/cash-and-carry</p>
-<p class="ref">Oracle. (2014, 23 de junio). <i>Oracle buys MICROS Systems</i> [Nota de prensa]. https://www.oracle.com/corporate/pressrelease/oracle-buys-micros-systems-062314.html</p>
-<p class="ref">Oracle. (2026a). <i>Form 10-K for the fiscal year ended May 31, 2026</i>. U.S. Securities and Exchange Commission. https://www.sec.gov/Archives/edgar/data/0001341439/000119312526277521/orcl-20260531.htm</p>
-<p class="ref">Oracle. (2026b). <i>Kitchen Display System Controller</i>. Simphony documentation. https://docs.oracle.com/en/industries/food-beverage/simphony/simcm/t_shared_services_overview_kdsc.htm</p>
-<p class="ref">Oracle. (2026c). <i>Kitchen display systems</i>. https://www.oracle.com/food-beverage/restaurant-pos-systems/kds-kitchen-display-systems/</p>
-<p class="ref">Profesional Horeca. (2025, junio). <i>La hostelería en España en 2025: 280.400 establecimientos, transformación y consolidación</i>. https://www.profesionalhoreca.com/la-hosteleria-en-espana-en-2025-280-400-establecimientos-transformacion-y-consolidacion/</p>
+<p class="ref">Inforetail. (2025). <i>Makro y GM Cash lideran el cash &amp; carry en tres comunidades autónomas</i>. <span class="url"><span class="nb">https:/</span><wbr><span class="nb">/</span><wbr><span class="nb">www.revistainforetail.com/</span></span></p>
+<p class="ref">Instituto Nacional de Estadística. (2025a, 11 de diciembre). <i>Directorio Central de Empresas (DIRCE). Datos a 1 de enero de 2025</i> [Nota de prensa]. <span class="url"><span class="nb">https:/</span><wbr><span class="nb">/</span><wbr><span class="nb">www.ine.es/</span><wbr><span class="nb">dyngs/</span><wbr><span class="nb">Prensa/</span><wbr><span class="nb">DIRCE2025.htm</span></span></p>
+<p class="ref">Instituto Nacional de Estadística. (2025b). <i>Encuesta sobre el uso de TIC y del comercio electrónico en las empresas. Año 2024 – primer trimestre de 2025</i> [Nota de prensa]. <span class="url"><span class="nb">https:/</span><wbr><span class="nb">/</span><wbr><span class="nb">www.ine.es/</span><wbr><span class="nb">dyngs/</span><wbr><span class="nb">Prensa/</span><wbr><span class="nb">ETICCE20241T2025.htm</span></span></p>
+<p class="ref">Kibsi. (2022, 28 de octubre). <i>Restaurant Computer Vision AI</i> [Vídeo]. YouTube. <span class="url"><span class="nb">https:/</span><wbr><span class="nb">/</span><wbr><span class="nb">www.youtube.com/</span><wbr><span class="nb">watch?v=i_mL3LT0lDg</span></span></p>
+<p class="ref">Last.app. (2026). <i>Un precio para cada restaurante</i>. <span class="url"><span class="nb">https:/</span><wbr><span class="nb">/</span><wbr><span class="nb">www.last.app/</span><wbr><span class="nb">precios</span></span></p>
+<p class="ref">Loman. (2026). <i>Micros pricing</i>. <span class="url"><span class="nb">https:/</span><wbr><span class="nb">/</span><wbr><span class="nb">loman.ai/</span><wbr><span class="nb">blog/</span><wbr><span class="nb">micros-pricing</span></span></p>
+<p class="ref">Loyverse. (2026). <i>Precios</i>. <span class="url"><span class="nb">https:/</span><wbr><span class="nb">/</span><wbr><span class="nb">loyverse.com/</span><wbr><span class="nb">es/</span><wbr><span class="nb">pricing</span></span></p>
+<p class="ref">Mac4U IT Services. (2018, 26 de septiembre). <i>Revel's Kitchen Display System (KDS)</i> [Vídeo]. YouTube. <span class="url"><span class="nb">https:/</span><wbr><span class="nb">/</span><wbr><span class="nb">www.youtube.com/</span><wbr><span class="nb">watch?v=5vVwk86Gasg</span></span></p>
+<p class="ref">Macrotrends. (2026). <i>Oracle revenue 2010-2026</i>. <span class="url"><span class="nb">https:/</span><wbr><span class="nb">/</span><wbr><span class="nb">www.macrotrends.net/</span><wbr><span class="nb">stocks/</span><wbr><span class="nb">charts/</span><wbr><span class="nb">ORCL/</span><wbr><span class="nb">oracle/</span><wbr><span class="nb">revenue</span></span></p>
+<p class="ref">Makro España. (2026). <i>Cash and carry</i>. <span class="url"><span class="nb">https:/</span><wbr><span class="nb">/</span><wbr><span class="nb">www.makro.es/</span><wbr><span class="nb">compra-como-quieras/</span><wbr><span class="nb">cash-and-carry</span></span></p>
+<p class="ref">Oracle. (2014, 23 de junio). <i>Oracle buys MICROS Systems</i> [Nota de prensa]. <span class="url"><span class="nb">https:/</span><wbr><span class="nb">/</span><wbr><span class="nb">www.oracle.com/</span><wbr><span class="nb">corporate/</span><wbr><span class="nb">pressrelease/</span><wbr><span class="nb">oracle-buys-micros-systems-062314.html</span></span></p>
+<p class="ref">Oracle. (2026a). <i>Form 10-K for the fiscal year ended May 31, 2026</i>. U.S. Securities and Exchange Commission. <span class="url"><span class="nb">https:/</span><wbr><span class="nb">/</span><wbr><span class="nb">www.sec.gov/</span><wbr><span class="nb">Archives/</span><wbr><span class="nb">edgar/</span><wbr><span class="nb">data/</span><wbr><span class="nb">0001341439/</span><wbr><span class="nb">000119312526277521/</span><wbr><span class="nb">orcl-20260531.htm</span></span></p>
+<p class="ref">Oracle. (2026b). <i>Kitchen Display System Controller</i>. Simphony documentation. <span class="url"><span class="nb">https:/</span><wbr><span class="nb">/</span><wbr><span class="nb">docs.oracle.com/</span><wbr><span class="nb">en/</span><wbr><span class="nb">industries/</span><wbr><span class="nb">food-beverage/</span><wbr><span class="nb">simphony/</span><wbr><span class="nb">simcm/</span><wbr><span class="nb">t_shared_services_overview_kdsc.htm</span></span></p>
+<p class="ref">Oracle. (2026c). <i>Kitchen display systems</i>. <span class="url"><span class="nb">https:/</span><wbr><span class="nb">/</span><wbr><span class="nb">www.oracle.com/</span><wbr><span class="nb">food-beverage/</span><wbr><span class="nb">restaurant-pos-systems/</span><wbr><span class="nb">kds-kitchen-display-systems/</span></span></p>
+<p class="ref">Profesional Horeca. (2025, junio). <i>La hostelería en España en 2025: 280.400 establecimientos, transformación y consolidación</i>. <span class="url"><span class="nb">https:/</span><wbr><span class="nb">/</span><wbr><span class="nb">www.profesionalhoreca.com/</span><wbr><span class="nb">la-hosteleria-en-espana-en-2025-280-400-establecimientos-transformacion-y-consolidacion/</span></span></p>
 <p class="ref">Riches Manuel y Roca. (2026a). <i>Sistema KDS + TPV para hostelería: memoria del proyecto</i> [Documento del repositorio, docs/MEMORIA.md]. Proyecto Intermodular I, IES Conselleria.</p>
 <p class="ref">Riches Manuel y Roca. (2026b). <i>Informe de mercado y análisis de producto</i> [Documentos del repositorio: docs/INFORME_MERCADO.md, docs/ANALISIS_KDS_*.md y docs/mercado/]. Proyecto Intermodular I, IES Conselleria.</p>
-<p class="ref">Square. (2026). <i>Precios de Square en España</i>. https://squareup.com/es/es/pricing</p>
+<p class="ref">Square. (2026). <i>Precios de Square en España</i>. <span class="url"><span class="nb">https:/</span><wbr><span class="nb">/</span><wbr><span class="nb">squareup.com/</span><wbr><span class="nb">es/</span><wbr><span class="nb">es/</span><wbr><span class="nb">pricing</span></span></p>
 <p class="ref">TMBill. (2023, 3 de marzo). <i>Kitchen Display System — KDS &amp; Token Management System for Restaurants, Café &amp; QSR</i> [Vídeo]. YouTube.</p>
-<p class="ref">TPV Hostelería. (2026). <i>Camarero10: reseñas y opiniones</i>. https://tpvhosteleria.org/camarero10/</p>
-<p class="ref">TrustRadius. (2026). <i>Oracle Simphony pricing</i>. https://www.trustradius.com/products/oracle-simphony/pricing</p>
-<p class="ref">UpMenu. (2026). <i>Lightspeed POS pricing for restaurants: fees and hidden costs</i>. https://www.upmenu.com/blog/lightspeed-pos-pricing/</p>
-<p class="ref">VentaTPV. (2026). <i>Software Glop TPV: precios, versiones y características</i>. https://ventatpv.com/content/34-tpv-glop</p>
+<p class="ref">TPV Hostelería. (2026). <i>Camarero10: reseñas y opiniones</i>. <span class="url"><span class="nb">https:/</span><wbr><span class="nb">/</span><wbr><span class="nb">tpvhosteleria.org/</span><wbr><span class="nb">camarero10/</span></span></p>
+<p class="ref">TrustRadius. (2026). <i>Oracle Simphony pricing</i>. <span class="url"><span class="nb">https:/</span><wbr><span class="nb">/</span><wbr><span class="nb">www.trustradius.com/</span><wbr><span class="nb">products/</span><wbr><span class="nb">oracle-simphony/</span><wbr><span class="nb">pricing</span></span></p>
+<p class="ref">UpMenu. (2026). <i>Lightspeed POS pricing for restaurants: fees and hidden costs</i>. <span class="url"><span class="nb">https:/</span><wbr><span class="nb">/</span><wbr><span class="nb">www.upmenu.com/</span><wbr><span class="nb">blog/</span><wbr><span class="nb">lightspeed-pos-pricing/</span></span></p>
+<p class="ref">VentaTPV. (2026). <i>Software Glop TPV: precios, versiones y características</i>. <span class="url"><span class="nb">https:/</span><wbr><span class="nb">/</span><wbr><span class="nb">ventatpv.com/</span><wbr><span class="nb">content/</span><wbr><span class="nb">34-tpv-glop</span></span></p>
 <h2 id="s8-1">8.1. Normativa consultada</h2>
-<p class="ref">Ley 11/2021, de 9 de julio, de medidas de prevención y lucha contra el fraude fiscal. <i>BOE</i>, 164. https://www.boe.es/buscar/act.php?id=BOE-A-2021-11473</p>
-<p class="ref">Ley 18/2022, de 28 de septiembre, de creación y crecimiento de empresas. <i>BOE</i>, 234. https://www.boe.es/buscar/act.php?id=BOE-A-2022-15818</p>
-<p class="ref">Ley Orgánica 3/2018, de 5 de diciembre, de Protección de Datos Personales y garantía de los derechos digitales. <i>BOE</i>, 294. https://www.boe.es/buscar/act.php?id=BOE-A-2018-16673</p>
-<p class="ref">Real Decreto 126/2015, de 27 de febrero, por el que se aprueba la norma general relativa a la información alimentaria de los alimentos que se presenten sin envasar. <i>BOE</i>, 54. https://www.boe.es/buscar/act.php?id=BOE-A-2015-2293</p>
+<p class="ref">Ley 11/2021, de 9 de julio, de medidas de prevención y lucha contra el fraude fiscal. <i>BOE</i>, 164. <span class="url"><span class="nb">https:/</span><wbr><span class="nb">/</span><wbr><span class="nb">www.boe.es/</span><wbr><span class="nb">buscar/</span><wbr><span class="nb">act.php?id=BOE-A-2021-11473</span></span></p>
+<p class="ref">Ley 18/2022, de 28 de septiembre, de creación y crecimiento de empresas. <i>BOE</i>, 234. <span class="url"><span class="nb">https:/</span><wbr><span class="nb">/</span><wbr><span class="nb">www.boe.es/</span><wbr><span class="nb">buscar/</span><wbr><span class="nb">act.php?id=BOE-A-2022-15818</span></span></p>
+<p class="ref">Ley Orgánica 3/2018, de 5 de diciembre, de Protección de Datos Personales y garantía de los derechos digitales. <i>BOE</i>, 294. <span class="url"><span class="nb">https:/</span><wbr><span class="nb">/</span><wbr><span class="nb">www.boe.es/</span><wbr><span class="nb">buscar/</span><wbr><span class="nb">act.php?id=BOE-A-2018-16673</span></span></p>
+<p class="ref">Real Decreto 126/2015, de 27 de febrero, por el que se aprueba la norma general relativa a la información alimentaria de los alimentos que se presenten sin envasar. <i>BOE</i>, 54. <span class="url"><span class="nb">https:/</span><wbr><span class="nb">/</span><wbr><span class="nb">www.boe.es/</span><wbr><span class="nb">buscar/</span><wbr><span class="nb">act.php?id=BOE-A-2015-2293</span></span></p>
 <p class="ref">Real Decreto 238/2026, de 31 de marzo, por el que se desarrolla la factura electrónica entre empresarios y profesionales. <i>BOE</i>.</p>
-<p class="ref">Real Decreto 1007/2023, de 5 de diciembre, por el que se aprueba el Reglamento de requisitos de los sistemas informáticos de facturación. <i>BOE</i>, 291. https://www.boe.es/buscar/act.php?id=BOE-A-2023-24840</p>
+<p class="ref">Real Decreto 1007/2023, de 5 de diciembre, por el que se aprueba el Reglamento de requisitos de los sistemas informáticos de facturación. <i>BOE</i>, 291. <span class="url"><span class="nb">https:/</span><wbr><span class="nb">/</span><wbr><span class="nb">www.boe.es/</span><wbr><span class="nb">buscar/</span><wbr><span class="nb">act.php?id=BOE-A-2023-24840</span></span></p>
 <p class="ref">Real Decreto-ley 15/2025, de 2 de diciembre, por el que se aplaza la entrada en vigor de los requisitos de los sistemas informáticos de facturación. <i>BOE</i>, 3 de diciembre de 2025.</p>
-<p class="ref">Reglamento (UE) n.º 1169/2011 del Parlamento Europeo y del Consejo, de 25 de octubre de 2011, sobre la información alimentaria facilitada al consumidor. <i>DOUE</i>, L 304. https://eur-lex.europa.eu/legal-content/ES/TXT/?uri=CELEX%3A32011R1169</p>
-<p class="ref">Reglamento (UE) 2016/679 del Parlamento Europeo y del Consejo, de 27 de abril de 2016, relativo a la protección de las personas físicas en lo que respecta al tratamiento de datos personales (RGPD). <i>DOUE</i>, L 119. https://eur-lex.europa.eu/legal-content/ES/TXT/?uri=CELEX%3A32016R0679</p>
+<p class="ref">Reglamento (UE) n.º 1169/2011 del Parlamento Europeo y del Consejo, de 25 de octubre de 2011, sobre la información alimentaria facilitada al consumidor. <i>DOUE</i>, L 304. <span class="url"><span class="nb">https:/</span><wbr><span class="nb">/</span><wbr><span class="nb">eur-lex.europa.eu/</span><wbr><span class="nb">legal-content/</span><wbr><span class="nb">ES/</span><wbr><span class="nb">TXT/</span><wbr><span class="nb">?uri=CELEX%3A32011R1169</span></span></p>
+<p class="ref">Reglamento (UE) 2016/679 del Parlamento Europeo y del Consejo, de 27 de abril de 2016, relativo a la protección de las personas físicas en lo que respecta al tratamiento de datos personales (RGPD). <i>DOUE</i>, L 119. <span class="url"><span class="nb">https:/</span><wbr><span class="nb">/</span><wbr><span class="nb">eur-lex.europa.eu/</span><wbr><span class="nb">legal-content/</span><wbr><span class="nb">ES/</span><wbr><span class="nb">TXT/</span><wbr><span class="nb">?uri=CELEX%3A32016R0679</span></span></p>
 
 <!-- ---------------- Anexos ---------------- -->
 <div class="salto"></div>
