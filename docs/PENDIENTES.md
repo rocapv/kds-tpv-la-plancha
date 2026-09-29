@@ -66,4 +66,10 @@ panel LED o tableta) y si el pago de la app se queda en simulacro o algún día 
 - `PROPUESTA_PLANNING_MESAS.md` — **sin construir**: la agenda vista como planning, una fila por
   mesa y el día en horizontal, con una barra por reserva. No necesita API nueva: sale de
   `/api/reservas` y `/api/mesas`. Iría como pestaña de `reservas.html`, no como pantalla aparte.
+- `PROPUESTA_GRUPOS_Y_FACTURACION.md` — **sin construir**: quién se sienta en cada sitio de la
+  mesa (popup con la rejilla 2×3 de una mesa de seis, nombre y lo que pidió cada uno), cobro
+  comensal a comensal frente a dividir, tickets individuales o de la mesa, y factura a petición
+  desde la app o al camarero. Incluye una corrección al encargo: lo de «al cerrar el día ya no se
+  puede emitir» vale como política de caja, pero no como norma absoluta, porque el reglamento de
+  facturación obliga a expedirla cuando el cliente la pide.
 
