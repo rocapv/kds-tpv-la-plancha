@@ -41,3 +41,20 @@ Hecho y medido (ver `deploy/_qa/gui/`). Lo que queda apuntado de esa tanda:
   suyo es que la carta guarde el color y el CSS decida el texto.
 - `qa_gui.py` mide con el navegador a 1280×800 y 390×844. Faltaría una pasada a 1024×600, que es
   la resolución de muchas tabletas de TPV baratas.
+
+## Encargo del 29/09/2026: la app del cliente y la visión por cámara
+
+RocaPV describe cinco cosas nuevas. Quedan especificadas en dos documentos, sin construir:
+
+- `PROPUESTA_APP_CLIENTE.md` — (1) QR rotativo en la pantalla LED de la mesa que vincula al
+  cliente con esa mesa hasta que se va; (2) pedido directo desde la app con un filtro que retiene
+  lo absurdo (las 1111 botellas de agua) para que lo confirme un camarero; (3) seguimiento del
+  estado de cocina y cuenta que el cliente puede saldar cuando quiera, entera o a trozos, solo o
+  con camarero; (4) reservas con quince minutos de antelación y pedido adelantado.
+- `PROPUESTA_VISION_CCTV.md` — posiciones y tiempos de clientes y empleados a partir del CCTV,
+  **sin reconocimiento facial y sin medir a nadie por su nombre**: eso no es una preferencia, es
+  lo que permite la ley. Detección anónima, homografía al plano de sala y agregados.
+
+Dos decisiones pendientes de RocaPV antes de empezar: qué son las pantallas de mesa (ESP32 con
+panel LED o tableta) y si el pago de la app se queda en simulacro o algún día cobra de verdad.
+
