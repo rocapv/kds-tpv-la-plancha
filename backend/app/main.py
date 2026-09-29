@@ -18,7 +18,7 @@ from pydantic import BaseModel, Field
 from .red import es_de_la_lan
 from .auth import (abrir_sesion, cerrar_sesion, cifrar_clave, exige, exige_nivel,
                    usuario, usuario_de_token)
-from . import almacen
+from . import almacen, reservas
 from .db import conn, q, q1
 from .simulacion import simulacion
 
@@ -2363,6 +2363,316 @@ async def rechazar_solicitud(sid: int, u: dict = Depends(exige("camarero", "enca
     await hub.emitir("solicitudes", solicitud_id=sid)
     await hub.emitir_publico("solicitud")
     return {"ok": True}
+
+
+# ─────────────── Reservas (bloque 4 de PROPUESTA_APP_CLIENTE.md) ───────────────
+# El cliente reserva desde la calle y, si quiere, deja pedido. Ese pedido NO entra en cocina al
+# reservar: se queda esperando y sale solo un rato antes de la hora. Quien lo suelta es el bucle
+# de abajo, para que no dependa de que alguien tenga una pantalla abierta.
+class LineaReserva(BaseModel):
+    producto_id: int
+    cantidad: int = Field(1, ge=1, le=20)
+    notas: str | None = Field(None, max_length=120)
+
+
+class NuevaReserva(BaseModel):
+    hora: datetime
+    comensales: int = Field(ge=1, le=30)
+    nombre: str = Field(min_length=2, max_length=60)
+    telefono: str | None = Field(None, max_length=20)
+    zona: str | None = None
+    nota: str | None = Field(None, max_length=200)
+    lineas: list[LineaReserva] = Field(default_factory=list, max_length=40)
+
+
+def _reserva_publica(r: dict) -> dict:
+    """Lo que puede ver quien tiene el enlace: lo suyo y nada más.
+
+    Ni el teléfono de otro, ni quién la cogió, ni el resto de la agenda del local.
+    """
+    return {"id": r["id"], "hora": r["hora"], "comensales": r["comensales"],
+            "nombre": r["nombre"], "mesa": r["mesa"], "estado": r["estado"],
+            "nota": r["nota"], "token": r["token"], "total_cent": r["total_cent"],
+            "soltada_en": r["soltada_en"],
+            "lineas": [{"nombre": l["nombre"], "cantidad": l["cantidad"],
+                        "precio_cent": l["precio_cent"], "notas": l["notas"]}
+                       for l in r["lineas"]]}
+
+
+def _guardar_reserva(d: NuevaReserva, mesa: dict, ip: str | None, empleado_id: int | None) -> int:
+    lineas = []
+    for l in d.lineas:
+        pr = q1("SELECT id, nombre, disponible FROM productos WHERE id=%s AND activo",
+                (l.producto_id,))
+        if not pr:
+            raise HTTPException(404, "Ese producto ya no está en la carta")
+        lineas.append(l)
+    token = reservas.nuevo_token()
+    with conn() as c, c.cursor() as cur:
+        cur.execute("""INSERT INTO reservas (mesa_id, zona, hora, comensales, nombre, telefono,
+                                             nota, token, origen_ip, creada_por, estado)
+                       VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
+                    (mesa["id"], d.zona, d.hora, d.comensales, d.nombre.strip(), d.telefono,
+                     d.nota, token, ip, empleado_id,
+                     "confirmada" if empleado_id else "pendiente"))
+        rid = cur.lastrowid
+        for l in lineas:
+            cur.execute("""INSERT INTO reserva_lineas (reserva_id, producto_id, cantidad, notas)
+                           VALUES (%s,%s,%s,%s)""", (rid, l.producto_id, l.cantidad, l.notas))
+    return rid
+
+
+async def _soltar_reserva(rid: int, empleado_id: int) -> dict | None:
+    """Manda a cocina el pedido adelantado de una reserva. Devuelve el pedido, o None si no
+    había nada que soltar.
+
+    La mesa puede estar ocupada todavía por quien se va a ir en cinco minutos: el pedido se crea
+    igual, porque lo que importa es que cocina empiece. Al sentar a la reserva se le engancha.
+    """
+    r = reservas.completa(rid)
+    if not r or not r["lineas"] or r["soltada_en"]:
+        return None
+    agotados = [l["nombre"] for l in r["lineas"] if not l["disponible"]]
+    with conn() as c, c.cursor() as cur:
+        if r["pedido_id"]:
+            pid = r["pedido_id"]
+        else:
+            cur.execute("""INSERT INTO pedidos (tipo, mesa_id, comensales, empleado_id, cliente)
+                           VALUES ('sala',%s,%s,%s,%s)""",
+                        (r["mesa_id"], r["comensales"], empleado_id, r["nombre"]))
+            pid = cur.lastrowid
+        for l in r["lineas"]:
+            if not l["disponible"]:
+                continue                      # lo agotado no se manda: se avisa a la sala
+            cur.execute("""INSERT INTO lineas_pedido
+                           (pedido_id, producto_id, cantidad, precio_cent, notas, estacion,
+                            estado, enviada_en)
+                           VALUES (%s,%s,%s,%s,%s,%s,'enviada',NOW())""",
+                        (pid, l["producto_id"], l["cantidad"], l["precio_cent"],
+                         l["notas"], l["estacion"]))
+        cur.execute("""UPDATE reservas SET pedido_id=%s, soltada_en=NOW() WHERE id=%s""",
+                    (pid, rid))
+    almacen.consumir_pedido(pid, empleado_id)
+    if agotados:
+        for e in q("SELECT id FROM empleados WHERE activo AND rol='encargado'"):
+            q("""INSERT INTO avisos_empleado (empleado_id, texto, detalle)
+                 VALUES (%s,%s,%s)""",
+              (e["id"], f"Reserva de {r['nombre']} ({r['hora']:%H:%M}): agotado",
+               ", ".join(agotados)[:200]))
+    await hub.emitir("kds", pedido_id=pid)
+    await hub.emitir("mesas")
+    await hub.emitir("reservas", reserva_id=rid)
+    await hub.emitir("carta")
+    return pedido_completo(pid)
+
+
+def _empleado_de_guardia() -> int | None:
+    """A nombre de quién entra una comanda que suelta el reloj, no una persona.
+
+    Se elige al encargado activo de menor número; si no hay ninguno, cualquier empleado activo.
+    Un pedido sin empleado no se puede guardar, y mentir con un id inventado sería peor.
+    """
+    e = q1("SELECT id FROM empleados WHERE activo AND rol='encargado' ORDER BY id LIMIT 1") \
+        or q1("SELECT id FROM empleados WHERE activo ORDER BY id LIMIT 1")
+    return e["id"] if e else None
+
+
+@app.get("/api/publico/reservas/huecos")
+def publico_huecos(fecha: str, comensales: int = 2, zona: str | None = None):
+    """Las horas libres de un día para ese grupo. Sin decir cuántas mesas hay ni quién tiene qué."""
+    cfg = reservas.config()
+    if not cfg["activas"]:
+        raise HTTPException(409, "Ahora mismo no se admiten reservas")
+    try:
+        dia = datetime.fromisoformat(fecha)
+    except ValueError:
+        raise HTTPException(422, "Fecha mal escrita; se espera AAAA-MM-DD")
+    if comensales < 1 or comensales > 30:
+        raise HTTPException(422, "Número de comensales fuera de rango")
+    libres = reservas.huecos(dia, comensales, zona, cfg)
+    return {"fecha": dia.date(), "antelacion_min": cfg["antelacion_min"],
+            "horario": cfg["horario"],
+            "horas": [{"hora": h["hora"], "zona": h["zona"]} for h in libres]}
+
+
+@app.post("/api/publico/reservas", status_code=201)
+async def publico_reservar(d: NuevaReserva, request: Request):
+    cfg = reservas.config()
+    try:
+        mesa = reservas.revisar(d.hora, d.comensales, d.zona, cfg)
+    except reservas.NoSePuede as e:
+        raise HTTPException(e.codigo, e.motivo)
+    rid = _guardar_reserva(d, mesa, request.client.host if request.client else None, None)
+    await hub.emitir("reservas", reserva_id=rid)
+    return _reserva_publica(reservas.completa(rid))
+
+
+@app.get("/api/publico/reservas/{token}")
+def publico_ver_reserva(token: str):
+    r = reservas.por_token(token)
+    if not r:
+        raise HTTPException(404, "No encuentro esa reserva")
+    return _reserva_publica(r)
+
+
+@app.post("/api/publico/reservas/{token}/anular")
+async def publico_anular_reserva(token: str):
+    r = reservas.por_token(token)
+    if not r:
+        raise HTTPException(404, "No encuentro esa reserva")
+    if r["estado"] in ("sentada", "anulada", "no_show"):
+        raise HTTPException(409, f"Esa reserva ya está {r['estado']}")
+    q("UPDATE reservas SET estado='anulada', resuelta_en=NOW() WHERE id=%s", (r["id"],))
+    await hub.emitir("reservas", reserva_id=r["id"])
+    return {"id": r["id"], "estado": "anulada"}
+
+
+@app.get("/api/reservas")
+def listar_reservas(fecha: str | None = None, u: dict = Depends(exige("camarero", "encargado"))):
+    dia = datetime.fromisoformat(fecha) if fecha else datetime.now()
+    cfg = reservas.config()
+    return {"fecha": dia.date(), "config": cfg, "reservas": reservas.agenda(dia)}
+
+
+@app.post("/api/reservas", status_code=201)
+async def crear_reserva_en_sala(d: NuevaReserva, u: dict = Depends(exige("camarero", "encargado"))):
+    """La que coge un camarero por teléfono: se salta los quince minutos, porque el cliente
+    puede estar en la puerta, pero no el solape: la mesa sigue sin poder estar en dos sitios."""
+    cfg = reservas.config()
+    try:
+        mesa = reservas.revisar(d.hora, d.comensales, d.zona, cfg, saltar_antelacion=True)
+    except reservas.NoSePuede as e:
+        raise HTTPException(e.codigo, e.motivo)
+    rid = _guardar_reserva(d, mesa, None, u["id"])
+    await hub.emitir("reservas", reserva_id=rid)
+    return reservas.completa(rid)
+
+
+class MesaDeReserva(BaseModel):
+    mesa_id: int
+
+
+@app.patch("/api/reservas/{rid}/mesa")
+async def cambiar_mesa_de_reserva(rid: int, d: MesaDeReserva,
+                                  u: dict = Depends(exige("camarero", "encargado"))):
+    """«Os cambio a la M2».
+
+    Pasa en toda sala: la mesa asignada se alarga, o llega un grupo mayor. Se comprueba que en
+    la nueva quepan y que no haya otra reserva encima, y si el pedido adelantado ya estaba en
+    cocina se muda con ellos.
+    """
+    r = reservas.completa(rid)
+    if not r:
+        raise HTTPException(404, "Reserva no encontrada")
+    if r["estado"] in ("anulada", "no_show"):
+        raise HTTPException(409, f"Esa reserva está {r['estado']}")
+    mesa = q1("SELECT id, nombre, plazas FROM mesas WHERE id=%s", (d.mesa_id,))
+    if not mesa:
+        raise HTTPException(404, "Esa mesa no existe")
+    if mesa["plazas"] < r["comensales"]:
+        raise HTTPException(409, f"En la {mesa['nombre']} caben {mesa['plazas']}, "
+                                 f"y son {r['comensales']}")
+    if reservas.mesa_ocupada(mesa["id"], r["hora"], reservas.config(), excluir=rid):
+        raise HTTPException(409, f"La {mesa['nombre']} ya está reservada a esa hora")
+    q("UPDATE reservas SET mesa_id=%s WHERE id=%s", (mesa["id"], rid))
+    if r["pedido_id"]:
+        q("UPDATE pedidos SET mesa_id=%s WHERE id=%s AND estado='abierto'",
+          (mesa["id"], r["pedido_id"]))
+    await hub.emitir("reservas", reserva_id=rid)
+    await hub.emitir("mesas")
+    return reservas.completa(rid)
+
+
+@app.post("/api/reservas/{rid}/{accion}")
+async def mandar_reserva(rid: int, accion: str,
+                         u: dict = Depends(exige("camarero", "encargado"))):
+    """confirmar · sentar · soltar · no_show · anular."""
+    r = reservas.completa(rid)
+    if not r:
+        raise HTTPException(404, "Reserva no encontrada")
+    cfg = reservas.config()
+
+    if accion == "confirmar":
+        if r["estado"] != "pendiente":
+            raise HTTPException(409, f"Esa reserva ya está {r['estado']}")
+        q("UPDATE reservas SET estado='confirmada' WHERE id=%s", (rid,))
+
+    elif accion == "soltar":
+        if r["estado"] in ("anulada", "no_show"):
+            raise HTTPException(409, f"Esa reserva está {r['estado']}")
+        if not r["lineas"]:
+            raise HTTPException(409, "Esa reserva no trae pedido adelantado")
+        if r["soltada_en"]:
+            raise HTTPException(409, "El pedido adelantado ya está en cocina")
+        await _soltar_reserva(rid, u["id"])
+
+    elif accion == "sentar":
+        if r["estado"] in ("anulada", "no_show", "sentada"):
+            raise HTTPException(409, f"Esa reserva está {r['estado']}")
+        # Entre la reserva y ahora puede haber entrado alguien por la puerta: si la mesa está
+        # ocupada por otro pedido, se dice y la sala decide dónde sentarlos.
+        ocupada = q1("""SELECT id FROM pedidos WHERE mesa_id=%s AND estado='abierto'
+                        AND (%s IS NULL OR id<>%s)""",
+                     (r["mesa_id"], r["pedido_id"], r["pedido_id"]))
+        if ocupada:
+            raise HTTPException(409, f"La mesa {r['mesa']} tiene un pedido abierto (#{ocupada['id']})")
+        if r["lineas"] and not r["soltada_en"]:
+            await _soltar_reserva(rid, u["id"])
+            r = reservas.completa(rid)
+        pid = r["pedido_id"]
+        if not pid:
+            with conn() as c, c.cursor() as cur:
+                cur.execute("""INSERT INTO pedidos (tipo, mesa_id, comensales, empleado_id, cliente)
+                               VALUES ('sala',%s,%s,%s,%s)""",
+                            (r["mesa_id"], r["comensales"], u["id"], r["nombre"]))
+                pid = cur.lastrowid
+        q("""UPDATE reservas SET estado='sentada', pedido_id=%s, resuelta_en=NOW()
+             WHERE id=%s""", (pid, rid))
+        await hub.emitir("mesas")
+
+    elif accion in ("no_show", "anular"):
+        if r["estado"] == "sentada":
+            raise HTTPException(409, "Esa reserva ya está sentada")
+        estado = "no_show" if accion == "no_show" else "anulada"
+        q("UPDATE reservas SET estado=%s, resuelta_en=NOW() WHERE id=%s", (estado, rid))
+
+    else:
+        raise HTTPException(422, "Acción desconocida: confirmar, sentar, soltar, no_show o anular")
+
+    await hub.emitir("reservas", reserva_id=rid)
+    return reservas.completa(rid)
+
+
+async def _vigilar_reservas() -> None:
+    """Cada minuto mira si toca mandar algún pedido adelantado a cocina.
+
+    Va en el servidor y no en una pantalla a propósito: el pedido de las nueve tiene que entrar
+    en cocina aunque esa noche nadie haya abierto la agenda de reservas.
+    """
+    while True:
+        try:
+            cfg = reservas.config()
+            empleado = _empleado_de_guardia()
+            if empleado:
+                for fila in reservas.pendientes_de_soltar(cfg):
+                    await _soltar_reserva(fila["id"], empleado)
+        except asyncio.CancelledError:
+            raise
+        except Exception:
+            pass          # un fallo aquí no puede tumbar el servicio; se reintenta al minuto
+        await asyncio.sleep(60)
+
+
+@app.on_event("startup")
+async def arrancar_vigilante_reservas():
+    app.state.tarea_reservas = asyncio.create_task(_vigilar_reservas())
+
+
+@app.on_event("shutdown")
+async def parar_vigilante_reservas():
+    tarea = getattr(app.state, "tarea_reservas", None)
+    if tarea:
+        tarea.cancel()
 
 
 # ─────────────── Frontend estático ───────────────

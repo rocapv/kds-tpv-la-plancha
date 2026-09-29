@@ -14,6 +14,7 @@
     <small id="donde" class="tenue"></small>
   </div>
   <span class="hueco"></span>
+  <button id="b-reservar" class="sutil">Reservar mesa</button>
   <button id="b-tema" class="tema" title="Cambiar entre día y noche" aria-label="Cambiar tema">
     <span class="astro"></span>
   </button>
@@ -21,6 +22,9 @@
 </header>
 
 <p id="mensaje" class="aviso-local"></p>
+
+<!-- La reserva propia, si la hay: se guarda en el móvil y se consulta con su enlace. -->
+<section id="mi-reserva" class="mi-reserva" hidden aria-live="polite"></section>
 
 <!-- Seguimiento de la comanda propia: en vez de un diálogo que hay que abrir, una tira que
      se queda a la vista y avanza sola (canal público + sondeo). -->
@@ -85,6 +89,34 @@
   <div class="fila"><button id="c-cancelar">Seguir mirando</button><button id="c-ok" class="primario">Enviar comanda</button></div>
 </dialog>
 
+<dialog id="d-reservar">
+  <h3>Reservar mesa</h3>
+  <p class="tenue">Se reserva con quince minutos de antelación como mínimo. Si dejas pedido, se
+    empieza a preparar poco antes de tu hora para que esté hecho al llegar.</p>
+  <div class="fila-reserva">
+    <label class="campo">Día <input id="r-fecha" type="date"></label>
+    <label class="campo">Personas <input id="r-pax" type="number" min="1" max="30" value="2"></label>
+    <label class="campo">Zona
+      <select id="r-zona">
+        <option value="">la que haya</option>
+        <option value="sala">Comedor presurizado</option>
+        <option value="terraza">Mirador de la fractura</option>
+        <option value="barra">Atraque</option>
+      </select>
+    </label>
+  </div>
+  <div id="r-horas" class="horas"></div>
+  <input type="hidden" id="r-hora">
+  <label class="campo">Tu nombre <input id="r-nombre" maxlength="60" placeholder="Para la reserva"></label>
+  <label class="campo">Teléfono (opcional) <input id="r-telefono" maxlength="20" inputmode="tel"></label>
+  <label class="campo">Nota (opcional) <input id="r-nota" maxlength="200" placeholder="Cumpleaños, alergia, carrito…"></label>
+  <label class="campo" id="r-con-cesta" hidden>
+    <input type="checkbox" id="r-adelantar" checked>
+    Dejar pedido ya: <span id="r-cesta-texto"></span>
+  </label>
+  <div class="fila"><button id="r-cancelar">Ahora no</button><button id="r-ok" class="primario">Reservar</button></div>
+</dialog>
+
 <dialog id="d-estado">
   <h3 id="e-titulo">Tu comanda</h3>
   <div id="e-cuerpo"></div>
@@ -93,5 +125,6 @@
 
 <script src="/js/comun.js?v=__V__"></script>
 <script src="/js/cliente.js?v=__V__"></script>
+<script src="/js/cliente_reservas.js?v=__V__"></script>
 </body>
 </html>

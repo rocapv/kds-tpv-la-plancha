@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Reservas · Cantina Vesta-9</title>
+<link rel="stylesheet" href="/css/estilo.css?v=__V__">
+</head>
+<body>
+<header class="barra">
+  <a href="/"><button><span class="sables"><i></i><i></i><i></i></span> Menú</button></a>
+  <h1>Reservas</h1>
+  <input type="date" id="fecha">
+  <button id="b-hoy">Hoy</button>
+  <span class="hueco"></span>
+  <span id="resumen" class="tenue"></span>
+  <button id="b-nueva" class="primario">Coger una por teléfono</button>
+  <span id="reloj"></span>
+  <span id="conexion" class="conexion"></span>
+</header>
+
+<main class="agenda">
+  <section class="caja">
+    <h3>Agenda del día</h3>
+    <p class="tenue" id="reglas"></p>
+    <div id="lista"></div>
+  </section>
+</main>
+
+<dialog id="d-nueva">
+  <form method="dialog" id="f-nueva">
+    <h3>Reserva por teléfono</h3>
+    <p class="tenue">La que coge la sala se salta los quince minutos de antelación, pero no el
+      solape: la mesa no puede estar en dos sitios a la vez.</p>
+    <label>Nombre <input id="n-nombre" maxlength="60" required></label>
+    <label>Teléfono <input id="n-telefono" maxlength="20" inputmode="tel"></label>
+    <label>Comensales <input id="n-comensales" type="number" min="1" max="30" value="2" required></label>
+    <label>Día y hora <input id="n-hora" type="datetime-local" required></label>
+    <label>Zona
+      <select id="n-zona">
+        <option value="">la que haya</option>
+        <option value="sala">Comedor presurizado</option>
+        <option value="terraza">Mirador de la fractura</option>
+        <option value="barra">Atraque</option>
+      </select>
+    </label>
+    <label>Nota <input id="n-nota" maxlength="200" placeholder="cumpleaños, alergia, carrito…"></label>
+    <div class="acciones">
+      <button value="cancelar">Cancelar</button>
+      <button id="n-guardar" value="guardar" class="primario">Apuntar</button>
+    </div>
+  </form>
+</dialog>
+
+<script src="/js/comun.js?v=__V__"></script>
+<script src="/js/sesion.js?v=__V__"></script>
+<script src="/js/reservas.js?v=__V__"></script>
+</body>
+</html>
