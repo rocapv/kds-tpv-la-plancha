@@ -62,7 +62,15 @@ def cmd_camaras(_args) -> int:
 
 
 def cmd_casting(args) -> int:
-    for clave, r in E.casting(rehacer=args.rehacer).items():
+    solo = [c.strip() for c in (args.solo or "").split(",") if c.strip()] or None
+    for clave, r in E.casting(rehacer=args.rehacer, solo=solo).items():
+        print(f"  {clave:8s} {r}")
+    return 0
+
+
+def cmd_hojas(args) -> int:
+    solo = [c.strip() for c in (args.solo or "").split(",") if c.strip()] or None
+    for clave, r in E.hojas(rehacer=args.rehacer, solo=solo).items():
         print(f"  {clave:8s} {r}")
     return 0
 
@@ -101,7 +109,13 @@ def main() -> int:
 
     c = sub.add_parser("casting")
     c.add_argument("--rehacer", action="store_true", help="vuelve a retratar aunque ya exista")
+    c.add_argument("--solo", default="", help="claves separadas por comas")
     c.set_defaults(func=cmd_casting)
+
+    h = sub.add_parser("hojas", help="la hoja de personaje de cada molde (varias vistas)")
+    h.add_argument("--rehacer", action="store_true")
+    h.add_argument("--solo", default="", help="claves separadas por comas")
+    h.set_defaults(func=cmd_hojas)
 
     g = sub.add_parser("guion")
     g.add_argument("prompt")

@@ -101,7 +101,8 @@ def _controles_al_dia(bib: B.Biblia) -> None:
 
 
 def producir(prompt: str, t: Trabajo, usar_llm: bool = True, con_voz: bool = True,
-             solo_guion: bool = False, guion_hecho: "Gu.Guion | None" = None) -> dict:
+             solo_guion: bool = False, guion_hecho: "Gu.Guion | None" = None,
+             elegidos: list[str] | None = None) -> dict:
     """Todo el proceso. Devuelve el estado final.
 
     `guion_hecho` salta al guionista y rueda un guion escrito a mano. Es lo que
@@ -113,7 +114,7 @@ def producir(prompt: str, t: Trabajo, usar_llm: bool = True, con_voz: bool = Tru
     t.anotar("escribiendo el guion", 0.02)
 
     bib = B.cargar()
-    g = guion_hecho or Gu.escribir(prompt, bib, usar_llm=usar_llm)
+    g = guion_hecho or Gu.escribir(prompt, bib, usar_llm=usar_llm, elegidos=elegidos)
     t.estado["titulo"] = g.titulo
     t.estado["avisos"].extend(g.avisos)
     t.estado["escenas"] = [asdict(e) for e in g.escenas]
@@ -195,12 +196,23 @@ def producir(prompt: str, t: Trabajo, usar_llm: bool = True, con_voz: bool = Tru
 
         control = B.DIR_CONTROL / f"{esc.camara}_profundidad.png"
         referencia = E.referencia_para(esc.personajes)
-        if esc.personajes and referencia is None:
+        if esc.personajes and not referencia:
             t.avisar(f"Plano {i+1}: sin retrato de {esc.personajes[0]}; la persona saldrá "
                      "genérica. Haz el casting para que sea siempre la misma.")
+        elif esc.personajes and len(referencia) == 1:
+            t.avisar(f"Plano {i+1}: {esc.personajes[0]} solo tiene el retrato frontal. "
+                     "Con la hoja de personaje entera aguanta mucho mejor cuando gira la cabeza "
+                     "(`python estudio_cli.py hojas`).")
 
+        # El orden importa y no es el natural: primero QUIÉN y QUÉ hace, con
+        # peso explícito, y el ambiente al final. Al revés, el decorado se come
+        # el prompt y la gente no llega a aparecer.
         gente = ", ".join(B.ELENCO[c].breve for c in esc.personajes if c in B.ELENCO)
-        positivo = ", ".join(x for x in [esc.accion, gente, B.ESTILO] if x)
+        if esc.personajes:
+            cabeza = f"({gente}:1.3), {esc.accion}" if gente else esc.accion
+        else:
+            cabeza = esc.accion
+        positivo = ", ".join(x for x in [cabeza, B.ESTILO] if x)
         fotogramas = max(16, esc.segundos * B.FORMATO["fps"])
 
         grafo = C.construir(
@@ -290,7 +302,7 @@ _en_marcha: dict[str, threading.Thread] = {}
 
 
 def lanzar(prompt: str, usar_llm: bool = True, con_voz: bool = True,
-           solo_guion: bool = False) -> str:
+           solo_guion: bool = False, elegidos: list[str] | None = None) -> str:
     ident = _nuevo_id()
     while (DIR_TRABAJOS / ident).exists():
         time.sleep(1)
@@ -302,7 +314,8 @@ def lanzar(prompt: str, usar_llm: bool = True, con_voz: bool = True,
     def correr() -> None:
         with _candado:          # la GPU es una: los trabajos hacen cola
             try:
-                producir(prompt, t, usar_llm=usar_llm, con_voz=con_voz, solo_guion=solo_guion)
+                producir(prompt, t, usar_llm=usar_llm, con_voz=con_voz,
+                         solo_guion=solo_guion, elegidos=elegidos)
             except Exception as e:
                 t.estado["fase"] = "error"
                 t.estado["error"] = str(e)

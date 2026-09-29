@@ -85,12 +85,14 @@ ALTURAS_POR_NOMBRE = {
 #
 # En inglés a propósito: SD 1.5 entiende mucho peor el español, y describir ropa
 # en inglés además evita marcar género donde no hace falta.
+# CORTO a propósito. SD 1.5 lee 77 fichas de golpe y lo que va al principio pesa
+# más: con el estilo largo de antes, el decorado se comía el prompt y la persona
+# quedaba diluida hasta desaparecer —el primer clip salió con la sala perfecta y
+# sin nadie dentro—. La sala ya la impone ControlNet, así que aquí solo hace
+# falta el AMBIENTE: de qué está hecha la pared y cómo es la luz.
 ESTILO = (
-    "interior of a canteen inside an asteroid mining station, walls of carved "
-    "grey rock reinforced with riveted steel ribs, warm amber service lighting "
-    "from below, cold blue safety strips along the floor, dust motes in the air, "
-    "cinematic film still, 35mm anamorphic lens, shallow depth of field, "
-    "muted teal and amber palette, volumetric haze, photorealistic"
+    "inside an asteroid mining station canteen, carved rock walls with steel ribs, "
+    "warm amber lighting, cinematic film still, 35mm, photorealistic"
 )
 
 ESTILO_NEGATIVO = (
@@ -185,10 +187,13 @@ ELENCO: dict[str, Personaje] = {p.clave: p for p in [
     # Sin gafas de soldar ni cuello alto en el retrato: con ellas el modelo le
     # puso las gafas sobre los ojos y una braga hasta la nariz, y un molde con la
     # cara tapada no le sirve a IP-Adapter para reconocer a nadie.
+    # «pale dry lips» va escrito a propósito: sin eso, el modelo le pintaba los
+    # labios de rosa fuerte, y IP-Adapter lo amplificaba en toda la hoja.
     Personaje("teo", "Teo Marchal", "cliente",
               "portrait of a young man in his twenties, short dark curly hair, clean shaven, "
-              "open collar blue coverall, faint grease on one cheek, bare face, friendly look",
-              "a young man in a blue coverall", 1012),
+              "pale dry lips, open collar blue coverall, faint grease on one cheek, "
+              "tired friendly look",
+              "a young man in a blue coverall", 1033),
     # Clientas
     Personaje("nadia", "Nadia Ostrov", "cliente",
               "portrait of a weathered woman in her sixties, veteran miner, worn orange jumpsuit, "

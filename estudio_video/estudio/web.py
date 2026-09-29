@@ -150,7 +150,8 @@ class Manejador(BaseHTTPRequestHandler):
             ident = Pr.lanzar(prompt,
                               usar_llm=bool(datos.get("usar_llm", True)),
                               con_voz=bool(datos.get("con_voz", True)),
-                              solo_guion=bool(datos.get("solo_guion", False)))
+                              solo_guion=bool(datos.get("solo_guion", False)),
+                              elegidos=list(datos.get("personajes") or []))
             self._json({"id": ident})
 
         elif ruta == "/api/casting":

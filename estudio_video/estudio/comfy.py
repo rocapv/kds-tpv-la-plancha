@@ -39,10 +39,17 @@ CONTROLNET_PROFUNDIDAD = "control_v11f1p_sd15_depth_fp16.safetensors"
 CONTROLNET_LINEAS = "control_v11p_sd15_lineart_fp16.safetensors"
 
 # Cuánto manda cada freno. Subir la profundidad respeta más la sala pero deja
-# menos sitio a la gente; bajarla suelta el encuadre. 0,75 es el punto en que la
-# sala se reconoce y todavía caben personas delante.
-FUERZA_PROFUNDIDAD = 0.75
-FUERZA_IDENTIDAD = 0.70
+# menos sitio a la gente; bajarla suelta el encuadre.
+#
+# Medido con el primer clip (29/09/2026): con 0,75 hasta el 85% de los pasos, la
+# sala salía perfecta —muro, puerta, suelo, el bulto de las sillas— y NO HABÍA
+# NADIE. El mapa de profundidad no tiene personas dentro, así que mientras
+# ControlNet manda, el modelo rellena lo que ve: una habitación vacía. Aflojarlo
+# y, sobre todo, soltarlo a mitad de camino deja que la gente aparezca cuando la
+# sala ya está puesta.
+FUERZA_PROFUNDIDAD = 0.55
+HASTA_PROFUNDIDAD = 0.55       # a partir de ahí, ControlNet ya no opina
+FUERZA_IDENTIDAD = 0.75
 
 CONTEXTO = 16          # fotogramas que AnimateDiff v3 mira a la vez
 SOLAPE = 4
@@ -75,8 +82,18 @@ def vram_libre(url: str = COMFY) -> tuple[int, int]:
              "--format=csv,noheader,nounits"],
             capture_output=True, text=True, timeout=15)
         if r.returncode == 0 and r.stdout.strip():
-            libre, total = r.stdout.strip().splitlines()[0].split(",")
-            return int(libre), int(total)
+            libre, total = (int(x) for x in r.stdout.strip().splitlines()[0].split(","))
+            # A lo que queda en la tarjeta se le suma lo que ComfyUI ya tiene
+            # RESERVADO: eso es suyo y lo reutiliza para el siguiente render. Sin
+            # sumarlo, en cuanto ComfyUI carga los modelos la tarjeta parece
+            # llena y el estudio se niega a generar... por culpa de sí mismo.
+            try:
+                with urllib.request.urlopen(f"{url}/system_stats", timeout=8) as s:
+                    dev = (json.load(s).get("devices") or [{}])[0]
+                libre += max(0, dev.get("torch_vram_total", 0) // 2**20)
+            except Exception:
+                pass
+            return min(libre, total), total
     except Exception:
         pass
     # Sin nvidia-smi, lo de ComfyUI es mejor que nada, pero es optimista.
@@ -114,7 +131,7 @@ def _copiar_a_entradas(origen: Path) -> str:
 
 def construir(prompt_positivo: str, prompt_negativo: str, control: Path,
               fotogramas: int, semilla: int, prefijo: str,
-              referencia: Path | None = None,
+              referencia: Path | list[Path] | None = None,
               ancho: int | None = None, alto: int | None = None,
               fuerza_control: float = FUERZA_PROFUNDIDAD,
               fuerza_identidad: float = FUERZA_IDENTIDAD) -> dict:
@@ -128,16 +145,35 @@ def construir(prompt_positivo: str, prompt_negativo: str, control: Path,
     g["1"] = {"class_type": "CheckpointLoaderSimple",
               "inputs": {"ckpt_name": CHECKPOINT}}
 
+    # La referencia puede ser una imagen o la hoja de personaje entera. Con la
+    # hoja, las vistas se apilan en un lote y sus embeddings se PROMEDIAN: así la
+    # identidad no depende de que en la toma la cabeza esté como en el retrato.
+    vistas = ([referencia] if isinstance(referencia, Path) else list(referencia or []))
+    vistas = [v for v in vistas if v and v.exists()]
+
     modelo = ["1", 0]
-    if referencia is not None and referencia.exists():
+    if vistas:
         g["2"] = {"class_type": "IPAdapterUnifiedLoader",
                   "inputs": {"model": ["1", 0], "preset": "PLUS (high strength)"}}
-        g["3"] = {"class_type": "LoadImage",
-                  "inputs": {"image": _copiar_a_entradas(referencia)}}
+        # Una carga por vista, encadenadas con ImageBatch hasta formar un lote.
+        anterior = None
+        for n, v in enumerate(vistas):
+            carga = f"3_{n}"
+            g[carga] = {"class_type": "LoadImage",
+                        "inputs": {"image": _copiar_a_entradas(v)}}
+            if anterior is None:
+                anterior = [carga, 0]
+            else:
+                junta = f"3b_{n}"
+                g[junta] = {"class_type": "ImageBatch",
+                            "inputs": {"image1": anterior, "image2": [carga, 0]}}
+                anterior = [junta, 0]
+
         g["4"] = {"class_type": "IPAdapterAdvanced",
-                  "inputs": {"model": ["2", 0], "ipadapter": ["2", 1], "image": ["3", 0],
+                  "inputs": {"model": ["2", 0], "ipadapter": ["2", 1], "image": anterior,
                              "weight": fuerza_identidad, "weight_type": "linear",
-                             "combine_embeds": "concat", "start_at": 0.0, "end_at": 1.0,
+                             "combine_embeds": "average" if len(vistas) > 1 else "concat",
+                             "start_at": 0.0, "end_at": 1.0,
                              "embeds_scaling": "V only"}}
         modelo = ["4", 0]
 
@@ -167,7 +203,7 @@ def construir(prompt_positivo: str, prompt_negativo: str, control: Path,
                "inputs": {"positive": ["7", 0], "negative": ["8", 0],
                           "control_net": ["11", 0], "image": ["10", 0],
                           "strength": fuerza_control, "start_percent": 0.0,
-                          "end_percent": 0.85}}
+                          "end_percent": HASTA_PROFUNDIDAD}}
 
     g["13"] = {"class_type": "EmptyLatentImage",
                "inputs": {"width": ancho, "height": alto, "batch_size": fotogramas}}

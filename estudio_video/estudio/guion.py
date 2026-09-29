@@ -141,8 +141,32 @@ Platos que existen en la carta (por si los nombras en la narración): {platos}.
 """
 
 
+def modelo_a_usar(url: str = LLM_URL, preferido: str = LLM_MODELO) -> str | None:
+    """El modelo preferido si está, y si no, cualquiera que sirva.
+
+    LM Studio carga y descarga modelos según lo que haga cada uno en esta
+    máquina, así que pedir siempre el mismo nombre falla el día que alguien lo
+    descarga —pasó en cuanto se liberó la GPU— y el guionista se caía a
+    plantillas diciendo solo «HTTPError», que no explica nada.
+    """
+    try:
+        r = requests.get(url.replace("/chat/completions", "/models"), timeout=8)
+        r.raise_for_status()
+        ids = [m.get("id", "") for m in r.json().get("data", [])]
+    except Exception:
+        return None
+    if preferido in ids:
+        return preferido
+    # Los de embeddings no saben conversar; el resto vale.
+    utiles = [i for i in ids if "embed" not in i.lower()]
+    return utiles[0] if utiles else None
+
+
 def _pedir_al_llm(prompt: str, bib: B.Biblia, url: str = LLM_URL,
-                  modelo: str = LLM_MODELO) -> dict | None:
+                  modelo: str | None = None) -> dict | None:
+    modelo = modelo or modelo_a_usar(url)
+    if not modelo:
+        raise RuntimeError("no hay ningún modelo de lenguaje cargado en LM Studio")
     cuerpo = {
         "model": modelo,
         "messages": [
@@ -338,16 +362,63 @@ def validar(crudo: dict, bib: B.Biblia, prompt: str) -> Guion:
     return Guion(titulo=titulo, tipo=tipo, escenas=escenas, prompt=prompt, avisos=avisos)
 
 
-def escribir(prompt: str, bib: B.Biblia | None = None, usar_llm: bool = True) -> Guion:
-    """El guion de un prompt. Intenta el LLM; si no hay, tira de plantillas."""
+def _repartir(escenas: list[dict], elegidos: list[str]) -> list[dict]:
+    """Pone a los elegidos en las escenas que llevan gente, en orden.
+
+    Los elegidos vienen de las caras que se pulsan en la web. Si alguien se
+    molesta en decir «quiero a Nadia y a Klaus», salen Nadia y Klaus, no los que
+    trajera la plantilla. Las escenas sin gente (una pantalla, una toma de
+    cocina de espaldas) se quedan como están.
+    """
+    if not elegidos:
+        return escenas
+    fuera = []
+    turno = 0
+    for e in escenas:
+        e = dict(e)
+        cuantos = len(e.get("personajes") or [])
+        if cuantos:
+            e["personajes"] = [elegidos[(turno + n) % len(elegidos)] for n in range(cuantos)]
+            # Sin repetir a nadie dentro del mismo plano.
+            vistos, limpio = set(), []
+            for c in e["personajes"]:
+                if c not in vistos:
+                    vistos.add(c)
+                    limpio.append(c)
+            e["personajes"] = limpio
+            turno += 1
+        fuera.append(e)
+    return fuera
+
+
+def escribir(prompt: str, bib: B.Biblia | None = None, usar_llm: bool = True,
+             elegidos: list[str] | None = None) -> Guion:
+    """El guion de un prompt. Intenta el LLM; si no hay, tira de plantillas.
+
+    `elegidos` son las claves del elenco que el usuario ha pulsado en la web:
+    esas son las personas que salen, y nadie más.
+    """
     bib = bib or B.cargar()
     avisos: list[str] = []
+    elegidos = [c for c in (elegidos or []) if c in B.ELENCO]
 
     if usar_llm:
         try:
-            crudo = _pedir_al_llm(prompt, bib)
+            extra = ""
+            if elegidos:
+                quienes = ", ".join(f"{c} ({B.ELENCO[c].nombre})" for c in elegidos)
+                extra = ("\n\nEn este vídeo salen EXACTAMENTE estas personas y ninguna otra: "
+                         f"{quienes}. Reparte sus intervenciones entre las escenas.")
+            crudo = _pedir_al_llm(prompt + extra, bib)
             if crudo:
                 g = validar(crudo, bib, prompt)
+                if elegidos:
+                    sobran = {c for e in g.escenas for c in e.personajes} - set(elegidos)
+                    for e in g.escenas:
+                        e.personajes = [c for c in e.personajes if c in elegidos]
+                    if sobran:
+                        avisos.append("Se quitaron personas que no habías elegido: "
+                                      + ", ".join(sorted(sobran)) + ".")
                 g.avisos = avisos + g.avisos
                 return g
             avisos.append("El modelo de lenguaje no devolvió JSON; se usan plantillas.")
@@ -355,6 +426,7 @@ def escribir(prompt: str, bib: B.Biblia | None = None, usar_llm: bool = True) ->
             avisos.append(f"Sin modelo de lenguaje ({type(e).__name__}); se usan plantillas.")
 
     escenas, usadas = _por_plantillas(prompt)
+    escenas = _repartir(escenas, elegidos)
     tipo = "tutorial" if any(w in _sin_tildes(prompt) for w in ("tutorial", "como se", "explica",
                                                                "enseña", "ensena", "aprende")) else "escena"
     crudo: dict[str, Any] = {"titulo": prompt[:60] or "Cantina Vesta-9", "tipo": tipo,

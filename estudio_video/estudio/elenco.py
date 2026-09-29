@@ -21,9 +21,14 @@ from . import comfy as C
 LADO = 512
 PASOS = 26
 
-ENCUADRE = ("head and shoulders portrait, whole head inside the frame, face fully visible and "
-            "unobstructed, looking straight at the camera, neutral studio lighting, "
-            "plain dark background, sharp focus, photorealistic, 50mm lens")
+# Lo que comparten TODAS las imágenes de referencia de una persona: la misma luz
+# y el mismo fondo. Una hoja donde cada vista tiene su propia iluminación le
+# enseña a IP-Adapter el decorado en vez de la cara.
+ENCUADRE_COMUN = ("face fully visible and unobstructed, neutral studio lighting, "
+                  "plain dark background, sharp focus, photorealistic, 50mm lens")
+
+ENCUADRE = ("head and shoulders portrait, whole head inside the frame, "
+            "looking straight at the camera, " + ENCUADRE_COMUN)
 
 # Lo de tapar la cara no es una manía: en la primera tanda, a un personaje descrito
 # con «gafas de soldar subidas a la frente» el modelo le puso las gafas sobre los
@@ -34,11 +39,80 @@ NEGATIVO = ("text, watermark, logo, cartoon, anime, illustration, painting, 3d r
             "deformed face, extra heads, blurry, lowres, multiple people, hands, "
             "face mask, scarf over face, balaclava, covered face, goggles over eyes, "
             "sunglasses, helmet visor, cropped head, top of head out of frame, "
-            "back of head, looking away, full body, wide shot")
+            "back of head, looking away, full body, wide shot, "
+            # De la primera tanda de hojas: vistas partidas en dos y un personaje
+            # al que el modelo le pintó los labios de rosa en casi todas.
+            "split image, diptych, collage, side by side, two people, duplicate person, "
+            "mirrored copy, lipstick, makeup, glossy lips, headless, neck only")
+
+
+# ── La hoja de personaje ────────────────────────────────────────────────────
+# Un retrato frontal le da a IP-Adapter un solo punto de vista, y en cuanto la
+# persona gira la cabeza dentro de una escena deja de reconocerla: sale «alguien
+# parecido». La hoja de personaje es lo que usa cualquier producción para lo
+# mismo —varias vistas de la misma persona, más primeros planos de cara— y aquí
+# sirve para dos cosas:
+#
+#   1. Alimentar a IP-Adapter con TODAS las vistas a la vez (sus embeddings se
+#      promedian), con lo que la identidad deja de depender del encuadre.
+#   2. Poder mirarla. Si un molde no aguanta de perfil, se ve en la hoja y no
+#      cuarenta minutos después, en el vídeo.
+#
+# Cada vista se genera A PARTIR DEL RETRATO BASE, con el propio IP-Adapter: así
+# el de perfil es la misma persona que el frontal y no otra que se le parece.
+# Cada vista dice SIEMPRE que hay una sola persona y que la cabeza entra entera.
+# Sin eso, la primera tanda salió con vistas partidas en dos (el mismo hombre
+# duplicado dentro del cuadro) y con primeros planos que eran un cuello y una
+# camisa: «extreme close up of the face only» lo entiende como que la cara puede
+# salirse por arriba.
+SOLO_UNO = "one person alone, single subject, whole head inside the frame"
+
+VISTAS = [
+    ("frontal", f"looking straight at the camera, head and shoulders, {SOLO_UNO}", 1.00),
+    ("tres_cuartos", f"three quarter view, head turned slightly to one side, "
+                     f"head and shoulders, {SOLO_UNO}", 0.92),
+    ("perfil", f"side view of the head, looking to the left, head and shoulders, {SOLO_UNO}", 0.88),
+    ("cara", f"close up portrait, the face fills most of the frame, neutral expression, "
+             f"{SOLO_UNO}", 0.95),
+    ("cara_hablando", f"close up portrait, mouth slightly open as if talking, "
+                      f"looking slightly off camera, {SOLO_UNO}", 0.92),
+    ("cara_abajo", f"close up portrait, head tilted down, eyes looking down at something "
+                   f"held below, concentrated, {SOLO_UNO}", 0.92),
+    ("medio", f"medium shot from the waist up, standing, arms relaxed at the sides, {SOLO_UNO}", 0.85),
+]
+
+# Cuánto pesa la referencia al generar cada vista. Muy alto y las siete vistas
+# salen iguales (el mismo frontal repetido, que no aporta nada); muy bajo y
+# dejan de ser la misma persona. 0,85-1,0 es donde gira la cabeza sin cambiar de
+# cara.
 
 
 def ruta_de(clave: str) -> Path:
+    """El retrato base: el ancla de la que cuelga todo lo demás."""
     return B.DIR_ELENCO / f"{clave}.png"
+
+
+def dir_hoja(clave: str) -> Path:
+    return B.DIR_ELENCO / clave
+
+
+def vistas_de(clave: str) -> list[Path]:
+    """Las imágenes de referencia de un molde, la base primero.
+
+    Si no hay hoja todavía, devuelve el retrato base solo: el estudio sigue
+    funcionando con una referencia, simplemente sujeta peor.
+    """
+    base = ruta_de(clave)
+    fuera = [base] if base.exists() else []
+    d = dir_hoja(clave)
+    if d.is_dir():
+        for nombre, _, _ in VISTAS:
+            if nombre == "frontal":
+                continue                      # el frontal ya es el retrato base
+            f = d / f"{nombre}.png"
+            if f.exists():
+                fuera.append(f)
+    return fuera
 
 
 def _grafo_retrato(p: B.Personaje) -> dict:
@@ -82,6 +156,77 @@ def retratar(clave: str, rehacer: bool = False, aviso=None) -> Path:
     return destino
 
 
+def _grafo_vista(p: B.Personaje, vista: str, encuadre: str, peso: float,
+                 referencia: Path) -> dict:
+    """Una vista de la hoja, generada desde el retrato base con IP-Adapter."""
+    return {
+        "1": {"class_type": "CheckpointLoaderSimple",
+              "inputs": {"ckpt_name": C.CHECKPOINT}},
+        "2": {"class_type": "IPAdapterUnifiedLoader",
+              "inputs": {"model": ["1", 0], "preset": "PLUS FACE (portraits)"}},
+        "3": {"class_type": "LoadImage",
+              "inputs": {"image": C._copiar_a_entradas(referencia)}},
+        "4": {"class_type": "IPAdapterAdvanced",
+              "inputs": {"model": ["2", 0], "ipadapter": ["2", 1], "image": ["3", 0],
+                         "weight": peso, "weight_type": "linear",
+                         "combine_embeds": "concat", "start_at": 0.0, "end_at": 1.0,
+                         "embeds_scaling": "V only"}},
+        "5": {"class_type": "CLIPTextEncode",
+              "inputs": {"text": f"{p.retrato}, {encuadre}, {ENCUADRE_COMUN}", "clip": ["1", 1]}},
+        "6": {"class_type": "CLIPTextEncode",
+              "inputs": {"text": NEGATIVO, "clip": ["1", 1]}},
+        "7": {"class_type": "EmptyLatentImage",
+              "inputs": {"width": LADO, "height": LADO, "batch_size": 1}},
+        "8": {"class_type": "KSampler",
+              "inputs": {"model": ["4", 0], "seed": p.semilla + abs(hash(vista)) % 9973,
+                         "steps": PASOS, "cfg": 7.0, "sampler_name": "dpmpp_2m",
+                         "scheduler": "karras", "positive": ["5", 0], "negative": ["6", 0],
+                         "latent_image": ["7", 0], "denoise": 1.0}},
+        "9": {"class_type": "VAEDecode",
+              "inputs": {"samples": ["8", 0], "vae": ["1", 2]}},
+        "10": {"class_type": "SaveImage",
+               "inputs": {"images": ["9", 0], "filename_prefix": f"hoja_{p.clave}_{vista}"}},
+    }
+
+
+def hoja_de_personaje(clave: str, rehacer: bool = False, aviso=None) -> list[Path]:
+    """Genera (o devuelve) las vistas de un molde. El frontal es el retrato base."""
+    p = B.ELENCO[clave]
+    base = retratar(clave, aviso=aviso)          # sin base no hay hoja
+    d = dir_hoja(clave)
+    d.mkdir(parents=True, exist_ok=True)
+
+    for vista, encuadre, peso in VISTAS:
+        if vista == "frontal":
+            continue
+        destino = d / f"{vista}.png"
+        if destino.exists() and not rehacer:
+            continue
+        pid = C.encolar(_grafo_vista(p, vista, encuadre, peso, base))
+        salidas = C.esperar(pid, aviso=aviso)
+        imagenes = [s for s in salidas if s.suffix.lower() in (".png", ".jpg", ".jpeg")]
+        if not imagenes:
+            raise C.ComfyCaido(f"la vista «{vista}» de {p.nombre} no dejó imagen")
+        shutil.copy2(imagenes[0], destino)
+    return vistas_de(clave)
+
+
+def hojas(rehacer: bool = False, solo: list[str] | None = None, aviso=None) -> dict[str, str]:
+    """La hoja de todo el elenco."""
+    out: dict[str, str] = {}
+    for clave in (solo or list(B.ELENCO)):
+        try:
+            v = hoja_de_personaje(clave, rehacer=rehacer, aviso=aviso)
+            out[clave] = f"{len(v)} vistas"
+        except Exception as e:
+            out[clave] = f"ERROR: {e}"
+    return out
+
+
+def falta_hoja() -> list[str]:
+    return [c for c in B.ELENCO if len(vistas_de(c)) < len(VISTAS)]
+
+
 def casting(rehacer: bool = False, solo: list[str] | None = None, aviso=None) -> dict[str, str]:
     """Retrata a todo el elenco. Devuelve clave → ruta o motivo del fallo."""
     out: dict[str, str] = {}
@@ -97,15 +242,19 @@ def falta_casting() -> list[str]:
     return [c for c in B.ELENCO if not ruta_de(c).exists()]
 
 
-def referencia_para(personajes: list[str]) -> Path | None:
-    """El retrato que guía una escena.
+def referencia_para(personajes: list[str]) -> list[Path]:
+    """Las imágenes de referencia que guían una escena.
 
-    Si en el plano hay varias personas se usa el retrato de la primera. Meterle
-    dos identidades a IP-Adapter a la vez las mezcla y salen dos caras a medio
-    camino, que es peor que tener una bien y otra genérica.
+    Se usa la hoja ENTERA de la primera persona del plano: frontal, tres cuartos,
+    perfil y los primeros planos de cara. IP-Adapter promedia sus embeddings, así
+    que la identidad deja de depender de cómo esté colocada la cabeza en la toma.
+
+    De una sola persona, eso sí. Meterle DOS identidades a la vez las mezcla y
+    salen dos caras a medio camino, que es peor que tener una bien y otra
+    genérica.
     """
     for c in personajes:
-        r = ruta_de(c)
-        if r.exists():
-            return r
-    return None
+        v = vistas_de(c)
+        if v:
+            return v
+    return []
