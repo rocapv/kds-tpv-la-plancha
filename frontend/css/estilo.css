@@ -934,3 +934,14 @@ body.pantalla-mesa { display: grid; place-items: center; min-height: 100vh; text
 .lineas-solicitud li { display: flex; align-items: center; gap: .5rem; padding: .15rem 0; }
 .lineas-solicitud input { width: 4.2rem; text-align: center; }
 
+/* El pase: lo que cocina ha terminado y espera a que alguien lo lleve. */
+.caja.pase { border-color: var(--ok); margin-bottom: .8rem; }
+.comanda-pase { border-top: 1px solid var(--borde); padding: .6rem 0; }
+.comanda-pase:first-child { border-top: 0; }
+.comanda-pase header { display: flex; justify-content: space-between; align-items: baseline; }
+.comanda-pase ul { list-style: none; padding: 0; margin: .3rem 0; }
+.comanda-pase li { display: flex; align-items: center; gap: .5rem; padding: .1rem 0; }
+.comanda-pase li button { padding: .2em .6em; }
+.comanda-pase .nota { color: var(--aviso); font-size: .9rem; }
+.comanda-pase.tarde header b { color: var(--mal); }
+

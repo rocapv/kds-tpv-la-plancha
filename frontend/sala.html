@@ -19,6 +19,13 @@
 <main class="sala">
   <section class="kpis" id="kpis"></section>
 
+  <section class="caja pase" id="pase-caja" hidden>
+    <h3>Listo para llevar <span id="pase-cuenta" class="tenue"></span></h3>
+    <p class="tenue">Cocina ha terminado estos platos. Se dan por servidos cuando quien los lleva
+      lo confirma aquí: hasta entonces siguen contando como espera del cliente.</p>
+    <div id="pase"></div>
+  </section>
+
   <section class="caja avisos" id="avisos-caja">
     <h3>Quién está esperando</h3>
     <p class="tenue">No mide el plato, mide al cliente: mesas sin atender, cuentas sin cobrar y platos listos que nadie recoge.</p>
@@ -41,6 +48,7 @@ const TEXTO = {
 };
 
 async function cargar() {
+  await cargarPase();
   const s = await api('/sala');
   $('#resumen').textContent = `${s.ocupadas} ocupadas · ${s.libres} libres`;
 
@@ -75,6 +83,38 @@ async function cargar() {
 }
 
 setInterval(() => $('#reloj').textContent = new Date().toLocaleTimeString('es-ES'), 1000);
+/** Lo que cocina ha terminado y espera a que alguien lo lleve a la mesa. */
+async function cargarPase() {
+  let d;
+  try { d = await api('/pase'); } catch { return; }
+  const caja = $('#pase-caja');
+  caja.hidden = !d.comandas.length;
+  $('#pase-cuenta').textContent = d.comandas.length
+    ? `· ${d.comandas.reduce((n, c) => n + c.lineas.length, 0)} platos en ${d.comandas.length} comandas`
+    : '';
+  const minutos = seg => Math.floor(seg / 60);
+  $('#pase').innerHTML = d.comandas.map(c => `
+    <article class="comanda-pase ${minutos(c.lineas[0].esperando_seg) >= 5 ? 'tarde' : ''}">
+      <header>
+        <b>${c.mesa ? 'Mesa ' + esc(c.mesa) : '🛍 ' + esc(c.cliente || 'Para llevar')}</b>
+        <span class="tenue">${minutos(c.lineas[0].esperando_seg)} min en el pase</span>
+      </header>
+      <ul>${c.lineas.map(l => `<li>
+        <button data-linea="${l.id}" class="sutil" title="Solo este plato">${l.cantidad}× ${esc(l.producto)}</button>
+        ${l.notas ? `<span class="nota">${esc(l.notas)}</span>` : ''}</li>`).join('')}</ul>
+      <button data-pedido="${c.pedido_id}" class="ok">Llevado a la mesa</button>
+    </article>`).join('');
+
+  $('#pase').querySelectorAll('[data-pedido]').forEach(b => b.onclick = async () => {
+    try { await api(`/pedidos/${b.dataset.pedido}/entregar`, { method: 'POST' }); cargar(); }
+    catch (e) { aviso(e.message, 'error'); }
+  });
+  $('#pase').querySelectorAll('[data-linea]').forEach(b => b.onclick = async () => {
+    try { await api(`/lineas/${b.dataset.linea}/entregar`, { method: 'POST' }); cargar(); }
+    catch (e) { aviso(e.message, 'error'); }
+  });
+}
+
 exigirSesion(['camarero', 'encargado']).then(() => {
   conectarWS(ev => { if (['mesas', 'kds', 'listo', 'reconectado'].includes(ev.tipo)) cargar(); });
   cargar();

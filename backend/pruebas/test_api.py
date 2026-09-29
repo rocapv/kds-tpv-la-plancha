@@ -192,12 +192,22 @@ def test_la_cocina_no_recibe_los_alergenos_del_producto(cliente, camarero, cocin
     cliente.post(f"/api/pedidos/{pid}/anular", headers=camarero)
 
 
-def test_avance_de_estados(cliente, cocina, pedido_enviado):
+def test_avance_de_estados(cliente, cocina, camarero, pedido_enviado):
+    """Cocina avanza hasta «lista» y ahí se para: el plato sigue en el pase.
+
+    El último paso, darlo por servido, es de quien lo lleva a la mesa. Ver `test_entrega.py`.
+    """
     estados = []
-    for _ in range(3):
+    for _ in range(2):
         estados.append(cliente.post(f"/api/kds/pedido/{pedido_enviado}/avanzar?estacion=plancha",
                                     headers=cocina).json()["estado"])
-    assert estados == ["preparando", "lista", "servida"]
+    assert estados == ["preparando", "lista"]
+    tope = cliente.post(f"/api/kds/pedido/{pedido_enviado}/avanzar?estacion=plancha",
+                        headers=cocina)
+    assert tope.status_code == 409
+    # Y lo cierra sala
+    assert cliente.post(f"/api/pedidos/{pedido_enviado}/entregar",
+                        headers=camarero).status_code == 200
 
 
 def test_deshacer_una_linea(cliente, cocina, camarero, pedido_enviado):

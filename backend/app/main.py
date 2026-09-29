@@ -586,6 +586,11 @@ def kds(estacion: str | None = None, pantalla: str | None = None, limite: int = 
 
 
 SIGUIENTE = {"enviada": "preparando", "preparando": "lista", "lista": "servida"}
+# Pero cocina **no llega hasta el final**: su trabajo termina cuando el plato está listo en el
+# pase. Quien lo da por servido es quien lo lleva a la mesa, que es el único que sabe que ha
+# llegado. Si cocina pudiera marcarlo, un plato podría constar como servido mientras se enfría
+# bajo la lámpara, y los tiempos de sala dejarían de significar nada.
+SIGUIENTE_COCINA = {"enviada": "preparando", "preparando": "lista"}
 # En cocina se toca la pantalla con las manos ocupadas: hay que poder volver atrás.
 ANTERIOR = {v: k for k, v in SIGUIENTE.items()}
 
@@ -609,7 +614,10 @@ async def cambiar_estado_linea(lid: int, d: CambioEstado, u: dict = Depends(exig
     if not l:
         raise HTTPException(404, "Línea no encontrada")
     if d.estado == "siguiente":
-        nuevo = SIGUIENTE.get(l["estado"])
+        nuevo = SIGUIENTE_COCINA.get(l["estado"])
+        if not nuevo and l["estado"] == "lista":
+            raise HTTPException(409, "Ese plato ya está listo; lo da por servido quien lo lleva "
+                                     "a la mesa")
     elif d.estado == "anterior":
         nuevo = ANTERIOR.get(l["estado"])
         if not nuevo:
@@ -620,6 +628,9 @@ async def cambiar_estado_linea(lid: int, d: CambioEstado, u: dict = Depends(exig
         nuevo = d.estado
     if nuevo not in ("enviada", "preparando", "lista", "servida"):
         raise HTTPException(409, f"No se puede pasar de {l['estado']} a {d.estado}")
+    if nuevo == "servida" and u["rol_operativo"] == "cocina" and u["rol"] != "encargado":
+        raise HTTPException(403, "Marcar un plato como servido es de sala: lo confirma quien lo "
+                                 "lleva a la mesa")
     _mover_lineas([lid], nuevo)
     await hub.emitir("kds", pedido_id=l["pedido_id"])
     await hub.emitir_publico("recogida")
@@ -660,8 +671,14 @@ async def avanzar_pedido(pid: int, estacion: str | None = None, pantalla: str | 
     filtro, extra = filtro_estaciones(claves)
     args = (pid, *extra)
     lineas = q(f"""SELECT id, estado FROM lineas_pedido WHERE pedido_id=%s
-                   AND estado IN ('enviada','preparando','lista') {filtro}""", args)
+                   AND estado IN ('enviada','preparando') {filtro}""", args)
     if not lineas:
+        # Puede que no quede nada, o que lo que queda ya esté listo esperando a que lo lleven.
+        listas = q(f"""SELECT COUNT(*) n FROM lineas_pedido WHERE pedido_id=%s
+                       AND estado='lista' {filtro}""", args)[0]["n"]
+        if listas:
+            raise HTTPException(409, "Todo lo de esta comanda está listo en el pase; "
+                                     "lo recoge sala")
         raise HTTPException(404, "Nada que avanzar")
     minimo = min(lineas, key=lambda x: list(SIGUIENTE).index(x["estado"]))["estado"]
     nuevo = SIGUIENTE[minimo]
@@ -706,6 +723,67 @@ def recogida():
             "listos": listos[:TOPE_RECOGIDA], "preparando": preparando[:TOPE_RECOGIDA],
             "mas_listos": max(0, len(listos) - TOPE_RECOGIDA),
             "mas_preparando": max(0, len(preparando) - TOPE_RECOGIDA)}
+
+
+# ─────────────── El pase: de cocina a la mesa ───────────────
+# Entre «el plato está hecho» y «el cliente lo tiene delante» hay un viaje, y ese viaje lo hace
+# una persona. Confirmarlo es lo que convierte el tiempo de cocina en tiempo de servicio real:
+# sin esta confirmación, un plato listo y olvidado bajo la lámpara sigue contando como servido.
+@app.get("/api/pase")
+def pase(u: dict = Depends(exige("camarero", "encargado"))):
+    """Lo que está listo esperando a que alguien lo lleve, agrupado por mesa."""
+    filas = q("""SELECT l.id, l.pedido_id, l.cantidad, l.notas, l.lista_en,
+                        pr.nombre AS producto, p.tipo, p.cliente, m.nombre AS mesa,
+                        TIMESTAMPDIFF(SECOND, l.lista_en, NOW()) AS esperando_seg
+                 FROM lineas_pedido l
+                 JOIN pedidos p    ON p.id=l.pedido_id
+                 JOIN productos pr ON pr.id=l.producto_id
+                 LEFT JOIN mesas m ON m.id=p.mesa_id
+                 WHERE l.estado='lista' AND p.estado='abierto'
+                 ORDER BY l.lista_en""")
+    mesas: dict[int, dict] = {}
+    for f in filas:
+        d = mesas.setdefault(f["pedido_id"], {
+            "pedido_id": f["pedido_id"], "mesa": f["mesa"], "tipo": f["tipo"],
+            "cliente": f["cliente"], "desde": f["lista_en"], "lineas": []})
+        d["desde"] = min(d["desde"], f["lista_en"]) if d["desde"] else f["lista_en"]
+        d["lineas"].append(f)
+    return {"ahora": datetime.now(), "comandas": list(mesas.values())}
+
+
+async def _entregar(ids: list[int], u: dict) -> int:
+    if not ids:
+        raise HTTPException(404, "Ahí no hay nada listo que llevar")
+    _mover_lineas(ids, "servida")
+    pedidos = {f["pedido_id"] for f in
+               q(f"SELECT pedido_id FROM lineas_pedido WHERE id IN ({','.join(['%s'] * len(ids))})",
+                 tuple(ids))}
+    for pid in pedidos:
+        await hub.emitir("kds", pedido_id=pid)
+    await hub.emitir("mesas")
+    await hub.emitir_publico("recogida")
+    return len(ids)
+
+
+@app.post("/api/lineas/{lid}/entregar")
+async def entregar_linea(lid: int, u: dict = Depends(exige("camarero", "encargado"))):
+    """«Ya está en la mesa». Solo vale sobre un plato que cocina ha dado por listo."""
+    l = q1("SELECT estado FROM lineas_pedido WHERE id=%s", (lid,))
+    if not l:
+        raise HTTPException(404, "Línea no encontrada")
+    if l["estado"] != "lista":
+        raise HTTPException(409, f"Ese plato está «{l['estado']}»: solo se entrega lo que está listo")
+    await _entregar([lid], u)
+    return {"id": lid, "estado": "servida"}
+
+
+@app.post("/api/pedidos/{pid}/entregar")
+async def entregar_pedido(pid: int, u: dict = Depends(exige("camarero", "encargado"))):
+    """Lo normal: se coge la bandeja entera de una mesa y se lleva de una vez."""
+    ids = [f["id"] for f in q("SELECT id FROM lineas_pedido WHERE pedido_id=%s AND estado='lista'",
+                              (pid,))]
+    n = await _entregar(ids, u)
+    return {"pedido_id": pid, "entregadas": n}
 
 
 # ─────────────── Informes (encargado) ───────────────
