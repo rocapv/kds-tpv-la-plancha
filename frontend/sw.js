@@ -11,7 +11,7 @@
 // Lo que NUNCA se guarda: nada de `/api`. Una respuesta vieja de la API sería un precio, una
 // mesa o una comanda mentirosa; para eso está la cola de `sinred.js`, que sabe lo que apuntó.
 
-const VERSION = 'kds-tpv-v4';
+const VERSION = 'kds-tpv-v5';
 const CONCHA = [
   '/tpv.html',
   '/css/estilo.css',
@@ -77,7 +77,10 @@ function esDelCliente(url) {
     próxima visita. Si no hay nada guardado, se espera a la red como siempre. */
 async function deLaCacheYRefrescar(peticion) {
   const cache = await caches.open(VERSION);
-  const guardada = await cache.match(peticion, { ignoreSearch: true });
+  // Coincidencia EXACTA, con su `?v=<sello>`: si se busca ignorando la query, una versión nueva
+  // se responde con la copia vieja y la pantalla se queda con el CSS o el JavaScript de antes.
+  // Pasó con el estilo de la pantalla de mesa: el QR se pintaba sin su fondo blanco.
+  const guardada = await cache.match(peticion);
   const dePaso = fetch(peticion).then(r => {
     if (r.ok) cache.put(peticion, r.clone());
     return r;
