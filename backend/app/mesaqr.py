@@ -15,7 +15,7 @@ tandas y se va: eso es una visita con un pedido dentro, y no al revés.
 import secrets
 from datetime import datetime
 
-from fastapi import HTTPException
+from fastapi import Header, HTTPException
 
 from .db import conn, q, q1
 
@@ -231,3 +231,15 @@ def listar_activas() -> list[dict]:
                  FROM visitas v JOIN mesas m ON m.id=v.mesa_id
                  WHERE v.estado='activa' ORDER BY v.abierta_en""")
     return filas
+
+
+def actual(x_visita: str | None = Header(None)) -> dict:
+    """La mesa desde la que habla este teléfono, exigida como dependencia.
+
+    Va en su propia cabecera (`X-Visita`) para que pueda convivir con la cuenta de cliente: son
+    dos cosas distintas y se tienen a la vez.
+    """
+    d = de_token(x_visita)
+    if not d:
+        raise HTTPException(401, "Vuelve a leer el código de la mesa")
+    return d

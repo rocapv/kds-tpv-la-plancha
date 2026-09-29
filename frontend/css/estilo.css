@@ -919,3 +919,18 @@ body.pantalla-mesa { display: grid; place-items: center; min-height: 100vh; text
 .mi-mesa .cab { display: flex; align-items: center; justify-content: space-between; gap: .5rem; }
 .mi-mesa p { margin: .3rem 0 0; }
 
+/* Lo que lleva pedido la mesa, en el móvil del cliente. */
+.comanda-mesa { margin: .6rem 1rem; padding: .8rem 1rem; border: 1px solid var(--borde);
+  border-radius: var(--r); background: var(--panel); }
+.comanda-mesa .cab { display: flex; justify-content: space-between; align-items: baseline;
+  margin-bottom: .4rem; }
+.comanda-mesa .esperando { color: var(--aviso); margin: .4rem 0 0; }
+.comanda-mesa .esperando small { display: block; color: var(--tenue); }
+.comanda-mesa .rechazada { color: var(--mal); margin: .4rem 0 0; }
+
+/* Comandas del cliente paradas por el filtro: el motivo, y la cantidad corregible. */
+.solicitud .motivo { color: var(--aviso); font-weight: 600; margin: .2rem 0; }
+.lineas-solicitud { list-style: none; padding: 0; margin: .4rem 0; }
+.lineas-solicitud li { display: flex; align-items: center; gap: .5rem; padding: .15rem 0; }
+.lineas-solicitud input { width: 4.2rem; text-align: center; }
+

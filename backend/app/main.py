@@ -18,7 +18,7 @@ from pydantic import BaseModel, Field
 from .red import es_de_la_lan
 from .auth import (abrir_sesion, cerrar_sesion, cifrar_clave, exige, exige_nivel,
                    usuario, usuario_de_token)
-from . import almacen, clientes, mesaqr, reservas
+from . import almacen, clientes, mesaqr, pedido_cliente, reservas
 from .db import conn, q, q1
 from .simulacion import simulacion
 
@@ -237,7 +237,11 @@ class CierreCaja(BaseModel):
 
 class LineaSolicitada(BaseModel):
     producto_id: int
-    cantidad: int = Field(1, ge=1, le=20)
+    # El tope de aquí es una barrera contra lo absurdo (nadie pide mil cafés ni por error de
+    # dedo), no la regla del local: quien decide cuántas unidades admite una comanda es el
+    # filtro de `pedido_cliente`, que además EXPLICA por qué la para. Un 422 seco de validación
+    # le diría al cliente «Input should be less than or equal to 20», que no ayuda a nadie.
+    cantidad: int = Field(1, ge=1, le=999)
     notas: str | None = Field(None, max_length=120)
 
 
@@ -2296,14 +2300,149 @@ def publico_estado_solicitud(sid: int):
     return s
 
 
+# ─────────────── El cliente pide desde su mesa ───────────────
+# Con la mesa vinculada por QR ya se sabe quién pide y desde dónde, así que la comanda entra
+# sola en cocina. Lo que no pasa el filtro se queda esperando **con el motivo escrito**, para que
+# la sala decida en dos segundos y el cliente sepa por qué su pedido no ha salido.
+class PedidoDeMesa(BaseModel):
+    lineas: list[LineaSolicitada] = Field(min_length=1, max_length=60)
+    nota: str | None = Field(None, max_length=160)
+
+
+class AjusteLinea(BaseModel):
+    id: int
+    cantidad: int = Field(ge=0, le=99)      # 0 = quitarla
+
+
+class ResolucionSolicitud(BaseModel):
+    lineas: list[AjusteLinea] = Field(default_factory=list)
+    motivo: str | None = Field(None, max_length=200)
+
+
+def _guardar_solicitud(visita: dict | None, mesa_id: int | None, cliente: str | None,
+                       nota: str | None, lineas: list[dict], ip: str | None,
+                       motivo: str | None, automatica: bool) -> int:
+    with conn() as c, c.cursor() as cur:
+        cur.execute("""INSERT INTO solicitudes (mesa_id, visita_id, cliente, nota, origen_ip,
+                                                motivo_retencion, automatica, estado)
+                       VALUES (%s,%s,%s,%s,%s,%s,%s,%s)""",
+                    (mesa_id, (visita or {}).get("visita_id"), cliente, nota, ip, motivo,
+                     automatica, "aceptada" if automatica else "pendiente"))
+        sid = cur.lastrowid
+        for l in lineas:
+            cur.execute("""INSERT INTO solicitud_lineas (solicitud_id, producto_id, cantidad, notas)
+                           VALUES (%s,%s,%s,%s)""", (sid, l["id"], l["cantidad"], l["notas"]))
+    return sid
+
+
+async def _a_cocina(mesa_id: int, lineas: list[dict], empleado_id: int, cliente: str | None,
+                    visita_id: int | None) -> int:
+    """Mete las líneas en el pedido de la mesa y las manda a cocina. Devuelve el pedido."""
+    with conn() as c, c.cursor() as cur:
+        abierto = q1("SELECT id FROM pedidos WHERE mesa_id=%s AND estado='abierto'", (mesa_id,))
+        if abierto:
+            pid = abierto["id"]
+        else:
+            cur.execute("""INSERT INTO pedidos (tipo, mesa_id, empleado_id, cliente)
+                           VALUES ('sala',%s,%s,%s)""", (mesa_id, empleado_id, cliente))
+            pid = cur.lastrowid
+        for l in lineas:
+            cur.execute("""INSERT INTO lineas_pedido
+                           (pedido_id, producto_id, cantidad, precio_cent, notas, estacion,
+                            estado, enviada_en)
+                           VALUES (%s,%s,%s,%s,%s,%s,'enviada',NOW())""",
+                        (pid, l["id"], l["cantidad"], l["precio_cent"], l["notas"], l["estacion"]))
+        if visita_id:
+            cur.execute("UPDATE visitas SET pedido_id=%s WHERE id=%s AND pedido_id IS NULL",
+                        (pid, visita_id))
+    almacen.consumir_pedido(pid, empleado_id)
+    await hub.emitir("kds", pedido_id=pid)
+    await hub.emitir("mesas")
+    await hub.emitir("carta")
+    await hub.emitir_publico("recogida")
+    return pid
+
+
+@app.post("/api/publico/visita/pedido", status_code=201)
+async def publico_pedir_desde_la_mesa(d: PedidoDeMesa, request: Request,
+                                      v: dict = Depends(mesaqr.actual),
+                                      yo: dict | None = Depends(clientes.cliente_opcional)):
+    visita = mesaqr.estado(v["visita_id"])
+    cfg = pedido_cliente.config()
+    lineas = pedido_cliente.lineas_validadas(d.lineas)
+    motivo = pedido_cliente.revisar(lineas, visita["mesa_id"], cfg)
+    quien = v.get("alias") or (yo or {}).get("nombre")
+    ip = request.client.host if request.client else None
+
+    if motivo:
+        sid = _guardar_solicitud(v, visita["mesa_id"], quien, d.nota, lineas, ip, motivo, False)
+        await hub.emitir("solicitudes", solicitud_id=sid)     # suena en el TPV
+        return {"estado": "esperando", "motivo": motivo, "solicitud_id": sid,
+                "total_cent": sum(l["cantidad"] * l["precio_cent"] for l in lineas)}
+
+    empleado = _empleado_de_guardia()
+    if not empleado:
+        raise HTTPException(503, "No hay nadie de guardia en el sistema; avisa a un camarero")
+    pid = await _a_cocina(visita["mesa_id"], lineas, empleado, quien, visita["id"])
+    sid = _guardar_solicitud(v, visita["mesa_id"], quien, d.nota, lineas, ip, None, True)
+    q("UPDATE solicitudes SET pedido_id=%s, resuelta_en=NOW() WHERE id=%s", (pid, sid))
+    await hub.emitir_publico("solicitud")
+    return {"estado": "en cocina", "solicitud_id": sid, "pedido_id": pid,
+            "total_cent": sum(l["cantidad"] * l["precio_cent"] for l in lineas)}
+
+
+@app.get("/api/publico/visita/comanda")
+def publico_comanda_de_la_mesa(v: dict = Depends(mesaqr.actual)):
+    """Lo que lleva pedido esta mesa y cómo va, para el teléfono del cliente.
+
+    Solo su mesa, y sin nada interno: ni estación de cocina, ni quién la atiende.
+    """
+    visita = mesaqr.estado(v["visita_id"])
+    esperando = q("""SELECT s.id, s.motivo_retencion, s.creada_en
+                     FROM solicitudes s
+                     WHERE s.visita_id=%s AND s.estado='pendiente' ORDER BY s.creada_en""",
+                  (visita["id"],))
+    for s in esperando:
+        s["lineas"] = q("""SELECT sl.cantidad, p.nombre, p.precio_cent
+                           FROM solicitud_lineas sl JOIN productos p ON p.id=sl.producto_id
+                           WHERE sl.solicitud_id=%s""", (s["id"],))
+    rechazadas = q("""SELECT id, motivo_rechazo, resuelta_en FROM solicitudes
+                      WHERE visita_id=%s AND estado='rechazada'
+                        AND resuelta_en >= NOW() - INTERVAL 30 MINUTE""", (visita["id"],))
+    lineas = []
+    total = pagado = 0
+    if visita["pedido_id"]:
+        p = pedido_completo(visita["pedido_id"])
+        total, pagado = p["total_cent"], p.get("pagado_cent", 0)
+        for l in p["lineas"]:
+            if l["estado"] == "anulada":
+                continue
+            lineas.append({"nombre": l["producto"], "cantidad": l["cantidad"],
+                           "precio_cent": l["precio_cent"],
+                           "estado": PARA_EL_CLIENTE.get(l["estado"], l["estado"])})
+    return {"mesa": visita["mesa"], "lineas": lineas, "total_cent": total,
+            "pagado_cent": pagado, "saldo_cent": total - pagado,
+            "esperando": esperando, "rechazadas": rechazadas}
+
+
+# Cómo se le cuenta a un cliente en qué va lo suyo. «Enviada» no significa nada para quien
+# espera un plato; «en cola» sí.
+PARA_EL_CLIENTE = {"pendiente": "apuntado", "enviada": "en cola", "preparando": "haciéndose",
+                   "lista": "listo", "servida": "servido"}
+
+
 # ─────────────── Solicitudes (sala) ───────────────
 @app.get("/api/solicitudes")
 def listar_solicitudes(u: dict = Depends(exige("camarero", "encargado"))):
     filas = q("""SELECT s.*, m.nombre AS mesa FROM solicitudes s
                  LEFT JOIN mesas m ON m.id=s.mesa_id
                  WHERE s.estado='pendiente' ORDER BY s.creada_en""")
+    # `motivo_retencion` ya viene en s.*: es lo primero que mira quien va a resolverla.
     for f in filas:
-        f["lineas"] = q("""SELECT sl.cantidad, sl.notas, sl.producto_id, p.nombre, p.precio_cent
+        # `sl.id` hace falta para poder corregir la cantidad antes de aceptar: sin él, la
+        # pantalla no sabe a qué línea se refiere.
+        f["lineas"] = q("""SELECT sl.id, sl.cantidad, sl.notas, sl.producto_id,
+                                  p.nombre, p.precio_cent
                            FROM solicitud_lineas sl JOIN productos p ON p.id=sl.producto_id
                            WHERE sl.solicitud_id=%s""", (f["id"],))
         f["total_cent"] = sum(l["cantidad"] * l["precio_cent"] for l in f["lineas"])
@@ -2311,13 +2450,27 @@ def listar_solicitudes(u: dict = Depends(exige("camarero", "encargado"))):
 
 
 @app.post("/api/solicitudes/{sid}/aceptar")
-async def aceptar_solicitud(sid: int, u: dict = Depends(exige("camarero", "encargado"))):
-    """La convierte en pedido de verdad: a partir de aquí es una comanda como cualquier otra."""
+async def aceptar_solicitud(sid: int, d: ResolucionSolicitud | None = None,
+                            u: dict = Depends(exige("camarero", "encargado"))):
+    """La convierte en pedido de verdad: a partir de aquí es una comanda como cualquier otra.
+
+    Se pueden **corregir las cantidades** antes de aceptar, que es lo que hace falta cuando el
+    cliente ha pedido once aguas queriendo una: se ajusta a una y entra. Cantidad 0 quita la
+    línea; si no queda ninguna, es que lo que tocaba era rechazarla.
+    """
     s = q1("SELECT * FROM solicitudes WHERE id=%s", (sid,))
     if not s:
         raise HTTPException(404, "Solicitud no encontrada")
     if s["estado"] != "pendiente":
         raise HTTPException(409, f"Esa solicitud ya está {s['estado']}")
+    for ajuste in (d.lineas if d else []):
+        if ajuste.cantidad == 0:
+            q("DELETE FROM solicitud_lineas WHERE id=%s AND solicitud_id=%s", (ajuste.id, sid))
+        else:
+            q("UPDATE solicitud_lineas SET cantidad=%s WHERE id=%s AND solicitud_id=%s",
+              (ajuste.cantidad, ajuste.id, sid))
+    if not q1("SELECT COUNT(*) n FROM solicitud_lineas WHERE solicitud_id=%s", (sid,))["n"]:
+        raise HTTPException(409, "No queda ninguna línea; recházala en vez de aceptarla")
     lineas = q("""SELECT sl.*, p.precio_cent, p.estacion, p.disponible, p.nombre
                   FROM solicitud_lineas sl JOIN productos p ON p.id=sl.producto_id
                   WHERE sl.solicitud_id=%s""", (sid,))
@@ -2352,12 +2505,20 @@ async def aceptar_solicitud(sid: int, u: dict = Depends(exige("camarero", "encar
 
 
 @app.post("/api/solicitudes/{sid}/rechazar")
-async def rechazar_solicitud(sid: int, u: dict = Depends(exige("camarero", "encargado"))):
+async def rechazar_solicitud(sid: int, d: ResolucionSolicitud | None = None,
+                             u: dict = Depends(exige("camarero", "encargado"))):
+    """Se rechaza **con motivo**, y el motivo llega al teléfono del cliente.
+
+    Un pedido que desaparece sin explicación hace que el cliente lo repita, o que llame al
+    camarero para preguntar: las dos cosas dan más trabajo que escribir «no nos queda».
+    """
     s = q1("SELECT estado FROM solicitudes WHERE id=%s", (sid,))
     if not s:
         raise HTTPException(404, "Solicitud no encontrada")
     if s["estado"] != "pendiente":
         raise HTTPException(409, f"Esa solicitud ya está {s['estado']}")
+    q("UPDATE solicitudes SET motivo_rechazo=%s WHERE id=%s",
+      ((d.motivo.strip() if d and d.motivo else None), sid))
     q("""UPDATE solicitudes SET estado='rechazada', atendida_por=%s, resuelta_en=NOW()
          WHERE id=%s""", (u["id"], sid))
     await hub.emitir("solicitudes", solicitud_id=sid)
@@ -2441,22 +2602,13 @@ async def publico_unirse(d: Canje, yo: dict | None = Depends(clientes.cliente_op
     return r
 
 
-def visita_actual(x_visita: str | None = Header(None)) -> dict:
-    """La mesa desde la que habla este teléfono. Va en su propia cabecera para que pueda convivir
-    con la cuenta de cliente: son dos cosas distintas y se tienen a la vez."""
-    d = mesaqr.de_token(x_visita)
-    if not d:
-        raise HTTPException(401, "Vuelve a leer el código de la mesa")
-    return d
-
-
 @app.get("/api/publico/visita")
-def publico_visita(d: dict = Depends(visita_actual)):
+def publico_visita(d: dict = Depends(mesaqr.actual)):
     return {**mesaqr.estado(d["visita_id"]), "alias": d["alias"]}
 
 
 @app.post("/api/publico/visita/salir")
-def publico_visita_salir(d: dict = Depends(visita_actual)):
+def publico_visita_salir(d: dict = Depends(mesaqr.actual)):
     """El teléfono se desengancha. La visita sigue: los demás siguen sentados."""
     q("DELETE FROM visita_dispositivos WHERE token=%s", (d["token"],))
     return {"hecho": True}

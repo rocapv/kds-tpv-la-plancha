@@ -27,8 +27,14 @@ async function cargarSolicitudes() {
         <b>${s.mesa ? 'Mesa ' + esc(s.mesa) : '🛍 ' + esc(s.cliente || 'Para llevar')}</b>
         <span class="tenue">hace ${minutosDesde(s.creada_en)} min · ${euro(s.total_cent)}</span>
       </header>
+      ${s.motivo_retencion ? `<p class="motivo">✋ ${esc(s.motivo_retencion)}</p>` : ''}
       ${s.nota ? `<p class="nota">⚠ ${esc(s.nota)}</p>` : ''}
-      <ul>${s.lineas.map(l => `<li>${l.cantidad}× ${esc(l.nombre)}</li>`).join('')}</ul>
+      <ul class="lineas-solicitud">${s.lineas.map(l => `
+        <li>
+          <input type="number" min="0" max="99" value="${l.cantidad}"
+                 data-linea="${l.id}" aria-label="Cantidad de ${esc(l.nombre)}">
+          ${esc(l.nombre)} <span class="tenue">${euro(l.precio_cent)}</span>
+        </li>`).join('')}</ul>
       <div class="fila">
         <button data-rechazar="${s.id}" class="mal">Rechazar</button>
         <button data-aceptar="${s.id}" class="ok">Aceptar y pasar a cocina</button>
@@ -36,8 +42,13 @@ async function cargarSolicitudes() {
     </article>`).join('') || '<p class="tenue">No hay comandas esperando</p>';
 
   $('#lista-solicitudes').querySelectorAll('[data-aceptar]').forEach(b => b.onclick = async () => {
+    // Las cantidades se pueden corregir antes de aceptar: es lo que hace falta cuando alguien
+    // ha pedido once aguas queriendo una. A cero, la línea se cae.
+    const ajustes = [...b.closest('.solicitud').querySelectorAll('[data-linea]')]
+      .map(i => ({ id: +i.dataset.linea, cantidad: +i.value }));
     try {
-      pedido = await api(`/solicitudes/${b.dataset.aceptar}/aceptar`, { method: 'POST' });
+      pedido = await api(`/solicitudes/${b.dataset.aceptar}/aceptar`,
+                         { method: 'POST', body: { lineas: ajustes } });
       aviso('Comanda aceptada · repásala y envíala a cocina', 'ok');
       $('#d-solicitudes').close();
       verCarta();
@@ -45,8 +56,12 @@ async function cargarSolicitudes() {
     } catch (e) { aviso(e.message, 'error'); }
   });
   $('#lista-solicitudes').querySelectorAll('[data-rechazar]').forEach(b => b.onclick = async () => {
-    if (!confirm('¿Rechazar esta comanda? El cliente lo verá en su teléfono.')) return;
-    await api(`/solicitudes/${b.dataset.rechazar}/rechazar`, { method: 'POST' }).catch(e => aviso(e.message, 'error'));
+    const motivo = prompt('¿Por qué? El cliente lo verá en su teléfono.\n\n'
+                         + 'Ej.: «no nos queda», «eso no se sirve en mesa»');
+    if (motivo === null) return;
+    await api(`/solicitudes/${b.dataset.rechazar}/rechazar`,
+              { method: 'POST', body: { motivo: motivo.trim() || null } })
+      .catch(e => aviso(e.message, 'error'));
     cargarSolicitudes();
   });
 }

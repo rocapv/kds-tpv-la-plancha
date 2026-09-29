@@ -198,14 +198,28 @@ $('#b-enviar').onclick = () => $('#d-cesta').showModal();
 
 $('#c-ok').onclick = async () => {
   if (!cesta.length) return aviso('Tu comanda está vacía', 'error');
-  const cuerpo = {
-    mesa_id: $('#c-mesa').value ? +$('#c-mesa').value : null,
-    cliente: $('#c-nombre').value.trim() || null,
-    nota: $('#c-nota').value.trim() || null,
-    lineas: cesta.map(l => ({ producto_id: l.producto_id, cantidad: l.cantidad })),
-  };
+  const lineas = cesta.map(l => ({ producto_id: l.producto_id, cantidad: l.cantidad }));
+  const nota = $('#c-nota').value.trim() || null;
+  // Con la mesa leída del QR, la comanda va derecha a cocina salvo que salte el filtro. Sin
+  // mesa vinculada se sigue como antes: el cliente dice dónde está y lo confirma un camarero.
+  const enLaMesa = typeof tokenVisita === 'function' && tokenVisita();
   try {
-    const r = await api('/publico/solicitudes', { method: 'POST', body: cuerpo });
+    if (enLaMesa) {
+      const r = await api('/publico/visita/pedido', { method: 'POST', body: { lineas, nota } });
+      cesta = []; guardarCesta(); pintarCesta();
+      $('#d-cesta').close();
+      if (r.estado === 'en cocina') {
+        aviso('Pedido en cocina', 'ok');
+      } else {
+        aviso('Un camarero tiene que confirmarlo: ' + r.motivo, 'info');
+      }
+      verComandaDeLaMesa();
+      return;
+    }
+    const r = await api('/publico/solicitudes', { method: 'POST', body: {
+      mesa_id: $('#c-mesa').value ? +$('#c-mesa').value : null,
+      cliente: $('#c-nombre').value.trim() || null, nota, lineas,
+    }});
     cesta = []; guardarCesta(); pintarCesta();
     $('#d-cesta').close();
     aviso('Comanda enviada · la confirma un camarero', 'ok');
@@ -213,6 +227,28 @@ $('#c-ok').onclick = async () => {
     $('#mi-comanda').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   } catch (e) { aviso(e.message, 'error'); }
 };
+
+/** Lo que lleva pedido la mesa, con el estado de cada plato en palabras de cliente. */
+async function verComandaDeLaMesa() {
+  if (!(typeof tokenVisita === 'function' && tokenVisita())) return;
+  const caja = $('#comanda-mesa');
+  if (!caja) return;
+  let d;
+  try { d = await api('/publico/visita/comanda'); } catch { caja.hidden = true; return; }
+  const hay = d.lineas.length || d.esperando.length || d.rechazadas.length;
+  caja.hidden = !hay;
+  if (!hay) return;
+  const fila = l => `<div class="linea-cesta"><span class="cant">${l.cantidad}</span>
+      <span class="nombre">${esc(l.nombre)}</span>
+      <span class="importe">${esc(l.estado || '')}</span></div>`;
+  caja.innerHTML = `
+    <div class="cab"><b>Tu mesa ${esc(d.mesa)}</b>
+      <span class="tenue">${euro(d.total_cent)}${d.pagado_cent ? ' · pagado ' + euro(d.pagado_cent) : ''}</span></div>
+    ${d.lineas.map(fila).join('')}
+    ${d.esperando.map(s => `<p class="esperando">⏳ ${s.lineas.map(l => `${l.cantidad}× ${esc(l.nombre)}`).join(', ')}
+        <small>${esc(s.motivo_retencion || 'esperando confirmación')}</small></p>`).join('')}
+    ${d.rechazadas.map(r => `<p class="rechazada">✕ No ha podido ser${r.motivo_rechazo ? ': ' + esc(r.motivo_rechazo) : ''}</p>`).join('')}`;
+}
 
 // ── Seguimiento de la propia comanda ──
 const TEXTO = {
@@ -285,6 +321,7 @@ async function refrescarSeguimiento() {
   if (!comandaSeguida) return;
   try {
     const s = await api('/publico/solicitudes/' + comandaSeguida);
+    verComandaDeLaMesa();
     pintarSeguimiento(s);
     if ($('#d-estado').open) verEstado(comandaSeguida);
   } catch (e) {
