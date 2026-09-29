@@ -886,3 +886,7 @@ button.sutil:active, .simulacion button:active, .faccion:active,
 .horas .hueco.elegida { background: var(--acento); border-color: var(--acento); color: var(--acento-texto); }
 .horas .hueco.elegida small { color: inherit; }
 
+/* Botón de instalar la carta como app: solo aparece cuando el navegador lo ofrece. */
+.instalar { background: var(--acento); border-color: var(--acento); color: var(--acento-texto);
+  font-weight: 600; padding: .35em .8em; }
+

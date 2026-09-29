@@ -1,0 +1,21 @@
+{
+  "name": "Cantina Vesta-9",
+  "short_name": "Vesta-9",
+  "description": "La carta de la cantina: pedir desde la mesa, seguir la comanda y reservar.",
+  "lang": "es",
+  "start_url": "/cliente.html?app=1",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#100d0c",
+  "theme_color": "#100d0c",
+  "categories": ["food", "lifestyle"],
+  "icons": [
+    { "src": "/img/icono-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/img/icono-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/img/icono-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Reservar mesa", "url": "/cliente.html?app=1&reservar=1" }
+  ]
+}

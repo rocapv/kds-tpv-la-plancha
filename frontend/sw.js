@@ -11,7 +11,7 @@
 // Lo que NUNCA se guarda: nada de `/api`. Una respuesta vieja de la API sería un precio, una
 // mesa o una comanda mentirosa; para eso está la cola de `sinred.js`, que sabe lo que apuntó.
 
-const VERSION = 'kds-tpv-v1';
+const VERSION = 'kds-tpv-v2';
 const CONCHA = [
   '/tpv.html',
   '/css/estilo.css',
@@ -22,8 +22,37 @@ const CONCHA = [
   '/js/tpv.js',
 ];
 
+// La carta del cliente se instala en el móvil («Añadir a pantalla de inicio»), así que también
+// necesita poder abrirse sin esperar a la red. Va en el mismo trabajador porque solo puede haber
+// uno por sitio, pero con su propia lista y su propia manera de responder:
+//
+//   · el TPV es **red primero**: una comanda o un precio viejos hacen daño.
+//   · las piezas del cliente son **caché primero y refresco por detrás**
+//     (stale-while-revalidate): la app abre al instante y se actualiza sola para la próxima vez.
+//     Como el HTML pide los recursos con `?v=<sello del despliegue>`, una versión nueva es otra
+//     URL: no hay manera de quedarse clavado en la vieja.
+//
+// Lo que NUNCA se guarda, ni aquí ni allí: nada de `/api`.
+const CONCHA_CLIENTE = [
+  '/cliente.html',
+  '/css/estilo.css',
+  '/js/comun.js',
+  '/js/cliente.js',
+  '/js/cliente_reservas.js',
+  '/js/app_cliente.js',
+  '/app.webmanifest',
+  '/img/icono-192.png',
+  '/img/icono-512.png',
+];
+
 self.addEventListener('install', e => {
-  e.waitUntil(caches.open(VERSION).then(c => c.addAll(CONCHA)).then(() => self.skipWaiting()));
+  // `addAll` falla entero si una sola pieza falla, y eso dejaría la app sin caché por un icono:
+  // se piden una a una y lo que no esté, no está.
+  e.waitUntil(caches.open(VERSION).then(async c => {
+    for (const pieza of [...CONCHA, ...CONCHA_CLIENTE]) {
+      try { await c.add(pieza); } catch {}
+    }
+  }).then(() => self.skipWaiting()));
 });
 
 self.addEventListener('activate', e => {
@@ -37,10 +66,37 @@ function esDelTpv(url) {
   return url.origin === self.location.origin && CONCHA.includes(url.pathname);
 }
 
+function esDelCliente(url) {
+  return url.origin === self.location.origin
+    && (CONCHA_CLIENTE.includes(url.pathname) || url.pathname.startsWith('/img/'));
+}
+
+/** Caché primero y refresco por detrás: se responde con lo guardado y se pide lo nuevo para la
+    próxima visita. Si no hay nada guardado, se espera a la red como siempre. */
+async function deLaCacheYRefrescar(peticion) {
+  const cache = await caches.open(VERSION);
+  const guardada = await cache.match(peticion, { ignoreSearch: true });
+  const dePaso = fetch(peticion).then(r => {
+    if (r.ok) cache.put(peticion, r.clone());
+    return r;
+  }).catch(() => null);
+  return guardada || (await dePaso) || Response.error();
+}
+
 self.addEventListener('fetch', e => {
   const url = new URL(e.request.url);
-  const navegacion = e.request.mode === 'navigate' && url.pathname === '/tpv.html';
-  if (e.request.method !== 'GET' || (!navegacion && !esDelTpv(url))) return;   // el resto, sin tocar
+  if (e.request.method !== 'GET' || url.pathname.startsWith('/api')) return;
+
+  const navegacion = e.request.mode === 'navigate';
+  // La app del cliente: sus piezas salen de la caché al instante. La página, de la red cuando
+  // la hay (para que un cambio de carta se vea), y de la copia cuando no.
+  if (esDelCliente(url) && !navegacion) {
+    e.respondWith(deLaCacheYRefrescar(e.request));
+    return;
+  }
+  const esCliente = navegacion && url.pathname === '/cliente.html';
+  const esTpv = navegacion && url.pathname === '/tpv.html';
+  if (!esCliente && !esTpv && !esDelTpv(url)) return;              // el resto, sin tocar
 
   e.respondWith((async () => {
     try {
