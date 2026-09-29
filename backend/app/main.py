@@ -18,7 +18,7 @@ from pydantic import BaseModel, Field
 from .red import es_de_la_lan
 from .auth import (abrir_sesion, cerrar_sesion, cifrar_clave, exige, exige_nivel,
                    usuario, usuario_de_token)
-from . import almacen, reservas
+from . import almacen, clientes, reservas
 from .db import conn, q, q1
 from .simulacion import simulacion
 
@@ -2363,6 +2363,78 @@ async def rechazar_solicitud(sid: int, u: dict = Depends(exige("camarero", "enca
     await hub.emitir("solicitudes", solicitud_id=sid)
     await hub.emitir_publico("solicitud")
     return {"ok": True}
+
+
+# ─────────────── Cuentas de cliente ───────────────
+# La puerta de la calle. Un cliente entra con su correo y su contraseña, y se queda dentro hasta
+# que sale: su token no caduca solo. Lo que abre ese token es lo suyo —su perfil, sus pedidos, sus
+# facturas— y **nada del local**: ni cocina, ni caja, ni ajustes.
+class AltaCliente(BaseModel):
+    email: str = Field(max_length=120)
+    contrasena: str = Field(min_length=8, max_length=100)
+    nombre: str | None = Field(None, max_length=60)
+
+
+class EntrarCliente(BaseModel):
+    email: str = Field(max_length=120)
+    contrasena: str = Field(max_length=100)
+
+
+class PerfilCliente(BaseModel):
+    nombre: str | None = Field(None, max_length=60)
+    telefono: str | None = Field(None, max_length=20)
+    nif: str | None = Field(None, max_length=20)
+    razon_social: str | None = Field(None, max_length=80)
+    direccion: str | None = Field(None, max_length=120)
+    factura_auto: bool | None = None
+
+
+class CambioClave(BaseModel):
+    actual: str = Field(max_length=100)
+    nueva: str = Field(min_length=8, max_length=100)
+
+
+@app.post("/api/publico/clientes/registro", status_code=201)
+def cliente_registro(d: AltaCliente, request: Request):
+    if not clientes.registro_abierto():
+        raise HTTPException(409, "Ahora mismo no se admiten cuentas nuevas")
+    agente = request.headers.get("user-agent")
+    return clientes.crear(d.email, d.contrasena, d.nombre, agente)
+
+
+@app.post("/api/publico/clientes/entrar")
+def cliente_entrar(d: EntrarCliente, request: Request):
+    return clientes.entrar(d.email, d.contrasena, request.headers.get("user-agent"),
+                           request.client.host if request.client else None)
+
+
+@app.get("/api/publico/clientes/yo")
+def cliente_yo(yo: dict = Depends(clientes.cliente)):
+    perfil = dict(yo)
+    perfil.pop("token", None)
+    return perfil
+
+
+@app.patch("/api/publico/clientes/yo")
+def cliente_guardar(d: PerfilCliente, yo: dict = Depends(clientes.cliente)):
+    return clientes.guardar_perfil(yo["id"], d.model_dump(exclude_unset=True))
+
+
+@app.post("/api/publico/clientes/contrasena")
+def cliente_cambiar_clave(d: CambioClave, yo: dict = Depends(clientes.cliente)):
+    clientes.cambiar_contrasena(yo["id"], d.actual, d.nueva)
+    # Cambiar la contraseña echa a los demás aparatos, menos a este: es lo que se espera cuando
+    # se cambia porque alguien ha entrado donde no debía.
+    q("DELETE FROM cliente_sesiones WHERE cliente_id=%s AND token<>%s", (yo["id"], yo["token"]))
+    return {"hecho": True}
+
+
+@app.post("/api/publico/clientes/salir")
+def cliente_salir(todos: bool = False, yo: dict = Depends(clientes.cliente)):
+    if todos:
+        return {"cerradas": clientes.salir_de_todos(yo["id"])}
+    clientes.salir(yo["token"])
+    return {"cerradas": 1}
 
 
 # ─────────────── Reservas (bloque 4 de PROPUESTA_APP_CLIENTE.md) ───────────────

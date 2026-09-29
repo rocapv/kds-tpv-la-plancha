@@ -19,6 +19,7 @@
     <small id="donde" class="tenue"></small>
   </div>
   <span class="hueco"></span>
+  <button id="b-cuenta" class="sutil">Entrar</button>
   <button id="b-reservar" class="sutil">Reservar mesa</button>
   <button id="b-tema" class="tema" title="Cambiar entre día y noche" aria-label="Cambiar tema">
     <span class="astro"></span>
@@ -94,6 +95,46 @@
   <div class="fila"><button id="c-cancelar">Seguir mirando</button><button id="c-ok" class="primario">Enviar comanda</button></div>
 </dialog>
 
+<dialog id="d-micuenta">
+  <h3>Tu cuenta</h3>
+
+  <div id="cu-fuera">
+    <p class="tenue">Con cuenta, la app se acuerda de ti: tus pedidos, tus reservas y, si quieres,
+      la factura con tus datos sin tener que dictarlos cada vez.</p>
+    <label class="campo" id="cu-nombre-campo" hidden>Tu nombre
+      <input id="cu-nombre" maxlength="60" autocomplete="name"></label>
+    <label class="campo">Correo
+      <input id="cu-email" type="email" maxlength="120" autocomplete="email" inputmode="email"></label>
+    <label class="campo">Contraseña
+      <input id="cu-clave" type="password" maxlength="100" autocomplete="current-password"></label>
+    <div class="fila">
+      <button id="cu-modo" class="sutil">Crear una cuenta</button>
+      <button id="cu-entrar" class="primario">Entrar</button>
+      <button id="cu-alta" class="primario" hidden>Crear cuenta</button>
+    </div>
+  </div>
+
+  <div id="cu-dentro" hidden>
+    <p class="tenue">Sesión iniciada como <b id="cu-correo"></b>. No se cierra sola: sigues dentro
+      hasta que pulses «Salir».</p>
+    <label class="campo">Nombre <input id="cu-p-nombre" maxlength="60"></label>
+    <label class="campo">Teléfono <input id="cu-p-telefono" maxlength="20" inputmode="tel"></label>
+    <details class="campo">
+      <summary>Datos para la factura</summary>
+      <label class="campo">NIF <input id="cu-p-nif" maxlength="20"></label>
+      <label class="campo">Nombre o razón social <input id="cu-p-razon" maxlength="80"></label>
+      <label class="campo">Dirección <input id="cu-p-direccion" maxlength="120"></label>
+      <label class="campo"><input type="checkbox" id="cu-p-auto"> Factura automática en cada pago</label>
+    </details>
+    <div class="fila">
+      <button id="cu-salir" class="mal">Salir</button>
+      <button id="cu-guardar" class="primario">Guardar</button>
+    </div>
+  </div>
+
+  <div class="fila"><button id="cu-cerrar">Cerrar</button></div>
+</dialog>
+
 <dialog id="d-reservar">
   <h3>Reservar mesa</h3>
   <p class="tenue">Se reserva con quince minutos de antelación como mínimo. Si dejas pedido, se
@@ -129,6 +170,7 @@
 </dialog>
 
 <script src="/js/comun.js?v=__V__"></script>
+<script src="/js/cuenta.js?v=__V__"></script>
 <script src="/js/cliente.js?v=__V__"></script>
 <script src="/js/cliente_reservas.js?v=__V__"></script>
 <script src="/js/app_cliente.js?v=__V__"></script>

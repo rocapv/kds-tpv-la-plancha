@@ -890,3 +890,10 @@ button.sutil:active, .simulacion button:active, .faccion:active,
 .instalar { background: var(--acento); border-color: var(--acento); color: var(--acento-texto);
   font-weight: 600; padding: .35em .8em; }
 
+/* Cuenta del cliente: el botón cambia de cara cuando hay sesión. */
+.sutil.dentro { border-color: var(--ok); color: var(--ok); }
+#d-micuenta .campo { display: block; margin: .5rem 0; }
+#d-micuenta input[type=text], #d-micuenta input[type=email], #d-micuenta input[type=password],
+#d-micuenta input:not([type=checkbox]) { width: 100%; }
+#d-micuenta details.campo summary { cursor: pointer; color: var(--tenue); margin: .6rem 0; }
+
