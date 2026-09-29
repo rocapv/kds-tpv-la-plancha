@@ -204,10 +204,15 @@ def desde_imagen(imagen: Path, destino: Path, segundos: float, movimiento: str =
         ultimo = "mar"
 
     destino.parent.mkdir(parents=True, exist_ok=True)
-    _correr([ffmpeg(), "-y", "-loop", "1", "-t", f"{segundos:.3f}", "-i", str(imagen),
+    # La imagen entra UNA vez, sin `-loop`. zoompan genera `d` fotogramas por cada
+    # fotograma que recibe: con la imagen repetida 96 veces por el loop, salían
+    # 96x96 = 9.216 fotogramas y cada plano duraba 6 minutos y 40 segundos en vez
+    # de cuatro. El `-t` de salida es el cinturón por si acaso.
+    _correr([ffmpeg(), "-y", "-i", str(imagen),
              "-filter_complex", ";".join(filtros), "-map", f"[{ultimo}]",
              "-an", "-c:v", "libx264", "-preset", "medium", "-crf", "18",
-             "-pix_fmt", "yuv420p", "-r", str(fps), str(destino)],
+             "-pix_fmt", "yuv420p", "-r", str(fps), "-t", f"{segundos:.3f}",
+             str(destino)],
             f"animar {imagen.name}")
     return destino
 
