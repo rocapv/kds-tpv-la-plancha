@@ -172,10 +172,10 @@ _PLANTILLAS: dict[str, dict] = {
                  "off their sleeves, looking around for a free table",
                  narracion="Llegan dos clientes y buscan mesa.",
                  personajes=["nadia", "teo"], segundos=4),
-            dict(camara="comedor", accion="a server walks over to the newcomers and gestures "
+            dict(camara="comedor", accion="a waiter walks over to the newcomers and gestures "
                  "towards a free table, holding a rugged tablet",
-                 narracion="La camarera les acomoda y abre la mesa en el TPV.",
-                 personajes=["vera", "nadia", "teo"], segundos=4),
+                 narracion="El camarero les acomoda y abre la mesa en el TPV.",
+                 personajes=["oliver", "nadia", "teo"], segundos=4),
             dict(camara="atraque", accion="", narracion="La mesa queda abierta con sus comensales.",
                  pantalla="tpv", pantalla_como="completa", segundos=5),
         ],
@@ -190,22 +190,25 @@ _PLANTILLAS: dict[str, dict] = {
             dict(camara="mesa", accion="", narracion="La carta se abre en su teléfono, con los "
                  "alérgenos de cada plato.",
                  pantalla="cliente", pantalla_como="completa", segundos=6),
+            # Sin personaje del elenco: en cocina no hay molde todavía, así que la
+            # figura la pone el modelo y puede cambiar de una toma a otra.
             dict(camara="pase", accion="a cook places a finished plate under the warming lamps "
-                 "and taps a screen",
+                 "and taps a screen, seen from behind",
                  narracion="El pedido entra directo en cocina.",
-                 personajes=["dimo"], segundos=4),
+                 personajes=[], segundos=4),
         ],
     },
     "servir": {
         "palabras": ["sirve", "servir", "servido", "camarer", "plato", "come", "comer", "bandeja"],
         "escenas": [
-            dict(camara="pase", accion="a cook slides a tray of plates onto the pass and rings a bell",
+            dict(camara="pase", accion="a cook slides a tray of plates onto the pass and rings "
+                 "a bell, seen from behind",
                  narracion="Cocina termina y lo deja en el pase.",
-                 personajes=["dimo"], segundos=4),
-            dict(camara="comedor", accion="a server carries a tray of plates between the tables "
+                 personajes=[], segundos=4),
+            dict(camara="comedor", accion="a waiter carries a tray of plates between the tables "
                  "and sets them down in front of two seated customers",
                  narracion="Sala recoge la bandeja y la lleva a la mesa.",
-                 personajes=["vera", "nadia", "teo"], segundos=5),
+                 personajes=["oliver", "nadia", "teo"], segundos=5),
             dict(camara="mesa", accion="two seated customers start eating, steam rising from the plates",
                  narracion="Al entregar, el camarero confirma la entrega en su pantalla.",
                  personajes=["nadia", "teo"], segundos=4),
@@ -216,11 +219,11 @@ _PLANTILLAS: dict[str, dict] = {
         "escenas": [
             dict(camara="mesa", accion="a seated customer taps a phone a few times and then sets "
                  "it down on the table, relaxed",
-                 narracion="El cliente pide la cuenta desde la app y paga.",
-                 personajes=["iris"], segundos=4),
-            dict(camara="atraque", accion="a server at the counter glances at a screen and nods",
+                 narracion="La clienta pide la cuenta desde la app y paga.",
+                 personajes=["suri"], segundos=4),
+            dict(camara="atraque", accion="a waiter at the counter glances at a screen and nods",
                  narracion="En la barra se ve el cobro entrar.",
-                 personajes=["vera"], segundos=4),
+                 personajes=["oliver"], segundos=4),
             dict(camara="atraque", accion="", narracion="La mesa queda libre y la factura, emitida.",
                  pantalla="tpv", pantalla_como="completa", segundos=5),
         ],
@@ -229,9 +232,9 @@ _PLANTILLAS: dict[str, dict] = {
         "palabras": ["cocina", "kds", "comanda", "fuego", "plancha", "freidora", "bump"],
         "escenas": [
             dict(camara="cocina", accion="a cook works at a hot plate, flames flaring, reaching "
-                 "for a ticket screen above the counter",
+                 "for a ticket screen above the counter, seen from behind",
                  narracion="En cocina, cada comanda aparece en su estación.",
-                 personajes=["dimo"], segundos=4),
+                 personajes=[], segundos=4),
             dict(camara="cocina", accion="", narracion="Cocina termina en «lista»: quien la lleva a "
                  "la mesa es sala.",
                  pantalla="kds", pantalla_como="completa", segundos=6),
@@ -240,13 +243,13 @@ _PLANTILLAS: dict[str, dict] = {
 }
 
 _POR_DEFECTO = [
-    dict(camara="comedor", accion="customers eating and talking at the tables, a server walking "
+    dict(camara="comedor", accion="customers eating and talking at the tables, a waiter walking "
          "between them with a tray",
          narracion="Un servicio normal en la Cantina Vesta-9.",
-         personajes=["nadia", "teo", "vera"], segundos=5),
-    dict(camara="atraque", accion="a server behind the counter serves a drink to a standing customer",
+         personajes=["nadia", "teo", "oliver"], segundos=5),
+    dict(camara="atraque", accion="a waiter behind the counter serves a drink to a standing customer",
          narracion="En el atraque se despacha lo de paso.",
-         personajes=["vera", "iris"], segundos=4),
+         personajes=["oliver", "klaus"], segundos=4),
 ]
 
 

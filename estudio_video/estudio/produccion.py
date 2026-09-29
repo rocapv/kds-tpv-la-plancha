@@ -101,14 +101,19 @@ def _controles_al_dia(bib: B.Biblia) -> None:
 
 
 def producir(prompt: str, t: Trabajo, usar_llm: bool = True, con_voz: bool = True,
-             solo_guion: bool = False) -> dict:
-    """Todo el proceso. Devuelve el estado final."""
+             solo_guion: bool = False, guion_hecho: "Gu.Guion | None" = None) -> dict:
+    """Todo el proceso. Devuelve el estado final.
+
+    `guion_hecho` salta al guionista y rueda un guion escrito a mano. Es lo que
+    usan las pruebas de moldes, donde lo que se quiere no es que un modelo decida
+    las escenas, sino repetir exactamente las mismas para todo el elenco.
+    """
     t.estado["prompt"] = prompt
     t.estado["fase"] = "guion"
     t.anotar("escribiendo el guion", 0.02)
 
     bib = B.cargar()
-    g = Gu.escribir(prompt, bib, usar_llm=usar_llm)
+    g = guion_hecho or Gu.escribir(prompt, bib, usar_llm=usar_llm)
     t.estado["titulo"] = g.titulo
     t.estado["avisos"].extend(g.avisos)
     t.estado["escenas"] = [asdict(e) for e in g.escenas]

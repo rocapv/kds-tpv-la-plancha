@@ -21,11 +21,20 @@ from . import comfy as C
 LADO = 512
 PASOS = 26
 
-ENCUADRE = ("head and shoulders portrait, facing the camera, neutral studio lighting, "
+ENCUADRE = ("head and shoulders portrait, whole head inside the frame, face fully visible and "
+            "unobstructed, looking straight at the camera, neutral studio lighting, "
             "plain dark background, sharp focus, photorealistic, 50mm lens")
 
+# Lo de tapar la cara no es una manía: en la primera tanda, a un personaje descrito
+# con «gafas de soldar subidas a la frente» el modelo le puso las gafas sobre los
+# ojos y una braga hasta la nariz, y a otro lo encuadró de cintura para arriba con
+# la coronilla fuera. Un molde con la cara tapada o cortada no le sirve de nada a
+# IP-Adapter, que es quien tiene que reconocer a esa persona en cada toma.
 NEGATIVO = ("text, watermark, logo, cartoon, anime, illustration, painting, 3d render, "
-            "deformed face, extra heads, blurry, lowres, multiple people, hands")
+            "deformed face, extra heads, blurry, lowres, multiple people, hands, "
+            "face mask, scarf over face, balaclava, covered face, goggles over eyes, "
+            "sunglasses, helmet visor, cropped head, top of head out of frame, "
+            "back of head, looking away, full body, wide shot")
 
 
 def ruta_de(clave: str) -> Path:

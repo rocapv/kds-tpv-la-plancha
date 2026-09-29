@@ -163,45 +163,41 @@ class Personaje:
     semilla: int               # fija: el retrato sale igual cada vez que se recasten
 
 
+# Cinco moldes y no más: el camarero, dos clientes y dos clientas. Cuantas menos
+# caras haya, más veces sale cada una, y cuantas más veces sale, antes nota
+# cualquiera que es siempre la misma persona, que es justo de lo que va esto.
+# Aquí el género SÍ va escrito: al modelo hay que decírselo o lo decide él, y
+# entonces la misma clave sale hombre en una toma y mujer en la siguiente.
 ELENCO: dict[str, Personaje] = {p.clave: p for p in [
+    # Sala
+    # En el retrato NO se nombra la tableta: mencionar un objeto que se sostiene
+    # abre el plano, y la primera tanda salió de cintura para arriba y sin
+    # coronilla. Los objetos van en `breve`, que es lo que se usa en las escenas.
+    Personaje("oliver", "Óliver Sanz", "sala",
+              "portrait of a man in his thirties, short dark hair, trimmed dark beard, "
+              "black apron over a dark shirt, alert and friendly expression",
+              "a waiter, a man in a black apron holding a rugged tablet", 2011),
     # Clientes
-    Personaje("nadia", "Nadia Ostrov", "cliente",
-              "portrait of a weathered veteran miner in a worn orange jumpsuit, short grey "
-              "cropped hair, deep lines on the face, dust on the collar, neutral expression",
-              "a veteran miner in a worn orange jumpsuit with short grey hair", 1001),
-    Personaje("teo", "Teo Marchal", "cliente",
-              "portrait of a young dock technician in a blue coverall, welding goggles pushed "
-              "up on the forehead, dark curly hair, faint grease on one cheek",
-              "a young dock technician in a blue coverall with goggles on the forehead", 1002),
-    Personaje("suri", "Suri Malabar", "cliente",
-              "portrait of a geologist in a green thermal jacket, long dark braid over one "
-              "shoulder, rimless glasses, calm attentive look",
-              "a geologist in a green thermal jacket with a long dark braid", 1003),
     Personaje("klaus", "Klaus Bergmann", "cliente",
-              "portrait of a broad shouldered foreman with a full grey beard, high visibility "
-              "vest over a dark thermal shirt, tired eyes",
-              "a broad shouldered foreman with a grey beard and a high visibility vest", 1004),
-    Personaje("iris", "Iris Fontaine", "cliente",
-              "portrait of a cargo pilot in a battered leather flight jacket covered in patches, "
-              "red hair shaved on one side, sharp confident expression",
-              "a cargo pilot in a patched leather flight jacket with red hair shaved on one side", 1005),
-    Personaje("bo", "Bo Tanaka", "cliente",
-              "portrait of a young apprentice in an oversized grey coverall, knitted cap, "
-              "round face, slightly nervous smile",
-              "a young apprentice in an oversized grey coverall and a knitted cap", 1006),
-    # Personal
-    Personaje("vera", "Vera Solano", "sala",
-              "portrait of a server in a black apron over a dark shirt, hair tied back, holding "
-              "a rugged tablet, alert friendly expression",
-              "a server in a black apron holding a rugged tablet", 2001),
-    Personaje("dimo", "Dimo Krast", "cocina",
-              "portrait of a cook in a white kitchen jacket with rolled sleeves, dark head scarf, "
-              "forearms marked by old burns, focused expression",
-              "a cook in a white kitchen jacket and dark head scarf", 2002),
-    Personaje("ana", "Ana Ferrer", "direccion",
-              "portrait of a floor manager in a dark buttoned shirt, short hair, reading glasses "
-              "hanging from the collar, composed expression",
-              "a floor manager in a dark buttoned shirt with reading glasses on the collar", 2003),
+              "portrait of a broad shouldered man in his fifties, full grey beard, high "
+              "visibility vest over a dark thermal shirt, tired eyes, weathered skin",
+              "a broad shouldered man with a grey beard and a high visibility vest", 1004),
+    # Sin gafas de soldar ni cuello alto en el retrato: con ellas el modelo le
+    # puso las gafas sobre los ojos y una braga hasta la nariz, y un molde con la
+    # cara tapada no le sirve a IP-Adapter para reconocer a nadie.
+    Personaje("teo", "Teo Marchal", "cliente",
+              "portrait of a young man in his twenties, short dark curly hair, clean shaven, "
+              "open collar blue coverall, faint grease on one cheek, bare face, friendly look",
+              "a young man in a blue coverall", 1012),
+    # Clientas
+    Personaje("nadia", "Nadia Ostrov", "cliente",
+              "portrait of a weathered woman in her sixties, veteran miner, worn orange jumpsuit, "
+              "short grey cropped hair, deep lines on her face, dust on the collar",
+              "an older woman in a worn orange jumpsuit with short grey hair", 1001),
+    Personaje("suri", "Suri Malabar", "cliente",
+              "portrait of a woman in her thirties, geologist, green thermal jacket, long dark "
+              "braid over one shoulder, rimless glasses, calm attentive look",
+              "a woman in a green thermal jacket with a long dark braid", 1003),
 ]}
 
 
