@@ -94,6 +94,18 @@ def cmd_producir(args) -> int:
     return 0
 
 
+def cmd_publicar(args) -> int:
+    from estudio import publicar as Pub
+    try:
+        url = Pub.publicar(Pr.DIR_SALIDAS, solo=[s.strip() for s in args.solo.split(",")
+                                                 if s.strip()] or None)
+    except Exception as e:
+        print(f"FALLÓ: {e}")
+        return 1
+    print(f"publicado (solo LAN): {url}")
+    return 0
+
+
 def cmd_web(args) -> int:
     W.servir(args.puerto)
     return 0
@@ -127,6 +139,10 @@ def main() -> int:
     pr.add_argument("--sin-llm", action="store_true")
     pr.add_argument("--sin-voz", action="store_true")
     pr.set_defaults(func=cmd_producir)
+
+    pu = sub.add_parser("publicar", help="subir los vídeos a home.pr1.es/videos (solo LAN)")
+    pu.add_argument("--solo", default="", help="nombres de fichero separados por comas")
+    pu.set_defaults(func=cmd_publicar)
 
     w = sub.add_parser("web")
     w.add_argument("--puerto", type=int, default=W.PUERTO)

@@ -33,8 +33,25 @@ from pathlib import Path
 from . import biblia as B
 
 COMFY = "http://127.0.0.1:8188"
-CHECKPOINT = "v1-5-pruned-emaonly.safetensors"
+
+# El modelo importa MÁS que la resolución. `v1-5-pruned-emaonly` es SD 1.5 pelado
+# de 2022 y no sabe hacer una foto: da caras de cera y anatomía rara. Realistic
+# Vision es la misma arquitectura —así que AnimateDiff, ControlNet e IP-Adapter
+# siguen valiendo— afinada para fotorrealismo. Cambiar esto fue lo que más
+# acercó el resultado a una fotografía, más que subir píxeles o pasos.
+CHECKPOINT = "realisticVision_v60B1.safetensors"
+# El VAE del checkpoint es el flojo de serie: el ft-mse recupera color y detalle
+# fino, sobre todo en piel y en las zonas oscuras, que aquí son casi todas.
+VAE = "vae-ft-mse-840000-ema-pruned.safetensors"
 MOVIMIENTO = "v3_sd15_mm.ckpt"
+
+# Reparación de caras: detecta cada cara, la regenera a 512 px y la vuelve a
+# pegar. En un plano general la cara ocupa veinte píxeles y el modelo no puede
+# resolverla; esto le da esos mismos veinte píxeles ampliados y vuelve a
+# dibujarlos con todo el modelo. Es lo que separa «figura con manchas en la
+# cabeza» de «persona».
+DETECTOR_CARAS = "bbox/face_yolov8m.pt"
+DENOISE_CARA = 0.45        # más alto reinventa la cara; más bajo no la arregla
 CONTROLNET_PROFUNDIDAD = "control_v11f1p_sd15_depth_fp16.safetensors"
 CONTROLNET_LINEAS = "control_v11p_sd15_lineart_fp16.safetensors"
 
@@ -59,6 +76,15 @@ FUERZA_IDENTIDAD = 0.45
 
 CONTEXTO = 16          # fotogramas que AnimateDiff v3 mira a la vez
 SOLAPE = 4
+
+# Superresolución: sube lo generado hasta 1080 inventando detalle. Sin esto, el
+# montaje solo estira píxeles y el resultado es un 768 grande y blando.
+#
+# x2 y no x4: de 768x432 a 1080 hay un factor 2,5, así que un x4 sube primero a
+# 3072x1728 para tener que bajar después. Medido: con el x4, un plano de tres
+# segundos costaba 7,1 minutos; casi la mitad era escalar de más.
+ESCALADOR = "RealESRGAN_x2plus.pth"
+ALTO_FINAL = 1080
 
 
 class ComfyCaido(RuntimeError):
@@ -163,7 +189,8 @@ def construir(prompt_positivo: str, prompt_negativo: str, control: Path,
               referencia: Path | list[Path] | None = None,
               ancho: int | None = None, alto: int | None = None,
               fuerza_control: float = FUERZA_PROFUNDIDAD,
-              fuerza_identidad: float = FUERZA_IDENTIDAD) -> dict:
+              fuerza_identidad: float = FUERZA_IDENTIDAD,
+              escalar: bool = True, arreglar_caras: bool = True) -> dict:
     """El grafo entero, listo para POST /prompt."""
     ancho = ancho or B.FORMATO["ancho"]
     alto = alto or B.FORMATO["alto"]
@@ -173,6 +200,8 @@ def construir(prompt_positivo: str, prompt_negativo: str, control: Path,
 
     g["1"] = {"class_type": "CheckpointLoaderSimple",
               "inputs": {"ckpt_name": CHECKPOINT}}
+    g["1v"] = {"class_type": "VAELoader", "inputs": {"vae_name": VAE}}
+    vae = ["1v", 0]
 
     # La referencia puede ser una imagen o la hoja de personaje entera. Con la
     # hoja, las vistas se apilan en un lote y sus embeddings se PROMEDIAN: así la
@@ -252,9 +281,49 @@ def construir(prompt_positivo: str, prompt_negativo: str, control: Path,
                           "negative": ["12", 1], "latent_image": ["13", 0],
                           "denoise": 1.0}}
     g["15"] = {"class_type": "VAEDecode",
-               "inputs": {"samples": ["14", 0], "vae": ["1", 2]}}
+               "inputs": {"samples": ["14", 0], "vae": vae}}
+
+    imagenes = ["15", 0]
+
+    # Reparar las caras ANTES de escalar: así el detalle que inventa el escalador
+    # parte de una cara bien dibujada y no de un borrón nítido.
+    if arreglar_caras:
+        g["20"] = {"class_type": "UltralyticsDetectorProvider",
+                   "inputs": {"model_name": DETECTOR_CARAS}}
+        g["21"] = {"class_type": "FaceDetailer",
+                   "inputs": {
+                       "image": imagenes, "model": modelo, "clip": ["1", 1], "vae": vae,
+                       "guide_size": 512, "guide_size_for": True, "max_size": 1024,
+                       "seed": semilla, "steps": 18, "cfg": f["cfg"],
+                       "sampler_name": "dpmpp_2m", "scheduler": "karras",
+                       "positive": ["7", 0], "negative": ["8", 0],
+                       "denoise": DENOISE_CARA, "feather": 8, "noise_mask": True,
+                       "force_inpaint": True, "bbox_threshold": 0.45,
+                       "bbox_dilation": 10, "bbox_crop_factor": 3.0,
+                       "sam_detection_hint": "center-1", "sam_dilation": 0,
+                       "sam_threshold": 0.93, "sam_bbox_expansion": 0,
+                       "sam_mask_hint_threshold": 0.7,
+                       "sam_mask_hint_use_negative": "False",
+                       "drop_size": 10, "bbox_detector": ["20", 0],
+                       "wildcard": "", "cycle": 1}}
+        imagenes = ["21", 0]
+
+    # Superresolución antes de guardar: con modelo y luego encaje exacto a
+    # 1920x1080. Se hace aquí y no en ffmpeg porque el modelo reconstruye
+    # detalle (bordes, tela, cara) y un escalado de vídeo solo interpola.
+    if escalar:
+        g["17"] = {"class_type": "UpscaleModelLoader",
+                   "inputs": {"model_name": ESCALADOR}}
+        g["18"] = {"class_type": "ImageUpscaleWithModel",
+                   "inputs": {"upscale_model": ["17", 0], "image": imagenes}}
+        g["19"] = {"class_type": "ImageScale",
+                   "inputs": {"image": ["18", 0], "upscale_method": "lanczos",
+                              "width": int(ALTO_FINAL * ancho / alto), "height": ALTO_FINAL,
+                              "crop": "disabled"}}
+        imagenes = ["19", 0]
+
     g["16"] = {"class_type": "VHS_VideoCombine",
-               "inputs": {"images": ["15", 0], "frame_rate": float(f["fps"]),
+               "inputs": {"images": imagenes, "frame_rate": float(f["fps"]),
                           "loop_count": 0, "filename_prefix": prefijo,
                           "format": "video/h264-mp4", "pingpong": False,
                           "save_output": True}}

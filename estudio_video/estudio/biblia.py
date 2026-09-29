@@ -106,9 +106,21 @@ ESTILO_NEGATIVO = (
 )
 
 # Cómo sale el vídeo. Cambiar esto cambia TODOS los vídeos, que es justo la idea.
+#
+# SOBRE LA RESOLUCIÓN, que es la pregunta que siempre se hace: el vídeo SALE a
+# 1920x1080, pero no se GENERA a 1920x1080, y no es lo mismo ni se puede hacer
+# de otra manera aquí. SD 1.5 se entrenó a 512 px: pedirle 1080 de largo no da
+# más detalle, da cuerpos duplicados y composiciones partidas, porque el modelo
+# no sabe encuadrar a esa escala. Y AnimateDiff con 24 fotogramas a 1080 no
+# entra en 11 GB ni de lejos.
+#
+# Lo que sí funciona, y es lo que hace todo el mundo con SD 1.5: generar donde
+# el modelo compone bien y subir después con un modelo de superresolución
+# (4x-UltraSharp), que INVENTA detalle en vez de estirar píxeles. El resultado
+# es un 1080p de verdad, no un 640 ampliado.
 FORMATO = {
-    "ancho": 640,          # lo que se genera; se escala a 1920x1080 en el montaje
-    "alto": 360,
+    "ancho": 768,          # lo que se genera: el techo donde SD1.5 aún compone bien
+    "alto": 432,
     "fps": 8,              # AnimateDiff v3 trabaja a 8; el montaje interpola a 24
     "fps_final": 24,
     "ancho_final": 1920,

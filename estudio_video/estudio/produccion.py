@@ -28,6 +28,7 @@ from . import geometria as G
 from . import guion as Gu
 from . import montaje as M
 from . import pantallas as P
+from . import publicar as Pub
 from . import voz as V
 
 DIR_TRABAJOS = B.RAIZ / "trabajos"
@@ -291,6 +292,16 @@ def producir(prompt: str, t: Trabajo, usar_llm: bool = True, con_voz: bool = Tru
 
     t.estado["salida"] = final.name
     t.estado["segundos"] = round(reloj, 1)
+
+    # Publicar en Raspa es parte de terminar: un vídeo que solo existe en Pecera
+    # no lo ve nadie más. Si falla, el trabajo NO se da por roto: el MP4 está
+    # hecho y se puede subir después.
+    t.anotar("publicando en Raspa", 0.97)
+    try:
+        t.estado["url"] = Pub.publicar(DIR_SALIDAS, solo=[final.name])
+    except Exception as e:
+        t.avisar(f"No se pudo publicar en home.pr1.es/videos ({e}). El vídeo está en salidas/.")
+
     t.estado["fase"] = "listo"
     t.anotar("listo", 1.0)
     return t.estado

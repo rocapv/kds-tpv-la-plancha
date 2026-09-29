@@ -129,6 +129,7 @@ def _grafo_retrato(p: B.Personaje) -> dict:
     return {
         "1": {"class_type": "CheckpointLoaderSimple",
               "inputs": {"ckpt_name": C.CHECKPOINT}},
+        "1v": {"class_type": "VAELoader", "inputs": {"vae_name": C.VAE}},
         "2": {"class_type": "CLIPTextEncode",
               "inputs": {"text": f"{p.retrato}, {ENCUADRE}", "clip": ["1", 1]}},
         "3": {"class_type": "CLIPTextEncode",
@@ -141,7 +142,7 @@ def _grafo_retrato(p: B.Personaje) -> dict:
                          "positive": ["2", 0], "negative": ["3", 0],
                          "latent_image": ["4", 0], "denoise": 1.0}},
         "6": {"class_type": "VAEDecode",
-              "inputs": {"samples": ["5", 0], "vae": ["1", 2]}},
+              "inputs": {"samples": ["5", 0], "vae": ["1v", 0]}},
         "7": {"class_type": "SaveImage",
               "inputs": {"images": ["6", 0], "filename_prefix": f"elenco_{p.clave}"}},
     }
@@ -172,6 +173,7 @@ def _grafo_vista(p: B.Personaje, vista: str, encuadre: str, peso: float,
     return {
         "1": {"class_type": "CheckpointLoaderSimple",
               "inputs": {"ckpt_name": C.CHECKPOINT}},
+        "1v": {"class_type": "VAELoader", "inputs": {"vae_name": C.VAE}},
         "2": {"class_type": "IPAdapterUnifiedLoader",
               "inputs": {"model": ["1", 0], "preset": "PLUS FACE (portraits)"}},
         "3": {"class_type": "LoadImage",
@@ -193,7 +195,7 @@ def _grafo_vista(p: B.Personaje, vista: str, encuadre: str, peso: float,
                          "scheduler": "karras", "positive": ["5", 0], "negative": ["6", 0],
                          "latent_image": ["7", 0], "denoise": 1.0}},
         "9": {"class_type": "VAEDecode",
-              "inputs": {"samples": ["8", 0], "vae": ["1", 2]}},
+              "inputs": {"samples": ["8", 0], "vae": ["1v", 0]}},
         "10": {"class_type": "SaveImage",
                "inputs": {"images": ["9", 0], "filename_prefix": f"hoja_{p.clave}_{vista}"}},
     }
