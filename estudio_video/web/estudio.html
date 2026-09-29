@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Estudio de vídeo — Cantina Vesta-9</title>
+<style>
+  :root {
+    --fondo: #100d0c;
+    --caja: #1a1715;
+    --borde: #2c2724;
+    --texto: #e9e4de;
+    --tenue: #9a908a;
+    --brasa: #c0392b;
+    --ambar: #d68910;
+    --verde: #229954;
+    --frio: #2471a3;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--fondo); color: var(--texto);
+    font: 15px/1.5 "Segoe UI", system-ui, sans-serif;
+  }
+  header {
+    padding: 22px 28px; border-bottom: 1px solid var(--borde);
+    display: flex; align-items: baseline; gap: 18px; flex-wrap: wrap;
+  }
+  h1 { font-size: 19px; margin: 0; font-weight: 600; letter-spacing: .3px; }
+  header .sub { color: var(--tenue); font-size: 13px; }
+  main { max-width: 1180px; margin: 0 auto; padding: 24px 28px 80px; }
+  section { margin-bottom: 34px; }
+  h2 {
+    font-size: 13px; text-transform: uppercase; letter-spacing: 1.2px;
+    color: var(--tenue); font-weight: 600; margin: 0 0 12px;
+  }
+  .caja { background: var(--caja); border: 1px solid var(--borde); border-radius: 10px; padding: 18px; }
+
+  textarea {
+    width: 100%; min-height: 92px; resize: vertical; background: #0c0a09;
+    color: var(--texto); border: 1px solid var(--borde); border-radius: 8px;
+    padding: 13px 15px; font: inherit;
+  }
+  textarea:focus { outline: 2px solid var(--ambar); outline-offset: -1px; }
+  .fila { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; margin-top: 13px; }
+  button {
+    background: var(--brasa); color: #fff; border: 0; border-radius: 7px;
+    padding: 11px 22px; font: inherit; font-weight: 600; cursor: pointer;
+  }
+  button:hover { filter: brightness(1.12); }
+  button:disabled { opacity: .45; cursor: default; }
+  button.otro { background: #2c2724; color: var(--texto); font-weight: 500; }
+  label.marca { display: flex; align-items: center; gap: 7px; color: var(--tenue); font-size: 14px; cursor: pointer; }
+
+  .ejemplos { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+  .ejemplos button {
+    background: transparent; border: 1px solid var(--borde); color: var(--tenue);
+    font-weight: 400; font-size: 13px; padding: 6px 12px; border-radius: 20px;
+  }
+  .ejemplos button:hover { color: var(--texto); border-color: var(--ambar); }
+
+  .salud { display: flex; gap: 10px; flex-wrap: wrap; }
+  .chip {
+    font-size: 12.5px; padding: 5px 11px; border-radius: 20px;
+    border: 1px solid var(--borde); color: var(--tenue); background: #0c0a09;
+  }
+  .chip.si { border-color: #2c5c3f; color: #7fd1a0; }
+  .chip.no { border-color: #5c2c2c; color: #e08b8b; }
+
+  .trabajos { display: flex; flex-direction: column; gap: 12px; }
+  .trabajo { border-left: 3px solid var(--borde); padding-left: 15px; }
+  .trabajo.marcha { border-left-color: var(--ambar); }
+  .trabajo.listo { border-left-color: var(--verde); }
+  .trabajo.error { border-left-color: var(--brasa); }
+  .trabajo h3 { margin: 0 0 3px; font-size: 15px; font-weight: 600; }
+  .trabajo .meta { color: var(--tenue); font-size: 13px; }
+  .barra { height: 4px; background: #0c0a09; border-radius: 3px; margin: 9px 0; overflow: hidden; }
+  .barra i { display: block; height: 100%; background: var(--ambar); transition: width .4s; }
+  .avisos { margin: 8px 0 0; padding-left: 18px; color: var(--tenue); font-size: 13px; }
+  .avisos li { margin: 2px 0; }
+
+  .galeria { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 16px; }
+  .galeria figure { margin: 0; }
+  .galeria video, .galeria img { width: 100%; border-radius: 8px; background: #000; display: block; }
+  .galeria figcaption { color: var(--tenue); font-size: 13px; margin-top: 7px; }
+
+  .tiras { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; }
+  .tiras figure { margin: 0; }
+  .tiras img { width: 100%; border-radius: 6px; border: 1px solid var(--borde); display: block; }
+  .tiras figcaption { font-size: 12px; color: var(--tenue); margin-top: 5px; }
+  details summary { cursor: pointer; color: var(--tenue); font-size: 13px; padding: 4px 0; }
+  a { color: var(--ambar); }
+  .nada { color: var(--tenue); font-size: 14px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Estudio de vídeo</h1>
+  <span class="sub" id="local">Cantina Vesta-9 — KDS+TPV</span>
+</header>
+
+<main>
+  <section>
+    <div class="caja">
+      <textarea id="prompt" placeholder="Qué quieres ver. Por ejemplo: dos clientes llegan, se sientan, piden desde el móvil con el QR de la mesa y pagan con la app."></textarea>
+      <div class="ejemplos" id="ejemplos"></div>
+      <div class="fila">
+        <button id="generar">Generar vídeo</button>
+        <button class="otro" id="soloGuion">Solo el guion</button>
+        <label class="marca"><input type="checkbox" id="conVoz" checked> Con voz</label>
+        <label class="marca"><input type="checkbox" id="usarLlm" checked> Guionista con modelo de lenguaje</label>
+      </div>
+      <div class="fila salud" id="salud"></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Trabajos</h2>
+    <div class="trabajos" id="trabajos"><p class="nada">Todavía no has pedido ningún vídeo.</p></div>
+  </section>
+
+  <section>
+    <h2>Vídeos</h2>
+    <div class="galeria" id="galeria"><p class="nada">Aquí aparecerán los vídeos terminados.</p></div>
+  </section>
+
+  <section>
+    <h2>La línea</h2>
+    <div class="caja">
+      <p class="nada" style="margin-top:0">
+        Esto es lo que NO cambia entre vídeos. Las cámaras salen del plano real del local
+        (<code>plano.html</code>): son las mismas medidas en todas las tomas. El elenco son
+        retratos congelados; mientras no se rehaga el casting, la misma persona es la misma
+        persona.
+      </p>
+      <div class="fila">
+        <button class="otro" id="actualizarBiblia">Releer el plano y la carta del KDS</button>
+        <button class="otro" id="hacerCasting">Hacer el casting que falte</button>
+      </div>
+      <details open style="margin-top:16px">
+        <summary>Cámaras</summary>
+        <div class="tiras" id="camaras" style="margin-top:10px"></div>
+      </details>
+      <details style="margin-top:10px">
+        <summary>Elenco</summary>
+        <div class="tiras" id="elenco" style="margin-top:10px"></div>
+      </details>
+    </div>
+  </section>
+</main>
+
+<script>
+const $ = (s) => document.querySelector(s);
+const sello = Date.now();
+
+const EJEMPLOS = [
+  "Dos clientes llegan, se sientan y el camarero les abre la mesa",
+  "Un cliente lee el QR de la mesa, pide desde el móvil y el pedido entra en cocina",
+  "Tutorial: cómo funciona la pantalla de cocina",
+  "Cocina termina el plato, sala lo recoge del pase y lo lleva a la mesa",
+  "Una clienta pide la cuenta desde la app y paga sin levantarse",
+];
+
+function pintarEjemplos() {
+  $("#ejemplos").innerHTML = "";
+  for (const e of EJEMPLOS) {
+    const b = document.createElement("button");
+    b.textContent = e;
+    b.onclick = () => { $("#prompt").value = e; $("#prompt").focus(); };
+    $("#ejemplos").append(b);
+  }
+}
+
+async function salud() {
+  const s = await (await fetch("/api/salud")).json();
+  if (s.local) $("#local").textContent = `${s.local} — KDS+TPV`;
+  const chips = [
+    ["ComfyUI", s.comfy, s.comfy ? `${s.vram_libre} MiB libres de ${s.vram_total}` : "apagado"],
+    ["Guionista", s.llm, s.llm ? "modelo de lenguaje" : "plantillas"],
+    ["Voz", s.piper, s.piper ? "Piper en Raspa" : "sin Piper"],
+    ["Casting", s.casting_falta.length === 0, s.casting_falta.length === 0
+      ? "completo" : `faltan ${s.casting_falta.length}`],
+    ["Cámaras", true, `${s.camaras} encuadres`],
+    ["Carta", true, `${s.platos || 0} platos, ${s.mesas || 0} mesas`],
+  ];
+  $("#salud").innerHTML = chips.map(([n, ok, d]) =>
+    `<span class="chip ${ok ? "si" : "no"}">${n}: ${d}</span>`).join("");
+  return s;
+}
+
+function fase(t) {
+  if (t.fase === "listo") return "listo";
+  if (t.fase === "error") return "error";
+  return "marcha";
+}
+
+async function trabajos() {
+  const lista = await (await fetch("/api/trabajos")).json();
+  const cont = $("#trabajos");
+  if (!lista.length) { cont.innerHTML = '<p class="nada">Todavía no has pedido ningún vídeo.</p>'; }
+  else {
+    cont.innerHTML = lista.map(t => `
+      <div class="trabajo ${fase(t)}">
+        <h3>${t.titulo || t.prompt || t.id}</h3>
+        <div class="meta">${t.creado} · ${t.fase}${t.paso ? " — " + t.paso : ""}${
+          t.segundos ? " · " + t.segundos + " s" : ""}</div>
+        ${t.fase !== "listo" && t.fase !== "error"
+          ? `<div class="barra"><i style="width:${Math.round((t.avance || 0) * 100)}%"></i></div>` : ""}
+        ${t.error ? `<div class="meta" style="color:#e08b8b">${t.error}</div>` : ""}
+        ${(t.avisos || []).length ? `<ul class="avisos">${t.avisos.map(a => `<li>${a}</li>`).join("")}</ul>` : ""}
+      </div>`).join("");
+  }
+
+  const hechos = lista.filter(t => t.salida);
+  const gal = $("#galeria");
+  if (!hechos.length) { gal.innerHTML = '<p class="nada">Aquí aparecerán los vídeos terminados.</p>'; }
+  else {
+    gal.innerHTML = hechos.map(t => `
+      <figure>
+        <video controls preload="metadata" ${t.portada ? `poster="/salidas/${t.portada}"` : ""}
+               src="/salidas/${t.salida}"></video>
+        <figcaption>${t.titulo || t.prompt}${
+          t.srt ? ` · <a href="/salidas/${t.srt}" download>subtítulos</a>` : ""}
+          · <a href="/salidas/${t.salida}" download>descargar</a></figcaption>
+      </figure>`).join("");
+  }
+  return lista;
+}
+
+async function catalogo() {
+  const c = await (await fetch("/api/catalogo")).json();
+  $("#camaras").innerHTML = c.camaras.map(cam => `
+    <figure>
+      <img src="/biblia/control/${cam.clave}_profundidad.png?v=${sello}" alt="${cam.nombre}" loading="lazy">
+      <figcaption><b>${cam.nombre}</b><br>${cam.nota}</figcaption>
+    </figure>`).join("");
+  $("#elenco").innerHTML = c.elenco.map(p => `
+    <figure>
+      ${p.retrato
+        ? `<img src="/biblia/elenco/${p.clave}.png?v=${sello}" alt="${p.nombre}" loading="lazy">`
+        : `<div style="aspect-ratio:1;border:1px dashed var(--borde);border-radius:6px"></div>`}
+      <figcaption><b>${p.nombre}</b><br>${p.papel}${p.retrato ? "" : " — sin retrato"}</figcaption>
+    </figure>`).join("");
+}
+
+async function pedir(soloGuion) {
+  const prompt = $("#prompt").value.trim();
+  if (!prompt) { $("#prompt").focus(); return; }
+  $("#generar").disabled = $("#soloGuion").disabled = true;
+  try {
+    await fetch("/api/producir", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        prompt, solo_guion: soloGuion,
+        con_voz: $("#conVoz").checked, usar_llm: $("#usarLlm").checked,
+      }),
+    });
+    await trabajos();
+  } finally {
+    $("#generar").disabled = $("#soloGuion").disabled = false;
+  }
+}
+
+$("#generar").onclick = () => pedir(false);
+$("#soloGuion").onclick = () => pedir(true);
+$("#actualizarBiblia").onclick = async (ev) => {
+  ev.target.disabled = true; ev.target.textContent = "Releyendo...";
+  await fetch("/api/biblia/actualizar", { method: "POST" });
+  location.reload();
+};
+$("#hacerCasting").onclick = async (ev) => {
+  ev.target.disabled = true; ev.target.textContent = "Casting en marcha...";
+  await fetch("/api/casting", { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
+};
+
+pintarEjemplos();
+salud(); trabajos(); catalogo();
+// Dos ritmos: el avance de los trabajos interesa a cada rato, pero preguntar por
+// la salud cuesta un SSH a Raspa y una llamada al modelo, y eso no se hace cada
+// dos segundos por gusto.
+setInterval(trabajos, 2500);
+setInterval(salud, 15000);
+</script>
+</body>
+</html>

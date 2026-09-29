@@ -1,0 +1,22 @@
+# Lo que se genera no se guarda: los vídeos pesan y los trabajos son de usar y tirar.
+salidas/
+trabajos/
+
+# El plano y la carta son una copia de lo que hay en la base de datos: se vuelven
+# a bajar con `python estudio_cli.py biblia`. Guardarlos aquí sería tener dos
+# verdades sobre dónde están las mesas.
+biblia/plano.json
+biblia/carta.json
+biblia/local.json
+
+# Los mapas de control se derivan del plano, sin nada aleatorio: se regeneran
+# igual byte a byte con `python estudio_cli.py camaras`.
+biblia/control/
+biblia/contactos_camaras.png
+
+# Los retratos del elenco SÍ se guardan (biblia/elenco/): son lo único que no se
+# puede volver a deducir de la base de datos, y si cambian, cambia la cara de los
+# clientes en todos los vídeos anteriores.
+
+__pycache__/
+*.pyc
