@@ -78,6 +78,20 @@ def _escapar(texto: str) -> str:
             .replace("%", "\\%").replace(",", "\\,"))
 
 
+def _linea_concat(fichero: Path) -> str:
+    """Una l\u00ednea del fichero de lista de `concat`, con la comilla escapada.
+
+    El demuxer delimita cada ruta con comillas simples, as\u00ed que una comilla
+    DENTRO de la ruta la cierra por la mitad. Y la ruta de este repositorio
+    tiene una: \u00ab...1 d'Administraci\u00f3 de Sistemes...\u00bb. El resultado era que
+    ffmpeg intentaba abrir \u00abM:/CLAUDE/ASIR/212438_Projecte intermodular 1 d\u00bb y
+    se quejaba de un fichero que nadie hab\u00eda nombrado. Dentro de comillas
+    simples no se puede escapar: hay que cerrar, poner la comilla suelta y
+    volver a abrir.
+    """
+    return "file '" + fichero.as_posix().replace("'", "'\\''") + "'\n"
+
+
 def normalizar(clip: Path, destino: Path, segundos: float, rotulo: str = "",
                marca: str = "") -> Path:
     """Un plano cualquiera → 1920×1080 a 24 fps, con su duración exacta."""
@@ -144,7 +158,7 @@ def unir(videos: list[Path], audios: list[Path], destino: Path,
     tmp.mkdir(parents=True, exist_ok=True)
 
     lista_v = tmp / "videos.txt"
-    lista_v.write_text("".join(f"file '{v.as_posix()}'\n" for v in videos), encoding="utf-8")
+    lista_v.write_text("".join(_linea_concat(v) for v in videos), encoding="utf-8")
     mudo = tmp / "mudo.mp4"
     _correr([ffmpeg(), "-y", "-f", "concat", "-safe", "0", "-i", str(lista_v),
              "-c", "copy", str(mudo)], "juntar los planos")
@@ -152,7 +166,7 @@ def unir(videos: list[Path], audios: list[Path], destino: Path,
     pista = None
     if audios:
         lista_a = tmp / "audios.txt"
-        lista_a.write_text("".join(f"file '{a.as_posix()}'\n" for a in audios), encoding="utf-8")
+        lista_a.write_text("".join(_linea_concat(a) for a in audios), encoding="utf-8")
         pista = tmp / "voz.wav"
         _correr([ffmpeg(), "-y", "-f", "concat", "-safe", "0", "-i", str(lista_a),
                  "-c", "copy", str(pista)], "juntar la voz")
