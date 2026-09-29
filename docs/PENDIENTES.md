@@ -44,32 +44,50 @@ Hecho y medido (ver `deploy/_qa/gui/`). Lo que queda apuntado de esa tanda:
 
 ## Encargo del 29/09/2026: la app del cliente y la visión por cámara
 
-RocaPV describe cinco cosas nuevas. Quedan especificadas en dos documentos, sin construir:
+RocaPV describió cinco cosas nuevas, especificadas en `PROPUESTA_APP_CLIENTE.md` y
+`PROPUESTA_VISION_CCTV.md`. Estado al cerrar el día:
 
-- `PROPUESTA_APP_CLIENTE.md` — (1) QR rotativo en la pantalla LED de la mesa que vincula al
-  cliente con esa mesa hasta que se va; (2) pedido directo desde la app con un filtro que retiene
-  lo absurdo (las 1111 botellas de agua) para que lo confirme un camarero; (3) seguimiento del
-  estado de cocina y cuenta que el cliente puede saldar cuando quiera, entera o a trozos, solo o
-  con camarero; (4) reservas con quince minutos de antelación y pedido adelantado.
-- `PROPUESTA_VISION_CCTV.md` — posiciones y tiempos de clientes y empleados a partir del CCTV,
-  **sin reconocimiento facial y sin medir a nadie por su nombre**: eso no es una preferencia, es
-  lo que permite la ley. Detección anónima, homografía al plano de sala y agregados.
+| Bloque | Estado |
+|---|---|
+| 4 · Reservas con pedido adelantado | **Hecho** (`7dd56bb`): `19_reservas.sql`, agenda `reservas.html`, reserva desde el móvil, 16 pruebas |
+| — · Carta instalable y cuentas de cliente | **Hecho** (`e6bc059`, `d4c815d`) |
+| 1 · QR de mesa rotativo (5-50 s, un solo uso) | **Hecho** (`4c8e047`, `e91fbf0`): `21_mesa_qr.sql`, `pantalla.html`, 17 pruebas |
+| 2 · Pedido directo con filtro | **Hecho** (`b756858`): lo absurdo se para con el motivo escrito y sala corrige la cantidad, 14 pruebas |
+| — · Paso cocina → mesa | **Hecho** (`89209e1`): cocina llega a «lista», la entrega la confirma sala desde el pase |
+| 3 · Cuenta y pago desde la app | **Pendiente.** El cliente ya ve sus platos en cola (`/api/publico/visita/comanda`); falta saldar la cuenta desde el móvil, entera o a trozos. Depende de la tarea 2 de abajo |
+| Visión por CCTV | **Sin construir.** Sin reconocimiento facial y sin medir a nadie por su nombre: lo exige la ley. DPIA y cartel antes de la primera cámara |
 
-Dos decisiones pendientes de RocaPV antes de empezar: qué son las pantallas de mesa (ESP32 con
-panel LED o tableta) y si el pago de la app se queda en simulacro o algún día cobra de verdad.
+Dos decisiones pendientes de RocaPV: qué son las pantallas de mesa (ESP32 con panel LED o
+tableta; el QR ya lo dibuja el servidor, así que valen las dos) y si el pago de la app se queda en
+simulacro o algún día cobra de verdad.
 
-## Hecho y lo que queda del encargo del 29/09
+## Tres tareas encadenadas (29/09/2026)
 
-- **Bloque 4 (reservas) construido** el mismo día: `19_reservas.sql`, `app/reservas.py`, la agenda
-  `reservas.html`, el «Reservar mesa» de la carta del móvil y 16 pruebas. Quedan los bloques 1, 2
-  y 3 de `PROPUESTA_APP_CLIENTE.md` (QR de mesa, pedido directo con filtro, cuenta y pago).
-- `PROPUESTA_PLANNING_MESAS.md` — **sin construir**: la agenda vista como planning, una fila por
+1. **Grupo en la mesa** — **hecho** (`f6e66d8`): `23_comensales.sql`, popup con la rejilla del
+   tamaño real de la mesa, lo que pide cada móvil nace a su nombre. Repartir es opcional.
+2. **Cuenta comensal a comensal** — pendiente: cada uno lo suyo o dividir, tickets individuales o
+   de la mesa.
+3. **Factura a petición** — pendiente: desde la app o al camarero.
+
+Diseño de las tres en `PROPUESTA_GRUPOS_Y_FACTURACION.md`.
+
+## Sin construir
+
+- `PROPUESTA_PLANNING_MESAS.md` — la agenda vista como planning, una fila por
   mesa y el día en horizontal, con una barra por reserva. No necesita API nueva: sale de
   `/api/reservas` y `/api/mesas`. Iría como pestaña de `reservas.html`, no como pantalla aparte.
-- `PROPUESTA_GRUPOS_Y_FACTURACION.md` — **sin construir**: quién se sienta en cada sitio de la
-  mesa (popup con la rejilla 2×3 de una mesa de seis, nombre y lo que pidió cada uno), cobro
-  comensal a comensal frente a dividir, tickets individuales o de la mesa, y factura a petición
-  desde la app o al camarero. Incluye una corrección al encargo: lo de «al cerrar el día ya no se
-  puede emitir» vale como política de caja, pero no como norma absoluta, porque el reglamento de
-  facturación obliga a expedirla cuando el cliente la pide.
+- Al construir la factura (tarea 3), recordar la corrección que trae
+  `PROPUESTA_GRUPOS_Y_FACTURACION.md`: lo de «al cerrar el día ya no se puede emitir» vale como
+  política de caja, pero no como norma absoluta, porque el reglamento de facturación obliga a
+  expedirla cuando el cliente la pide.
+
+## Estudio de vídeo (`estudio_video/`)
+
+- **Primera tirada de generación de imagen** (casting de los nueve retratos + un clip de prueba):
+  sin hacer. `esperar_gpu.py` la lanza solo cuando hay 5.200 MiB libres dos lecturas seguidas; el
+  29/09 la tarjeta la ocupaba el modelo de Graphify en LM Studio. Hasta entonces, las cifras de
+  calidad y tiempo del `README` son estimaciones.
+- La zona de recogida no tiene mostrador en el plano (se arregla en `plano.html`); el sitio de
+  pruebas `:8093` no tiene `reservas.html` ni `pantalla.html` (republicar con `publicar.sh`);
+  falta publicar los vídeos terminados en `home.pr1.es`.
 
