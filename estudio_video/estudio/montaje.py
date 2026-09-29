@@ -135,6 +135,83 @@ def normalizar(clip: Path, destino: Path, segundos: float, rotulo: str = "",
     return destino
 
 
+# ── Movimiento de cámara sobre un plano fijo ────────────────────────────────
+# Los planos se generan como IMAGEN y el movimiento lo pone la cámara, no el
+# modelo. Es la técnica de toda la vida del documental, y aquí además es la
+# decisión técnica correcta: una imagen sola cuesta 36 segundos de GPU y sale
+# nítida, mientras que animarla con AnimateDiff cuesta 17 minutos y sale peor,
+# porque reparte el mismo modelo entre veinticuatro fotogramas.
+#
+# La imagen llega a 3072x1728, muy por encima de los 1920x1080 de salida: ese
+# sobrante es lo que se gasta al acercarse, y por eso el zoom no pixela.
+MOVIMIENTOS = ["acercar", "alejar", "derecha", "izquierda", "acercar_derecha"]
+ZOOM = 1.18            # cuánto llega a acercarse
+
+
+def _expresion_camara(movimiento: str, total: int) -> tuple[str, str, str]:
+    """(zoom, x, y) como expresiones de zoompan. `on` es el fotograma actual."""
+    avance = f"(on/{max(1, total - 1)})"
+    z_in = f"1+{ZOOM - 1:.3f}*{avance}"
+    z_out = f"{ZOOM:.3f}-{ZOOM - 1:.3f}*{avance}"
+    centro_x, centro_y = "iw/2-(iw/zoom/2)", "ih/2-(ih/zoom/2)"
+
+    if movimiento == "acercar":
+        return z_in, centro_x, centro_y
+    if movimiento == "alejar":
+        return z_out, centro_x, centro_y
+    if movimiento == "derecha":
+        return f"{ZOOM:.3f}", f"(iw-iw/zoom)*{avance}", centro_y
+    if movimiento == "izquierda":
+        return f"{ZOOM:.3f}", f"(iw-iw/zoom)*(1-{avance})", centro_y
+    # acercar_derecha: las dos cosas a la vez, que es lo que más parece una cámara
+    return z_in, f"(iw-iw/zoom)*{avance}", centro_y
+
+
+def movimiento_de(indice: int, camara: str) -> str:
+    """Siempre el mismo movimiento para el mismo plano: nada al azar."""
+    return MOVIMIENTOS[(indice + sum(map(ord, camara))) % len(MOVIMIENTOS)]
+
+
+def desde_imagen(imagen: Path, destino: Path, segundos: float, movimiento: str = "acercar",
+                 rotulo: str = "", marca: str = "") -> Path:
+    """Una imagen fija + movimiento de cámara = un plano de vídeo."""
+    f = B.FORMATO
+    ancho, alto, fps = f["ancho_final"], f["alto_final"], f["fps_final"]
+    total = max(2, int(round(segundos * fps)))
+    z, x, y = _expresion_camara(movimiento, total)
+    fundido_salida = max(0.0, segundos - FUNDIDO)
+
+    filtros = [
+        # zoompan trabaja mejor sobre una imagen mayor que la salida; la de
+        # entrada ya viene a 3072x1728, así que solo se encaja la proporción.
+        f"[0:v]scale={ancho * 2}:{alto * 2}:force_original_aspect_ratio=increase,"
+        f"crop={ancho * 2}:{alto * 2},setsar=1[grande]",
+        f"[grande]zoompan=z='{z}':x='{x}':y='{y}':d={total}:s={ancho}x{alto}:fps={fps}[mov]",
+        f"[mov]fade=t=in:st=0:d={FUNDIDO},fade=t=out:st={fundido_salida:.3f}:d={FUNDIDO}[base]",
+    ]
+
+    ultimo = "base"
+    if rotulo:
+        filtros.append(
+            f"[{ultimo}]drawtext=fontfile='{FUENTE}':text='{_escapar(rotulo)}':"
+            f"fontcolor=white:fontsize=46:box=1:boxcolor=0x0c0c0eCC:boxborderw=22:"
+            f"x=80:y=h-190[rot]")
+        ultimo = "rot"
+    if marca:
+        filtros.append(
+            f"[{ultimo}]drawtext=fontfile='{FUENTE}':text='{_escapar(marca)}':"
+            f"fontcolor=0xE8E8EAAA:fontsize=26:x=w-tw-46:y=46[mar]")
+        ultimo = "mar"
+
+    destino.parent.mkdir(parents=True, exist_ok=True)
+    _correr([ffmpeg(), "-y", "-loop", "1", "-t", f"{segundos:.3f}", "-i", str(imagen),
+             "-filter_complex", ";".join(filtros), "-map", f"[{ultimo}]",
+             "-an", "-c:v", "libx264", "-preset", "medium", "-crf", "18",
+             "-pix_fmt", "yuv420p", "-r", str(fps), str(destino)],
+            f"animar {imagen.name}")
+    return destino
+
+
 def pista_de_voz(wav: Path | None, segundos: float, destino: Path) -> Path:
     """Un WAV de la duración exacta del plano: la voz al principio, silencio detrás."""
     destino.parent.mkdir(parents=True, exist_ok=True)

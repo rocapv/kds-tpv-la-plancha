@@ -64,8 +64,21 @@ CONTROLNET_LINEAS = "control_v11p_sd15_lineart_fp16.safetensors"
 # ControlNet manda, el modelo rellena lo que ve: una habitación vacía. Aflojarlo
 # y, sobre todo, soltarlo a mitad de camino deja que la gente aparezca cuando la
 # sala ya está puesta.
-FUERZA_PROFUNDIDAD = 0.65
-HASTA_PROFUNDIDAD = 0.70       # a partir de ahí, ControlNet ya no opina
+# 0,30 y no 0,65. Esto costó una tarde de imágenes feas y merece explicación,
+# porque el síntoma no apuntaba aquí: las escenas salían con colores de neón y
+# una textura de puntos, como un render de los noventa, y parecía culpa del
+# modelo. No lo era. Generando por partes se vio que el modelo solo daba
+# fotografías, ControlNet solo daba fotografías e IP-Adapter solo daba
+# fotografías — y que **ControlNet fuerte junto con IP-Adapter** era lo que las
+# rompía. El mapa de profundidad de aquí no viene de una foto: son cajas
+# rasterizadas, con cantos durísimos, y forzarlo al 65% mientras la referencia
+# de identidad empuja por otro lado satura la imagen.
+#
+# A 0,30 la sala se sigue reconociendo -mismo encuadre, mesas donde van- y la
+# imagen es una fotografía. Es el intercambio correcto: una sala algo menos
+# literal a cambio de que no parezca un videojuego.
+FUERZA_PROFUNDIDAD = 0.30
+HASTA_PROFUNDIDAD = 0.60       # a partir de ahí, ControlNet ya no opina
 # La identidad, floja: con la cara basta. Subirla trae también la ropa, la luz y
 # el fondo del retrato, y la escena deja de ser la cantina. Medido: con 0,75 y
 # una referencia de alguien con chaqueta verde, la cantina entera salió verde
@@ -84,6 +97,9 @@ SOLAPE = 4
 # 3072x1728 para tener que bajar después. Medido: con el x4, un plano de tres
 # segundos costaba 7,1 minutos; casi la mitad era escalar de más.
 ESCALADOR = "RealESRGAN_x2plus.pth"
+# Para los planos fijos sí interesa el x4: de 768x432 sube a 3072x1728, y ese
+# margen es lo que permite que la cámara se acerque después sin pixelarse.
+ESCALADOR_GRANDE = "4x-UltraSharp.pth"
 ALTO_FINAL = 1080
 
 
@@ -327,6 +343,103 @@ def construir(prompt_positivo: str, prompt_negativo: str, control: Path,
                           "loop_count": 0, "filename_prefix": prefijo,
                           "format": "video/h264-mp4", "pingpong": False,
                           "save_output": True}}
+    return g
+
+
+def construir_fijo(prompt_positivo: str, prompt_negativo: str, control: Path,
+                   semilla: int, prefijo: str, referencia: list[Path] | None = None,
+                   ancho: int | None = None, alto: int | None = None,
+                   pasos: int = 32, fuerza_control: float = FUERZA_PROFUNDIDAD,
+                   fuerza_identidad: float = FUERZA_IDENTIDAD) -> dict:
+    """Un plano como IMAGEN, con toda la calidad, para animarlo luego con la cámara.
+
+    Es el mismo grafo que el de vídeo sin AnimateDiff, y esa ausencia lo cambia
+    todo: el modelo dedica su capacidad a UNA imagen en vez de repartirla entre
+    veinticuatro, y no hay módulo de movimiento emborronando el detalle. Medido:
+    36 segundos por imagen contra 16,7 minutos por un plano animado de tres
+    segundos, y con mejor resultado.
+
+    Se escala x4 (a 3072x1728) a propósito, aunque el vídeo salga a 1080: ese
+    margen es lo que permite que la cámara se acerque después sin quedarse sin
+    píxeles.
+    """
+    ancho = ancho or B.FORMATO["ancho"]
+    alto = alto or B.FORMATO["alto"]
+    f = B.FORMATO
+
+    g: dict[str, dict] = {
+        "1": {"class_type": "CheckpointLoaderSimple", "inputs": {"ckpt_name": CHECKPOINT}},
+        "1v": {"class_type": "VAELoader", "inputs": {"vae_name": VAE}},
+        "7": {"class_type": "CLIPTextEncode",
+              "inputs": {"text": prompt_positivo, "clip": ["1", 1]}},
+        "8": {"class_type": "CLIPTextEncode",
+              "inputs": {"text": prompt_negativo, "clip": ["1", 1]}},
+        "9": {"class_type": "LoadImage", "inputs": {"image": _copiar_a_entradas(control)}},
+        "11": {"class_type": "ControlNetLoader",
+               "inputs": {"control_net_name": CONTROLNET_PROFUNDIDAD}},
+        "12": {"class_type": "ControlNetApplyAdvanced",
+               "inputs": {"positive": ["7", 0], "negative": ["8", 0], "control_net": ["11", 0],
+                          "image": ["9", 0], "strength": fuerza_control,
+                          "start_percent": 0.0, "end_percent": HASTA_PROFUNDIDAD}},
+        "13": {"class_type": "EmptyLatentImage",
+               "inputs": {"width": ancho, "height": alto, "batch_size": 1}},
+    }
+
+    vistas = [v for v in (referencia or []) if v and v.exists()]
+    modelo = ["1", 0]
+    if vistas:
+        g["2"] = {"class_type": "IPAdapterUnifiedLoader",
+                  "inputs": {"model": ["1", 0], "preset": "PLUS FACE (portraits)"}}
+        anterior = None
+        for n, v in enumerate(vistas):
+            g[f"3_{n}"] = {"class_type": "LoadImage",
+                           "inputs": {"image": _copiar_a_entradas(v)}}
+            if anterior is None:
+                anterior = [f"3_{n}", 0]
+            else:
+                g[f"3b_{n}"] = {"class_type": "ImageBatch",
+                                "inputs": {"image1": anterior, "image2": [f"3_{n}", 0]}}
+                anterior = [f"3b_{n}", 0]
+        g["4"] = {"class_type": "IPAdapterAdvanced",
+                  "inputs": {"model": ["2", 0], "ipadapter": ["2", 1], "image": anterior,
+                             "weight": fuerza_identidad, "weight_type": "linear",
+                             "combine_embeds": "average" if len(vistas) > 1 else "concat",
+                             "start_at": 0.15, "end_at": 0.95,
+                             "embeds_scaling": "K+V w/ C penalty"}}
+        modelo = ["4", 0]
+
+    g["14"] = {"class_type": "KSampler",
+               "inputs": {"model": modelo, "seed": semilla, "steps": pasos, "cfg": f["cfg"],
+                          "sampler_name": "dpmpp_2m", "scheduler": "karras",
+                          "positive": ["12", 0], "negative": ["12", 1],
+                          "latent_image": ["13", 0], "denoise": 1.0}}
+    g["15"] = {"class_type": "VAEDecode", "inputs": {"samples": ["14", 0], "vae": ["1v", 0]}}
+
+    salida = ["15", 0]
+    if vistas:                       # sin persona no hay cara que arreglar
+        g["20"] = {"class_type": "UltralyticsDetectorProvider",
+                   "inputs": {"model_name": DETECTOR_CARAS}}
+        g["21"] = {"class_type": "FaceDetailer",
+                   "inputs": {"image": salida, "model": modelo, "clip": ["1", 1],
+                              "vae": ["1v", 0], "guide_size": 512, "guide_size_for": True,
+                              "max_size": 1024, "seed": semilla, "steps": 20, "cfg": f["cfg"],
+                              "sampler_name": "dpmpp_2m", "scheduler": "karras",
+                              "positive": ["7", 0], "negative": ["8", 0],
+                              "denoise": DENOISE_CARA, "feather": 8, "noise_mask": True,
+                              "force_inpaint": True, "bbox_threshold": 0.45,
+                              "bbox_dilation": 10, "bbox_crop_factor": 3.0,
+                              "sam_detection_hint": "center-1", "sam_dilation": 0,
+                              "sam_threshold": 0.93, "sam_bbox_expansion": 0,
+                              "sam_mask_hint_threshold": 0.7,
+                              "sam_mask_hint_use_negative": "False", "drop_size": 10,
+                              "bbox_detector": ["20", 0], "wildcard": "", "cycle": 1}}
+        salida = ["21", 0]
+
+    g["17"] = {"class_type": "UpscaleModelLoader", "inputs": {"model_name": ESCALADOR_GRANDE}}
+    g["18"] = {"class_type": "ImageUpscaleWithModel",
+               "inputs": {"upscale_model": ["17", 0], "image": salida}}
+    g["22"] = {"class_type": "SaveImage",
+               "inputs": {"images": ["18", 0], "filename_prefix": prefijo}}
     return g
 
 

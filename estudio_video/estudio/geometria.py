@@ -21,7 +21,7 @@ import math
 from pathlib import Path
 
 import numpy as np
-from PIL import Image
+from PIL import Image, ImageFilter
 
 from . import biblia as B
 
@@ -308,7 +308,14 @@ def mapa_profundidad(zbuf: np.ndarray) -> Image.Image:
     d_cerca, d_lejos = 1.0 / cerca, 1.0 / lejos
     norm = (1.0 / z - d_lejos) / (d_cerca - d_lejos)
     norm[~finito] = 0.0
-    return Image.fromarray((np.clip(norm, 0, 1) * 255).astype(np.uint8), mode="L")
+    mapa = Image.fromarray((np.clip(norm, 0, 1) * 255).astype(np.uint8), mode="L")
+
+    # Un suavizado corto antes de entregarlo. Los mapas con los que se entrenó
+    # ControlNet salen de fotos y son continuos; este sale de cajas rasterizadas
+    # y tiene cantos de un píxel, durísimos. Esa dureza es parte de por qué, a
+    # fuerza alta, las escenas salían saturadas y con textura de puntos. Con el
+    # borde ablandado, la misma geometría guía igual y pelea menos.
+    return mapa.filter(ImageFilter.GaussianBlur(radius=1.6))
 
 
 def mapa_lineas(bib: B.Biblia, cam: B.Camara, zbuf: np.ndarray, vista: Vista,

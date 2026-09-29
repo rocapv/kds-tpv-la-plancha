@@ -90,9 +90,17 @@ ALTURAS_POR_NOMBRE = {
 # quedaba diluida hasta desaparecer —el primer clip salió con la sala perfecta y
 # sin nadie dentro—. La sala ya la impone ControlNet, así que aquí solo hace
 # falta el AMBIENTE: de qué está hecha la pared y cómo es la luz.
+# El decorado también decide cuánto realismo se puede pedir. «Paredes de roca
+# excavada en un asteroide» el modelo no lo ha fotografiado nunca: lo ha visto en
+# ilustraciones y arte conceptual, y eso devolvía — escenas oscuras con aspecto
+# de videojuego. «Comedor de tripulación de una estación», en cambio, se parece a
+# cosas que sí existen y están fotografiadas: comedores de barco, de refinería,
+# de base antártica. Misma ambientación, pero pedida con palabras que el modelo
+# asocia a fotos. El cambio no costó ni un segundo de GPU y fue el segundo salto
+# de calidad más grande, después de bajarle la fuerza a ControlNet.
 ESTILO = (
-    "inside an asteroid mining station canteen, carved rock walls with steel ribs, "
-    "warm amber lighting, cinematic film still, 35mm, photorealistic"
+    "photo of a crew mess hall on a space station, panelled walls, stainless steel, "
+    "bright even lighting, cinematic film still, 35mm, photorealistic"
 )
 
 ESTILO_NEGATIVO = (
@@ -130,6 +138,15 @@ FORMATO = {
     "muestreador": "euler",
     "planificador": "normal",
     "semilla_base": 90210,   # fija: dos veces el mismo guion = dos veces el mismo vídeo
+    # «fijo»: cada plano se genera como imagen y el movimiento lo pone la cámara
+    # en el montaje. «animado»: AnimateDiff mueve a la gente de verdad.
+    # Medido el 29/09/2026 en la 1080 Ti, para un plano de tres segundos:
+    #   fijo    → 36 s de GPU, imagen nítida, cara reconocible
+    #   animado → 16,7 min, detalle hundido y escena apagada
+    # 28 veces más caro para peor resultado, así que el movimiento lo pone la
+    # cámara. Con una GPU capaz de mover modelos de vídeo de verdad, esto se
+    # cambia a «animado» y ya está.
+    "modo": "fijo",
 }
 
 

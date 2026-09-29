@@ -216,20 +216,37 @@ def producir(prompt: str, t: Trabajo, usar_llm: bool = True, con_voz: bool = Tru
         positivo = ", ".join(x for x in [cabeza, B.ESTILO] if x)
         fotogramas = max(16, esc.segundos * B.FORMATO["fps"])
 
-        grafo = C.construir(
-            prompt_positivo=positivo, prompt_negativo=B.ESTILO_NEGATIVO,
-            control=control, fotogramas=fotogramas,
-            semilla=esc.semilla(B.FORMATO["semilla_base"], i),
-            prefijo=f"kds_{t.id}_{i:02d}", referencia=referencia)
-        pid = C.encolar(grafo)
-        salidas = C.esperar(pid, aviso=lambda s, e, i=i: t.anotar(
-            f"plano {i+1}: {e}, {s} s", None))
-        clips = [s for s in salidas if s.suffix.lower() == ".mp4"]
-        if not clips:
-            t.avisar(f"Plano {i+1}: la generación no dejó vídeo; se salta.")
-            continue
-        info["clip"] = str(clips[0])
-        info["origen"] = "generado"
+        semilla = esc.semilla(B.FORMATO["semilla_base"], i)
+        if B.FORMATO.get("modo", "fijo") == "fijo":
+            # Plano fijo + movimiento de cámara: 36 s de GPU en vez de 17 min, y
+            # con mejor imagen. El movimiento lo pone el montaje.
+            grafo = C.construir_fijo(
+                prompt_positivo=positivo, prompt_negativo=B.ESTILO_NEGATIVO,
+                control=control, semilla=semilla,
+                prefijo=f"kds_{t.id}_{i:02d}", referencia=referencia)
+            pid = C.encolar(grafo)
+            salidas = C.esperar(pid, aviso=lambda s, e, i=i: t.anotar(
+                f"plano {i+1}: {e}, {s} s", None))
+            imagenes = [s for s in salidas if s.suffix.lower() in (".png", ".jpg")]
+            if not imagenes:
+                t.avisar(f"Plano {i+1}: la generación no dejó imagen; se salta.")
+                continue
+            info["imagen"] = str(imagenes[0])
+            info["origen"] = "fijo"
+        else:
+            grafo = C.construir(
+                prompt_positivo=positivo, prompt_negativo=B.ESTILO_NEGATIVO,
+                control=control, fotogramas=fotogramas, semilla=semilla,
+                prefijo=f"kds_{t.id}_{i:02d}", referencia=referencia)
+            pid = C.encolar(grafo)
+            salidas = C.esperar(pid, aviso=lambda s, e, i=i: t.anotar(
+                f"plano {i+1}: {e}, {s} s", None))
+            clips = [s for s in salidas if s.suffix.lower() == ".mp4"]
+            if not clips:
+                t.avisar(f"Plano {i+1}: la generación no dejó vídeo; se salta.")
+                continue
+            info["clip"] = str(clips[0])
+            info["origen"] = "generado"
 
     # ── 3. Montaje ──────────────────────────────────────────────────────
     t.estado["fase"] = "montaje"
@@ -242,9 +259,8 @@ def producir(prompt: str, t: Trabajo, usar_llm: bool = True, con_voz: bool = Tru
 
     for i, esc in enumerate(g.escenas):
         info = crudos[i]
-        if not info.get("clip"):
+        if not (info.get("clip") or info.get("imagen")):
             continue
-        clip = Path(info["clip"])
         # Manda la voz: si la frase dura más que el plano, el plano se estira.
         segundos = float(esc.segundos)
         if i in voces:
@@ -252,10 +268,17 @@ def producir(prompt: str, t: Trabajo, usar_llm: bool = True, con_voz: bool = Tru
 
         destino = t.dir / "planos" / f"{i:02d}.mp4"
         try:
-            normalizados.append(M.normalizar(clip, destino, segundos,
-                                             rotulo=esc.rotulo, marca=marca))
+            if info.get("imagen"):
+                mov = M.movimiento_de(i, esc.camara)
+                info["movimiento"] = mov
+                normalizados.append(M.desde_imagen(
+                    Path(info["imagen"]), destino, segundos, movimiento=mov,
+                    rotulo=esc.rotulo, marca=marca))
+            else:
+                normalizados.append(M.normalizar(Path(info["clip"]), destino, segundos,
+                                                 rotulo=esc.rotulo, marca=marca))
         except Exception as e:
-            t.avisar(f"Plano {i+1}: no se pudo normalizar ({e}); se salta.")
+            t.avisar(f"Plano {i+1}: no se pudo montar ({e}); se salta.")
             continue
         audios.append(M.pista_de_voz(voces.get(i), segundos, t.dir / "audio" / f"{i:02d}.wav"))
         if esc.narracion:
