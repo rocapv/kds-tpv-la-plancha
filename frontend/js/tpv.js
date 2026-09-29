@@ -246,6 +246,7 @@ function pintarTicket() {
 // Cuántos se sientan en la mesa. Nadie lo apuntaba, y sin ese dato la sala no puede decir
 // cuánta gente hay dentro ni cuánto gasta cada comensal.
 function pintarComensales() {
+  $('#b-grupo').hidden = !(pedido && pedido.mesa);
   const caja = $('#comensales');
   if (!caja) return;
   const hay = pedido && pedido.tipo === 'sala';
@@ -497,3 +498,81 @@ window.addEventListener('sinred-sincronizado', async () => {
 });
 
 entrar().then(() => { cargarSolicitudes(); prepararMovil(); });
+
+// ── El grupo de la mesa: quién se sienta dónde y de quién es cada plato ──
+// Se abre desde el ticket y se cierra al pulsar fuera, como cualquier diálogo del navegador.
+// La rejilla tiene el tamaño de la mesa: una de seis se pinta 2×3.
+let grupoElegido = null;          // a quién se le van a asignar los platos que se toquen
+
+async function cargarGrupo() {
+  if (!pedido) return;
+  const d = await api(`/pedidos/${pedido.id}/grupo`);
+  $('#g-titulo').textContent = `Mesa ${d.mesa || ''} · ${euro(d.total_cent)}`;
+  const sitio = s => {
+    if (s.libre) return `<button class="sitio libre" data-sentar="${s.sitio}">
+        <span class="hueco-sitio">+</span><small>sitio ${s.sitio}</small></button>`;
+    const elegido = grupoElegido === s.id ? ' elegido' : '';
+    return `<div class="sitio${elegido}" data-comensal="${s.id}">
+      <header><b>${esc(s.nombre || 'Sin nombre')}</b>
+        ${s.con_movil ? '<span title="Pide desde su móvil">📱</span>' : ''}
+        <button class="sutil" data-renombrar="${s.id}" title="Cambiar el nombre">✎</button>
+        <button class="sutil" data-levantar="${s.id}" title="Se ha ido">✕</button>
+      </header>
+      <ul>${s.lineas.map(l => `<li><button data-suelta="${l.id}">${l.cantidad}× ${esc(l.producto)}</button></li>`).join('')
+           || '<li class="tenue">Sin nada suyo</li>'}</ul>
+      <b class="importe">${euro(s.total_cent)}</b>
+    </div>`;
+  };
+  $('#g-rejilla').style.gridTemplateColumns = `repeat(${d.columnas}, 1fr)`;
+  $('#g-rejilla').innerHTML = d.rejilla.map(sitio).join('');
+  $('#g-mesa').innerHTML = `
+    <h4>De la mesa <span class="tenue">${euro(d.de_la_mesa.total_cent)}</span></h4>
+    <ul>${d.de_la_mesa.lineas.map(l =>
+      `<li><button data-coger="${l.id}">${l.cantidad}× ${esc(l.producto)}</button></li>`).join('')
+      || '<li class="tenue">Todo repartido</li>'}</ul>
+    ${grupoElegido ? '<p class="tenue">Toca un plato para pasárselo a quien tienes elegido.</p>'
+                   : '<p class="tenue">Elige primero a alguien de la rejilla.</p>'}`;
+
+  const recargar = () => cargarGrupo();
+  $('#g-rejilla').querySelectorAll('[data-sentar]').forEach(b => b.onclick = async () => {
+    const nombre = prompt('¿Quién se sienta ahí? (puedes dejarlo en blanco)');
+    if (nombre === null) return;
+    await api(`/pedidos/${pedido.id}/grupo`, { method: 'POST',
+      body: { sitio: +b.dataset.sentar, nombre: nombre.trim() || null } })
+      .catch(e => aviso(e.message, 'error'));
+    recargar();
+  });
+  $('#g-rejilla').querySelectorAll('[data-comensal]').forEach(caja => caja.onclick = ev => {
+    if (ev.target.closest('button')) return;               // los botones de dentro mandan
+    grupoElegido = grupoElegido === +caja.dataset.comensal ? null : +caja.dataset.comensal;
+    recargar();
+  });
+  $('#g-rejilla').querySelectorAll('[data-renombrar]').forEach(b => b.onclick = async () => {
+    const nombre = prompt('Nombre');
+    if (nombre === null) return;
+    await api(`/grupo/${b.dataset.renombrar}`, { method: 'PATCH', body: { nombre: nombre.trim() || null } })
+      .catch(e => aviso(e.message, 'error'));
+    recargar();
+  });
+  $('#g-rejilla').querySelectorAll('[data-levantar]').forEach(b => b.onclick = async () => {
+    if (!confirm('¿Se ha ido? Lo que pidió pasa a ser de la mesa.')) return;
+    await api(`/grupo/${b.dataset.levantar}`, { method: 'DELETE' }).catch(e => aviso(e.message, 'error'));
+    grupoElegido = null;
+    recargar();
+  });
+  // Un plato suyo vuelve a la mesa; un plato de la mesa se le pasa a quien esté elegido.
+  $('#g-rejilla').querySelectorAll('[data-suelta]').forEach(b => b.onclick = async () => {
+    await api(`/lineas/${b.dataset.suelta}/comensal`, { method: 'PATCH', body: { comensal_id: null } })
+      .catch(e => aviso(e.message, 'error'));
+    recargar();
+  });
+  $('#g-mesa').querySelectorAll('[data-coger]').forEach(b => b.onclick = async () => {
+    if (!grupoElegido) return aviso('Elige antes a quién se lo pasas', 'error');
+    await api(`/lineas/${b.dataset.coger}/comensal`, { method: 'PATCH', body: { comensal_id: grupoElegido } })
+      .catch(e => aviso(e.message, 'error'));
+    recargar();
+  });
+}
+
+$('#b-grupo').onclick = () => { grupoElegido = null; cargarGrupo().then(() => $('#d-grupo').showModal()); };
+$('#g-cerrar').onclick = () => $('#d-grupo').close();

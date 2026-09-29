@@ -29,6 +29,7 @@
     <div class="ticket-cab">
       <h2 id="t-titulo">Selecciona una mesa</h2>
       <div id="t-sub" class="tenue"></div>
+      <button id="b-grupo" class="sutil" hidden>Grupo</button>
       <div id="comensales" class="comensales" hidden>
         <span class="tenue">Comensales</span>
         <span id="b-comensales"></span>
@@ -66,6 +67,15 @@
   <input id="n-texto" maxlength="120" style="width:100%" placeholder="Escribe una nota…">
   <div class="fila"><label>Cantidad <input id="n-cant" type="number" min="1" max="50" value="1" style="width:5em"></label></div>
   <div class="fila"><button id="n-cancelar">Cancelar</button><button id="n-ok" class="primario">Añadir</button></div>
+</dialog>
+
+<dialog id="d-grupo" class="dialogo-grupo">
+  <h3 id="g-titulo">La mesa</h3>
+  <p class="tenue">Un toque en un sitio libre sienta a alguien; un toque en un plato lo cambia de
+    cuenta. Lo que no se reparte es «de la mesa» y se cobra entre todos.</p>
+  <div id="g-rejilla" class="rejilla-mesa"></div>
+  <div id="g-mesa" class="de-la-mesa"></div>
+  <div class="fila"><button id="g-cerrar" class="primario">Cerrar</button></div>
 </dialog>
 
 <dialog id="d-cobro">

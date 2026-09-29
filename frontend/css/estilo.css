@@ -945,3 +945,22 @@ body.pantalla-mesa { display: grid; place-items: center; min-height: 100vh; text
 .comanda-pase .nota { color: var(--aviso); font-size: .9rem; }
 .comanda-pase.tarde header b { color: var(--mal); }
 
+/* ── El grupo de la mesa ──
+   La rejilla tiene el tamaño de la mesa; el número de columnas lo pone el JavaScript. */
+.dialogo-grupo { max-width: 46rem; width: 92vw; }
+.rejilla-mesa { display: grid; gap: .6rem; margin: .6rem 0; }
+.sitio { background: var(--panel2); border: 1px solid var(--borde); border-radius: var(--r);
+  padding: .6rem; text-align: left; }
+.sitio.libre { display: grid; place-items: center; color: var(--tenue); min-height: 5.5rem;
+  border-style: dashed; cursor: pointer; }
+.sitio .hueco-sitio { font-size: 1.8rem; line-height: 1; }
+.sitio.elegido { border-color: var(--acento); box-shadow: 0 0 0 1px var(--acento); }
+.sitio header { display: flex; align-items: center; gap: .3rem; }
+.sitio header b { flex: 1; }
+.sitio ul { list-style: none; padding: 0; margin: .3rem 0; }
+.sitio li button { padding: .15em .5em; font-size: .9rem; }
+.sitio .importe { display: block; text-align: right; }
+.de-la-mesa { border-top: 1px solid var(--borde); padding-top: .6rem; }
+.de-la-mesa ul { list-style: none; padding: 0; display: flex; flex-wrap: wrap; gap: .4rem; }
+@media (max-width: 640px) { .rejilla-mesa { grid-template-columns: 1fr !important; } }
+

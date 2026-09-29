@@ -18,7 +18,7 @@ from pydantic import BaseModel, Field
 from .red import es_de_la_lan
 from .auth import (abrir_sesion, cerrar_sesion, cifrar_clave, exige, exige_nivel,
                    usuario, usuario_de_token)
-from . import almacen, clientes, mesaqr, pedido_cliente, reservas
+from . import almacen, clientes, comensales, mesaqr, pedido_cliente, reservas
 from .db import conn, q, q1
 from .simulacion import simulacion
 
@@ -723,6 +723,64 @@ def recogida():
             "listos": listos[:TOPE_RECOGIDA], "preparando": preparando[:TOPE_RECOGIDA],
             "mas_listos": max(0, len(listos) - TOPE_RECOGIDA),
             "mas_preparando": max(0, len(preparando) - TOPE_RECOGIDA)}
+
+
+# ─────────────── El grupo de la mesa ───────────────
+# Ojo con el nombre: `PATCH /api/pedidos/{id}/comensales` (que ya existía) dice CUÁNTOS son, y es
+# lo que pinta la ocupación de sala. Esto de aquí es QUIÉNES son y qué ha pedido cada uno, y va
+# por `/grupo` para que no se confundan al leerlas en la lista de rutas.
+# Quién ocupa cada sitio y de quién es cada plato. Todo opcional: una línea sin comensal es «de
+# la mesa», y una mesa sin comensales funciona como toda la vida.
+class NuevoComensal(BaseModel):
+    sitio: int | None = Field(None, ge=1, le=30)
+    nombre: str | None = Field(None, max_length=40)
+
+
+class NombreComensal(BaseModel):
+    nombre: str | None = Field(None, max_length=40)
+
+
+class DuenoDeLinea(BaseModel):
+    comensal_id: int | None = None      # None = de la mesa
+
+
+@app.get("/api/pedidos/{pid}/grupo")
+def ver_grupo(pid: int, u: dict = Depends(exige("camarero", "encargado"))):
+    return comensales.listar(pid)
+
+
+@app.post("/api/pedidos/{pid}/grupo", status_code=201)
+async def sentar_comensal(pid: int, d: NuevoComensal,
+                          u: dict = Depends(exige("camarero", "encargado"))):
+    exigir_abierto(pid)
+    c = comensales.sentar(pid, d.sitio, d.nombre)
+    await hub.emitir("mesas")
+    return c
+
+
+@app.patch("/api/grupo/{cid}")
+async def renombrar_comensal(cid: int, d: NombreComensal,
+                             u: dict = Depends(exige("camarero", "encargado"))):
+    c = comensales.renombrar(cid, d.nombre)
+    await hub.emitir("mesas")
+    return c
+
+
+@app.delete("/api/grupo/{cid}")
+async def levantar_comensal(cid: int, u: dict = Depends(exige("camarero", "encargado"))):
+    """Se levanta de la mesa. Lo que pidió pasa a ser «de la mesa»: alguien se lo ha comido."""
+    comensales.levantar(cid)
+    await hub.emitir("mesas")
+    return {"id": cid, "levantado": True}
+
+
+@app.patch("/api/lineas/{lid}/comensal")
+async def cambiar_dueno_de_linea(lid: int, d: DuenoDeLinea,
+                                 u: dict = Depends(exige("camarero", "encargado"))):
+    """«Eso es mío»: mover un plato de una cuenta a otra, o dejarlo de la mesa."""
+    r = comensales.mover_linea(lid, d.comensal_id)
+    await hub.emitir("mesas")
+    return r
 
 
 # ─────────────── El pase: de cocina a la mesa ───────────────
@@ -2414,8 +2472,10 @@ def _guardar_solicitud(visita: dict | None, mesa_id: int | None, cliente: str | 
 
 
 async def _a_cocina(mesa_id: int, lineas: list[dict], empleado_id: int, cliente: str | None,
-                    visita_id: int | None) -> int:
+                    visita_id: int | None, dispositivo: str | None = None,
+                    alias: str | None = None) -> int:
     """Mete las líneas en el pedido de la mesa y las manda a cocina. Devuelve el pedido."""
+    nuevas: list[int] = []
     with conn() as c, c.cursor() as cur:
         abierto = q1("SELECT id FROM pedidos WHERE mesa_id=%s AND estado='abierto'", (mesa_id,))
         if abierto:
@@ -2430,10 +2490,18 @@ async def _a_cocina(mesa_id: int, lineas: list[dict], empleado_id: int, cliente:
                             estado, enviada_en)
                            VALUES (%s,%s,%s,%s,%s,%s,'enviada',NOW())""",
                         (pid, l["id"], l["cantidad"], l["precio_cent"], l["notas"], l["estacion"]))
+            nuevas.append(cur.lastrowid)
         if visita_id:
             cur.execute("UPDATE visitas SET pedido_id=%s WHERE id=%s AND pedido_id IS NULL",
                         (pid, visita_id))
     almacen.consumir_pedido(pid, empleado_id)
+    # Lo que pide un móvil es de quien lo pide: así el reparto de la cuenta sale solo, sin que
+    # nadie tenga que acordarse después de quién pidió qué.
+    if dispositivo and nuevas:
+        mio = comensales.asegurar_para_dispositivo(pid, dispositivo, alias)
+        marcas = ",".join(["%s"] * len(nuevas))
+        q(f"UPDATE lineas_pedido SET comensal_id=%s WHERE id IN ({marcas})",
+          (mio["id"], *nuevas))
     await hub.emitir("kds", pedido_id=pid)
     await hub.emitir("mesas")
     await hub.emitir("carta")
@@ -2461,7 +2529,8 @@ async def publico_pedir_desde_la_mesa(d: PedidoDeMesa, request: Request,
     empleado = _empleado_de_guardia()
     if not empleado:
         raise HTTPException(503, "No hay nadie de guardia en el sistema; avisa a un camarero")
-    pid = await _a_cocina(visita["mesa_id"], lineas, empleado, quien, visita["id"])
+    pid = await _a_cocina(visita["mesa_id"], lineas, empleado, quien, visita["id"],
+                          dispositivo=v["token"], alias=quien)
     sid = _guardar_solicitud(v, visita["mesa_id"], quien, d.nota, lineas, ip, None, True)
     q("UPDATE solicitudes SET pedido_id=%s, resuelta_en=NOW() WHERE id=%s", (pid, sid))
     await hub.emitir_publico("solicitud")
