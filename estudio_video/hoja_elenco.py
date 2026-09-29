@@ -26,7 +26,7 @@ LADO_VISTA = 200
 
 def hojas_de_personaje() -> int:
     """Una fila por persona, con todas sus vistas: la guía de referencia."""
-    gente = [p for p in B.ELENCO.values() if E.vistas_de(p.clave)]
+    gente = [p for p in B.ELENCO.values() if E.vistas_de(p.clave, solo_cara=False)]
     if not gente:
         print("no hay hojas: `python estudio_cli.py hojas`")
         return 1
@@ -40,7 +40,7 @@ def hojas_de_personaje() -> int:
     for f, p in enumerate(gente):
         y = 14 + f * alto_fila
         dib.text((16, y - 2), f"{p.nombre}  ·  {p.papel}", fill=(233, 228, 222))
-        vistas = {v.stem: v for v in E.vistas_de(p.clave)}
+        vistas = {v.stem: v for v in E.vistas_de(p.clave, solo_cara=False)}
         vistas["frontal"] = E.ruta_de(p.clave)
         for c, nombre in enumerate(nombres):
             x = 14 + c * (LADO_VISTA + 14)

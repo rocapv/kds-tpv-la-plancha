@@ -96,7 +96,15 @@ def dir_hoja(clave: str) -> Path:
     return B.DIR_ELENCO / clave
 
 
-def vistas_de(clave: str) -> list[Path]:
+# A las ESCENAS solo van las vistas de cara. El plano medio enseña la ropa
+# entera, y con él dentro la referencia se trae el color: una toma de alguien con
+# chaqueta verde salió con la cantina entera teñida de verde. La hoja completa
+# sigue existiendo para mirarla y para el plano medio hace falta el prompt, no la
+# referencia.
+VISTAS_DE_CARA = {"frontal", "tres_cuartos", "perfil", "cara", "cara_hablando", "cara_abajo"}
+
+
+def vistas_de(clave: str, solo_cara: bool = True) -> list[Path]:
     """Las imágenes de referencia de un molde, la base primero.
 
     Si no hay hoja todavía, devuelve el retrato base solo: el estudio sigue
@@ -109,6 +117,8 @@ def vistas_de(clave: str) -> list[Path]:
         for nombre, _, _ in VISTAS:
             if nombre == "frontal":
                 continue                      # el frontal ya es el retrato base
+            if solo_cara and nombre not in VISTAS_DE_CARA:
+                continue
             f = d / f"{nombre}.png"
             if f.exists():
                 fuera.append(f)

@@ -99,7 +99,10 @@ ESTILO_NEGATIVO = (
     "text, letters, watermark, signature, logo, ui, hud, subtitles, menu card, "
     "readable writing, distorted hands, extra fingers, extra limbs, deformed face, "
     "blurry, lowres, jpeg artifacts, cartoon, anime, illustration, 3d render, "
-    "daylight, outdoors, sky, trees, grass, modern restaurant, fast food chain"
+    "daylight, outdoors, sky, trees, grass, modern restaurant, fast food chain, "
+    # La referencia de identidad arrastra el color de la ropa a toda la sala: en
+    # una toma de alguien con chaqueta verde salieron verdes hasta las paredes.
+    "monochrome, single colour scene, green tint, colour cast, tinted walls"
 )
 
 # Cómo sale el vídeo. Cambiar esto cambia TODOS los vídeos, que es justo la idea.
@@ -110,7 +113,7 @@ FORMATO = {
     "fps_final": 24,
     "ancho_final": 1920,
     "alto_final": 1080,
-    "pasos": 20,
+    "pasos": 24,
     "cfg": 7.5,
     "muestreador": "euler",
     "planificador": "normal",

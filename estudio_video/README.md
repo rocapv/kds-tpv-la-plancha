@@ -34,10 +34,28 @@ se le impone desde fuera, con cuatro anclas.
    por cada una. ControlNet obliga al modelo a respetar esa geometría. Si el
    encargado mueve una mesa en `plano.html`, los vídeos siguientes tienen esa mesa
    movida; hasta entonces, no cambia nada.
-2. **El elenco son retratos congelados.** Nueve personas con su ficha y su
-   semilla. IP-Adapter las mantiene reconocibles entre tomas. El casting se hace
-   una vez y no se vuelve a tocar: es lo único del estudio que no se puede volver
-   a deducir de la base de datos.
+2. **El elenco son cinco moldes con hoja de personaje.** El camarero, dos
+   clientes y dos clientas. Cuantas menos caras haya, más veces sale cada una, y
+   antes se nota que siempre es la misma persona. Cada molde tiene **siete
+   vistas** —frontal, tres cuartos, perfil, tres primeros planos de cara
+   (neutra, hablando y mirando hacia abajo, que es como se mira un móvil) y un
+   plano medio—, todas generadas a partir del retrato base, y en cada escena se
+   le pasan **todas a la vez** a IP-Adapter, que promedia sus embeddings. Con un
+   solo retrato frontal, en cuanto la persona gira la cabeza deja de
+   reconocerla y sale «alguien parecido».
+
+   El casting se hace una vez y no se vuelve a tocar: es lo único del estudio
+   que no se puede volver a deducir de la base de datos. Mirar la hoja antes de
+   rodar no es opcional —de las tres tandas que hicieron falta, las tres se
+   corrigieron mirando lo que salía: vistas partidas en dos, primeros planos que
+   eran un cuello, y un personaje con los labios pintados de rosa.
+
+   ```powershell
+   python estudio_cli.py casting      # los cinco retratos base
+   python estudio_cli.py hojas        # las siete vistas de cada uno
+   python hoja_elenco.py --hojas      # la hoja entera, para mirarla
+   python prueba_moldes.py            # las mismas 4 acciones para cada molde
+   ```
 3. **La carta y las pantallas no se generan: se graban.** SD 1.5 no sabe escribir
    «Brasa de Perihelio · 11,90 €»; saca garabatos. Cuando una escena tiene que
    enseñar interfaz, se abre el KDS de verdad en un navegador y se graba, con las
@@ -111,8 +129,9 @@ y su portada.
 | El aspecto de todos los vídeos | `ESTILO` en `biblia.py` |
 | Resolución, fps, pasos, semilla base | `FORMATO` en `biblia.py` |
 | Los encuadres | `CAMARAS` en `biblia.py` (y `python estudio_cli.py camaras`) |
-| Quién sale | `ELENCO` en `biblia.py` + `casting --rehacer` |
-| Cuánto manda la sala sobre el modelo | `FUERZA_PROFUNDIDAD` en `comfy.py` |
+| Quién sale | `ELENCO` en `biblia.py` + `casting --rehacer`, o las caras de la web |
+| Las vistas de la hoja de personaje | `VISTAS` en `elenco.py` + `hojas --rehacer` |
+| Cuánto manda la sala sobre el modelo | `FUERZA_PROFUNDIDAD` y `HASTA_PROFUNDIDAD` en `comfy.py` |
 | Qué se ve en las pantallas grabadas | `Servicio` en `pantallas.py` |
 | La voz | `VOZ_POR_DEFECTO` en `voz.py` (`sharvard` o `davefx`) |
 

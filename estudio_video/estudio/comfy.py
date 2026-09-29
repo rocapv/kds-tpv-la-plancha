@@ -47,9 +47,15 @@ CONTROLNET_LINEAS = "control_v11p_sd15_lineart_fp16.safetensors"
 # ControlNet manda, el modelo rellena lo que ve: una habitación vacía. Aflojarlo
 # y, sobre todo, soltarlo a mitad de camino deja que la gente aparezca cuando la
 # sala ya está puesta.
-FUERZA_PROFUNDIDAD = 0.55
-HASTA_PROFUNDIDAD = 0.55       # a partir de ahí, ControlNet ya no opina
-FUERZA_IDENTIDAD = 0.75
+FUERZA_PROFUNDIDAD = 0.65
+HASTA_PROFUNDIDAD = 0.70       # a partir de ahí, ControlNet ya no opina
+# La identidad, floja: con la cara basta. Subirla trae también la ropa, la luz y
+# el fondo del retrato, y la escena deja de ser la cantina. Medido: con 0,75 y
+# una referencia de alguien con chaqueta verde, la cantina entera salió verde
+# —paredes, techo y suelo—, y a 0,60 seguía igual. El color viaja en el
+# embedding aunque el adaptador sea el de caras, porque en un primer plano
+# también hay cuello y ropa.
+FUERZA_IDENTIDAD = 0.45
 
 CONTEXTO = 16          # fotogramas que AnimateDiff v3 mira a la vez
 SOLAPE = 4
@@ -67,15 +73,8 @@ def encendido(url: str = COMFY) -> bool:
         return False
 
 
-def vram_libre(url: str = COMFY) -> tuple[int, int]:
-    """(libre, total) de la tarjeta en MiB, preguntándoselo al driver.
-
-    NO se usa el `vram_free` de `/system_stats`: ComfyUI informa de lo que tiene
-    reservado para sí, no de lo que queda en la tarjeta. Con LM Studio ocupando
-    10 GB, ComfyUI seguía diciendo «9.489 MiB libres» y el trabajo habría pasado
-    la comprobación para morir de OOM a mitad de la generación. Quien sabe
-    cuánta memoria hay de verdad es nvidia-smi.
-    """
+def _nvidia_smi() -> tuple[int, int] | None:
+    """(libre, total) en MiB según el driver, o None si no se puede preguntar."""
     try:
         r = subprocess.run(
             ["nvidia-smi", "--query-gpu=memory.free,memory.total",
@@ -83,39 +82,69 @@ def vram_libre(url: str = COMFY) -> tuple[int, int]:
             capture_output=True, text=True, timeout=15)
         if r.returncode == 0 and r.stdout.strip():
             libre, total = (int(x) for x in r.stdout.strip().splitlines()[0].split(","))
-            # A lo que queda en la tarjeta se le suma lo que ComfyUI ya tiene
-            # RESERVADO: eso es suyo y lo reutiliza para el siguiente render. Sin
-            # sumarlo, en cuanto ComfyUI carga los modelos la tarjeta parece
-            # llena y el estudio se niega a generar... por culpa de sí mismo.
-            try:
-                with urllib.request.urlopen(f"{url}/system_stats", timeout=8) as s:
-                    dev = (json.load(s).get("devices") or [{}])[0]
-                libre += max(0, dev.get("torch_vram_total", 0) // 2**20)
-            except Exception:
-                pass
-            return min(libre, total), total
+            return libre, total
     except Exception:
         pass
-    # Sin nvidia-smi, lo de ComfyUI es mejor que nada, pero es optimista.
+    return None
+
+
+def _comfy_stats(url: str) -> dict:
     with urllib.request.urlopen(f"{url}/system_stats", timeout=10) as r:
-        d = json.load(r)
-    dev = (d.get("devices") or [{}])[0]
-    return (dev.get("vram_free", 0) // 2**20, dev.get("vram_total", 0) // 2**20)
+        return (json.load(r).get("devices") or [{}])[0]
+
+
+def modelos_de_lm_studio() -> list[str]:
+    """Qué tiene cargado LM Studio, que es el único que compite de verdad aquí."""
+    try:
+        r = subprocess.run([str(Path.home() / ".lmstudio" / "bin" / "lms.exe"), "ps"],
+                           capture_output=True, text=True, timeout=25)
+        return [l.split()[0] for l in (r.stdout or "").splitlines()
+                if l.strip() and not l.startswith("IDENTIFIER")
+                and not l.startswith("No models")]
+    except Exception:
+        return []
+
+
+def vram_libre(url: str = COMFY) -> tuple[int, int]:
+    """Cuánta VRAM hay DISPONIBLE PARA GENERAR, en MiB, y el total.
+
+    Ninguna de las dos fuentes vale por sí sola, y las dos se equivocaron en un
+    sentido distinto el mismo día:
+
+    · **ComfyUI** (`/system_stats`) no ve la memoria de otros procesos. Con LM
+      Studio ocupando 10 de 11 GB seguía diciendo «9.489 MiB libres», y el
+      trabajo habría pasado la comprobación para morir de OOM a mitad.
+    · **nvidia-smi** no distingue quién ocupa qué. Cuando ComfyUI tiene sus
+      propios modelos cargados —7,5 GB tras generar las hojas— el driver dice
+      que la tarjeta está llena, y el estudio se negaba a generar por culpa de
+      sí mismo, cuando ComfyUI descarga lo que le sobra en cuanto lo necesita.
+
+    La regla, que es la de esta máquina: si LM Studio tiene algo cargado, manda
+    el driver, porque esa memoria no la va a soltar nadie. Si no, manda ComfyUI,
+    que sabe gestionar la suya.
+    """
+    driver = _nvidia_smi()
+    try:
+        dev = _comfy_stats(url)
+        comfy_libre = dev.get("vram_free", 0) // 2**20
+        comfy_total = dev.get("vram_total", 0) // 2**20
+    except Exception:
+        return driver or (0, 0)
+
+    if not driver:
+        return comfy_libre, comfy_total
+    libre_driver, total = driver
+    if modelos_de_lm_studio():
+        return libre_driver, total
+    return max(libre_driver, comfy_libre), total
 
 
 def quien_ocupa_la_gpu() -> str:
     """Un texto corto con quién tiene la tarjeta, para poder decirlo en la web."""
-    try:
-        r = subprocess.run([str(Path.home() / ".lmstudio" / "bin" / "lms.exe"), "ps"],
-                           capture_output=True, text=True, timeout=20)
-        # `lms ps` a veces antepone líneas sueltas antes de la cabecera, así que
-        # no vale con saltarse la primera: se descarta la cabecera por su nombre.
-        nombres = [l.split()[0] for l in (r.stdout or "").splitlines()
-                   if l.strip() and not l.startswith("IDENTIFIER")]
-        if nombres:
-            return f"LM Studio tiene cargado: {', '.join(nombres)}"
-    except Exception:
-        pass
+    nombres = modelos_de_lm_studio()
+    if nombres:
+        return (f"LM Studio tiene cargado: {', '.join(nombres)}. "
+                f"Se libera con `lms unload {nombres[0]}`")
     return "hay otro proceso usando la tarjeta"
 
 
@@ -153,8 +182,12 @@ def construir(prompt_positivo: str, prompt_negativo: str, control: Path,
 
     modelo = ["1", 0]
     if vistas:
+        # PLUS FACE y no PLUS: el primero mira la CARA, el segundo mira la imagen
+        # entera y se trae el color y el estilo con ella. Con PLUS, una toma de
+        # alguien con chaqueta verde salió con la cantina entera teñida de verde,
+        # paredes incluidas. Aquí de la referencia solo queremos la persona.
         g["2"] = {"class_type": "IPAdapterUnifiedLoader",
-                  "inputs": {"model": ["1", 0], "preset": "PLUS (high strength)"}}
+                  "inputs": {"model": ["1", 0], "preset": "PLUS FACE (portraits)"}}
         # Una carga por vista, encadenadas con ImageBatch hasta formar un lote.
         anterior = None
         for n, v in enumerate(vistas):
@@ -173,8 +206,13 @@ def construir(prompt_positivo: str, prompt_negativo: str, control: Path,
                   "inputs": {"model": ["2", 0], "ipadapter": ["2", 1], "image": anterior,
                              "weight": fuerza_identidad, "weight_type": "linear",
                              "combine_embeds": "average" if len(vistas) > 1 else "concat",
-                             "start_at": 0.0, "end_at": 1.0,
-                             "embeds_scaling": "V only"}}
+                             # Entra una vez puesta la escena: en los primeros
+                             # pasos se decide la composición y el color, y ahí
+                             # la referencia no pinta nada bueno.
+                             "start_at": 0.15, "end_at": 0.95,
+                             # «C penalty» castiga la transferencia de estilo y
+                             # deja pasar sobre todo el parecido de la cara.
+                             "embeds_scaling": "K+V w/ C penalty"}}
         modelo = ["4", 0]
 
     # Contexto estático: no hace falta el deslizante para clips de pocos

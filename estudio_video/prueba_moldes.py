@@ -35,11 +35,12 @@ ACCIONES = [
 ]
 
 
-def guion_de(claves: list[str], segundos: int) -> Gu.Guion:
+def guion_de(claves: list[str], segundos: int, cuantas: int = 0) -> Gu.Guion:
     escenas = []
+    acciones = ACCIONES[:cuantas] if cuantas else ACCIONES
     for clave in claves:
         p = B.ELENCO[clave]
-        for i, (camara, titulo, accion) in enumerate(ACCIONES, start=1):
+        for i, (camara, titulo, accion) in enumerate(acciones, start=1):
             escenas.append(Gu.Escena(
                 camara=camara,
                 accion=f"{p.breve} {accion}",
@@ -56,6 +57,8 @@ def main() -> int:
     p = argparse.ArgumentParser(description="Las mismas cuatro acciones para cada molde")
     p.add_argument("--solo", default="", help="claves separadas por comas")
     p.add_argument("--segundos", type=int, default=3)
+    p.add_argument("--acciones", type=int, default=0,
+                   help="usar solo las N primeras acciones (para iterar barato)")
     args = p.parse_args()
 
     claves = [c.strip() for c in args.solo.split(",") if c.strip()] or list(B.ELENCO)
@@ -69,9 +72,9 @@ def main() -> int:
         print(f"sin retrato: {', '.join(sin_retrato)}. Lanza `python estudio_cli.py casting`.")
         return 1
 
-    g = guion_de(claves, args.segundos)
-    print(f"{len(claves)} moldes x {len(ACCIONES)} acciones = {len(g.escenas)} planos, "
-          f"{g.segundos} s de vídeo")
+    g = guion_de(claves, args.segundos, args.acciones)
+    print(f"{len(claves)} moldes x {args.acciones or len(ACCIONES)} acciones = "
+          f"{len(g.escenas)} planos, {g.segundos} s de vídeo")
     print("En una 1080 Ti esto son unos 35-45 minutos de cómputo.\n")
 
     t = Pr.Trabajo(Pr._nuevo_id())
