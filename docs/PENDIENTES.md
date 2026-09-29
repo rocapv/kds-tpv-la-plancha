@@ -58,3 +58,12 @@ RocaPV describe cinco cosas nuevas. Quedan especificadas en dos documentos, sin 
 Dos decisiones pendientes de RocaPV antes de empezar: qué son las pantallas de mesa (ESP32 con
 panel LED o tableta) y si el pago de la app se queda en simulacro o algún día cobra de verdad.
 
+## Hecho y lo que queda del encargo del 29/09
+
+- **Bloque 4 (reservas) construido** el mismo día: `19_reservas.sql`, `app/reservas.py`, la agenda
+  `reservas.html`, el «Reservar mesa» de la carta del móvil y 16 pruebas. Quedan los bloques 1, 2
+  y 3 de `PROPUESTA_APP_CLIENTE.md` (QR de mesa, pedido directo con filtro, cuenta y pago).
+- `PROPUESTA_PLANNING_MESAS.md` — **sin construir**: la agenda vista como planning, una fila por
+  mesa y el día en horizontal, con una barra por reserva. No necesita API nueva: sale de
+  `/api/reservas` y `/api/mesas`. Iría como pestaña de `reservas.html`, no como pantalla aparte.
+
