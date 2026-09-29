@@ -18,7 +18,7 @@ from pydantic import BaseModel, Field
 from .red import es_de_la_lan
 from .auth import (abrir_sesion, cerrar_sesion, cifrar_clave, exige, exige_nivel,
                    usuario, usuario_de_token)
-from . import almacen, clientes, reservas
+from . import almacen, clientes, mesaqr, reservas
 from .db import conn, q, q1
 from .simulacion import simulacion
 
@@ -2365,6 +2365,145 @@ async def rechazar_solicitud(sid: int, u: dict = Depends(exige("camarero", "enca
     return {"ok": True}
 
 
+# ─────────────── El QR de la mesa y las visitas ───────────────
+# La pantalla de la mesa pide un código, lo enseña unos segundos y vuelve a pedir otro. El
+# teléfono que lo lee abre la visita de esa mesa y se queda unido hasta que el grupo se va.
+class Canje(BaseModel):
+    codigo: str = Field(min_length=4, max_length=16)
+    alias: str | None = Field(None, max_length=40)
+
+
+class NuevaPantalla(BaseModel):
+    mesa_id: int
+    nombre: str | None = Field(None, max_length=40)
+
+
+def _secreto_de_pantalla(authorization: str | None = Header(None),
+                         x_pantalla: str | None = Header(None)) -> dict:
+    """La pantalla se identifica con su secreto, y solo se le hace caso desde la red del local.
+
+    Una pantalla está atornillada a una mesa: si sus peticiones llegan de fuera, o alguien ha
+    copiado el secreto o alguien se ha llevado la pantalla. En los dos casos, no.
+    """
+    secreto = authorization[7:].strip() if authorization and authorization.lower().startswith("bearer ") \
+        else x_pantalla
+    p = mesaqr.pantalla_de_secreto(secreto)
+    if not p:
+        raise HTTPException(401, "Pantalla desconocida")
+    return p
+
+
+def _qr_svg(texto: str, escala: int = 8) -> str:
+    """El QR como SVG, generado aquí: la pantalla solo pinta lo que le den, y así vale igual una
+    tableta con navegador que un aparato que no sepa dibujar códigos."""
+    import segno
+    return segno.make(texto, error="m").svg_inline(scale=escala, dark="#101010", light=None)
+
+
+def _url_de_mesa(request: Request, codigo: str) -> str:
+    base = str(ajustes_dict().get("url_publica", "")).strip().rstrip("/")
+    if not base:
+        base = str(request.base_url).rstrip("/")
+    return f"{base}/m/{codigo}"
+
+
+@app.post("/api/pantalla/codigo")
+def pantalla_codigo(request: Request, p: dict = Depends(_secreto_de_pantalla)):
+    if not es_de_la_lan(request.client.host if request.client else None):
+        raise HTTPException(403, "Las pantallas de mesa solo hablan desde la red del local")
+    cfg = mesaqr.config()
+    if not cfg["activo"]:
+        raise HTTPException(409, "El pedido desde la mesa está desactivado")
+    d = mesaqr.emitir(p, cfg)
+    d["url"] = _url_de_mesa(request, d["codigo"])
+    d["svg"] = _qr_svg(d["url"])
+    return d
+
+
+@app.get("/m/{codigo}")
+def abrir_desde_la_mesa(codigo: str):
+    """Lo que hay dentro del QR. Redirige a la carta con el código puesto, para que el cliente no
+    tenga que teclear nada."""
+    return RedirectResponse(f"/cliente.html?m={codigo}")
+
+
+@app.post("/api/publico/mesa/canjear")
+async def publico_canjear(d: Canje, yo: dict | None = Depends(clientes.cliente_opcional)):
+    r = mesaqr.canjear(d.codigo, d.alias or (yo or {}).get("nombre"), (yo or {}).get("id"))
+    await hub.emitir("visitas", visita_id=r["id"])
+    return r
+
+
+@app.post("/api/publico/mesa/unirse")
+async def publico_unirse(d: Canje, yo: dict | None = Depends(clientes.cliente_opcional)):
+    r = mesaqr.unirse(d.codigo, d.alias or (yo or {}).get("nombre"), (yo or {}).get("id"))
+    await hub.emitir("visitas", visita_id=r["id"])
+    return r
+
+
+def visita_actual(x_visita: str | None = Header(None)) -> dict:
+    """La mesa desde la que habla este teléfono. Va en su propia cabecera para que pueda convivir
+    con la cuenta de cliente: son dos cosas distintas y se tienen a la vez."""
+    d = mesaqr.de_token(x_visita)
+    if not d:
+        raise HTTPException(401, "Vuelve a leer el código de la mesa")
+    return d
+
+
+@app.get("/api/publico/visita")
+def publico_visita(d: dict = Depends(visita_actual)):
+    return {**mesaqr.estado(d["visita_id"]), "alias": d["alias"]}
+
+
+@app.post("/api/publico/visita/salir")
+def publico_visita_salir(d: dict = Depends(visita_actual)):
+    """El teléfono se desengancha. La visita sigue: los demás siguen sentados."""
+    q("DELETE FROM visita_dispositivos WHERE token=%s", (d["token"],))
+    return {"hecho": True}
+
+
+# ── La sala ──
+@app.get("/api/visitas")
+def listar_visitas(u: dict = Depends(exige("camarero", "encargado"))):
+    return mesaqr.listar_activas()
+
+
+@app.post("/api/visitas/{vid}/cerrar")
+async def cerrar_visita(vid: int, u: dict = Depends(exige("camarero", "encargado"))):
+    mesaqr.cerrar(vid)
+    await hub.emitir("visitas", visita_id=vid)
+    return {"id": vid, "estado": "cerrada"}
+
+
+@app.post("/api/mesas/{mesa_id}/visita", status_code=201)
+async def abrir_visita_a_mano(mesa_id: int, u: dict = Depends(exige("camarero", "encargado"))):
+    """Para cuando el móvil del cliente no lee el QR, que también pasa: el camarero abre la mesa
+    y le da el código de unirse de viva voz."""
+    if not q1("SELECT id FROM mesas WHERE id=%s", (mesa_id,)):
+        raise HTTPException(404, "Esa mesa no existe")
+    v = mesaqr.visita_activa(mesa_id) or mesaqr.abrir_visita(mesa_id)
+    await hub.emitir("visitas", visita_id=v["id"])
+    return mesaqr.estado(v["id"])
+
+
+@app.get("/api/pantallas")
+def listar_pantallas_mesa(u: dict = Depends(exige("encargado"))):
+    return mesaqr.listar_pantallas()
+
+
+@app.post("/api/pantallas", status_code=201)
+def alta_pantalla_mesa(d: NuevaPantalla, u: dict = Depends(exige("encargado"))):
+    """Devuelve el secreto **una sola vez**: es lo que hay que grabar en la pantalla. Después ya
+    no se puede volver a ver, solo dar de baja esta y crear otra."""
+    return mesaqr.alta_pantalla(d.mesa_id, d.nombre)
+
+
+@app.delete("/api/pantallas/{pid}")
+def baja_pantalla_mesa(pid: int, u: dict = Depends(exige("encargado"))):
+    q("UPDATE mesa_pantallas SET activa=FALSE WHERE id=%s", (pid,))
+    return {"id": pid, "activa": False}
+
+
 # ─────────────── Cuentas de cliente ───────────────
 # La puerta de la calle. Un cliente entra con su correo y su contraseña, y se queda dentro hasta
 # que sale: su token no caduca solo. Lo que abre ese token es lo suyo —su perfil, sus pedidos, sus
@@ -2728,6 +2867,12 @@ async def _vigilar_reservas() -> None:
             if empleado:
                 for fila in reservas.pendientes_de_soltar(cfg):
                     await _soltar_reserva(fila["id"], empleado)
+            # De paso, las mesas que ya se pueden cerrar: cuenta saldada y pasado el rato de
+            # cortesía, o abandonadas hace horas. Una mesa con saldo pendiente NO se cierra sola.
+            cfg_qr = mesaqr.config()
+            for v in mesaqr.cerrables(cfg_qr):
+                mesaqr.cerrar(v["id"])
+                await hub.emitir("visitas", visita_id=v["id"])
         except asyncio.CancelledError:
             raise
         except Exception:

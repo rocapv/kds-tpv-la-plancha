@@ -149,7 +149,7 @@ def test_el_encargado_puede_abrir_todas_sus_pantallas(cliente, encargado):
     yo = cliente.get("/api/yo", headers=encargado).json()
     front = Path(__file__).resolve().parents[2] / "frontend"
     # Las del cliente y las que se abren sin sesión no cuentan: no son pantallas de trabajo.
-    fuera = {"cliente.html", "recogida.html"}
+    fuera = {"cliente.html", "recogida.html", "pantalla.html"}
     pantallas = {f.name for f in front.glob("*.html")} - fuera
     faltan = pantallas - set(yo["guis"])
     assert not faltan, f"pantallas que el encargado no puede abrir: {sorted(faltan)}"

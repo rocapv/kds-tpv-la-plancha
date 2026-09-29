@@ -1,3 +1,4 @@
 fastapi==0.115.*
 uvicorn[standard]==0.32.*
 pymysql==1.1.*
+segno==1.6.*          # el QR de las mesas, en SVG y sin dependencias

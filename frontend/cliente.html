@@ -19,6 +19,7 @@
     <small id="donde" class="tenue"></small>
   </div>
   <span class="hueco"></span>
+  <button id="b-unirme" class="sutil" title="Teclear el código de la mesa">Mi mesa</button>
   <button id="b-cuenta" class="sutil">Entrar</button>
   <button id="b-reservar" class="sutil">Reservar mesa</button>
   <button id="b-tema" class="tema" title="Cambiar entre día y noche" aria-label="Cambiar tema">
@@ -30,6 +31,9 @@
 <p id="mensaje" class="aviso-local"></p>
 
 <!-- La reserva propia, si la hay: se guarda en el móvil y se consulta con su enlace. -->
+<!-- La mesa en la que se está sentado, si se ha leído el QR de la pantalla. -->
+<section id="mi-mesa" class="mi-mesa" hidden aria-live="polite"></section>
+
 <section id="mi-reserva" class="mi-reserva" hidden aria-live="polite"></section>
 
 <!-- Seguimiento de la comanda propia: en vez de un diálogo que hay que abrir, una tira que
@@ -171,6 +175,7 @@
 
 <script src="/js/comun.js?v=__V__"></script>
 <script src="/js/cuenta.js?v=__V__"></script>
+<script src="/js/cliente_mesa.js?v=__V__"></script>
 <script src="/js/cliente.js?v=__V__"></script>
 <script src="/js/cliente_reservas.js?v=__V__"></script>
 <script src="/js/app_cliente.js?v=__V__"></script>

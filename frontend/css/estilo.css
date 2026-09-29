@@ -897,3 +897,25 @@ button.sutil:active, .simulacion button:active, .faccion:active,
 #d-micuenta input:not([type=checkbox]) { width: 100%; }
 #d-micuenta details.campo summary { cursor: pointer; color: var(--tenue); margin: .6rem 0; }
 
+/* ── La pantalla que va tras el cristal de la mesa ──
+   Se mira de cerca y a oscuras: el QR grande, el número de mesa enorme y nada más. */
+body.pantalla-mesa { display: grid; place-items: center; min-height: 100vh; text-align: center; }
+.qr-mesa h1 { font-size: clamp(2rem, 9vw, 4rem); letter-spacing: .04em; }
+.qr-mesa .qr { background: #fff; padding: 1rem; border-radius: var(--r); display: inline-block;
+  margin: .6rem 0; line-height: 0; }
+.qr-mesa .qr svg { width: min(52vw, 52vh); height: auto; }
+.qr-mesa .codigo { font-size: clamp(1rem, 3.5vw, 1.8rem); letter-spacing: .28em;
+  font-variant-numeric: tabular-nums; color: var(--acento); margin: .2rem 0; }
+.qr-mesa .pie { color: var(--tenue); margin: .2rem 0; }
+.qr-mesa.union .qr { background: #dff5e6; }
+.qr-mesa.union h1 { color: var(--ok); }
+.aviso-pantalla { padding: 2rem; }
+.aviso-pantalla b { font-size: 1.6rem; display: block; margin-bottom: .5rem; }
+.cargando { color: var(--tenue); }
+
+/* La tira de «estás en la mesa X» dentro de la carta del cliente. */
+.mi-mesa { margin: .6rem 1rem; padding: .8rem 1rem; border: 1px solid var(--acento);
+  border-radius: var(--r); background: var(--panel); }
+.mi-mesa .cab { display: flex; align-items: center; justify-content: space-between; gap: .5rem; }
+.mi-mesa p { margin: .3rem 0 0; }
+

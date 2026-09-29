@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mesa · Cantina Vesta-9</title>
+<link rel="stylesheet" href="/css/estilo.css?v=__V__">
+</head>
+<!-- La pantalla que va tras el cristal de la mesa.
+     Existe para dos cosas: para las mesas con tableta, y para poder probar y enseñar el sistema
+     sin tener que grabar un ESP32. El aparato, sea el que sea, hace lo mismo: pide un código,
+     lo enseña los segundos que le digan y vuelve a pedir otro. -->
+<body class="pantalla-mesa">
+<main id="cuadro">
+  <p class="cargando">Conectando con la cantina…</p>
+</main>
+
+<script src="/js/comun.js?v=__V__"></script>
+<script src="/js/pantalla.js?v=__V__"></script>
+</body>
+</html>

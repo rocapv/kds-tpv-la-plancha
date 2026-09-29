@@ -40,12 +40,17 @@ async function apiRed(ruta, opciones = {}) {
   const t = typeof tokenActual === 'function' ? tokenActual() : null;
   if (t) cabeceras.Authorization = 'Bearer ' + t;
   if (opciones.clave) cabeceras['Idempotency-Key'] = opciones.clave;
+  // La mesa va en su propia cabecera: se puede estar sentado en una mesa Y tener cuenta, que son
+  // dos cosas distintas. Las cabeceras que traiga quien llama se suman, no sustituyen.
+  const v = typeof tokenVisita === 'function' ? tokenVisita() : null;
+  if (v) cabeceras['X-Visita'] = v;
+  Object.assign(cabeceras, opciones.headers || {});
   let r;
   esperando(+1);
   try {
     r = await fetch('/api' + ruta, {
-      headers: cabeceras,
       ...opciones,
+      headers: cabeceras,
       body: opciones.body ? JSON.stringify(opciones.body) : undefined,
     });
   } catch (fallo) {
