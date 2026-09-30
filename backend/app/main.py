@@ -100,7 +100,12 @@ async def ws_endpoint(ws: WebSocket, token: str | None = None):
     await hub.entrar(ws)
     try:
         while True:
-            await ws.receive_text()  # ping del cliente; no esperamos órdenes por aquí
+            # Por aquí no se dan órdenes: lo único que llega es el latido de la pantalla. Se le
+            # contesta, porque es así como sabe que la línea sigue viva. Si no se contestara, una
+            # tableta con el wifi caído seguiría enseñando el punto verde —el TCP se queda colgado
+            # sin cerrarse— y la camarera creería que lo que apunta llega a cocina.
+            if await ws.receive_text() == "ping":
+                await ws.send_text('{"tipo":"pong"}')
     except WebSocketDisconnect:
         hub.salir(ws)
 

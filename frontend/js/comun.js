@@ -79,21 +79,56 @@ async function api(ruta, opciones = {}) {
   return typeof sinRed === 'object' ? sinRed.llamar(ruta, opciones) : apiRed(ruta, opciones);
 }
 
-// WebSocket con reconexión automática; muestra el estado en #conexion
+// WebSocket con reconexión automática; muestra el estado en #conexion.
+//
+// El punto verde tiene que decir la verdad: es lo único que mira la camarera para saber si lo que
+// apunta llega a cocina. Antes se mandaba un «ping» cada 25 s SIN esperar respuesta —y el servidor
+// no contestaba nada—, así que el estado solo cambiaba si el navegador lanzaba `onclose`. Cuando a
+// la sala se le cae el wifi el TCP se queda colgado sin cerrarse: medido con la red cortada, 60 s
+// y la pantalla seguía diciendo «Conectado». Ahora hay dos maneras de enterarse, y vale la primera
+// que salte:
+//   · el aviso `offline` del navegador, inmediato cuando se cae la red del aparato;
+//   · el latido: el servidor contesta «pong» a cada «ping», y si pasan LATIDO_MUERTO sin oír NADA
+//     se cierra el socket a mano para que `onclose` lo pinte en rojo y vuelva a intentarlo.
+const LATIDO_CADA = 5000, LATIDO_MUERTO = 15000;
+
 function conectarWS(alRecibir) {
   const marca = $('#conexion');
+  const pintar = (clase, titulo) => marca && (marca.className = 'conexion ' + clase, marca.title = titulo);
   const abrir = () => {
     const t = typeof tokenActual === 'function' ? tokenActual() : null;
     const ws = new WebSocket((location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/ws' + (t ? '?token=' + encodeURIComponent(t) : ''));
-    ws.onopen = () => { marca && (marca.className = 'conexion ok', marca.title = 'Conectado'); alRecibir({ tipo: 'reconectado' }); };
+    let ultimo = Date.now(), latido = null;
+    // Sin este `clearInterval` cada reconexión dejaba un intervalo vivo apuntando a un socket
+    // muerto: una tableta de todo el turno acababa con decenas.
+    const parar = () => { clearInterval(latido); latido = null; };
+    const darPorMuerta = () => { parar(); if (ws.readyState < 2) ws.close(); };
+    const alCaerLaRed = () => darPorMuerta();
+
+    ws.onopen = () => {
+      ultimo = Date.now();
+      pintar('ok', 'Conectado');
+      latido = setInterval(() => {
+        if (Date.now() - ultimo > LATIDO_MUERTO) return darPorMuerta();
+        if (ws.readyState === 1) ws.send('ping');
+      }, LATIDO_CADA);
+      alRecibir({ tipo: 'reconectado' });
+    };
     ws.onmessage = e => {
+      ultimo = Date.now();                      // cualquier mensaje vale como señal de vida
       const ev = JSON.parse(e.data);
+      if (ev.tipo === 'pong') return;           // solo servía para saber que la línea sigue ahí
       // cualquier trozo de pantalla puede escuchar el WS sin pelearse por la única devolución
       window.dispatchEvent(new CustomEvent('evento-ws', { detail: ev }));
       alRecibir(ev);
     };
-    ws.onclose = () => { marca && (marca.className = 'conexion ko', marca.title = 'Sin conexión'); setTimeout(abrir, 2000); };
-    setInterval(() => ws.readyState === 1 && ws.send('ping'), 25000);
+    ws.onclose = () => {
+      parar();
+      removeEventListener('offline', alCaerLaRed);
+      pintar('ko', 'Sin conexión');
+      setTimeout(abrir, 2000);
+    };
+    addEventListener('offline', alCaerLaRed);
   };
   abrir();
 }

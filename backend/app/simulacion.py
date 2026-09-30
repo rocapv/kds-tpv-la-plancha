@@ -61,6 +61,21 @@ def repartir_desfases(cuantos: int) -> list[float]:
     periodo = CICLO_MARCHA * 2
     return [periodo * i / max(1, cuantos) for i in range(cuantos)]
 
+def trabajo_de_cocina(comandas: list[dict], creados) -> list[dict]:
+    """De lo que enseña el pase, en qué tiene algo que hacer cocina. Las más viejas primero.
+
+    Aparte y sin estado por el mismo motivo que `marcha_en`, y porque aquí ya se colgó la demo
+    entera una vez: desde que existe el paso «cocina → mesa», una comanda con TODAS sus líneas en
+    «lista» sigue apareciendo en la pantalla de cocina (espera en el pase a que sala la lleve),
+    pero avanzarla da 409. El bot cogía siempre la más antigua —que es justo la que ya está
+    lista—, se comía el 409 en cada vuelta y no avanzaba ninguna; la cocina no se vaciaba, la
+    sala se frenaba por atasco y a los dos minutos y medio no se movía nada.
+    """
+    return [c for c in comandas
+            if c["pedido_id"] in creados
+            and any(l["estado"] != "lista" for l in c["lineas"])]
+
+
 RASTRO = Path(os.environ.get("KDS_DATOS", Path.home() / ".local/share/kds-tpv")) / "simulacion.json"
 
 
@@ -246,6 +261,17 @@ class Simulacion:
                 # Si la cocina está desbordada, este camarero NO sienta a nadie esta vuelta.
                 # No es ir más lento: es lo que hace un maître cuando hay cuarenta comandas sin
                 # salir. Es el techo que impide que la cola crezca sin parar.
+                # Lo primero, vaciar el pase: lo que cocina ha dado por listo hay que llevarlo a
+                # la mesa, y desde que existe el paso «cocina → mesa» esa entrega la confirma
+                # sala. Va ANTES del freno por atasco a propósito: cuando la cocina está hasta
+                # arriba es justo cuando hay que sacar bandejas, no cuando hay que dejar de
+                # hacerlo.
+                try:
+                    llevadas = await self._llevar_del_pase(quien)
+                    if llevadas:
+                        ficha["ultimo"] = f"llevadas {llevadas} del pase"
+                except Exception as e:
+                    ficha["ultimo"] = f"error al llevar: {e}"
                 atasco = 0
                 try:
                     atasco = self._cocina_pendiente(quien)
@@ -268,6 +294,22 @@ class Simulacion:
         except asyncio.CancelledError:
             raise
 
+    async def _llevar_del_pase(self, quien: dict) -> int:
+        """Lleva a la mesa lo que está listo en el pase. Solo lo de la simulación.
+
+        El filtro por `self.creados` no es cosmético: si la simulación entregara comandas de
+        verdad, se estaría dando por servido un plato que nadie ha movido de debajo de la lámpara.
+        """
+        from . import main as api
+        listas = [c for c in api.pase(u=quien)["comandas"] if c["pedido_id"] in self.creados]
+        n = 0
+        for c in listas:
+            try:
+                n += (await api.entregar_pedido(c["pedido_id"], u=quien))["entregadas"]
+            except Exception:
+                continue            # otro camarero se le adelantó; no es un fallo
+        return n
+
     async def _bot_cocina(self, estacion: dict, quien: dict):
         """Cocinero de una sección: solo toca las líneas de SU sección, como en la vida real."""
         from . import main as api
@@ -282,7 +324,7 @@ class Simulacion:
                     # con `limite`), una llamada posicional mete el empleado donde no toca y el
                     # bot se cae en silencio.
                     datos = api.kds(estacion=estacion["clave"], pantalla=None, u=quien)
-                    mias = [c for c in datos["comandas"] if c["pedido_id"] in self.creados]
+                    mias = trabajo_de_cocina(datos["comandas"], self.creados)
                     if not mias:
                         continue
                     apurado = len(mias) >= COLA_APURO
@@ -292,9 +334,16 @@ class Simulacion:
                     # comandas encima no saca un plato y se sienta. Las más antiguas primero,
                     # que el pase manda.
                     for elegida in mias[:PLATOS_EN_APURO if apurado else 1]:
-                        await api.avanzar_pedido(elegida["pedido_id"], estacion=estacion["clave"],
-                                                 pantalla=None, u=quien)
-                        ficha["avances"] += 1
+                        # Cada comanda en su propio `try`: una atascada no puede tumbar la tacada
+                        # entera. Antes el error salía al `except` de fuera y las demás de la
+                        # tanda se quedaban sin tocar.
+                        try:
+                            await api.avanzar_pedido(elegida["pedido_id"],
+                                                     estacion=estacion["clave"],
+                                                     pantalla=None, u=quien)
+                            ficha["avances"] += 1
+                        except Exception as e:
+                            ficha["ultimo"] = f"error en #{elegida['pedido_id']}: {e}"
                     ficha["cola"] = len(mias)
                     ficha["ultimo"] = f"#{mias[0]['pedido_id']}"
                 except Exception as e:
