@@ -201,6 +201,11 @@ class Personaje:
     # reflectante en una toma y con chaleco y pajarita en la siguiente. Aparte y
     # con su propio peso, se repite.
     vestuario: str = ""
+    # Quién es, en español y en dos frases. No va al modelo de imagen: va a la
+    # ficha, y sirve para que el guionista —y quien escriba el prompt— sepa qué
+    # haría esta persona y qué no. Un elenco sin carácter acaba siendo cinco
+    # maniquíes con ropa distinta.
+    personalidad: str = ""
 
 
 # Cinco moldes y no más: el camarero, dos clientes y dos clientas. Cuantas menos
@@ -218,7 +223,10 @@ ELENCO: dict[str, Personaje] = {p.clave: p for p in [
               "black apron over a dark shirt, alert and friendly expression",
               "a waiter, a man in his thirties with short dark hair and a trimmed beard", 2011,
               "wearing a black bib apron over a grey shirt with the sleeves rolled up, "
-              "dark trousers"),
+              "dark trousers",
+              "Ocho años detrás de la barra y se sabe los nombres. Habla poco y rápido, no "
+              "pierde una comanda y no aguanta ver un plato enfriándose en el pase. Con los "
+              "novatos tiene toda la paciencia del mundo."),
     # Clientes
     Personaje("klaus", "Klaus Bergmann", "cliente",
               "portrait of a broad shouldered man in his fifties, full grey beard, high "
@@ -231,7 +239,10 @@ ELENCO: dict[str, Personaje] = {p.clave: p for p in [
               # pelearse con el modelo por cuál prenda es naranja solo consigue
               # que deje de repetirse.
               "wearing a grey work waistcoat over an orange long sleeve shirt, "
-              "heavy work trousers"),
+              "heavy work trousers",
+              "Capataz de perforación, treinta años en el cinturón. Come lo mismo y a la misma "
+              "hora desde siempre. Habla bajo y poco, pero cuando algo se tuerce en la galería "
+              "es al primero al que llaman."),
     # Sin gafas de soldar ni cuello alto en el retrato: con ellas el modelo le
     # puso las gafas sobre los ojos y una braga hasta la nariz, y un molde con la
     # cara tapada no le sirve a IP-Adapter para reconocer a nadie.
@@ -242,18 +253,27 @@ ELENCO: dict[str, Personaje] = {p.clave: p for p in [
               "pale dry lips, open collar blue coverall, faint grease on one cheek, "
               "tired friendly look",
               "a young man in his twenties with short dark curly hair", 1033,
-              "wearing a blue work coverall unzipped at the collar over a grey t-shirt"),
+              "wearing a blue work coverall unzipped at the collar over a grey t-shirt",
+              "Técnico de atraque recién llegado, veinticuatro años. Todo le sorprende y "
+              "pregunta de más. Come con el móvil en la mano y pide siempre lo más barato de "
+              "la carta, que aún no cobra como los demás."),
     # Clientas
     Personaje("nadia", "Nadia Ostrov", "cliente",
               "portrait of a weathered woman in her sixties, veteran miner, worn orange jumpsuit, "
               "short grey cropped hair, deep lines on her face, dust on the collar",
               "a woman in her sixties with short grey cropped hair and a weathered face", 1001,
-              "wearing a worn orange work jumpsuit, dusty, zipped up to the chest"),
+              "wearing a worn orange work jumpsuit, dusty, zipped up to the chest",
+              "Cuarenta años picando roca y una rodilla que se lo recuerda. Desayuna a las "
+              "cinco y cena antes que nadie. No se fía de las pantallas: prefiere pedirle al "
+              "camarero, que para eso está."),
     Personaje("suri", "Suri Malabar", "cliente",
               "portrait of a woman in her thirties, geologist, green thermal jacket, long dark "
               "braid over one shoulder, rimless glasses, calm attentive look",
               "a woman in her thirties with a long dark braid and rimless glasses", 1003,
-              "wearing a green thermal jacket over a white shirt, dark trousers"),
+              "wearing a green thermal jacket over a white shirt, dark trousers",
+              "Geóloga de turno largo, llegó en el último carguero. Lo anota todo en la "
+              "tableta, hasta lo que cena. Educada y algo distante; pide siempre lo mismo y "
+              "paga desde la app sin levantar la vista."),
 ]}
 
 

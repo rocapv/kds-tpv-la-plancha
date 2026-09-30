@@ -75,6 +75,13 @@ def cmd_hojas(args) -> int:
     return 0
 
 
+def cmd_giro(args) -> int:
+    solo = [c.strip() for c in (args.solo or "").split(",") if c.strip()] or None
+    for clave, r in E.giros(rehacer=args.rehacer, solo=solo).items():
+        print(f"  {clave:8s} {r}")
+    return 0
+
+
 def cmd_guion(args) -> int:
     g = Gu.escribir(args.prompt, usar_llm=not args.sin_llm)
     print(json.dumps(g.a_dict(), ensure_ascii=False, indent=1))
@@ -128,6 +135,11 @@ def main() -> int:
     h.add_argument("--rehacer", action="store_true")
     h.add_argument("--solo", default="", help="claves separadas por comas")
     h.set_defaults(func=cmd_hojas)
+
+    gi = sub.add_parser("giro", help="las 24 posiciones de 15 en 15 grados, con su ropa")
+    gi.add_argument("--rehacer", action="store_true")
+    gi.add_argument("--solo", default="", help="claves separadas por comas")
+    gi.set_defaults(func=cmd_giro)
 
     g = sub.add_parser("guion")
     g.add_argument("prompt")
