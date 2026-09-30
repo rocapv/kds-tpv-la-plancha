@@ -133,26 +133,36 @@ function pintarDestacados() {
       <b>${esc(d.nombre)}</b>
     </button>`).join('');
   colocarPila();
+}
 
-  // El gesto de pasar tarjeta y el de abrir la ficha salen del mismo dedo: sin esto, cada barrido
-  // terminaba abriendo la ficha de la tarjeta que acabas de apartar. Y `pointercancel` importa
-  // tanto como `pointerup`: si el sistema se queda el gesto a medias (otra app, un gesto del
-  // borde de la pantalla), sin esto el `x0` quedaba puesto y el siguiente toque se medía contra
-  // el punto de partida del gesto anterior.
+// Los oyentes del dedo van sobre `#pila`, que NO se rehace nunca: dentro de `pintarDestacados()`
+// se acumulaba uno por cada repintado, y la carta se repinta sola cada minuto y cada vez que el
+// servidor avisa. Al cuarto de hora, un solo barrido pasaba quince tarjetas. Por eso se enganchan
+// UNA vez, aquí, y las tarjetas —que sí se rehacen— se atienden por delegación.
+//
+// El barrido y la pulsación salen del mismo dedo, así que hay que distinguirlos: se mide cuánto
+// se ha movido entre `pointerdown` y `pointerup`, y por encima de 10 px ya no cuenta como
+// pulsación. Sin eso, cada barrido terminaba abriendo la ficha de la tarjeta recién apartada.
+// `pointercancel` cuenta tanto como `pointerup`: si el sistema se queda el gesto a medias, el
+// punto de partida no puede quedarse puesto esperando al toque siguiente.
+(function gestosDeLaPila() {
+  const pila = $('#pila');
+  if (!pila) return;
   let x0 = null, arrastrado = false;
-  $('#pila').addEventListener('pointerdown', e => { x0 = e.clientX; arrastrado = false; });
-  $('#pila').addEventListener('pointercancel', () => { x0 = null; arrastrado = true; });
-  $('#pila').addEventListener('pointerup', e => {
+  pila.addEventListener('pointerdown', e => { x0 = e.clientX; arrastrado = false; });
+  pila.addEventListener('pointercancel', () => { x0 = null; arrastrado = true; });
+  pila.addEventListener('pointerup', e => {
     if (x0 === null) return;
     const dx = e.clientX - x0;
     x0 = null;
     arrastrado = Math.abs(dx) > 10;
     if (Math.abs(dx) > 40) girar(dx < 0 ? 1 : -1);
   });
-  $('#pila').querySelectorAll('[data-ficha]').forEach(t => t.onclick = () => {
-    if (!arrastrado) verFicha(+t.dataset.ficha);
+  pila.addEventListener('click', e => {
+    const t = e.target.closest('[data-ficha]');
+    if (t && !arrastrado) verFicha(+t.dataset.ficha);
   });
-}
+})();
 
 // Hoy ningún producto del local tiene foto subida, y una tarjeta que solo enseña imagen y nombre
 // sin imagen no enseña nada. Pero la imagen ya existía: el servidor dibuja cada plato en
