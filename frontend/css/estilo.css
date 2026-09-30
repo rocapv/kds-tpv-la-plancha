@@ -97,7 +97,9 @@ label:has(> input[type="checkbox"]) { min-height: var(--toque); cursor: pointer;
 header.barra {
   position: sticky; top: 0; z-index: 40;
   display: flex; align-items: center; gap: .6rem; flex-wrap: wrap;
-  min-height: var(--barra-alto); padding: .5rem 1rem;
+  /* 60px fijo y NO var(--barra-alto): esa variable la reescribe comun.js con lo que mide la
+     barra, y si la barra la usara de mínimo ya no podría encoger al ensanchar la pantalla. */
+  min-height: 60px; padding: .5rem 1rem;
   background: var(--panel); border-bottom: 1px solid var(--borde);
 }
 header.barra h1 { font-size: 1.1rem; font-weight: 800; letter-spacing: .02em; white-space: nowrap; }
@@ -171,6 +173,10 @@ td input { min-height: 40px; }
 .estado.lista      { background: var(--ok-suave); color: var(--ok-tinta); }
 .estado.servida    { color: var(--tenue); }
 .estado.anulada    { text-decoration: line-through; color: var(--apagado); }
+/* Registro de entradas del personal (usuarios.html → Intentos de entrada) */
+.estado.origen-local    { background: var(--ok-suave); color: var(--ok-tinta); }
+.estado.origen-internet { background: var(--mal-suave); color: var(--mal-tinta); }
+.resumen .chip.chip-mal { border-color: var(--mal); background: var(--mal-suave); color: var(--mal-tinta); }
 
 /* Alérgenos: obligatorios por normativa, mismo color en carta, TPV y cocina */
 .alerg { color: var(--alerg); font-weight: 600; font-size: .85rem; }
@@ -248,12 +254,19 @@ dialog input:not([type="checkbox"]):not([type="number"]):not([type="color"]) { f
 .mesa.sin-red, .linea.sin-red { background-image: repeating-linear-gradient(45deg, #ffffff0f 0 8px, transparent 8px 16px); }
 
 .cats { display: flex; gap: .5rem; flex-wrap: wrap; margin-bottom: 1rem; }
-.cats button { --c: var(--borde-fuerte); background: var(--panel); border-color: var(--c); border-left-width: 6px; color: var(--texto) !important; }
-.cats button.activa { background: var(--panel3); border-color: var(--texto); outline: 0; }
+/* El color de la categoría llega como `--c` desde tpv.js y aquí se decide qué se hace con él: el
+   borde y un tinte suave. El texto es siempre el del tema, así que se lee igual aunque el
+   encargado ponga una categoría amarillo limón. (Antes tpv.js pintaba el fondo entero con el
+   color en línea y el texto blanco dependía de que ese color fuera oscuro.) El primer `background`
+   es la reserva para navegadores sin `color-mix` (tabletas de TPV viejas). */
+.cats button { background: var(--panel); background: color-mix(in srgb, var(--c, transparent) 16%, var(--panel));
+               border-color: var(--c, var(--borde-fuerte)); border-left-width: 6px; color: var(--texto); }
+.cats button.activa { background: var(--panel3); background: color-mix(in srgb, var(--c, transparent) 30%, var(--panel3));
+                      border-color: var(--texto); border-left-color: var(--c, var(--texto)); outline: 0; }
 .productos { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: .6rem; }
 .producto {
   min-height: 96px; padding: .7rem .8rem; text-align: left; display: flex; flex-direction: column; justify-content: space-between; align-items: stretch; gap: .3rem;
-  background: var(--panel); border-left-width: 6px; font-weight: 600; line-height: 1.2;
+  background: var(--panel); border-left-width: 6px; border-left-color: var(--c, var(--borde-fuerte)); font-weight: 600; line-height: 1.2;
 }
 .producto:hover { border-color: var(--acento); }
 .producto > span { color: var(--tenue); font-size: .92rem; font-variant-numeric: tabular-nums; }
@@ -578,7 +591,7 @@ body.cliente[data-tema="claro"] {
 /* Poca altura (tableta apaisada pequeña): la barra no puede comerse la pantalla */
 @media (max-height: 520px) {
   header.barra { min-height: 48px; padding: .3rem .8rem; }
-  .tpv { height: calc(100vh - 48px); }
+  /* el alto de .tpv sale de --barra-alto, que comun.js mide de la barra real */
 }
 
 /* ── 14 · Impresión ──────────────────────────────────────────────────────────────────── */

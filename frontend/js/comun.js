@@ -114,3 +114,23 @@ function minutosDesde(fecha, ahora = new Date()) {
 // barra; aquí se les pone el nombre que usa la tripulación de la estación.
 const ZONAS = { sala: 'Comedor presurizado', terraza: 'Mirador de la fractura', barra: 'Atraque' };
 const zonaNombre = z => ZONAS[z] || z;
+
+// ── El alto real de la barra de arriba ─────────────────────────────────────────────────
+// El TPV y el tablón de recogida ocupan «la pantalla menos la barra», y la hoja de estilos
+// suponía una barra de 60 px. En una tableta de 1024×600 la barra se parte en dos filas y
+// mide el doble: el pie del ticket («Ticket / factura», «Anular») quedaba fuera de la vista.
+// Se mide la barra de verdad y se le dice a la hoja de estilos cuánto ocupa.
+(function altoDeLaBarra() {
+  const medir = () => {
+    const b = document.querySelector('header.barra');
+    if (b) document.documentElement.style.setProperty('--barra-alto', b.offsetHeight + 'px');
+  };
+  const empezar = () => {
+    medir();
+    const b = document.querySelector('header.barra');
+    if (b && 'ResizeObserver' in window) new ResizeObserver(medir).observe(b);
+    else addEventListener('resize', medir);
+  };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', empezar);
+  else empezar();
+})();

@@ -22,7 +22,10 @@ from playwright.sync_api import sync_playwright
 AQUI = Path(__file__).resolve().parent
 ROLES = {"1111": "camarero", "3333": "cocina", "9999": "encargado"}
 PUBLICAS = ["/recogida.html", "/cliente.html?mesa=3"]
-TAMANOS = {"tableta": (1280, 800), "movil": (390, 844)}
+# 1024×600 es la pantalla de muchas tabletas de TPV baratas (las de 7" y 10" de gama baja): poca
+# altura, y táctil como el móvil, así que los botones pequeños cuentan igual.
+TAMANOS = {"tableta": (1280, 800), "tableta_barata": (1024, 600), "movil": (390, 844)}
+TACTILES = {"tableta_barata", "movil"}
 
 # Lo que se mide dentro de la página. Va en un solo bloque para no hacer cien viajes.
 MEDIR = r"""
@@ -151,7 +154,12 @@ def main():
     ap.add_argument("--solo", help="solo esta pantalla (p. ej. tpv.html)")
     ap.add_argument("--tema", choices=("oscuro", "claro"), default="oscuro",
                     help="el tema claro es otro juego de colores: hay que medirlo aparte")
+    ap.add_argument("--tamanos", default=",".join(TAMANOS),
+                    help=f"cuáles medir, separados por comas ({', '.join(TAMANOS)})")
     a = ap.parse_args()
+    tamanos = {t: TAMANOS[t] for t in a.tamanos.split(",") if t in TAMANOS}
+    if not tamanos:
+        ap.error(f"--tamanos: ninguno válido; hay {', '.join(TAMANOS)}")
     TEMA[0] = a.tema
     salida = AQUI / "_qa" / "gui" / a.tanda
     salida.mkdir(parents=True, exist_ok=True)
@@ -159,10 +167,10 @@ def main():
 
     with sync_playwright() as pw:
         nav = pw.chromium.launch(headless=True)
-        for tamano, (w, h) in TAMANOS.items():
+        for tamano, (w, h) in tamanos.items():
             for pin, rol in list(ROLES.items()) + [(None, "publico")]:
                 ctx = nav.new_context(viewport={"width": w, "height": h}, device_scale_factor=1,
-                                      is_mobile=(tamano == "movil"), has_touch=(tamano == "movil"))
+                                      is_mobile=(tamano == "movil"), has_touch=(tamano in TACTILES))
                 page = ctx.new_page()
                 consola = []
                 page.on("console", lambda m: consola.append(m.text) if m.type == "error" else None)
@@ -198,7 +206,7 @@ def main():
                     avisos = []
                     if m.get("desborde"): avisos.append(f"DESBORDE {m['ancho']}>{m['ventana']}")
                     if m.get("contraste_bajo"): avisos.append(f"contraste×{len(m['contraste_bajo'])}")
-                    if tamano == "movil" and m.get("botones_pequenos"): avisos.append(f"pequeños×{len(m['botones_pequenos'])}")
+                    if tamano in TACTILES and m.get("botones_pequenos"): avisos.append(f"pequeños×{len(m['botones_pequenos'])}")
                     if m.get("cortados"): avisos.append(f"cortados×{len(m['cortados'])}")
                     if m["consola"]: avisos.append(f"consola×{len(m['consola'])}")
                     print(f"  {tamano:7} {rol:9} {ruta:34} {' · '.join(avisos) or 'ok'}")
@@ -211,7 +219,7 @@ def main():
     tot = {"desborde": 0, "contraste": 0, "pequenos": 0, "cortados": 0, "consola": 0}
     for m in informe["pantallas"]:
         d = "SÍ" if m.get("desborde") else ""
-        c = len(m.get("contraste_bajo", [])); p = len(m.get("botones_pequenos", [])) if m["tamano"] == "movil" else 0
+        c = len(m.get("contraste_bajo", [])); p = len(m.get("botones_pequenos", [])) if m["tamano"] in TACTILES else 0
         k = len(m.get("cortados", [])); e = len(m["consola"])
         tot["desborde"] += bool(d); tot["contraste"] += c; tot["pequenos"] += p; tot["cortados"] += k; tot["consola"] += e
         filas.append(f"| {m['tamano']} | {m['rol']} | `{m['ruta']}` | {d} | {c or ''} | {p or ''} | {k or ''} | {e or ''} |")
@@ -219,14 +227,14 @@ def main():
     for m in informe["pantallas"]:
         for b in m.get("contraste_bajo", []):
             detalle.append(f"- {m['tamano']}/{m['rol']} `{m['ruta']}` · contraste {b['ratio']}:1 (mín. {b['minimo']}) en `{b['sel']}` «{b['texto']}»")
-        if m["tamano"] == "movil":
+        if m["tamano"] in TACTILES:
             for b in m.get("botones_pequenos", []):
                 detalle.append(f"- {m['tamano']}/{m['rol']} `{m['ruta']}` · botón {b['w']}×{b['h']} px `{b['sel']}` «{b['texto']}»")
         for c in m["consola"]:
             detalle.append(f"- {m['tamano']}/{m['rol']} `{m['ruta']}` · consola: {c[:140]}")
     md = [f"# QA de la interfaz · tanda «{a.tanda}» · {informe['cuando']} · {a.url}", "",
           f"Pantallas medidas: {len(informe['pantallas'])} · desbordes: {tot['desborde']} · textos con contraste bajo: {tot['contraste']} · "
-          f"botones pequeños en móvil: {tot['pequenos']} · cortados: {tot['cortados']} · errores de consola: {tot['consola']}", "",
+          f"botones pequeños en pantallas táctiles: {tot['pequenos']} · cortados: {tot['cortados']} · errores de consola: {tot['consola']}", "",
           *filas, "", "## Detalle", *(detalle or ["- nada que señalar"])]
     (salida / "informe.md").write_text("\n".join(md), encoding="utf-8")
     print(f"\n{len(informe['pantallas'])} pantallas · desbordes {tot['desborde']} · contraste {tot['contraste']} · pequeños {tot['pequenos']} · cortados {tot['cortados']} · consola {tot['consola']}")

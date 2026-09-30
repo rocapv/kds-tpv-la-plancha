@@ -156,11 +156,12 @@ function verCarta() {
   $('#v-mesas').hidden = true;
   $('#v-carta').hidden = false;
   $('#cats').innerHTML = catalogo.map(c =>
-    `<button data-cat="${c.id}" class="${c.id === catActiva ? 'activa' : ''}" style="background:${c.color}">${esc(c.nombre)}</button>`).join('');
+    // Solo se pasa el color; qué se pinta con él lo decide la hoja de estilos (.cats button).
+    `<button data-cat="${c.id}" class="${c.id === catActiva ? 'activa' : ''}" style="--c:${esc(c.color)}">${esc(c.nombre)}</button>`).join('');
   $('#cats').querySelectorAll('button').forEach(b => b.onclick = () => { catActiva = +b.dataset.cat; verCarta(); });
   const cat = catalogo.find(c => c.id === catActiva);
   $('#productos').innerHTML = cat.productos.map(p =>
-    `<button class="producto" data-p="${p.id}" style="border-left-color:${cat.color}"
+    `<button class="producto" data-p="${p.id}" style="--c:${esc(cat.color)}"
               ${p.disponible ? '' : 'disabled'} title="${p.disponible ? '' : 'Agotado. '}${p.alergenos ? 'Alérgenos: ' + esc(p.alergenos) : 'Sin alérgenos declarados'}">
        ${esc(p.nombre)}${p.alergenos ? `<span class="alerg">⚠ ${esc(p.alergenos)}</span>` : ''}
        <span>${p.disponible ? euro(p.precio_cent) : 'AGOTADO'}</span></button>`).join('');
