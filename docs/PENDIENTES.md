@@ -34,7 +34,12 @@ pidiendo `/api/.env`, `/api/config` y `/api/settings`. Pendiente, por orden:
    se guardan 30 días), `app/intentos.py`, `GET /api/seguridad/intentos` y la pestaña «Intentos de
    entrada» en `usuarios.html`: fallos por dirección, si vienen de la red del local o de internet,
    y quién entró después desde esa IP. Se apunta cada entrada, buena o mala, **nunca lo tecleado**.
-3. Contraseña larga obligatoria para los escalafones con gestión; el PIN, solo para la barra.
+3. ~~Contraseña larga obligatoria para los escalafones con gestión; el PIN, solo para la barra.~~
+   **Aparcado el 30/09 por decisión de RocaPV**: esto no es una cantina de verdad, es un proyecto
+   de clase, y los PIN de cuatro cifras (`1111`, `3333`, `9999`) son los que se usan para
+   enseñarlo. No se toca. El mecanismo ya está hecho por si algún día hiciera falta —
+   `POST /api/login` acepta número de empleado con contraseña además del PIN—, lo que no se hace
+   es exigirlo. Ojo si alguna vez esto sirviera a clientes reales: entonces sí, y antes el punto 1.
 
 ## Rediseño de la interfaz (23/09/2026)
 
@@ -54,6 +59,45 @@ Hecho y medido (ver `deploy/_qa/gui/`). Lo que quedó apuntado de esa tanda, **r
   `.acciones` para que bajen de línea a la vez, y el `top: 60px` escrito a mano de las categorías
   sustituido por `--alto-barra`, que mide `cliente.js`. Cero desborde en las cuatro pantallas
   públicas, y sin zonas de toque ni contrastes por debajo del mínimo en los dos temas.
+
+## QA completo del sitio (30/09/2026)
+
+Pasada entera contra una instancia de usar y tirar (BD aparte, `127.0.0.1:8191`, copia del repo:
+nada de esto tocó producción). Resultado final: 196 pruebas de `pytest`, `qa.py`, `qa_gui.py` en los
+dos temas y los tres tamaños, `qa_cliente.py`, `qa_sinred.py` y `qa_ritmo.py`, **sin fallos**. Lo
+que destapó, ya arreglado:
+
+- ~~**La simulación de la demo se paraba en seco a los 2½ minutos.**~~ Lo peor de la tanda, porque
+  la demo es lo que ve el tribunal: a los 2:30 dejaban de entrar pedidos, no se cocinaba y no se
+  cobraba nada más (medido: 25 pedidos, **0 cobrados**, cola clavada en 25 durante cuatro minutos).
+  Al añadir el paso «cocina → mesa» nadie actualizó `simulacion.py`: una comanda con todo en
+  «lista» sigue saliendo en la pantalla de cocina —espera en el pase— pero avanzarla da 409, así
+  que el bot cogía siempre la más antigua (justo la ya lista), se comía el 409 en cada vuelta y no
+  avanzaba **ninguna**; la cocina no se vaciaba, la sala se frenaba por atasco y todo se detenía.
+  Y **ningún bot recogía del pase**, que es el paso nuevo. Tres arreglos: `trabajo_de_cocina()`
+  descarta lo que ya está listo, el bot de sala vacía el pase con `entregar_pedido` antes de sentar
+  a nadie, y cada comanda de la tacada va en su propio `try` (un 409 tumbaba las demás). Vuelto a
+  medir: **82 pedidos, 63 cobrados**, cola entre 4 y 10. Dos pruebas nuevas en `test_ritmo_bots.py`,
+  comprobadas contra la lógica vieja para ver que fallan.
+- El fallo lo delató `qa_ritmo.py`, pero su mensaje apuntaba a otro sitio («la cola crece sin
+  parar»): esa comprobación compara la media de la segunda mitad con la de la primera, y una cola
+  **clavada** en el techo también la dispara. Y los errores de los bots se guardaban en
+  `ficha["ultimo"]`, que `qa_ritmo.py` no imprime: hubo que preguntar a `GET /api/simulacion` para
+  ver el 409. Merece la pena que el informe saque el `ultimo` de cada bot cuando algo falla.
+
+- ~~**El punto verde mentía.**~~ Es lo único que mira la camarera para saber si lo que apunta llega
+  a cocina, y con la red cortada seguía verde **más de 60 s** (medido). Dos causas juntas: el
+  «ping» de `comun.js` no esperaba respuesta y el `/ws` del servidor se lo comía sin contestar, así
+  que el estado solo cambiaba si el navegador lanzaba `onclose`… y cuando se cae el wifi de la sala
+  el TCP se queda colgado **sin cerrarse**. Ahora el servidor contesta `pong`, el cliente cierra el
+  socket a mano si pasan 15 s sin oír nada, y además escucha el aviso `offline` del navegador.
+  Vuelto a medir: se entera **al instante**. De paso, cada reconexión dejaba un `setInterval` vivo
+  apuntando a un socket muerto; una tableta de todo el turno acababa con decenas.
+- Cuidado al probar esto: `set_offline()` de Playwright **no cierra un socket ya abierto** ni corta
+  su tráfico, así que una prueba que solo lo llame puede pasar sin comprobar nada. Los dos caminos
+  se midieron por separado, porque el rápido tapa al otro: con el aviso `offline` puesto salta a
+  **0 s**; anulando ese aviso y tirando el «ping» antes de que salga —que es el wifi asociado pero
+  sin enlace de arriba— lo caza el latido a los **15 s**.
 
 ## Encargo del 29/09/2026: la app del cliente y la visión por cámara
 

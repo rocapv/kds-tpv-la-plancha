@@ -5,7 +5,8 @@ delante del tribunal: si todos los camareros apretaran a la vez mientras toda la
 floja, la pantalla del pase se llena de tarjetas que nadie saca.
 """
 from app.simulacion import (CICLO_MARCHA, COLA_APURO, COLA_ATASCO, FACTORES,
-                            PLATOS_EN_APURO, marcha_en, repartir_desfases)
+                            PLATOS_EN_APURO, marcha_en, repartir_desfases,
+                            trabajo_de_cocina)
 
 
 def test_cada_marcha_dura_tres_minutos():
@@ -50,6 +51,33 @@ def test_la_capacidad_total_no_se_mueve():
             fuertes = sum(1 for d in desfases if marcha_en(d, t) == "fuerte")
             assert abs(fuertes - cuantos / 2) <= 1, (
                 f"con {cuantos} bots, en t={t} van fuerte {fuertes}")
+
+
+def _comanda(pid, *estados):
+    return {"pedido_id": pid, "lineas": [{"estado": e} for e in estados]}
+
+
+def test_cocina_no_se_atasca_en_lo_que_ya_esta_listo():
+    """La que está entera en «lista» no es trabajo de cocina, es trabajo de sala.
+
+    Esta es la prueba del fallo que colgó la demo: la comanda más antigua era la que ya estaba
+    lista, avanzarla daba 409 y el bot no pasaba de ahí nunca. Lo que importa aquí es que la
+    siguiente —la que sí tiene faena— quede la primera de la lista.
+    """
+    creados = {1, 2, 3}
+    lista = _comanda(1, "lista", "lista")          # esperando en el pase a que sala la lleve
+    a_medias = _comanda(2, "lista", "preparando")  # le queda un plato: sí es de cocina
+    nueva = _comanda(3, "enviada")
+    hay = trabajo_de_cocina([lista, a_medias, nueva], creados)
+    assert [c["pedido_id"] for c in hay] == [2, 3]
+    # Y con el pase lleno de cosas listas, cocina no tiene nada que hacer: no se queda dando
+    # vueltas contra un 409, simplemente no hay trabajo.
+    assert trabajo_de_cocina([lista], creados) == []
+
+
+def test_cocina_no_toca_comandas_de_verdad():
+    """Fuera de `creados` no se toca: un plato de un cliente real no lo mueve la demo."""
+    assert trabajo_de_cocina([_comanda(99, "enviada")], {1, 2}) == []
 
 
 def test_las_valvulas_van_en_el_sentido_correcto():
