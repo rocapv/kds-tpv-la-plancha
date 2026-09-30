@@ -215,7 +215,25 @@ def limpiar(page, url):
             break
         page.once("dialog", lambda d: d.accept())
         fila.click(); page.wait_for_timeout(800)
-    print("  · limpieza hecha (usuario y producto de prueba dados de baja)")
+
+    # Y ahora se COMPRUEBA que se han ido. Esto faltaba, y no es un detalle: la limpieza pulsaba
+    # «Baja» y se creía el resultado, así que cuando no funcionaba nadie se enteraba. El 30/09
+    # aparecieron tres «Plato QA» vivos —activos y disponibles— en la carta de producción: un
+    # cliente con el móvil en la mesa veía «Plato QA · 7,25 €» entre los platos de verdad. El
+    # módulo de vídeo hasta se había hecho un filtro para esquivarlos (`_platos_presentables`),
+    # que es tapar el síntoma. Una limpieza que no se verifica es la misma trampa que una prueba
+    # que no puede fallar: da igual de bien que esté escrita, no informa.
+    quedan = []
+    for pagina, quien in ((url + "/usuarios.html", "QA Temporal"), (url + "/carta.html", "Plato QA")):
+        page.goto(pagina, wait_until="domcontentloaded")
+        page.wait_for_timeout(900)
+        vivos = page.query_selector_all(f"tr:has-text('{quien}') [data-baja]")
+        if vivos:
+            quedan.append(f"{len(vivos)} × «{quien}»")
+    if quedan:
+        anota(fallos, "[limpieza] el QA deja restos vivos en el sistema: " + ", ".join(quedan))
+    else:
+        print("  · limpieza hecha y comprobada (no queda ni usuario ni producto de prueba)")
 
 
 def main():
