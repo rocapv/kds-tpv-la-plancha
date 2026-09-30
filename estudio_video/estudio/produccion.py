@@ -167,12 +167,19 @@ def _controles_al_dia(bib: B.Biblia) -> None:
 
 def producir(prompt: str, t: Trabajo, usar_llm: bool = True, con_voz: bool = True,
              solo_guion: bool = False, guion_hecho: "Gu.Guion | None" = None,
-             elegidos: list[str] | None = None) -> dict:
+             elegidos: list[str] | None = None, publicar: bool = True) -> dict:
     """Todo el proceso. Devuelve el estado final.
 
     `guion_hecho` salta al guionista y rueda un guion escrito a mano. Es lo que
     usan las pruebas de moldes, donde lo que se quiere no es que un modelo decida
     las escenas, sino repetir exactamente las mismas para todo el elenco.
+
+    `publicar=False` deja el vídeo en `salidas/` y no lo sube. Es para el primer
+    pase de un guion nuevo: que estén los doce planos —lo único que sabe mirar el
+    guarda de más abajo— no quiere decir que sean BUENOS, y eso solo se ve
+    mirándolos. Pasó con este mismo estudio: tres planos completos, «exit 0,
+    publicado», y en cuadro una cocina doméstica con sillas verdes en vez de la
+    cantina y una azafata de vuelo haciendo de camarero.
     """
     t.estado["prompt"] = prompt
     t.estado["fase"] = "guion"
@@ -402,6 +409,8 @@ def producir(prompt: str, t: Trabajo, usar_llm: bool = True, con_voz: bool = Tru
         t.avisar(f"NO publicado: faltan los planos {faltan} de {len(crudos)}. "
                  f"El vídeo está en salidas/{final.name}; arregla lo que dicen los "
                  "avisos de arriba y vuelve a lanzar el mismo prompt.")
+    elif not publicar:
+        t.anotar(f"sin publicar por petición: salidas/{final.name}", 0.97)
     else:
         t.anotar("publicando en Raspa", 0.97)
         try:
