@@ -477,17 +477,26 @@ async function verDocumento(pedidoId, ofrecerFactura = true) {
 $('#b-documento').onclick = () => verDocumento(pedido.id, pedido.estado === 'cobrado');
 
 // ── Tiempo real ──
-conectarWS(async ev => {
-  if (!empleado) return;
-  if (ev.tipo === 'solicitudes') { cargarSolicitudes(); if (ev.solicitud_id) aviso('Nueva comanda desde una mesa', 'ok'); }
-  if (ev.tipo === 'carta') { catalogo = await api('/catalogo'); if (!$('#v-carta').hidden) verCarta(); }
-  if (ev.tipo === 'listo') aviso(`Pedido #${ev.pedido_id}: hay platos listos en el pase`, 'ok');
-  if (pedido && (ev.tipo === 'kds' || ev.tipo === 'listo' || ev.tipo === 'mesas')) {
-    try { pedido = await api('/pedidos/' + pedido.id); if (pedido.estado !== 'abierto') pedido = null; } catch { pedido = null; }
-    pintarTicket();
-  }
-  if (!$('#v-mesas').hidden && (ev.tipo === 'mesas' || ev.tipo === 'reconectado')) verMesas();
-});
+// La bandeja de comandas del móvil SOLO se llenaba cuando llegaba el aviso por el socket. Si
+// el socket estaba caído en ese instante —un reinicio del servidor, el wifi de la sala, los dos
+// segundos que tarda en abrirse— la comanda se quedaba en el servidor sin que nadie la viera y
+// el cliente esperando en la mesa. Así que también se vuelve a preguntar al reconectar.
+function escucharEventos() {
+  conectarWS(async ev => {
+    if (!empleado) return;
+    if (ev.tipo === 'solicitudes' || ev.tipo === 'reconectado') {
+      cargarSolicitudes();
+      if (ev.solicitud_id) aviso('Nueva comanda desde una mesa', 'ok');
+    }
+    if (ev.tipo === 'carta') { catalogo = await api('/catalogo'); if (!$('#v-carta').hidden) verCarta(); }
+    if (ev.tipo === 'listo') aviso(`Pedido #${ev.pedido_id}: hay platos listos en el pase`, 'ok');
+    if (pedido && (ev.tipo === 'kds' || ev.tipo === 'listo' || ev.tipo === 'mesas')) {
+      try { pedido = await api('/pedidos/' + pedido.id); if (pedido.estado !== 'abierto') pedido = null; } catch { pedido = null; }
+      pintarTicket();
+    }
+    if (!$('#v-mesas').hidden && (ev.tipo === 'mesas' || ev.tipo === 'reconectado')) verMesas();
+  });
+}
 
 // Al volver la red, `sinred.js` reenvía lo apuntado y los identificadores locales mueren:
 // se vuelve a las mesas para trabajar ya con los del servidor.
@@ -498,7 +507,9 @@ window.addEventListener('sinred-sincronizado', async () => {
   cargarSolicitudes();
 });
 
-entrar().then(() => { cargarSolicitudes(); prepararMovil(); });
+// El socket se abre con la sesión YA hecha: abrirlo antes es un 403 seguro del servidor (que
+// hace bien: un socket sin sesión no es nadie) y deja la pantalla sorda mientras reintenta.
+entrar().then(() => { escucharEventos(); cargarSolicitudes(); prepararMovil(); });
 
 // ── El grupo de la mesa: quién se sienta dónde y de quién es cada plato ──
 // Se abre desde el ticket y se cierra al pulsar fuera, como cualquier diálogo del navegador.

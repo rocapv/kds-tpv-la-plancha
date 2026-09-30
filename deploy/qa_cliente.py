@@ -10,12 +10,23 @@ Tres personas a la vez, cada una en su navegador:
     dar por servido lo que sigue bajo la lámpara no es cosa de cocina;
   · la CAMARERA otra vez, ahora en la pantalla de sala, confirma que la ha llevado a la mesa.
 En cada paso se comprueba que la tira del cliente ha avanzado SOLA (canal público + sondeo),
-sin recargar la página. Al final se anula el pedido: no queda nada en la base de datos real.
+sin recargar la página. Al final, la prueba de fuego: se le corta el wifi a la sala, entra una
+comanda y la bandeja del TPV tiene que ponerse al día ella sola al volver la línea.
+Todo lo que se crea se anula o se rechaza: no queda nada en la base de datos real.
 """
 import argparse
 import sys
 
 from playwright.sync_api import sync_playwright
+
+# La consola de Windows habla cp1252 y aquí se imprimen «▶», «✓» y «✗»: sin esto el QA muere
+# DENTRO de su propio informe y se lleva por delante todo lo que había contado, que es justo
+# lo que hace falta para saber qué falló.
+for canal in (sys.stdout, sys.stderr):
+    try:
+        canal.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
 
 fallos = []
 
@@ -152,7 +163,7 @@ def main():
         camarera.click(f"#pase [data-pedido='{pid}']")
         esperar_paso(cliente, "servida")
 
-        print("6 · detalle y limpieza")
+        print("6 · el detalle de la comanda")
         cliente.click("#mc-detalle")
         cliente.wait_for_selector("#d-estado[open]", timeout=5000)
         detalle = cliente.text_content("#e-cuerpo")
@@ -164,6 +175,45 @@ def main():
         r = camarera.evaluate("""async pid => (await fetch('/api/pedidos/' + pid + '/anular', { method: 'POST',
             headers: { Authorization: 'Bearer ' + JSON.parse(localStorage.kds_sesion).token } })).status""", pid)
         (bien if r in (200, 409) else mal)(f"pedido #{pid} anulado ({r})")
+
+        # ── La prueba de fuego de la bandeja ──
+        # Una comanda que entra mientras la sala no tiene línea no puede quedarse en el servidor
+        # esperando a que alguien recargue la página: el cliente está sentado en la mesa.
+        print("7 · entra una comanda con la sala sin wifi")
+        camarera.goto(a.url + "/tpv.html", wait_until="domcontentloaded")
+        camarera.wait_for_selector("#v-mesas .mesa", timeout=20000)
+        en_linea = "document.querySelector('#conexion')?.classList.contains('ok')"
+        camarera.wait_for_function(en_linea, timeout=20000)
+        bien("el TPV está en línea")
+        sala.set_offline(True)
+        camarera.wait_for_function("!" + en_linea, timeout=20000)
+        bien("se le cae la línea a la sala")
+        sid2 = cliente.evaluate("""async mesa => {
+            const carta = await (await fetch('/api/publico/carta')).json();
+            const p = carta.flatMap(c => c.productos).find(p => p.disponible);
+            const r = await fetch('/api/publico/solicitudes', { method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ mesa_id: mesa ? +mesa : null,
+                                       cliente: mesa ? null : 'QA sin red',
+                                       lineas: [{ producto_id: p.id, cantidad: 1 }] }) });
+            return r.ok ? (await r.json()).id : 'HTTP ' + r.status;
+        }""", mesa)
+        bien(f"el cliente manda la comanda #{sid2} con la sala a ciegas")
+        sala.set_offline(False)
+        try:
+            camarera.wait_for_selector(f"[data-aceptar='{sid2}']", state="attached", timeout=25000)
+            bien("al volver la línea, la bandeja se pone al día sola")
+        except Exception:
+            mal(f"la comanda #{sid2} no apareció en la bandeja al volver la línea "
+                f"(botón: {'visible' if camarera.is_visible('#b-solicitudes') else 'oculto'}, "
+                f"contador: {camarera.text_content('#n-solicitudes').strip()})")
+
+        print("· limpieza")
+        r = camarera.evaluate("""async sid => (await fetch('/api/solicitudes/' + sid + '/rechazar',
+            { method: 'POST', headers: { 'Content-Type': 'application/json',
+              Authorization: 'Bearer ' + JSON.parse(localStorage.kds_sesion).token },
+              body: JSON.stringify({ motivo: 'comanda de prueba del QA' }) })).status""", sid2)
+        (bien if r == 200 else mal)(f"comanda #{sid2} rechazada ({r})")
         for e in errores[:5]:
             mal("excepción en página: " + e[:140])
         nav.close()
