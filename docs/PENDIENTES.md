@@ -113,7 +113,9 @@ sala (internet lo ignora) y `sentados` en `/api/mesas`. 6 pruebas en `test_plann
   sin hacer. `esperar_gpu.py` la lanza solo cuando hay 5.200 MiB libres dos lecturas seguidas; el
   29/09 la tarjeta la ocupaba el modelo de Graphify en LM Studio. Hasta entonces, las cifras de
   calidad y tiempo del `README` son estimaciones.
-- La zona de recogida no tiene mostrador en el plano (se arregla en `plano.html`); el sitio de
-  pruebas `:8093` no tiene `reservas.html` ni `pantalla.html` (republicar con `publicar.sh`);
-  falta publicar los vídeos terminados en `home.pr1.es`.
+- La zona de recogida no tiene mostrador en el plano (se arregla en `plano.html`); falta publicar
+  los vídeos terminados en `home.pr1.es`.
+- (Resuelto el 30/09: el sitio de pruebas `:8093` ya tiene `reservas.html` y `pantalla.html`. Le
+  faltaban por no haberse republicado, no por nada del código; entraron solas al pasar
+  `publicar.sh` por los dos docroots. Comprobado en el disco de Raspa, no supuesto.)
 
