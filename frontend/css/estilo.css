@@ -968,3 +968,7 @@ body.pantalla-mesa { display: grid; place-items: center; min-height: 100vh; text
 .sitio .cobrar { width: 100%; margin-top: .3rem; }
 .sitio .pagado { color: var(--ok); margin: .3rem 0 0; font-weight: 600; }
 
+/* Comanda terminada en cocina: el botón informa, no invita a pulsar. */
+.bump.hecha { background: var(--panel2); color: var(--tenue); border-style: dashed;
+  cursor: default; font-size: .85rem; }
+

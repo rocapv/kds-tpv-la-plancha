@@ -6,7 +6,9 @@ Tres personas a la vez, cada una en su navegador:
   · el CLIENTE, en su móvil, abre la carta por el QR de una mesa libre, añade dos platos, envía
     la comanda y se queda mirando la tira de seguimiento;
   · la CAMARERA (PIN 1111), en el TPV, ve llegar la solicitud, la acepta y la manda a cocina;
-  · la COCINERA (PIN 3333), en el pase, la empieza, la marca lista y la da por servida.
+  · la COCINERA (PIN 3333), en el pase, la empieza y la marca lista — y ahí termina su parte:
+    dar por servido lo que sigue bajo la lámpara no es cosa de cocina;
+  · la CAMARERA otra vez, ahora en la pantalla de sala, confirma que la ha llevado a la mesa.
 En cada paso se comprueba que la tira del cliente ha avanzado SOLA (canal público + sondeo),
 sin recargar la página. Al final se anula el pedido: no queda nada en la base de datos real.
 """
@@ -111,14 +113,14 @@ def main():
         camarera.wait_for_timeout(800)
         esperar_paso(cliente, "cocina")
 
-        print("4 · la cocinera la empieza, la marca lista y la sirve")
+        print("4 · la cocinera la empieza y la marca lista (y ahí acaba su parte)")
         entrar(cocinera, a.url, "3333", "/kds.html?pantalla=pase")
         cocinera.wait_for_selector(".comanda", timeout=20000)
         tarjeta = cocinera.locator(".comanda", has=cocinera.locator(f".meta:has-text('#{pid} ')"))
         if tarjeta.count() == 0:
             tarjeta = cocinera.locator(".comanda", has=cocinera.locator(f".meta:has-text('#{pid}')"))
         (bien if tarjeta.count() == 1 else mal)(f"comanda #{pid} en el pase ({tarjeta.count()} tarjetas)")
-        for esperado, paso in (("Empezar", None), ("Listo", "lista"), ("Servido", "servida")):
+        for esperado, paso in (("Empezar", None), ("Listo", "lista")):
             texto = tarjeta.locator(".bump").text_content().strip()
             (bien if esperado in texto else mal)(f"botón de la comanda: «{texto}»")
             tarjeta.locator(".bump").click()
@@ -134,7 +136,23 @@ def main():
             if paso:
                 esperar_paso(cliente, paso)
 
-        print("5 · detalle y limpieza")
+        # Con todo listo, el botón de cocina tiene que quedarse inerte: ofrecer «Servido» aquí
+        # sería ofrecer algo que el servidor rechaza.
+        bump = tarjeta.locator(".bump")
+        if bump.count():
+            texto_final = bump.text_content().strip()
+            (bien if "pase" in texto_final.lower() else mal)(
+                f"cocina ya no ofrece servir: «{texto_final}»")
+            (bien if bump.is_disabled() else mal)("el botón de cocina queda inerte")
+
+        print("5 · la camarera confirma que la ha llevado a la mesa")
+        camarera.goto(a.url + "/sala.html", wait_until="domcontentloaded")
+        camarera.wait_for_selector(f"#pase [data-pedido='{pid}']", timeout=20000)
+        bien("la comanda aparece en el pase de sala")
+        camarera.click(f"#pase [data-pedido='{pid}']")
+        esperar_paso(cliente, "servida")
+
+        print("6 · detalle y limpieza")
         cliente.click("#mc-detalle")
         cliente.wait_for_selector("#d-estado[open]", timeout=5000)
         detalle = cliente.text_content("#e-cuerpo")

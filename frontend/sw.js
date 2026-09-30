@@ -11,7 +11,7 @@
 // Lo que NUNCA se guarda: nada de `/api`. Una respuesta vieja de la API sería un precio, una
 // mesa o una comanda mentirosa; para eso está la cola de `sinred.js`, que sabe lo que apuntó.
 
-const VERSION = 'kds-tpv-v8';
+const VERSION = 'kds-tpv-v9';
 const CONCHA = [
   '/tpv.html',
   '/css/estilo.css',

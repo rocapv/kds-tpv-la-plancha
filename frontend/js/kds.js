@@ -153,7 +153,11 @@ function actualizarLineas(ul, c) {
 }
 
 function etiquetaBump(c) {
-  if (c.lineas.every(l => l.estado === 'lista')) return { texto: 'Servido ✓', clase: 'ok' };
+  // Cuando todo está listo, el trabajo de cocina ha terminado: lo que falta es que alguien lo
+  // lleve a la mesa, y eso lo confirma sala desde su pantalla. El botón se queda inerte porque
+  // ofrecer «Servido» aquí era ofrecer algo que el servidor rechaza.
+  if (c.lineas.every(l => l.estado === 'lista'))
+    return { texto: 'En el pase · lo recoge sala', clase: 'hecha', inerte: true };
   if (c.lineas.some(l => l.estado === 'enviada')) return { texto: 'Empezar ▶', clase: 'primario' };
   return { texto: 'Listo ✓', clase: 'primario' };
 }
@@ -226,9 +230,10 @@ function actualizarTarjeta(art, c) {
   ponerTexto(art.querySelector('.meta'), `#${c.pedido_id} · ${c.camarero}`);
   actualizarLineas(art.querySelector('ul'), c);
   const bump = art.querySelector('.bump');
-  const { texto, clase } = etiquetaBump(c);
+  const { texto, clase, inerte } = etiquetaBump(c);
   ponerTexto(bump, texto);
   if (bump.className !== 'bump ' + clase) bump.className = 'bump ' + clase;
+  bump.disabled = Boolean(inerte);
   art.dataset.desde = c.desde;
 }
 
