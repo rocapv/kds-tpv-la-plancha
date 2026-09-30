@@ -58,8 +58,14 @@ se le impone desde fuera, con cuatro anclas.
    ```
 3. **La carta y las pantallas no se generan: se graban.** SD 1.5 no sabe escribir
    «Brasa de Perihelio · 11,90 €»; saca garabatos. Cuando una escena tiene que
-   enseñar interfaz, se abre el KDS de verdad en un navegador y se graba, con las
-   burbujas del tutorial que ya venían escritas en `tutorial.js`.
+   enseñar interfaz, se abre el KDS de verdad en un navegador y se graba.
+
+   Con burbujas o sin ellas, y **no es lo mismo**. Las de `tutorial.js` explican
+   la interfaz iluminando un elemento y apagando el resto: perfectas para un
+   tutorial, y justo lo que estorba en una escena de servicio, donde lo que hay
+   que ver es el dato —la mesa abierta, la comanda entrando, el aviso de la
+   cuenta— y quien explica es la narración. Lo decide `tutorial` en cada escena,
+   que por defecto vale lo que valga el `tipo` del guion.
 4. **La semilla sale del guion.** El mismo guion da el mismo vídeo. Si algo sale
    mal, se repite exacto y se compara.
 
@@ -93,6 +99,15 @@ python estudio_cli.py guion "un prompt"       # ver el guion sin gastar nada
 python estudio_cli.py producir "un prompt"    # el vídeo entero
 ```
 
+Y para el vídeo de referencia —el servicio completo, de la puerta a la factura—,
+que lleva el guion escrito a mano porque el orden lo manda el sistema y no el
+guionista:
+
+```powershell
+python video_servicio.py --guion              # los 12 planos, sin gastar GPU
+python video_servicio.py                      # el vídeo (~5 min de GPU)
+```
+
 Cada trabajo deja **todo** en `trabajos/<id>/`: el guion, los clips, la voz, los
 subtítulos y el estado paso a paso. El MP4 terminado va a `salidas/`, con su `.srt`
 y su portada.
@@ -122,6 +137,59 @@ y su portada.
   20 pasos. Un tutorial hecho solo de pantallas grabadas sale en menos de un minuto
   porque no toca la GPU.
 
+## Grabar pantallas: cinco trampas, todas silenciosas
+
+Las cinco pantallas de un vídeo de servicio son la mitad del metraje y **son el
+producto**: si salen mal, da igual lo bien que salga la gente generada. Lo que las
+hace difíciles es que ninguna de estas cinco cosas da un error. El clip se graba,
+dura lo que tiene que durar y enseña otra cosa.
+
+- **La cámara arranca al crear el contexto, no al pedirlo.** `record_video_dir` es
+  un argumento de `new_context`, así que abrir la página, esperar la red y teclear
+  el PIN —dos o tres segundos— van dentro del clip, y el montaje corta por el
+  principio. Tres de cada cinco planos enseñaban el teclado numérico. Se arregla
+  tecleando el PIN en un contexto **que no se graba** y pasando su `storage_state()`
+  al que sí (`_sesion_previa`); el token vive en `localStorage`, así que el contexto
+  que graba nace ya identificado. No hay forma de retrasar el comienzo.
+- **Un error de JavaScript no rompe la grabación: rompe la pantalla.** El vídeo sale
+  igual, con el hueco donde iba el contenido. Así se perdió el plano del pase, en
+  negro con el titular puesto, y nadie se enteró hasta mirar el montaje fotograma a
+  fotograma. Ahora `grabar()` escucha `pageerror` y `console.error` y avisa al
+  terminar. **Si una pantalla sale vacía, mirar ese aviso antes que nada.**
+- **El escaparate tiene que devolver la forma EXACTA de la API.** El pase
+  contestaba con la lista pelada y la API la envuelve en `{"comandas": [...]}`; en
+  `sala.html` el `try` protege la llamada pero no lo de después, así que el
+  TypeError se llevó por delante a `cargar()` entera —indicadores, avisos y zonas
+  incluidos—. Cuando se añada un endpoint nuevo al escaparate, copiar la forma del
+  backend, no la de memoria.
+- **Dos planos de la misma pantalla salen iguales si no se toca nada.** Para eso
+  están los **gestos** (`GESTOS` en `pantallas.py`, campo `gesto` de la escena):
+  `cobrar` abre la mesa que espera la cuenta y saca el panel de cobro. Los clics se
+  graban —no hay forma de pausar— pero quedan al principio, y el montaje los salta
+  leyendo un `.json` que se escribe junto al clip. El corte se ancla al **final**
+  del clip, que siempre termina con la pantalla ya quieta durante `segundos`;
+  cronometrar desde Python da un número parecido y equivocado, porque el vídeo
+  empieza a contar en el primer fotograma pintado.
+- **Media pantalla no está en la API: la calcula el backend.** El estado de una mesa
+  no se guarda en ninguna columna; `/api/sala` lo deduce de las líneas del pedido
+  —sin líneas, «sentados, sin pedir»; una sola línea en «lista», «listo en el pase»;
+  todas «servida», «esperando la cuenta»—. Inventar las líneas al azar deja el mapa a
+  lo que salga: faltaba «sin pedir» porque toda línea nacía enviada a cocina. Ahora
+  el estado se decide primero (`_guion_de_sala`) y las líneas se eligen para que el
+  backend deduzca ESE estado; lo que se sortea es el relleno. Y lo deducido tiene que
+  cuadrar **entre planos**: el pase sale de las mesas que de verdad tienen algo en
+  «lista», no de las tres primeras comandas, porque son dos planos casi seguidos y se
+  desmentían entre ellos.
+
+Y una regla que no es de Playwright sino del encargo: **lo que se lee en pantalla es
+lo que el espectador entiende del sistema**. Por eso las notas de comanda van por
+categoría (un «poco hecho» en un batido parece que el sistema mezcla las notas); por
+eso el escaparate también sirve `/api/catalogo` y `/api/publico/carta`, filtrados
+—el «Pato · 999,00 €» de la carta de desarrollo, en un TPV, se lee como un TPV con la
+carta mal—; y por eso la estación de cocina de cada plato se baja de la base de datos
+en vez de sortearse: una cerveza en la freidora desmiente la propia narración del
+plano, que dice «repartida por estaciones».
+
 ## Qué se cambia para cambiar el resultado
 
 | Quiero cambiar | Dónde |
@@ -134,6 +202,7 @@ y su portada.
 | Las vistas de la hoja de personaje | `VISTAS` en `elenco.py` + `hojas --rehacer` |
 | Cuánto manda la sala sobre el modelo | `FUERZA_PROFUNDIDAD` y `HASTA_PROFUNDIDAD` en `comfy.py` |
 | Qué se ve en las pantallas grabadas | `Servicio` en `pantallas.py` |
+| Qué se HACE en una pantalla mientras se graba | `GESTOS` en `pantallas.py` + `gesto` en la escena |
 | La voz | `VOZ_POR_DEFECTO` en `voz.py` (`sharvard` o `davefx`) |
 
 ## La ropa es parte del personaje

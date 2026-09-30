@@ -206,6 +206,13 @@ class Personaje:
     # haría esta persona y qué no. Un elenco sin carácter acaba siendo cinco
     # maniquíes con ropa distinta.
     personalidad: str = ""
+    # «h» o «m». Parece redundante —`breve` ya dice «a man», «a woman»— y no lo
+    # es: esa palabra va en el prompt positivo, donde compite con la acción, el
+    # ambiente y la ropa, y se pierde. Óliver, con barba escrita en su `breve`,
+    # salió MUJER en un plano y hombre en el de al lado, misma cámara y misma
+    # ficha. Este campo existe para poder decirlo también en el negativo, que es
+    # donde la palabra no compite con nada. Ver `produccion.negativo_de`.
+    sexo: str = ""
 
 
 # Cinco moldes y no más: el camarero, dos clientes y dos clientas. Cuantas menos
@@ -221,12 +228,16 @@ ELENCO: dict[str, Personaje] = {p.clave: p for p in [
     Personaje("oliver", "Óliver Sanz", "sala",
               "portrait of a man in his thirties, short dark hair, trimmed dark beard, "
               "black apron over a dark shirt, alert and friendly expression",
-              "a waiter, a man in his thirties with short dark hair and a trimmed beard", 2011,
-              "wearing a black bib apron over a grey shirt with the sleeves rolled up, "
+              "a waiter, a man in his thirties with short dark hair and a full dark beard", 2011,
+              # Chaleco y camisa BLANCA, que es lo que hay en la hoja. La ficha
+              # decía «delantal de peto sobre camisa gris» y la hoja nunca lo
+              # tuvo: el retrato salió con chaleco desde la primera tanda. Ver la
+              # nota de `vestuario` más abajo: manda la hoja.
+              "wearing a dark waistcoat over a white shirt with the sleeves rolled up, "
               "dark trousers",
               "Ocho años detrás de la barra y se sabe los nombres. Habla poco y rápido, no "
               "pierde una comanda y no aguanta ver un plato enfriándose en el pase. Con los "
-              "novatos tiene toda la paciencia del mundo."),
+              "novatos tiene toda la paciencia del mundo.", sexo="h"),
     # Clientes
     Personaje("klaus", "Klaus Bergmann", "cliente",
               "portrait of a broad shouldered man in his fifties, full grey beard, high "
@@ -242,21 +253,50 @@ ELENCO: dict[str, Personaje] = {p.clave: p for p in [
               "heavy work trousers",
               "Capataz de perforación, treinta años en el cinturón. Come lo mismo y a la misma "
               "hora desde siempre. Habla bajo y poco, pero cuando algo se tuerce en la galería "
-              "es al primero al que llaman."),
+              "es al primero al que llaman.", sexo="h"),
     # Sin gafas de soldar ni cuello alto en el retrato: con ellas el modelo le
     # puso las gafas sobre los ojos y una braga hasta la nariz, y un molde con la
     # cara tapada no le sirve a IP-Adapter para reconocer a nadie.
     # «pale dry lips» va escrito a propósito: sin eso, el modelo le pintaba los
     # labios de rosa fuerte, y IP-Adapter lo amplificaba en toda la hoja.
+    # LA ROPA DE UN MOLDE TIENE QUE SER LISA. Es la regla más cara de las que hay
+    # aquí, y se pagó entera con este personaje.
+    #
+    # Al pedir «open collar blue coverall» el modelo devolvía, siempre igual, una
+    # camisa de RAYAS azules y blancas. Por la regla de «si lo repite, manda la
+    # hoja» se le escribieron las rayas en la ficha. Y entonces TODOS sus planos
+    # salieron con la habitación a rayas: las paredes, los armarios, la mesa, el
+    # suelo. Cuatro tomas distintas, cuatro habitaciones a rayas.
+    #
+    # No era el adaptador de vestuario: se quitó y salió la MISMA imagen, píxel a
+    # píxel. Era la propia hoja de personaje entrando por el adaptador de
+    # identidad, que no sabe separar la cara de lo que la rodea y reparte por el
+    # encuadre entero cualquier patrón que encuentre. Medido sobre las hojas:
+    #
+    #     óliver (chaleco liso)   textura  5,3
+    #     suri   (abrigo liso)    textura  3,8
+    #     teo    (rayas)          textura 12,9   <-- se come la sala
+    #
+    # («textura» = media de |diferencia entre píxeles contiguos en horizontal|.)
+    #
+    # Así que «manda la hoja» tiene un límite: manda mientras lo que haga no
+    # estropee el plano. Con un patrón de alta frecuencia no se negocia; se
+    # rehace el casting con una prenda lisa. Aquí, camiseta lisa.
+    # Y un segundo aviso, del mismo personaje: «lisa» no puede ser lo ÚNICO que se
+    # diga de la ropa. Al dejarle solo «camiseta lisa» desapareció del texto lo
+    # que además de ropa decía «hombre» y «sitio de trabajo», y el casting devolvió
+    # una mujer en ropa interior sobre una cama. La prenda tiene que ser lisa Y
+    # seguir situando a la persona. Mono de trabajo, pero dicho «solid colour, no
+    # pattern» para que no vuelva a interpretarlo como rayas.
     Personaje("teo", "Teo Marchal", "cliente",
-              "portrait of a young man in his twenties, short dark curly hair, clean shaven, "
-              "pale dry lips, open collar blue coverall, faint grease on one cheek, "
-              "tired friendly look",
-              "a young man in his twenties with short dark curly hair", 1033,
-              "wearing a blue work coverall unzipped at the collar over a grey t-shirt",
+              "portrait of a young man in his twenties, short dark hair, clean shaven, "
+              "pale dry lips, plain charcoal grey work coverall, solid colour, no pattern, "
+              "faint grease on one cheek, tired friendly look",
+              "a young man in his twenties with short dark hair", 1033,
+              "wearing a plain charcoal grey work coverall, solid colour, no pattern",
               "Técnico de atraque recién llegado, veinticuatro años. Todo le sorprende y "
               "pregunta de más. Come con el móvil en la mano y pide siempre lo más barato de "
-              "la carta, que aún no cobra como los demás."),
+              "la carta, que aún no cobra como los demás.", sexo="h"),
     # Clientas
     Personaje("nadia", "Nadia Ostrov", "cliente",
               "portrait of a weathered woman in her sixties, veteran miner, worn orange jumpsuit, "
@@ -265,15 +305,20 @@ ELENCO: dict[str, Personaje] = {p.clave: p for p in [
               "wearing a worn orange work jumpsuit, dusty, zipped up to the chest",
               "Cuarenta años picando roca y una rodilla que se lo recuerda. Desayuna a las "
               "cinco y cena antes que nadie. No se fía de las pantallas: prefiere pedirle al "
-              "camarero, que para eso está."),
+              "camarero, que para eso está.", sexo="m"),
     Personaje("suri", "Suri Malabar", "cliente",
               "portrait of a woman in her thirties, geologist, green thermal jacket, long dark "
               "braid over one shoulder, rimless glasses, calm attentive look",
-              "a woman in her thirties with a long dark braid and rimless glasses", 1003,
-              "wearing a green thermal jacket over a white shirt, dark trousers",
+              "a woman in her thirties with dark shoulder length hair and glasses", 1003,
+              # Ni trenza ni gafas sin montura: la hoja tiene melena corta a la
+              # altura del hombro y unas gafas de pasta. Pedir la trenza en el
+              # texto mientras la referencia enseñaba melena era la razón de que
+              # sus planos se fueran a otro sitio -un café de madera en vez de la
+              # cantina- y de que posara como en un catálogo.
+              "wearing an olive green wool coat over a white shirt, dark trousers",
               "Geóloga de turno largo, llegó en el último carguero. Lo anota todo en la "
               "tableta, hasta lo que cena. Educada y algo distante; pide siempre lo mismo y "
-              "paga desde la app sin levantar la vista."),
+              "paga desde la app sin levantar la vista.", sexo="m"),
 ]}
 
 
@@ -324,6 +369,9 @@ class Biblia:
                     "categoria": cat["nombre"],
                     "precio": p["precio_cent"] / 100.0,
                     "alergenos": p.get("alergenos") or "",
+                    # Vacío en las biblias descargadas antes de que `descargar()`
+                    # lo trajera; quien lo use tiene que saber apañarse sin él.
+                    "estacion": p.get("estacion") or "",
                 })
         return out
 
@@ -361,16 +409,40 @@ def descargar(url: str = KDS_URL, pin: str = KDS_PIN) -> Biblia:
     """
     DIR_BIBLIA.mkdir(parents=True, exist_ok=True)
     token = _login(url, pin)
+    estaciones: dict[int, str] = {}
     try:
-        r = requests.get(f"{url}/api/plano", headers={"Authorization": f"Bearer {token}"}, timeout=20)
+        cabecera = {"Authorization": f"Bearer {token}"}
+        r = requests.get(f"{url}/api/plano", headers=cabecera, timeout=20)
         r.raise_for_status()
         plano = r.json()["elementos"]
+
+        # A qué sección de cocina va cada plato. No sale en la carta pública —que
+        # es «sin estación, sin bajas y sin nada interno»— pero sí en la del
+        # personal, y aprovechamos que el token ya está en la mano.
+        #
+        # Hace falta porque el escaparate repartía las comandas por estaciones al
+        # azar, y el plano del KDS dice en voz alta «la comanda entra en cocina
+        # REPARTIDA POR ESTACIONES». Salía una cerveza en la freidora y una brasa
+        # en la barra: el plano desmentía su propia narración. El dato existe y es
+        # una columna de `productos`, así que no hay que inventarlo.
+        try:
+            r = requests.get(f"{url}/api/catalogo", headers=cabecera, timeout=20)
+            if r.ok:
+                estaciones = {p["id"]: p["estacion"]
+                              for c in r.json() for p in c.get("productos", [])
+                              if p.get("estacion")}
+        except Exception:
+            pass
     finally:
         _logout(url, token)
 
     r = requests.get(f"{url}/api/publico/carta", timeout=20)
     r.raise_for_status()
     carta = r.json()
+    for c in carta:
+        for p in c.get("productos", []):
+            if p["id"] in estaciones:
+                p["estacion"] = estaciones[p["id"]]
 
     local = {}
     try:

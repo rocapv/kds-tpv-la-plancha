@@ -20,6 +20,7 @@ sys.path.insert(0, str(AQUI))
 
 from estudio import biblia as B          # noqa: E402
 from estudio import montaje as M         # noqa: E402
+from estudio import pantallas as P       # noqa: E402
 from estudio import produccion as Pr     # noqa: E402
 from estudio import publicar as Pub      # noqa: E402
 from estudio import voz as V             # noqa: E402
@@ -69,9 +70,15 @@ def main() -> int:
     reloj = 0.0
     for i, e in enumerate(escenas):
         fuente = por_plano.get(i)
-        if fuente is None:
-            crudo = dir_trabajo / "crudos" / f"{e.get('pantalla') or ''}.webm"
-            fuente = crudo if crudo.exists() else None
+        if fuente is None and e.get("pantalla"):
+            # Cada plano graba en SU carpeta (`crudos/07/tpv.webm`) desde que dos
+            # planos de la misma pantalla se pisaban. La ruta plana se mira
+            # después, por si el trabajo es de antes de aquel cambio.
+            for crudo in (dir_trabajo / "crudos" / f"{i:02d}" / f"{e['pantalla']}.webm",
+                          dir_trabajo / "crudos" / f"{e['pantalla']}.webm"):
+                if crudo.exists():
+                    fuente = crudo
+                    break
         if fuente is None:
             print(f"  plano {i+1}: sin material, se salta")
             continue
@@ -89,7 +96,8 @@ def main() -> int:
                                                    rotulo=e.get("rotulo", ""), marca=marca))
             else:
                 normalizados.append(M.normalizar(fuente, destino, segundos,
-                                                 rotulo=e.get("rotulo", ""), marca=marca))
+                                                 rotulo=e.get("rotulo", ""), marca=marca,
+                                                 desde=P.desde_de(fuente)))
         except Exception as ex:
             print(f"  plano {i+1}: {ex}")
             continue

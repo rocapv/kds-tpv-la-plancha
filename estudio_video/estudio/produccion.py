@@ -94,6 +94,70 @@ def _nuevo_id() -> str:
     return datetime.now().strftime("%Y%m%d_%H%M%S")
 
 
+def prompt_de(esc: "Gu.Escena") -> str:
+    """El prompt positivo de un plano. **La acción va primero.**
+
+    Vive aquí, y no copiado en cada script de prueba, por una razón aprendida a
+    base de perder una tarde: `probar_fijo.py` montaba su propio grafo, más
+    simple, y el estudio se estuvo ajustando con un instrumento que no medía lo
+    que luego se ejecutaba. Un prompt construido en dos sitios acaba siendo dos
+    prompts distintos.
+
+    El orden fue justo el contrario —QUIÉN, QUÉ LLEVA PUESTO, qué hace, ambiente—
+    y tenía su motivo: sin la persona delante, el decorado se comía el prompt y
+    la gente no llegaba a aparecer. Eso era verdad **antes de que existieran los
+    dos IP-Adapter**. Ahora la cara la pone la hoja de personaje y la ropa la
+    pone el adaptador de vestuario, las dos en el espacio de imagen, así que
+    gastar en describirlas más de la mitad de los 77 tokens de CLIP no añade
+    nada: solo empuja la acción al centro del prompt, donde se diluye. Y la
+    acción es lo ÚNICO que no lleva ningún adaptador.
+
+    Medido en la cámara `mesa`, misma semilla, «sostiene el móvil con las dos
+    manos y mira la pantalla»:
+
+        QUIÉN, ROPA, acción, ambiente     no hay móvil por ninguna parte
+        (acción:1.2), quién, ambiente     aparece el móvil; se pierde el mono
+        (acción:1.2), ambiente            sala preciosa, persona genérica
+        (acción:1.2), quién, amb., ropa   móvil, mono y cara                <--
+
+    La ropa al final y no al principio: ahí ya no compite con la acción, y con
+    el adaptador de vestuario sujetándola por la imagen, con nombrarla basta.
+    """
+    quienes = [B.ELENCO[c] for c in esc.personajes if c in B.ELENCO]
+    gente = ", ".join(p.breve for p in quienes)
+    ropa = ", ".join(p.vestuario for p in quienes if p.vestuario)
+    trozos = [f"({esc.accion}:1.2)" if esc.accion else ""]
+    if gente:
+        trozos.append(f"({gente}:1.1)")
+    trozos.append(B.ESTILO)
+    if ropa:
+        trozos.append(f"({ropa}:1.1)")
+    return ", ".join(x for x in trozos if x)
+
+
+def negativo_de(esc: "Gu.Escena") -> str:
+    """El negativo del plano: el de estilo, más el sexo que no toca, más `evitar`.
+
+    El sexo va aquí y no en el positivo por una razón medida: el positivo ya
+    dice quién es —«a man with a full dark beard»— y aun así el mismo personaje,
+    en la misma cámara y con la misma ficha, salió hombre en un plano y **mujer**
+    en el siguiente. La palabra estaba puesta; lo que fallaba es que competía con
+    todo lo demás. En el negativo no compite con nada: no hay más que una cosa
+    que no puede aparecer, y no aparece.
+
+    Solo se escribe cuando hay UNA persona anclada. Con dos, pedir que no haya
+    mujeres en un plano donde hay una mujer sería justo lo contrario de lo que se
+    quiere, y el estudio ya prohíbe en `video_servicio.py` anclar más de una.
+    """
+    partes = [B.ESTILO_NEGATIVO]
+    quienes = [B.ELENCO[c] for c in esc.personajes if c in B.ELENCO]
+    if len(quienes) == 1 and quienes[0].sexo in ("h", "m"):
+        partes.append("woman, female" if quienes[0].sexo == "h" else "man, male")
+    if esc.evitar:
+        partes.append(esc.evitar)
+    return ", ".join(partes)
+
+
 def _controles_al_dia(bib: B.Biblia) -> None:
     """Los mapas de las cámaras se generan si faltan. Son deterministas: no caducan."""
     falta = [c for c in B.CAMARAS if not (B.DIR_CONTROL / f"{c}_profundidad.png").exists()]
@@ -140,8 +204,14 @@ def producir(prompt: str, t: Trabajo, usar_llm: bool = True, con_voz: bool = Tru
         if esc.pantalla:
             t.anotar(f"grabando {B.PANTALLAS[esc.pantalla][2]}", parte)
             try:
+                # Cada plano graba en SU carpeta. `grabar` nombra el fichero por
+                # la clave de pantalla, así que dos planos de la misma pantalla
+                # —el TPV al abrir la mesa y el TPV al emitir la factura— se
+                # pisaban: el segundo borraba al primero y los dos acababan
+                # enseñando la misma toma.
                 w = P.grabar(esc.pantalla, segundos=esc.segundos,
-                             destino=t.dir / "crudos")
+                             con_tutorial=esc.tutorial, gesto=esc.gesto or None,
+                             destino=t.dir / "crudos" / f"{i:02d}", avisar=t.avisar)
                 info["clip"] = str(w)
                 info["origen"] = "pantalla"
             except Exception as e:
@@ -196,6 +266,12 @@ def producir(prompt: str, t: Trabajo, usar_llm: bool = True, con_voz: bool = Tru
         t.anotar(f"generando el plano {i+1} de {len(g.escenas)} ({esc.camara})", parte)
 
         control = B.DIR_CONTROL / f"{esc.camara}_profundidad.png"
+        vacia = G.camara_vacia(esc.camara)
+        if vacia is not None:
+            t.avisar(f"Plano {i+1}: la cámara «{esc.camara}» apenas ve geometría "
+                     f"({vacia:.0%} del encuadre). Sin nada que sujetar, la persona saldrá "
+                     "posando en un sitio que no es la cantina. Se arregla dibujando esa "
+                     "parte en plano.html, no bajando ni subiendo la fuerza de ControlNet.")
         referencia = E.referencia_para(esc.personajes)
         if esc.personajes and not referencia:
             t.avisar(f"Plano {i+1}: sin retrato de {esc.personajes[0]}; la persona saldrá "
@@ -205,24 +281,7 @@ def producir(prompt: str, t: Trabajo, usar_llm: bool = True, con_voz: bool = Tru
                      "Con la hoja de personaje entera aguanta mucho mejor cuando gira la cabeza "
                      "(`python estudio_cli.py hojas`).")
 
-        # El orden importa y no es el natural: primero QUIÉN, luego QUÉ LLEVA
-        # PUESTO, luego qué hace, y el ambiente al final. Al revés, el decorado
-        # se come el prompt y la gente no llega a aparecer; y con la ropa metida
-        # en la misma frase que la persona, el modelo la reinterpretaba en cada
-        # toma —el mismo hombre con chaleco reflectante y, al plano siguiente,
-        # con chaleco y pajarita—. La ropa es parte del personaje: va aparte y
-        # con su propio peso.
-        quienes = [B.ELENCO[c] for c in esc.personajes if c in B.ELENCO]
-        gente = ", ".join(p.breve for p in quienes)
-        ropa = ", ".join(p.vestuario for p in quienes if p.vestuario)
-        trozos = []
-        if gente:
-            trozos.append(f"({gente}:1.3)")
-        if ropa:
-            trozos.append(f"({ropa}:1.2)")
-        trozos.append(esc.accion)
-        trozos.append(B.ESTILO)
-        positivo = ", ".join(x for x in trozos if x)
+        positivo = prompt_de(esc)
         fotogramas = max(16, esc.segundos * B.FORMATO["fps"])
 
         semilla = esc.semilla(B.FORMATO["semilla_base"], i)
@@ -231,7 +290,7 @@ def producir(prompt: str, t: Trabajo, usar_llm: bool = True, con_voz: bool = Tru
             # con mejor imagen. El movimiento lo pone el montaje.
             cuerpo = E.cuerpo_de(esc.personajes[0]) if esc.personajes else None
             grafo = C.construir_fijo(
-                prompt_positivo=positivo, prompt_negativo=B.ESTILO_NEGATIVO,
+                prompt_positivo=positivo, prompt_negativo=negativo_de(esc),
                 control=control, semilla=semilla,
                 prefijo=f"kds_{t.id}_{i:02d}", referencia=referencia, cuerpo=cuerpo)
             pid = C.encolar(grafo)
@@ -245,7 +304,7 @@ def producir(prompt: str, t: Trabajo, usar_llm: bool = True, con_voz: bool = Tru
             info["origen"] = "fijo"
         else:
             grafo = C.construir(
-                prompt_positivo=positivo, prompt_negativo=B.ESTILO_NEGATIVO,
+                prompt_positivo=positivo, prompt_negativo=negativo_de(esc),
                 control=control, fotogramas=fotogramas, semilla=semilla,
                 prefijo=f"kds_{t.id}_{i:02d}", referencia=referencia)
             pid = C.encolar(grafo)
@@ -285,8 +344,10 @@ def producir(prompt: str, t: Trabajo, usar_llm: bool = True, con_voz: bool = Tru
                     Path(info["imagen"]), destino, segundos, movimiento=mov,
                     rotulo=esc.rotulo, marca=marca))
             else:
-                normalizados.append(M.normalizar(Path(info["clip"]), destino, segundos,
-                                                 rotulo=esc.rotulo, marca=marca))
+                clip = Path(info["clip"])
+                normalizados.append(M.normalizar(clip, destino, segundos,
+                                                 rotulo=esc.rotulo, marca=marca,
+                                                 desde=P.desde_de(clip)))
         except Exception as e:
             t.avisar(f"Plano {i+1}: no se pudo montar ({e}); se salta.")
             continue
@@ -329,11 +390,24 @@ def producir(prompt: str, t: Trabajo, usar_llm: bool = True, con_voz: bool = Tru
     # Publicar en Raspa es parte de terminar: un vídeo que solo existe en Pecera
     # no lo ve nadie más. Si falla, el trabajo NO se da por roto: el MP4 está
     # hecho y se puede subir después.
-    t.anotar("publicando en Raspa", 0.97)
-    try:
-        t.estado["url"] = Pub.publicar(DIR_SALIDAS, solo=[final.name])
-    except Exception as e:
-        t.avisar(f"No se pudo publicar en home.pr1.es/videos ({e}). El vídeo está en salidas/.")
+    #
+    # Pero un vídeo al que le FALTAN planos no se publica. Se monta y se entrega
+    # —el trabajo hecho no se tira, y por eso la GPU caída no aborta nada— y se
+    # queda en `salidas/` para mirarlo. La página de Raspa es el escaparate del
+    # sistema: un ejemplo visual con cinco planos de doce puesto ahí se lee como
+    # el producto terminado. Ya pasó, y de la peor manera: con ComfyUI apagado el
+    # proceso acabó en «exit 0, publicado» y sin una sola persona en cuadro.
+    faltan = [c["i"] + 1 for c in crudos if c.get("origen") in (None, "fallo")]
+    if faltan:
+        t.avisar(f"NO publicado: faltan los planos {faltan} de {len(crudos)}. "
+                 f"El vídeo está en salidas/{final.name}; arregla lo que dicen los "
+                 "avisos de arriba y vuelve a lanzar el mismo prompt.")
+    else:
+        t.anotar("publicando en Raspa", 0.97)
+        try:
+            t.estado["url"] = Pub.publicar(DIR_SALIDAS, solo=[final.name])
+        except Exception as e:
+            t.avisar(f"No se pudo publicar en home.pr1.es/videos ({e}). El vídeo está en salidas/.")
 
     t.estado["fase"] = "listo"
     t.anotar("listo", 1.0)

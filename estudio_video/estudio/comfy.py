@@ -20,6 +20,7 @@ velocidad utilizable.
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import shutil
 import subprocess
@@ -77,6 +78,28 @@ CONTROLNET_LINEAS = "control_v11p_sd15_lineart_fp16.safetensors"
 # A 0,30 la sala se sigue reconociendo -mismo encuadre, mesas donde van- y la
 # imagen es una fotografía. Es el intercambio correcto: una sala algo menos
 # literal a cambio de que no parezca un videojuego.
+#
+# RECONFIRMADO a 0,30 (30/09/2026), después de subirlo a 0,70 y tener que
+# bajarlo. Merece quedar escrito porque el error es fácil de repetir: un plano
+# malo en la cámara de `entrada` —la persona posando, de frente, en un sitio que
+# no es la cantina— parecía decir que el mapa no sujetaba el encuadre, y a 0,70
+# aquel plano concreto salía bien. Pero una golondrina no hace verano: barridas
+# las OTRAS cámaras con los prompts de verdad y la misma semilla, 0,70 rompe
+# todo lo demás.
+#
+#   mesa     0,15 fotografía y buena cara, pero sin sala
+#            0,30 persona y sala, fotográfico          <-- el bueno
+#            0,45 la persona encoge y se le rompe la cara
+#            0,60 no hay persona: solo muebles
+#   comedor  0,30 bien; 0,50 cara rota; 0,70 sala perfecta y NADIE
+#
+# Es la misma curva que ya estaba descrita más arriba, solo que medida: cuanto
+# más manda ControlNet, más pequeña y más lejos sale la gente, hasta desaparecer.
+# Y el plano de `entrada` no mejoraba por la fuerza: mejoraba por casualidad. Ese
+# mapa está VACÍO —56% de píxeles negros, cuando ninguna otra cámara de interior
+# pasa del 16%—, así que allí no hay geometría que seguir a ninguna fuerza. El
+# fallo era de la cámara, no de este número. Antes de tocar esta constante por un
+# plano feo: mirar el mapa de esa cámara.
 FUERZA_PROFUNDIDAD = 0.30
 HASTA_PROFUNDIDAD = 0.60       # a partir de ahí, ControlNet ya no opina
 # La identidad, floja: con la cara basta. Subirla trae también la ropa, la luz y
@@ -195,11 +218,42 @@ def quien_ocupa_la_gpu() -> str:
 
 
 def _copiar_a_entradas(origen: Path) -> str:
-    """LoadImage solo mira su carpeta de entrada; se copia allí y se usa el nombre."""
+    """LoadImage solo mira su carpeta de entrada; se copia allí con un nombre ÚNICO.
+
+    El nombre lleva la carpeta de origen y un trozo de hash del CONTENIDO, y las
+    dos cosas arreglan un fallo distinto. Antes se copiaba con `origen.name` a
+    secas, y esto es lo que pasaba.
+
+    **La colisión.** La hoja de cada personaje se guarda en su propia carpeta y
+    las vistas se llaman igual para todos:
+
+        biblia/elenco/oliver/cara.png ─┐
+        biblia/elenco/teo/cara.png    ─┼─► references/cara.png
+        biblia/elenco/suri/cara.png   ─┘
+
+    En la carpeta de ComfyUI, que es plana, sobrevivía UNA. Así que de las seis
+    vistas que se le pasan a IP-Adapter para fijar una identidad, cinco eran de
+    quien se hubiera copiado el último. El estudio llevaba desde el principio
+    promediando la cara del personaje con las caras de otros dos, y los síntomas
+    eran justo los que se estuvieron persiguiendo por otro lado: el camarero con
+    barba saliendo MUJER en un plano y hombre en el de al lado, las clientas
+    pareciéndose entre ellas, y los «tres señores idénticos con la misma barba»
+    sentados a la misma mesa. Nada de eso era IP-Adapter clonando: era esta
+    función sirviendo la cara equivocada.
+
+    **La caché rancia.** Además solo se recopiaba si el origen era más nuevo, y
+    `git checkout` restaura ficheros con la fecha de ahora pero también los deja
+    más viejos que la copia si el reloj se movió; con el hash en el nombre, un
+    contenido distinto es un fichero distinto y no hay nada que comparar.
+
+    La carpeta acumula copias, y es a propósito: pesan poco y equivocarse de cara
+    cuesta una tarde.
+    """
     entradas = B.DIR_COMFY_ENTRADAS
     entradas.mkdir(parents=True, exist_ok=True)
-    destino = entradas / origen.name
-    if not destino.exists() or destino.stat().st_mtime < origen.stat().st_mtime:
+    firma = hashlib.sha1(origen.read_bytes()).hexdigest()[:8]
+    destino = entradas / f"{origen.parent.name}_{origen.stem}_{firma}{origen.suffix}"
+    if not destino.exists():
         shutil.copy2(origen, destino)
     return destino.name
 

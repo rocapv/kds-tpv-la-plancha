@@ -93,8 +93,15 @@ def _linea_concat(fichero: Path) -> str:
 
 
 def normalizar(clip: Path, destino: Path, segundos: float, rotulo: str = "",
-               marca: str = "") -> Path:
-    """Un plano cualquiera → 1920×1080 a 24 fps, con su duración exacta."""
+               marca: str = "", desde: float = 0.0) -> Path:
+    """Un plano cualquiera → 1920×1080 a 24 fps, con su duración exacta.
+
+    `desde` salta los primeros segundos del clip. Lo usan las pantallas en las
+    que hay que HACER algo antes de que se vea lo que el plano promete —abrir la
+    mesa y pulsar «Cobrar», por ejemplo—: esos clics ocupan el principio del
+    vídeo y lo que interesa queda al final. Sin este salto, el plano del cobro
+    enseñaba el mapa de mesas, que es justo lo que enseña el plano anterior.
+    """
     f = B.FORMATO
     ancho, alto, fps = f["ancho_final"], f["alto_final"], f["fps_final"]
 
@@ -127,7 +134,10 @@ def normalizar(clip: Path, destino: Path, segundos: float, rotulo: str = "",
         ultimo = "mar"
 
     destino.parent.mkdir(parents=True, exist_ok=True)
-    _correr([ffmpeg(), "-y", "-i", str(clip),
+    # El `-ss` va ANTES del `-i`: así ffmpeg busca en el fichero en vez de
+    # decodificarlo entero y tirar lo que sobra.
+    salto = ["-ss", f"{desde:.3f}"] if desde > 0 else []
+    _correr([ffmpeg(), "-y", *salto, "-i", str(clip),
              "-filter_complex", ";".join(filtros), "-map", f"[{ultimo}]",
              "-an", "-c:v", "libx264", "-preset", "medium", "-crf", "18",
              "-pix_fmt", "yuv420p", "-r", str(fps), str(destino)],

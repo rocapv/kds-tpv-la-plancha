@@ -352,6 +352,36 @@ def mapa_lineas(bib: B.Biblia, cam: B.Camara, zbuf: np.ndarray, vista: Vista,
     return Image.fromarray(lienzo, mode="L")
 
 
+# Por debajo de esta cobertura, la cámara está mirando al vacío y ControlNet no
+# tiene nada que sujetar: el modelo se va con la referencia de identidad y
+# devuelve a la persona POSANDO en un sitio que no es la cantina, haga la fuerza
+# que haga. Costó media tarde y una sospecha equivocada —se culpó a
+# `FUERZA_PROFUNDIDAD` y se llegó a subirla, rompiendo todas las demás cámaras—
+# antes de mirar el mapa y ver que estaba negro. Se avisa para no repetirlo.
+#
+# Medido: de las cámaras de interior, ninguna baja del 0,84 salvo `entrada`, que
+# está en 0,44. Las que miran el edificio desde fuera (`sin_techo`) ven el
+# exterior por definición y quedan exentas.
+COBERTURA_MINIMA = 0.55
+
+
+def cobertura_del_mapa(clave: str, destino: Path | None = None) -> float:
+    """Qué parte del encuadre tiene geometría delante, de 0 a 1."""
+    f = (destino or B.DIR_CONTROL) / f"{clave}_profundidad.png"
+    if not f.exists():
+        return 1.0
+    return float((np.asarray(Image.open(f).convert("L")) > 8).mean())
+
+
+def camara_vacia(clave: str, destino: Path | None = None) -> float | None:
+    """La cobertura si la cámara mira demasiado vacío, o None si está bien."""
+    cam = B.CAMARAS.get(clave)
+    if cam is not None and cam.sin_techo:
+        return None
+    c = cobertura_del_mapa(clave, destino)
+    return c if c < COBERTURA_MINIMA else None
+
+
 def generar_controles(bib: B.Biblia | None = None, ancho: int | None = None,
                       alto: int | None = None, destino: Path | None = None) -> dict[str, dict]:
     """Los mapas de las nueve cámaras, de una vez. Devuelve dónde quedó cada cosa."""

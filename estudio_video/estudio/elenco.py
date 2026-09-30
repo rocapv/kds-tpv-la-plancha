@@ -46,6 +46,29 @@ NEGATIVO = ("text, watermark, logo, cartoon, anime, illustration, painting, 3d r
             "mirrored copy, lipstick, makeup, glossy lips, headless, neck only")
 
 
+def _negativo_de(p: B.Personaje) -> str:
+    """El negativo del casting, con el sexo de esta persona y el sitio donde NO está.
+
+    Las dos añadiduras salen del mismo accidente, que conviene no repetir. A Teo
+    se le quitó el mono de trabajo del retrato para que su ropa dejara de ser de
+    rayas —las rayas se comían la sala en cada plano—, y se le puso «camiseta
+    lisa». Con eso desapareció lo único del texto que decía a la vez «hombre» y
+    «esto es un sitio de trabajo», y el casting devolvió una MUJER en ropa
+    interior sobre una cama: si le pides a SD 1.5 un retrato de alguien joven con
+    una camiseta lisa y no dices nada más, te da el tipo de foto que más veces ha
+    visto con esa descripción, que es una sesión de dormitorio.
+
+    Describir bien al personaje no basta, porque en el positivo la palabra
+    compite con las otras setenta. Aquí no compite con nada.
+    """
+    extra = ["underwear, lingerie, bedroom, bed, boudoir, glamour shot, undressed"]
+    if p.sexo == "h":
+        extra.append("woman, female")
+    elif p.sexo == "m":
+        extra.append("man, male")
+    return NEGATIVO + ", " + ", ".join(extra)
+
+
 # ── La hoja de personaje ────────────────────────────────────────────────────
 # Un retrato frontal le da a IP-Adapter un solo punto de vista, y en cuanto la
 # persona gira la cabeza dentro de una escena deja de reconocerla: sale «alguien
@@ -167,7 +190,7 @@ def _grafo_retrato(p: B.Personaje) -> dict:
         "2": {"class_type": "CLIPTextEncode",
               "inputs": {"text": f"{p.retrato}, {ENCUADRE}", "clip": ["1", 1]}},
         "3": {"class_type": "CLIPTextEncode",
-              "inputs": {"text": NEGATIVO, "clip": ["1", 1]}},
+              "inputs": {"text": _negativo_de(p), "clip": ["1", 1]}},
         "4": {"class_type": "EmptyLatentImage",
               "inputs": {"width": LADO, "height": LADO, "batch_size": 1}},
         "5": {"class_type": "KSampler",
@@ -220,7 +243,7 @@ def _grafo_vista(p: B.Personaje, vista: str, encuadre: str, peso: float,
         "5": {"class_type": "CLIPTextEncode",
               "inputs": {"text": f"{p.retrato}, {encuadre}, {ENCUADRE_COMUN}", "clip": ["1", 1]}},
         "6": {"class_type": "CLIPTextEncode",
-              "inputs": {"text": NEGATIVO, "clip": ["1", 1]}},
+              "inputs": {"text": _negativo_de(p), "clip": ["1", 1]}},
         "7": {"class_type": "EmptyLatentImage",
               "inputs": {"width": LADO, "height": LADO, "batch_size": 1}},
         "8": {"class_type": "KSampler",
@@ -258,7 +281,7 @@ def _grafo_giro(p: B.Personaje, grados: int, pose: str, base: Path,
                          "embeds_scaling": "K+V w/ C penalty"}},
         "5": {"class_type": "CLIPTextEncode", "inputs": {"text": positivo, "clip": ["1", 1]}},
         "6": {"class_type": "CLIPTextEncode",
-              "inputs": {"text": NEGATIVO + ", cropped legs, cut off feet", "clip": ["1", 1]}},
+              "inputs": {"text": _negativo_de(p) + ", cropped legs, cut off feet", "clip": ["1", 1]}},
         "7": {"class_type": "EmptyLatentImage",
               "inputs": {"width": LADO_GIRO, "height": int(LADO_GIRO * 1.5), "batch_size": 1}},
     }

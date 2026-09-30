@@ -48,10 +48,43 @@ class Escena:
     rotulo: str = ""
     pantalla: str | None = None       # clave de B.PANTALLAS: se graba de verdad
     pantalla_como: str = "inserto"    # inserto (esquina) | completa
+    # Las burbujas de `tutorial.js` explican la interfaz, pero para explicarla la
+    # OSCURECEN: iluminan un elemento y apagan el resto. Eso es justo lo que se
+    # quiere en un tutorial y justo lo que estorba en una escena de servicio,
+    # donde lo que hay que ver es el dato —la mesa abierta, la comanda entrando,
+    # la factura emitida—, y quien explica es la narración.
+    tutorial: bool = True
+    # Lo que este plano EN CONCRETO no debe tener, además del negativo de estilo.
+    # Existe porque hay fallos que solo aparecen en una acción y que el prompt
+    # positivo no sabe evitar por mucho que se reescriba. El caso que lo motivó:
+    # «mira el móvil» sale una y otra vez con el teléfono pegado a la oreja,
+    # porque en las fotos de las que aprendió el modelo un móvil junto a una cara
+    # es casi siempre una llamada. Decirlo en positivo no funciona —no hay forma
+    # de escribir «no llames»—; en negativo, sí.
+    evitar: str = ""
+    # El número de toma. Cambiar esto reorienta la semilla de ESTE plano y deja
+    # todos los demás intactos.
+    #
+    # Hace falta porque un plano no es determinista en su calidad, solo en su
+    # resultado: con la cara anclada por IP-Adapter y la sala por ControlNet,
+    # todavía hay semillas que salen mal —el camarero con barba salió MUJER en un
+    # plano y bien en el de al lado, mismo personaje, misma cámara, misma ficha—.
+    # Sin esto, la única salida era tocar una constante global y estropear los
+    # nueve planos buenos para arreglar el décimo. Con esto se vuelve a rodar el
+    # plano malo, como en un rodaje de verdad, y lo demás no se entera.
+    toma: int = 0
+    # Qué se HACE en la pantalla mientras se graba (una clave de `P.GESTOS`).
+    #
+    # Sin esto, dos planos del TPV con narraciones distintas —«el estado de cada
+    # mesa» y «el TPV cierra el cobro y emite el ticket»— salían exactamente
+    # iguales: el mapa de mesas, quieto, dos veces. El segundo prometía un paso
+    # que no se veía, y en un vídeo que sirve de ejemplo de cómo funciona el
+    # servicio eso se lee como que ese paso no existe.
+    gesto: str = ""
 
     def semilla(self, base: int, indice: int) -> int:
         """Semilla reproducible: el mismo guion da el mismo vídeo, siempre."""
-        crudo = f"{self.camara}|{self.accion}|{indice}"
+        crudo = f"{self.camara}|{self.accion}|{indice}|{self.toma}"
         return (base + sum(ord(c) * (i + 1) for i, c in enumerate(crudo))) % (2**31)
 
 
@@ -298,6 +331,12 @@ def validar(crudo: dict, bib: B.Biblia, prompt: str) -> Guion:
     gente = list(B.ELENCO)
     pantallas = list(B.PANTALLAS)
 
+    # El tipo se decide antes que las escenas porque manda sobre ellas: en un
+    # tutorial las pantallas salen con las burbujas que explican la interfaz; en
+    # una escena de servicio salen limpias, porque ahí la pantalla no se explica,
+    # se enseña funcionando.
+    tipo = "tutorial" if str(crudo.get("tipo", "")).startswith("tut") else "escena"
+
     escenas: list[Escena] = []
     for i, e in enumerate(crudo.get("escenas", [])[:ESCENAS_MAX]):
         cam = _parecido(str(e.get("camara", "")), camaras)
@@ -351,6 +390,7 @@ def validar(crudo: dict, bib: B.Biblia, prompt: str) -> Guion:
             pantalla=pantalla,
             pantalla_como=("completa" if str(e.get("pantalla_como", "")).startswith("comp")
                            else "inserto"),
+            tutorial=bool(e.get("tutorial", tipo == "tutorial")),
         ))
 
     if not escenas:
@@ -358,7 +398,6 @@ def validar(crudo: dict, bib: B.Biblia, prompt: str) -> Guion:
         escenas = [Escena(**e) for e in _POR_DEFECTO]
 
     titulo = str(crudo.get("titulo") or prompt[:60] or "Sin título").strip()
-    tipo = "tutorial" if str(crudo.get("tipo", "")).startswith("tut") else "escena"
     return Guion(titulo=titulo, tipo=tipo, escenas=escenas, prompt=prompt, avisos=avisos)
 
 
