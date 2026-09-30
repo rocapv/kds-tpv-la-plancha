@@ -140,9 +140,26 @@ teléfono», no como dinero en la caja.
    tamaño real de la mesa, lo que pide cada móvil nace a su nombre. Repartir es opcional.
 2. **Cuenta comensal a comensal** — **hecho** (`21d1e77`, `6365440`): cada uno lo suyo o dividir,
    tickets individuales, `25_pago_comensal.sql`.
-3. **Factura a petición** — en curso (30/09): desde la app o al camarero.
+3. **Factura a petición** — **hecho** (`47f62ca`): `27_factura_a_peticion.sql` y `facturacion.py`,
+   que es donde viven la numeración, el plazo y la regla de **o una por cabeza, o una de todos**.
+   La pide el cliente desde la mesa (`/api/publico/visita/factura`), la de un cobro suelto la
+   emite la sala (`/api/pagos/{id}/factura`) y quien lo deje puesto en su perfil la recibe con el
+   propio pago. 23 pruebas.
 
 Diseño de las tres en `PROPUESTA_GRUPOS_Y_FACTURACION.md`.
+
+### Lo que la factura NO hace, dicho antes de que alguien lo suponga
+
+- **No hay rectificativa.** Si una factura sale mal, hoy no hay manera de anularla desde la
+  aplicación: habría que emitir una rectificativa (serie propia, referencia a la original) y eso
+  no está construido. Mientras no exista, el freno está en su sitio: un cobro con factura ya no se
+  puede borrar, así que nadie deja un número de la serie sin operación detrás.
+- **No se envía por correo.** La factura se ve y se descarga en la pantalla del cliente; lo que la
+  app dice cuando ya no puede emitirla es el teléfono y el correo del local, y el envío lo hace
+  una persona. Mandarla desde el servidor pide un SMTP y un registro de envíos que no hay.
+- **El IVA es uno para toda la carta** (`ajustes.iva_pct`). Con carta de comida y bebida alcohólica
+  al 21 % esto no valdría: el tipo tendría que ir por producto. Queda escrito porque es el cambio
+  que más cuesta descubrir tarde.
 
 ## Planning de mesas (30/09/2026)
 
@@ -162,10 +179,11 @@ sala (internet lo ignora) y `sentados` en `/api/mesas`. 6 pruebas en `test_plann
 
 ## Pendiente de construir
 
-- Al construir la factura (tarea 3), recordar la corrección que trae
-  `PROPUESTA_GRUPOS_Y_FACTURACION.md`: lo de «al cerrar el día ya no se puede emitir» vale como
-  política de caja, pero no como norma absoluta, porque el reglamento de facturación obliga a
-  expedirla cuando el cliente la pide.
+- La corrección que traía `PROPUESTA_GRUPOS_Y_FACTURACION.md` —«al cerrar el día ya no se puede»
+  vale como política de caja, no como norma absoluta— está **aplicada** en `47f62ca`: con la caja
+  cerrada la app deja de emitir pero contesta a quién pedirla, el encargado la sigue emitiendo y
+  el documento lleva las dos fechas. Lo que queda de ahí es la **rectificativa**, que es la única
+  salida cuando una factura ya emitida está mal.
 
 ## Estudio de vídeo (`estudio_video/`) — se lleva en otro chat
 
