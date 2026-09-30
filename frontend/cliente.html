@@ -21,14 +21,19 @@
   <span class="hueco"></span>
   <!-- En un móvil estrecho esta barra no cabe en una fila y baja de línea. Este orden es el que
        hace que al bajar quede algo con sentido: arriba quién eres y en qué mesa, con el día/noche
-       y el puntito de conexión pegados al otro extremo; abajo los tres botones que se pulsan. Los
-       tres van juntos dentro de `.acciones` para que bajen los tres a la vez: sueltos, cabía uno
-       arriba y los otros dos abajo, que es donde la fila parecía rota. Y como este orden es
-       también el orden en que se tabula, lo que se ve y lo que recorre el teclado coinciden. -->
+       pegado al otro extremo; abajo los tres botones que se pulsan. Los tres van juntos dentro de
+       `.acciones` para que bajen los tres a la vez: sueltos, cabía uno arriba y los otros dos
+       abajo, que es donde la fila parecía rota. Y como este orden es también el orden en que se
+       tabula, lo que se ve y lo que recorre el teclado coinciden. -->
   <button id="b-tema" class="tema" title="Cambiar entre día y noche" aria-label="Cambiar tema">
     <span class="astro"></span>
   </button>
-  <span id="conexion" class="conexion"></span>
+  <!-- Aquí había un `#conexion`, el punto verde de las pantallas del personal. En el móvil del
+       cliente estaba MUERTO: quien lo enciende es `conectarWS()`, y esta página no abre ningún
+       socket (se refresca sola cada 60 s, y el seguimiento de la comanda va preguntando). O sea
+       que era un punto gris, fijo y sin significado, en la cabecera de todos los clientes. Un
+       indicador que no puede cambiar de estado no informa de nada: engaña. Si algún día la carta
+       escucha por socket, se vuelve a poner —y entonces sí querrá decir algo. -->
   <div class="acciones">
     <button id="b-unirme" class="sutil" title="Teclear el código de la mesa">Mi mesa</button>
     <button id="b-cuenta" class="sutil">Entrar</button>
