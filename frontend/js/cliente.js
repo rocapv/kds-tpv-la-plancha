@@ -7,6 +7,7 @@ const LLAVE_COMANDA = 'kds_mi_comanda';
 
 let carta = [], catActiva = null, cesta = [], local = {};
 let alergenos = [], destacados = [], destacado = 0;
+let cuentaDeLaMesa = null;         // lo último que dijo el servidor de la cuenta de esta mesa
 try { cesta = JSON.parse(localStorage.getItem(LLAVE_CESTA) || '[]'); } catch { cesta = []; }
 
 const LLAVE_TEMA = 'kds_tema';
@@ -312,14 +313,118 @@ async function verComandaDeLaMesa() {
   const fila = l => `<div class="linea-cesta"><span class="cant">${l.cantidad}</span>
       <span class="nombre">${esc(l.nombre)}</span>
       <span class="importe">${esc(l.estado || '')}</span></div>`;
+  cuentaDeLaMesa = d;
   caja.innerHTML = `
     <div class="cab"><b>Tu mesa ${esc(d.mesa)}</b>
       <span class="tenue">${euro(d.total_cent)}${d.pagado_cent ? ' · pagado ' + euro(d.pagado_cent) : ''}</span></div>
     ${d.lineas.map(fila).join('')}
     ${d.esperando.map(s => `<p class="esperando">⏳ ${s.lineas.map(l => `${l.cantidad}× ${esc(l.nombre)}`).join(', ')}
         <small>${esc(s.motivo_retencion || 'esperando confirmación')}</small></p>`).join('')}
-    ${d.rechazadas.map(r => `<p class="rechazada">✕ No ha podido ser${r.motivo_rechazo ? ': ' + esc(r.motivo_rechazo) : ''}</p>`).join('')}`;
+    ${d.rechazadas.map(r => `<p class="rechazada">✕ No ha podido ser${r.motivo_rechazo ? ': ' + esc(r.motivo_rechazo) : ''}</p>`).join('')}
+    ${botonDePagar(d)}`;
 }
+
+/** El pie de la cuenta: qué se puede pagar desde aquí, si es que queda algo. */
+function botonDePagar(d) {
+  if (d.saldo_cent <= 0) {
+    return d.total_cent ? '<p class="pagada">✓ Cuenta pagada</p>' : '';
+  }
+  // Ya pagó lo suyo pero la mesa sigue debiendo: no se le empuja a pagar otra vez, se le dice en
+  // qué va la mesa. Sin esto, el botón «Pagar» seguiría ahí después de haber pagado y parecería
+  // que el pago no ha entrado.
+  if (d.mio && d.mio.pagado) {
+    return `<p class="tenue">Lo tuyo está pagado. La mesa debe todavía ${euro(d.saldo_cent)}.</p>
+      <div class="fila"><button data-pagar="todo" class="sutil">Pagar lo que queda</button></div>`;
+  }
+  return `<div class="fila acciones-cuenta">
+      <span class="tenue">Queda por pagar ${euro(d.saldo_cent)}</span>
+      <button data-pagar="abrir" class="primario">Pagar</button>
+    </div>`;
+}
+
+// Los botones de la cuenta se rehacen en cada repaso —cada 15 s—, así que el oyente va UNA vez
+// sobre la caja, que no se rehace, y las pulsaciones se atienden por delegación. Enganchar aquí
+// dentro de `verComandaDeLaMesa()` acumularía un juego de oyentes por repaso, que es exactamente
+// el fallo que tuvo el carrusel de «lo que más sale» y acabó pasando quince tarjetas de golpe.
+$('#comanda-mesa')?.addEventListener('click', e => {
+  const b = e.target.closest('[data-pagar]');
+  if (!b) return;
+  if (b.dataset.pagar === 'todo') pagar(true);
+  else abrirPago();
+});
+
+/** Elegir qué se paga: lo propio o la mesa entera. */
+function abrirPago() {
+  const d = cuentaDeLaMesa;
+  if (!d || d.saldo_cent <= 0) return;
+  const mio = d.mio && !d.mio.pagado ? d.mio : null;
+  $('#pg-mesa').textContent = d.mesa || '';
+  $('#pg-saldo').textContent = euro(d.saldo_cent);
+  // «Lo mío» solo se ofrece si hay platos a su nombre: sin eso no hay cifra que poner en el
+  // botón, y un botón de pagar sin importe es una firma en blanco.
+  const caja = $('#pg-opciones');
+  caja.innerHTML = mio
+    ? `<label class="opcion-pago"><input type="radio" name="pg" value="mio" checked>
+         <span><b>Lo mío · ${euro(mio.a_pagar_cent)}</b>
+         <small class="tenue">${euro(mio.suyo_cent)} de lo que pediste${mio.compartido_cent
+            ? ` + ${euro(mio.compartido_cent)} de lo que comparte la mesa` : ''}</small></span></label>
+       <label class="opcion-pago"><input type="radio" name="pg" value="todo">
+         <span><b>Toda la mesa · ${euro(d.saldo_cent)}</b>
+         <small class="tenue">Invitas tú</small></span></label>`
+    : `<p class="tenue">Lo que has tomado no está apuntado a tu nombre, así que no puedo decirte
+         cuánto es «lo tuyo». Puedes pagar la cuenta entera, o pedirle al camarero que la reparta.</p>
+       <label class="opcion-pago"><input type="radio" name="pg" value="todo" checked>
+         <span><b>Toda la mesa · ${euro(d.saldo_cent)}</b></span></label>`;
+  $('#pg-hecho').hidden = true;
+  $('#pg-elegir').hidden = false;
+  $('#d-pagar').showModal();
+}
+
+// La clave del pago se inventa UNA vez, al abrir el diálogo de confirmación, y se reutiliza en
+// cada reintento: es lo que convierte «no me ha llegado la respuesta» en algo inofensivo. Si se
+// inventara por intento, dos toques con mal wifi serían dos cobros. El middleware del servidor
+// (`Idempotency-Key`) devuelve la respuesta del primero y no cobra de nuevo.
+let claveDelPago = null;
+
+async function pagar(todo) {
+  const boton = $('#pg-pagar');
+  if (boton) boton.disabled = true;
+  claveDelPago = claveDelPago || uuidPago();
+  try {
+    const r = await api('/publico/visita/pagar',
+      { method: 'POST', body: { todo: !!todo, con_compartido: true }, clave: claveDelPago });
+    claveDelPago = null;                   // pago cerrado: el siguiente lleva clave nueva
+    $('#pg-elegir').hidden = true;
+    $('#pg-hecho').hidden = false;
+    $('#pg-importe').textContent = euro(r.importe_cent);
+    $('#pg-resto').textContent = r.cuenta_saldada
+      ? 'La cuenta de la mesa queda saldada.'
+      : `La mesa debe todavía ${euro(r.saldo_cent)}.`;
+    if (!$('#d-pagar').open) $('#d-pagar').showModal();
+    aviso('Pagado ' + euro(r.importe_cent), 'ok');
+    verComandaDeLaMesa();
+  } catch (e) {
+    // Un fallo de red NO invalida la clave: puede que el cobro haya entrado y se haya perdido
+    // la respuesta, y reintentar con la misma clave es justo lo que averigua cuál de las dos fue.
+    if (!e.red) claveDelPago = null;
+    aviso(e.message, 'error');
+  } finally {
+    if (boton) boton.disabled = false;
+  }
+}
+
+// `crypto.randomUUID` solo existe en contexto seguro. Producción va por HTTPS y lo tiene, pero el
+// sitio de pruebas de la LAN (:8093) va por HTTP pelado: allí sería `undefined` y el pago se
+// quedaría sin clave —sin red de seguridad— justo donde se prueba. De ahí el respaldo.
+const uuidPago = () => (crypto.randomUUID ? crypto.randomUUID()
+  : 'p-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10));
+
+$('#pg-pagar').onclick = () => {
+  const cual = document.querySelector('input[name="pg"]:checked');
+  pagar(cual && cual.value === 'todo');
+};
+$('#pg-cerrar').onclick = () => { $('#d-pagar').close(); claveDelPago = null; };
+$('#pg-listo').onclick = () => $('#d-pagar').close();
 
 // ── Seguimiento de la propia comanda ──
 const TEXTO = {
@@ -389,10 +494,16 @@ function pintarSeguimiento(s) {
 }
 
 async function refrescarSeguimiento() {
+  // La cuenta de la mesa se vuelve a mirar SIEMPRE, antes del `return` de abajo. Estaba dentro
+  // del seguimiento de la comanda propia, y por eso un móvil que no había pedido nada desde aquí
+  // —al que le apuntó el camarero, o el que solo picó del centro— no se enteraba nunca de nada:
+  // ni de que le habían servido, ni de que otro de la mesa acababa de pagar. Y con el pago desde
+  // la app eso ya no es un detalle estético: dos personas podrían ir a pagar lo mismo porque una
+  // no ve que la otra ya lo hizo.
+  verComandaDeLaMesa();
   if (!comandaSeguida) return;
   try {
     const s = await api('/publico/solicitudes/' + comandaSeguida);
-    verComandaDeLaMesa();
     pintarSeguimiento(s);
     if ($('#d-estado').open) verEstado(comandaSeguida);
   } catch (e) {
@@ -410,20 +521,29 @@ function escucharCanalPublico() {
   abrir();
 }
 
+/** Enciende el repaso periódico si no estaba ya. Uno solo, aunque se pida varias veces. */
+function arrancarRepaso() {
+  escucharCanalPublico();
+  if (!temporizadorSeguimiento) temporizadorSeguimiento = setInterval(refrescarSeguimiento, 15000);
+}
+
 function seguirComanda(id) {
   comandaSeguida = id;
   try { localStorage.setItem(LLAVE_COMANDA, String(id)); } catch {}
   refrescarSeguimiento();
-  escucharCanalPublico();
-  clearInterval(temporizadorSeguimiento);
-  temporizadorSeguimiento = setInterval(refrescarSeguimiento, 15000);
+  arrancarRepaso();
 }
 
 function dejarDeSeguir() {
   comandaSeguida = null;
   try { localStorage.removeItem(LLAVE_COMANDA); } catch {}
-  clearInterval(temporizadorSeguimiento);
   $('#mi-comanda').hidden = true;
+  // El reloj NO se para si seguimos sentados en una mesa: dejar de seguir la comanda propia es
+  // dejar de mirar la tira de pasos, no desentenderse de la cuenta que hay que pagar.
+  if (!(typeof tokenVisita === 'function' && tokenVisita())) {
+    clearInterval(temporizadorSeguimiento);
+    temporizadorSeguimiento = null;
+  }
 }
 
 $('#mc-detalle').onclick = () => comandaSeguida && verEstado(comandaSeguida);
@@ -433,6 +553,13 @@ $('#mc-olvidar').onclick = dejarDeSeguir;
 // Si ya hay una comanda enviada desde este teléfono, se sigue desde el primer momento
 const mia = localStorage.getItem(LLAVE_COMANDA);
 if (mia) seguirComanda(+mia);
+
+// Estar sentado en una mesa ya es motivo para escuchar, aunque este teléfono no haya pedido nada:
+// su cuenta la puede mover el camarero desde el TPV o cualquier otro móvil de la mesa. Antes el
+// canal público y el repaso periódico solo se encendían al enviar una comanda, así que quien no
+// pedía se quedaba mirando una pantalla congelada. El repaso es el de siempre (15 s), por si se
+// pierde un aviso del socket.
+if (typeof tokenVisita === 'function' && tokenVisita()) arrancarRepaso();
 
 cargar();
 setInterval(cargar, 60000);        // por si cambia la carta o se agota algo

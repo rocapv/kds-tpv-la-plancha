@@ -109,6 +109,27 @@ def test_se_puede_apagar_el_pedido_directo(cliente, camarero, encargado, mesa):
         _ajuste(cliente, encargado, "cliente_pedido_directo", "si")
 
 
+def test_el_que_se_aburre_pulsando_se_para(cliente, camarero, encargado, mesa):
+    """El tope por mesa y hora: el crío que pulsa «Pedir» veinte veces no llena la cocina.
+
+    Estaba sin prueba hasta que las de pagar desde el móvil tuvieron que subirlo para trabajar, y
+    una guarda que hay que apagar para probar otra cosa es justo la que conviene tener medida.
+    """
+    _ajuste(cliente, encargado, "cliente_max_pedidos_hora", 1)
+    try:
+        cliente.post("/api/publico/visita/pedido", headers=mesa["cab"],
+                     json={"lineas": [{"producto_id": AGUA, "cantidad": 1}]})
+        d = cliente.post("/api/publico/visita/pedido", headers=mesa["cab"],
+                         json={"lineas": [{"producto_id": AGUA, "cantidad": 1}]}).json()
+        assert d["estado"] == "esperando"
+        assert "una hora" in d["motivo"] and "el máximo son 1" in d["motivo"]
+    finally:
+        _ajuste(cliente, encargado, "cliente_max_pedidos_hora", 12)
+        for s in cliente.get("/api/solicitudes", headers=camarero).json():
+            if s["mesa"] == mesa["mesa"]["nombre"]:
+                cliente.post(f"/api/solicitudes/{s['id']}/rechazar", headers=camarero, json={})
+
+
 def test_una_categoria_puede_exigir_confirmacion(cliente, camarero, encargado, mesa):
     producto = cliente.get("/api/publico/carta").json()
     categoria = next(c["id"] for c in producto if any(p["id"] == AGUA for p in c["productos"]))

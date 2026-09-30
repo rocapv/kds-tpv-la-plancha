@@ -2662,6 +2662,7 @@ def publico_comanda_de_la_mesa(v: dict = Depends(mesaqr.actual)):
                         AND resuelta_en >= NOW() - INTERVAL 30 MINUTE""", (visita["id"],))
     lineas = []
     total = pagado = 0
+    mio = None
     if visita["pedido_id"]:
         p = pedido_completo(visita["pedido_id"])
         total, pagado = p["total_cent"], p.get("pagado_cent", 0)
@@ -2671,8 +2672,22 @@ def publico_comanda_de_la_mesa(v: dict = Depends(mesaqr.actual)):
             lineas.append({"nombre": l["producto"], "cantidad": l["cantidad"],
                            "precio_cent": l["precio_cent"],
                            "estado": PARA_EL_CLIENTE.get(l["estado"], l["estado"])})
+        # Lo que le toca a ESTE teléfono, para que la pantalla pueda ofrecerle pagar lo suyo con
+        # una cifra y no con una promesa. Sale del mismo `resumen()` que usa el TPV, así que el
+        # número que ve el cliente en el móvil y el que ve la camarera en la barra son el mismo.
+        # Si este móvil no tiene comensal, aquí va `null` **a propósito**: sin platos a su nombre
+        # no hay forma honrada de decirle cuánto es «lo suyo», y una pantalla que se lo inventa es
+        # peor que una que reconoce que no lo sabe.
+        yo = comensales.de_dispositivo(visita["pedido_id"], v["token"])
+        if yo:
+            r = cuenta.resumen(visita["pedido_id"])
+            f = next((c for c in r["cuentas"] if c["comensal_id"] == yo["id"]), None)
+            if f:
+                mio = {"comensal_id": yo["id"], "nombre": f["nombre"] or v.get("alias"),
+                       "suyo_cent": f["suyo_cent"], "compartido_cent": f["compartido_cent"],
+                       "a_pagar_cent": f["a_pagar_cent"], "pagado": f["pagado"]}
     return {"mesa": visita["mesa"], "lineas": lineas, "total_cent": total,
-            "pagado_cent": pagado, "saldo_cent": total - pagado,
+            "pagado_cent": pagado, "saldo_cent": total - pagado, "mio": mio,
             "esperando": esperando, "rechazadas": rechazadas}
 
 
@@ -2680,6 +2695,83 @@ def publico_comanda_de_la_mesa(v: dict = Depends(mesaqr.actual)):
 # espera un plato; «en cola» sí.
 PARA_EL_CLIENTE = {"pendiente": "apuntado", "enviada": "en cola", "preparando": "haciéndose",
                    "lista": "listo", "servida": "servido"}
+
+
+# ─────────────── Saldar la cuenta desde el móvil ───────────────
+# La máquina de cobrar ya estaba hecha para el TPV: `cuenta.cobro_de()` decide cuánto le toca a
+# cada uno y `_registrar_pago()` apunta el cobro y cierra el pedido cuando se salda. Aquí NO se
+# vuelve a escribir nada de eso —una segunda copia de la lógica del dinero es como se acaba
+# cobrando dos veces distintas por lo mismo—: solo se le abre la puerta al teléfono del cliente.
+#
+# Tres cosas que esta ruta hace distintas de la del camarero, y las tres a propósito:
+#
+#   · **De quién es el dinero lo dice el token, no el cuerpo.** El comensal se busca por
+#     `comensales.dispositivo`, que es el token de la visita. Si viniera en el cuerpo, un móvil
+#     sentado en la mesa podría pagar —o dejar a medias— lo de otro con solo cambiar un número.
+#   · **El método no se elige.** Lo fija el servidor a «app». Desde un teléfono no se puede pagar
+#     en efectivo, y dejar que el cliente escriba el método es dejarle marcar como cobrado en
+#     metálico algo que nadie ha metido en el cajón.
+#   · **Repetir no cobra dos veces.** El móvil del cliente está en una mesa con mal wifi y va a
+#     reintentar: el middleware de idempotencia ya guarda la respuesta por `Idempotency-Key`, así
+#     que basta con que el teléfono mande la misma clave en los reintentos de un mismo pago.
+class PagoDesdeLaApp(BaseModel):
+    todo: bool = False                 # pagar la cuenta entera de la mesa, no solo lo propio
+    con_compartido: bool = True        # llevarse su parte del pan y de la botella
+
+
+@app.post("/api/publico/visita/pagar", status_code=201)
+async def publico_pagar_lo_mio(d: PagoDesdeLaApp, v: dict = Depends(mesaqr.actual)):
+    """El cliente salda su parte —o la mesa entera— desde su propio teléfono."""
+    visita = mesaqr.estado(v["visita_id"])
+    pid = visita["pedido_id"]
+    if not pid:
+        raise HTTPException(409, "Todavía no hay nada que pagar en esta mesa")
+
+    p = pedido_completo(pid)
+    # Aquí NO se llama a `exigir_abierto()` aunque haga esta misma comprobación: lo que dice es
+    # «El pedido está cobrado», que es la jerga del TPV. Quien lee esto es un cliente con el
+    # teléfono en la mano, y lo que necesita saber es que su cuenta ya está saldada.
+    if p["estado"] != "abierto":
+        raise HTTPException(409, "Esta cuenta ya está pagada" if p["estado"] == "cobrado"
+                            else "Esta cuenta ya no está abierta; avisa a un camarero")
+    # Una línea «pendiente» es algo que el camarero ha apuntado en el TPV y aún no ha mandado a
+    # cocina. Cobrar con eso a medias deja la cuenta corta y al cliente convencido de que ya pagó.
+    # El mensaje va en palabras de cliente: él no sabe qué es una línea pendiente.
+    if any(l["estado"] == "pendiente" for l in p["lineas"]):
+        raise HTTPException(409, "Hay algo sin confirmar todavía en tu mesa; avisa a un camarero")
+    # Mesa abierta y sin nada apuntado: pasa cuando el camarero abre la mesa antes de tomar nota y
+    # alguien toca «Pagar» mientras espera. El saldo es cero, pero decirle «ya está pagada» sería
+    # mentirle —no ha pagado nada—, así que se le dice lo mismo que si no hubiera pedido.
+    if p["total_cent"] <= 0:
+        raise HTTPException(409, "Todavía no hay nada que pagar en esta mesa")
+    if p["pendiente_cent"] <= 0:
+        raise HTTPException(409, "Esta cuenta ya está pagada")
+
+    if d.todo:
+        # Paga la mesa entera: el importe es lo que falte y se marcan todas las líneas que
+        # quedaran sueltas, igual que el «cobrar todo» del TPV.
+        importe = p["pendiente_cent"]
+        lineas = [l["id"] for l in p["lineas"] if l["estado"] != "anulada" and not l["pago_id"]]
+        concepto, cid = "Pagado desde la app", None
+    else:
+        # Que este teléfono no tenga comensal significa que nunca pidió desde aquí: o se lo apuntó
+        # el camarero, o solo ha picado de lo del centro. En ambos casos es una persona sentada de
+        # verdad en esa mesa, así que se le da sitio y `cuenta.py` le asigna su parte de lo
+        # compartido —su propio `resumen()` lo dice: cuentan también «los que no pidieron nada
+        # propio pero están sentados». Se crea DESPUÉS de comprobar que hay algo pendiente, para
+        # no dejarle al camarero una silla fantasma en la rejilla si no había nada que cobrar.
+        mio = comensales.asegurar_para_dispositivo(pid, v["token"], v.get("alias"))
+        cid = mio["id"]
+        plan = cuenta.cobro_de(pid, cid, d.con_compartido)
+        importe, lineas, concepto = plan["importe_cent"], plan["lineas"], plan["concepto"]
+
+    pago_id = _registrar_pago(pid, "app", importe, lineas, concepto, None, comensal_id=cid)
+    await hub.emitir("mesas")                  # la sala lo ve en el momento
+    await hub.emitir_publico("cuenta")         # y los demás móviles de la mesa también
+    saldo = cuenta.resumen(pid)
+    return {"pago_id": pago_id, "importe_cent": importe, "concepto": concepto,
+            "mesa": visita["mesa"], "saldo_cent": saldo["pendiente_cent"],
+            "cuenta_saldada": saldo["pendiente_cent"] <= 0}
 
 
 # ─────────────── Solicitudes (sala) ───────────────

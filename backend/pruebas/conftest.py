@@ -83,13 +83,27 @@ def encargado(cliente):
     return _token(cliente, "9999")
 
 
+_turno = 0
+
+
 def mesa_libre(cliente, camarero):
-    """Una mesa sin pedido abierto. Si no queda ninguna, el mensaje lo dice claro:
-    es señal de que alguna prueba se ha dejado un pedido abierto."""
+    """Una mesa sin pedido abierto, y **no siempre la misma**.
+
+    Si no queda ninguna, el mensaje lo dice claro: es señal de que alguna prueba se ha dejado un
+    pedido abierto.
+
+    Devolver siempre la primera libre parecía inofensivo, porque cada prueba deja la mesa como la
+    encontró. Pero los topes del pedido desde el móvil se cuentan **por mesa y por hora**: con
+    quince pruebas seguidas sentadas en la S1, a la decimotercera comanda salta el tope y falla una
+    prueba que no iba de eso. Repartirlas se parece más a un servicio de verdad —trece mesas, gente
+    en varias— y el tope se sigue midiendo donde le toca, en `test_pedido_cliente`.
+    """
+    global _turno
     mesas = cliente.get("/api/mesas", headers=camarero).json()
     libres = [m for m in mesas if not m["pedido_id"]]
     assert libres, "no quedan mesas libres: alguna prueba no ha cerrado su pedido"
-    return libres[0]
+    _turno += 1
+    return libres[_turno % len(libres)]
 
 
 @pytest.fixture

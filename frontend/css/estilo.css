@@ -1018,6 +1018,23 @@ body.pantalla-mesa { display: grid; place-items: center; min-height: 100vh; text
 .comanda-mesa .esperando { color: var(--aviso); margin: .4rem 0 0; }
 .comanda-mesa .esperando small { display: block; color: var(--tenue); }
 .comanda-mesa .rechazada { color: var(--mal); margin: .4rem 0 0; }
+/* El pie de la cuenta: lo que falta y el botón de pagar. Se separa con una línea porque es la
+   única parte de esta caja que cobra dinero, y conviene que no parezca otra fila de platos. */
+.comanda-mesa .acciones-cuenta { margin-top: .6rem; padding-top: .6rem; border-top: 1px solid var(--borde);
+  justify-content: space-between; align-items: center; gap: .8rem; }
+.comanda-mesa .pagada { margin: .6rem 0 0; padding-top: .6rem; border-top: 1px solid var(--borde);
+  color: var(--ok-tinta, var(--ok)); font-weight: 600; }
+
+/* Elegir cuánto se paga. Cada opción es una etiqueta entera y clicable: en un móvil, acertarle al
+   círculo del radio con el pulgar es pedir demasiado, y el importe tiene que entrar en el mismo
+   gesto que la elección. Alto mínimo de 48 px por lo mismo. */
+.opcion-pago { display: flex; align-items: flex-start; gap: .7rem; min-height: 48px;
+  padding: .7rem .8rem; margin-bottom: .5rem; border: 1px solid var(--borde);
+  border-radius: var(--r); background: var(--panel2); cursor: pointer; }
+.opcion-pago:has(input:checked) { border-color: var(--acento); background: var(--panel3); }
+.opcion-pago input { margin-top: .25rem; width: 20px; height: 20px; flex: 0 0 auto; }
+.opcion-pago span { display: block; }
+.opcion-pago small { display: block; margin-top: .15rem; }
 
 /* Comandas del cliente paradas por el filtro: el motivo, y la cantidad corregible. */
 .solicitud .motivo { color: var(--aviso); font-weight: 600; margin: .2rem 0; }

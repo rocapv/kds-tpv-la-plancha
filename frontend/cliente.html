@@ -202,6 +202,26 @@
   <div class="fila"><button id="e-cerrar" class="primario">Cerrar</button></div>
 </dialog>
 
+<!-- Saldar la cuenta desde el móvil. No hay que elegir método de pago: desde un teléfono no se
+     paga en efectivo, y el servidor apunta el cobro como «app» sin preguntar. Lo único que se
+     elige es CUÁNTO: lo propio o la mesa entera. -->
+<dialog id="d-pagar">
+  <h3>Pagar · mesa <span id="pg-mesa"></span></h3>
+  <div id="pg-elegir">
+    <p class="tenue">Queda por pagar <b id="pg-saldo">0,00 €</b></p>
+    <div id="pg-opciones"></div>
+    <div class="fila">
+      <button id="pg-cerrar">Ahora no</button>
+      <button id="pg-pagar" class="primario">Pagar</button>
+    </div>
+  </div>
+  <div id="pg-hecho" hidden>
+    <p class="estado-grande aceptada">✓ Pagado <span id="pg-importe"></span></p>
+    <p class="tenue" id="pg-resto"></p>
+    <div class="fila"><button id="pg-listo" class="primario">Listo</button></div>
+  </div>
+</dialog>
+
 <script src="/js/comun.js?v=__V__"></script>
 <script src="/js/cuenta.js?v=__V__"></script>
 <script src="/js/cliente_mesa.js?v=__V__"></script>
