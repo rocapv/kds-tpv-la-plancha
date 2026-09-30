@@ -389,6 +389,45 @@ def test_la_pantalla_no_ofrece_un_boton_que_va_a_fallar(cliente, mesa):
     assert not final["puedo_pedirla"] and final["alcance_sugerido"] is None
 
 
+def test_cuando_no_se_puede_dice_cual_de_los_dos_noes_es(cliente, mesa, contacto_del_local):
+    """Hay dos «noes» y la pantalla no puede confundirlos.
+
+    Uno es el del plazo —la app no, el local sí, y ahí va su teléfono—. El otro es el de la regla
+    de «una por cabeza o una de todos», donde el teléfono sobra: el local tampoco va a hacerle una
+    segunda factura de lo mismo. Sin `al_local`, la pantalla enseñaba «Llama al…» en los dos.
+    """
+    bruno = _segundo_telefono(cliente, mesa)
+    carla = _segundo_telefono(cliente, mesa, "Carla")     # mira la cuenta y no paga nunca
+    _pide(cliente, mesa["cab"], HAMBURGUESA)
+    _pide(cliente, bruno, AGUA)
+
+    # Carla no ha pagado y la cuenta sigue abierta: ni se puede, ni es cosa del local.
+    ve = cliente.get("/api/publico/visita/factura", headers=carla).json()
+    assert not ve["puedo_pedirla"] and ve["al_local"] is False
+    assert "no has pagado" in ve["motivo"]
+    assert contacto_del_local["telefono"] not in ve["motivo"]
+
+    # Ana paga lo suyo y saca su factura; Bruno salda el resto. Con una factura por cabeza ya
+    # emitida, la de la cuenta entera que querría Carla no se puede hacer: ni aquí ni llamando.
+    _paga(cliente, mesa["cab"], con_compartido=False)
+    assert _factura(cliente, mesa["cab"], alcance="mio").status_code == 201
+    _paga(cliente, bruno, con_compartido=True)
+    ve = cliente.get("/api/publico/visita/factura", headers=carla).json()
+    assert ve["cuenta_saldada"] and not ve["puedo_pedirla"] and ve["al_local"] is False
+    assert ve["por_cabeza"] == 1 and "de quien pagó su parte" in ve["motivo"]
+    assert "la cuenta entera" in ve["motivo"]
+
+
+def test_con_la_caja_cerrada_el_no_si_lleva_el_telefono(cliente, mesa, caja_cerrada,
+                                                        contacto_del_local):
+    """El otro «no»: aquí el local sí puede, y el motivo va con a quién llamar."""
+    _pide(cliente, mesa["cab"], AGUA)
+    _paga(cliente, mesa["cab"], todo=True)
+    ve = cliente.get("/api/publico/visita/factura", headers=mesa["cab"]).json()
+    assert not ve["puedo_pedirla"] and ve["al_local"] is True
+    assert "caja" in ve["motivo"] and contacto_del_local["telefono"] in ve["plazo"]["como_pedirla"]
+
+
 def test_sin_mesa_no_se_pide_factura(cliente):
     assert cliente.post("/api/publico/visita/factura", json={"alcance": "mesa"}).status_code == 401
     assert cliente.get("/api/publico/visita/factura").status_code == 401

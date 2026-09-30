@@ -511,16 +511,17 @@ async function abrirFactura(pedirYa = false) {
   const ya = e.mia || e.de_la_mesa;
   if (ya) return pintarFactura(ya);
   if (!e.puedo_pedirla) {
-    // Aquí es donde NO se dice «ya no se puede». Se dice a quién pedirla, porque el local está
+    // Aquí es donde NO se dice «ya no se puede»: se dice a quién pedirla, porque el local está
     // obligado a expedirla cuando el cliente la pide, aunque la caja del día ya esté cerrada.
+    // Pero el teléfono solo cuando toca (`al_local`). Si lo que impide emitirla es que en la mesa
+    // ya hay facturas por cabeza, enseñar «llama al restaurante» manda a alguien a reclamar algo
+    // que tampoco le van a hacer; el motivo lo escribe el servidor, que es quien aplica la regla.
     const plazo = e.plazo || {};
     $('#fa-cuerpo').innerHTML = `
-      <p>${esc(plazo.motivo || 'Desde la app no se puede emitir ahora')}.</p>
-      ${plazo.como_pedirla ? `<p class="estado-grande">${esc(plazo.como_pedirla)}</p>
+      <p>${esc(e.motivo || plazo.motivo || 'Ahora mismo no se puede emitir desde la app')}.</p>
+      ${e.al_local && plazo.como_pedirla ? `<p class="estado-grande">${esc(plazo.como_pedirla)}</p>
         <p class="tenue">Están obligados a hacértela si la pides: el plazo de facturación no
-          termina cuando cierra la caja.</p>` : ''}
-      ${e.por_cabeza ? `<p class="tenue">En esta mesa ya hay ${e.por_cabeza} factura(s) de quien
-        pagó su parte, así que no puede hacerse además una de la cuenta entera.</p>` : ''}`;
+          termina cuando cierra la caja.</p>` : ''}`;
     return;
   }
 

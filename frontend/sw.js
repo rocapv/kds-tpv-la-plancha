@@ -14,7 +14,10 @@
 // v10: `cliente.html` estrena el diálogo de la factura. El HTML del cliente se sirve de la copia
 // primero, así que sin cambiar de versión la primera carga tras el despliegue seguiría siendo la
 // de antes —sin ese diálogo— y el botón de la factura no encontraría dónde pintarse.
-const VERSION = 'kds-tpv-v10';
+// v11: la casilla «Quiero factura» y el texto de cuándo NO se puede emitir. Cambian `estilo.css`
+// y `cliente.js`, que están los dos en la copia: sin subir la versión, el móvil que ya entró
+// seguiría viendo el cuadrado blanco y el «llama al restaurante» que no tocaba.
+const VERSION = 'kds-tpv-v11';
 const CONCHA = [
   '/tpv.html',
   '/css/estilo.css',

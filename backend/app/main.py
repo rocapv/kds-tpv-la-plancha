@@ -2962,6 +2962,7 @@ def publico_ver_factura(v: dict = Depends(mesaqr.actual)):
     if not pid:
         return {"mia": None, "de_la_mesa": None, "puedo_pedirla": False,
                 "alcance_sugerido": None, "cuenta_saldada": False, "por_cabeza": 0,
+                "motivo": "En esta mesa todavía no hay nada que facturar", "al_local": False,
                 "plazo": facturacion.plazo(None)}
     mia, pague = None, False
     yo = comensales.de_dispositivo(pid, v["token"])
@@ -2982,10 +2983,27 @@ def publico_ver_factura(v: dict = Depends(mesaqr.actual)):
     puedo_mesa = cobrado and not de_la_mesa and not por_cabeza
     en_plazo = bool(facturacion.app_activa() and plazo["abierto"])
     alcance = "mio" if puedo_mio else ("mesa" if puedo_mesa else None)
+    # Y **por qué** no se puede, dicho por quien lo sabe. `al_local` separa dos «noes» que no se
+    # parecen en nada: el del plazo -la app no, el local sí, y ahí va su teléfono- y el de la regla
+    # de «una por cabeza o una de todos», donde enseñar el teléfono sería mandar a alguien a
+    # reclamar algo que tampoco le van a hacer.
+    al_local, motivo = False, None
+    if alcance and not en_plazo:
+        al_local, motivo = True, plazo["motivo"] or "Desde la app no se puede emitir ahora"
+    elif not alcance and not (mia or de_la_mesa):
+        if not pague and not cobrado:
+            motivo = ("Todavía no has pagado nada. La factura se hace de lo que pagues tú, o de "
+                      "la cuenta entera cuando esté saldada")
+        elif por_cabeza:
+            motivo = (f"En esta mesa ya hay {len(por_cabeza)} factura(s) de quien pagó su parte, "
+                      "así que no puede hacerse además una de la cuenta entera")
+        else:
+            motivo = "Ahora mismo no hay nada que facturar en esta mesa"
     return {"mia": mia, "de_la_mesa": facturacion.publica(de_la_mesa) if de_la_mesa else None,
             "cuenta_saldada": cobrado, "plazo": plazo,
             "puedo_pedirla": bool(en_plazo and alcance),
             "alcance_sugerido": alcance if en_plazo else None,
+            "motivo": motivo, "al_local": al_local,
             "por_cabeza": len(por_cabeza)}
 
 

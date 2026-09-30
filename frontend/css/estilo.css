@@ -505,7 +505,11 @@ body.cliente[data-tema="claro"] {
 .linea-cesta .importe { font-variant-numeric: tabular-nums; }
 .total-cesta { justify-content: space-between; font-size: 1.2rem; font-weight: 800; }
 .campo { display: block; margin: .7rem 0; color: var(--tenue); font-size: .9rem; }
-.campo input, .campo select { display: block; width: 100%; margin-top: .25rem; min-height: 44px; font-size: 1rem; }
+/* La etiqueta a lo ancho vale para escribir dentro; una casilla estirada al 100 % y 44 px de alto
+   es un cuadrado blanco enorme que nadie reconoce como casilla. Se excluye a mano porque
+   `input[type="checkbox"]` (§2) y `.campo input` pesan lo mismo y gana el que va después. */
+.campo input:not([type="checkbox"]), .campo select { display: block; width: 100%; margin-top: .25rem; min-height: 44px; font-size: 1rem; }
+.campo:has(> input[type="checkbox"]) { display: inline-flex; align-items: center; gap: .5rem; cursor: pointer; }
 .estado-grande { font-size: 1.15rem; font-weight: 700; padding: .8rem; border-radius: var(--r); background: var(--panel2); }
 .estado-grande.aceptada { background: var(--ok); color: var(--ok-texto); }
 .estado-grande.rechazada { background: var(--mal); color: var(--mal-texto); }
@@ -984,6 +988,7 @@ button.sutil:active, .simulacion button:active, .faccion:active,
 /* Cuenta del cliente: el botón cambia de cara cuando hay sesión. */
 .sutil.dentro { border-color: var(--ok); color: var(--ok); }
 #d-micuenta .campo { display: block; margin: .5rem 0; }
+#d-micuenta .campo:has(> input[type=checkbox]) { display: flex; align-items: center; gap: .5rem; }
 #d-micuenta input[type=text], #d-micuenta input[type=email], #d-micuenta input[type=password],
 #d-micuenta input:not([type=checkbox]) { width: 100%; }
 #d-micuenta details.campo summary { cursor: pointer; color: var(--tenue); margin: .6rem 0; }
