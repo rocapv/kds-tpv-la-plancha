@@ -19,6 +19,7 @@
 <nav class="pestanas">
   <button data-vista="lista" class="activa">Empleados</button>
   <button data-vista="mapa">Mapa de la cantina</button>
+  <button data-vista="intentos">Intentos de entrada</button>
 </nav>
 
 <main class="informe" id="v-lista">
@@ -38,6 +39,24 @@
   entra y qué puede hacer. Quien quede fuera de las cajas se queda <b>fuera de servicio</b> y solo
   ve el menú. La gestión (carta, usuarios, ajustes, informes y arqueo) va por <b>escalafón</b>
   (encargado para arriba), se ponga donde se ponga.</p>
+</main>
+
+<main class="informe" id="v-intentos" hidden>
+  <div class="fila">
+    <label>Mirar las últimas <select id="i-horas">
+      <option value="1">hora</option><option value="24" selected>24 horas</option>
+      <option value="168">7 días</option><option value="720">30 días</option></select></label>
+    <button id="i-recargar">Recargar</button>
+  </div>
+  <div id="i-resumen" class="resumen"></div>
+  <h3>Por dirección</h3>
+  <div class="caja"><table id="i-ips"></table></div>
+  <h3>Últimos fallos</h3>
+  <div class="caja"><table id="i-recientes"></table></div>
+  <p class="tenue">Cada entrada del personal, buena o mala, queda apuntada con la dirección desde
+  la que se hizo. <b>Lo que se tecleó no se guarda nunca</b>: un PIN fallido suele estar a una cifra
+  del bueno. Si una dirección de <b>internet</b> falla muchas veces y luego entra alguien desde
+  ella, conviene preguntarle a esa persona si fue ella; si no, cámbiale el PIN.</p>
 </main>
 
 <dialog id="d-user">
@@ -166,26 +185,69 @@ $('#u-ok').onclick = async () => {
   } catch (e) { aviso(e.message, 'error'); }
 };
 
-// ?vista=mapa abre directamente el plano (comodo para dejarlo puesto en una pantalla)
-function verPestana(cual) {
-  document.querySelectorAll('.pestanas button').forEach(o => o.classList.toggle('activa', o.dataset.vista === cual));
-  $('#v-lista').hidden = cual !== 'lista';
-  $('#v-mapa').hidden = cual !== 'mapa';
-  if (cual === 'mapa') cargarMapa();
+// ─── Intentos de entrada: quién ha probado a entrar como personal, y desde dónde ───
+const ORIGEN = { local: 'red del local', internet: 'internet', desconocido: '¿?' };
+const fechaHora = f => f ? new Date(f).toLocaleString('es-ES', { day: '2-digit', month: '2-digit',
+                                    hour: '2-digit', minute: '2-digit' }) : '';
+const origen = o => `<span class="estado origen-${esc(o)}">${esc(ORIGEN[o] || o)}</span>`;
+
+async function cargarIntentos() {
+  let d;
+  try { d = await api('/seguridad/intentos?horas=' + $('#i-horas').value); }
+  catch (e) { return aviso(e.message, 'error'); }
+  $('#i-resumen').innerHTML = [
+    `<span class="chip"><b>${d.fallos}</b> fallos</span>`,
+    `<span class="chip"><b>${d.ips_con_fallos}</b> direcciones distintas</span>`,
+    `<span class="chip ${d.de_internet ? 'chip-mal' : ''}"><b>${d.de_internet}</b> fallos desde internet</span>`,
+    `<span class="chip"><b>${d.aciertos}</b> entradas buenas</span>`,
+    `<span class="chip tenue">se guarda ${d.dias_de_registro} días</span>`].join('');
+  $('#i-ips').innerHTML = d.por_ip.length
+    ? `<tr><th>Dirección</th><th>Desde</th><th>Fallos</th><th>Con PIN</th><th>Con clave</th>
+         <th>Último fallo</th><th>Entró después</th></tr>` +
+      d.por_ip.map(f => `<tr>
+        <td><code>${esc(f.ip || '—')}</code></td>
+        <td>${origen(f.origen)}</td>
+        <td class="num"><b>${f.fallos}</b></td>
+        <td class="num">${f.fallos_pin}</td>
+        <td class="num">${f.fallos_contrasena}</td>
+        <td>${fechaHora(f.ultimo_fallo)}</td>
+        <td>${f.entraron_despues.length
+              ? `<span class="estado ${f.origen === 'internet' ? 'origen-internet' : 'preparando'}">${esc(f.entraron_despues.join(', '))}</span>`
+              : '<span class="tenue">nadie</span>'}</td></tr>`).join('')
+    : '<tr><td class="tenue">Ningún fallo en este tiempo.</td></tr>';
+  $('#i-recientes').innerHTML = d.recientes.length
+    ? `<tr><th>Cuándo</th><th>Dirección</th><th>Desde</th><th>Cómo</th><th>Como quién</th><th>Navegador</th></tr>` +
+      d.recientes.map(r => `<tr>
+        <td>${fechaHora(r.cuando)}</td>
+        <td><code>${esc(r.ip || '—')}</code></td>
+        <td>${origen(r.origen)}</td>
+        <td>${r.via === 'pin' ? 'PIN' : 'número y clave'}</td>
+        <td>${r.via === 'pin' ? '<span class="tenue">—</span>'
+              : r.nombre ? `${esc(r.nombre)} <small class="tenue">(n.º ${String(r.empleado_id).padStart(4, '0')})</small>`
+              : `<span class="tenue">n.º ${esc(r.empleado_id)}, no existe</span>`}</td>
+        <td><small class="tenue">${esc((r.agente || '').slice(0, 60))}</small></td></tr>`).join('')
+    : '<tr><td class="tenue">Sin fallos.</td></tr>';
 }
-document.querySelectorAll('.pestanas button').forEach(b => b.onclick = () => {
-  document.querySelectorAll('.pestanas button').forEach(o => o.classList.toggle('activa', o === b));
-  $('#v-lista').hidden = b.dataset.vista !== 'lista';
-  $('#v-mapa').hidden = b.dataset.vista !== 'mapa';
-  if (b.dataset.vista === 'mapa') cargarMapa();
-});
+$('#i-horas').onchange = cargarIntentos;
+$('#i-recargar').onclick = cargarIntentos;
+
+// ?vista=mapa abre directamente el plano (comodo para dejarlo puesto en una pantalla)
+const VISTAS = { lista: null, mapa: () => cargarMapa(), intentos: () => cargarIntentos() };
+function verPestana(cual) {
+  if (!(cual in VISTAS)) cual = 'lista';
+  document.querySelectorAll('.pestanas button').forEach(o => o.classList.toggle('activa', o.dataset.vista === cual));
+  for (const v of Object.keys(VISTAS)) $('#v-' + v).hidden = v !== cual;
+  VISTAS[cual]?.();
+}
+document.querySelectorAll('.pestanas button').forEach(b => b.onclick = () => verPestana(b.dataset.vista));
 
 exigirSesion(['encargado']).then(async (yo) => {
   YO = yo;
   await cargarEscalafones();
   conectarWS(ev => { if (ev.tipo === 'plantilla' && !$('#v-mapa').hidden) cargarMapa(); });
   cargar();
-  if (new URLSearchParams(location.search).get('vista') === 'mapa') verPestana('mapa');
+  const vista = new URLSearchParams(location.search).get('vista');
+  if (vista) verPestana(vista);
 });
 </script>
 </body>

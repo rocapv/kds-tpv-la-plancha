@@ -19,6 +19,7 @@ from .red import es_de_la_lan
 from .auth import (abrir_sesion, cerrar_sesion, cifrar_clave, exige, exige_nivel,
                    usuario, usuario_de_token)
 from . import almacen, clientes, comensales, cuenta, mesaqr, pedido_cliente, reservas
+from . import intentos
 from .db import conn, q, q1
 from .simulacion import simulacion
 
@@ -328,13 +329,31 @@ def salud():
 
 
 @app.post("/api/login")
-def login(d: Login, user_agent: str | None = Header(None)):
-    """Único sitio donde viajan el PIN o la contraseña. Devuelve el token de la sesión."""
-    if d.contrasena and d.empleado_id:
-        return abrir_sesion(None, user_agent, d.empleado_id, d.contrasena)
-    if not d.pin:
+def login(d: Login, request: Request, user_agent: str | None = Header(None)):
+    """Único sitio donde viajan el PIN o la contraseña. Devuelve el token de la sesión.
+
+    Cada intento, bueno o malo, queda en `empleado_intentos` con su IP (ver `intentos.py`).
+    """
+    ip = request.client.host if request.client else None
+    con_clave = bool(d.contrasena and d.empleado_id)
+    if not con_clave and not d.pin:
         raise HTTPException(422, "Hace falta el PIN, o el número de empleado con su contraseña")
-    return abrir_sesion(d.pin, user_agent)
+    via = "contrasena" if con_clave else "pin"
+    try:
+        s = (abrir_sesion(None, user_agent, d.empleado_id, d.contrasena) if con_clave
+             else abrir_sesion(d.pin, user_agent))
+    except HTTPException as e:
+        if e.status_code == 401:
+            intentos.apuntar(ip, via, False, d.empleado_id if con_clave else None, user_agent)
+        raise
+    intentos.apuntar(ip, via, True, s["id"], user_agent)
+    return s
+
+
+@app.get("/api/seguridad/intentos")
+def ver_intentos(horas: int = 24, u: dict = Depends(exige("encargado"))):
+    """Quién ha intentado entrar como personal, desde dónde y cuántas veces."""
+    return intentos.resumen(horas)
 
 
 @app.post("/api/logout")

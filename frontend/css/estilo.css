@@ -171,6 +171,10 @@ td input { min-height: 40px; }
 .estado.lista      { background: var(--ok-suave); color: var(--ok-tinta); }
 .estado.servida    { color: var(--tenue); }
 .estado.anulada    { text-decoration: line-through; color: var(--apagado); }
+/* Registro de entradas del personal (usuarios.html → Intentos de entrada) */
+.estado.origen-local    { background: var(--ok-suave); color: var(--ok-tinta); }
+.estado.origen-internet { background: var(--mal-suave); color: var(--mal-tinta); }
+.resumen .chip.chip-mal { border-color: var(--mal); background: var(--mal-suave); color: var(--mal-tinta); }
 
 /* Alérgenos: obligatorios por normativa, mismo color en carta, TPV y cocina */
 .alerg { color: var(--alerg); font-weight: 600; font-size: .85rem; }
