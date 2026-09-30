@@ -117,36 +117,72 @@ function chipsDe(p) {
   return p.alergenos ? `<small class="alerg">⚠ ${esc(p.alergenos)}</small>` : '';
 }
 
-// Destacados: una pila de tarjetas que se pasa con el dedo. La de arriba se puede pedir.
+// Destacados: una pila de tarjetas que se pasa con el dedo. La tarjeta es un escaparate —foto y
+// nombre, nada más— y al pulsarla se abre la ficha con el precio, los alérgenos y el botón de
+// pedir. Antes cada tarjeta llevaba su precio y su «Añadir» encima, que es mucho cartel para algo
+// que se pasa con el dedo.
 function pintarDestacados() {
   const caja = $('#destacados');
   if (!destacados.length) { caja.hidden = true; return; }
   caja.hidden = false;
   $('#pila').innerHTML = destacados.map((d, i) => `
-    <article class="tarjeta" data-i="${i}" style="--color:${esc(d.color || '#e67e22')}">
-      ${d.foto ? `<img src="${esc(d.foto)}" alt="" loading="lazy">` : '<div class="sin-foto"></div>'}
-      <div class="texto">
-        <small>${esc(d.categoria)}</small>
-        <b>${esc(d.nombre)}</b>
-        <span class="precio">${euro(d.precio_cent)}</span>
-      </div>
-      <button class="pedir" data-pedir="${d.id}">Añadir</button>
-    </article>`).join('');
+    <button type="button" class="tarjeta" data-ficha="${d.id}" data-i="${i}"
+            style="--color:${esc(d.color || '#e67e22')}"
+            aria-label="Ver ${esc(d.nombre)}">
+      ${fotoDe(d)}
+      <b>${esc(d.nombre)}</b>
+    </button>`).join('');
   colocarPila();
-  $('#pila').querySelectorAll('[data-pedir]').forEach(b => b.onclick = e => {
-    e.stopPropagation();
-    anadir(+b.dataset.pedir, b);
-  });
-  // gesto: arrastrar la de arriba pasa a la siguiente
-  let x0 = null;
-  $('#pila').addEventListener('pointerdown', e => x0 = e.clientX);
+
+  // El gesto de pasar tarjeta y el de abrir la ficha salen del mismo dedo: sin esto, cada barrido
+  // terminaba abriendo la ficha de la tarjeta que acabas de apartar.
+  let x0 = null, arrastrado = false;
+  $('#pila').addEventListener('pointerdown', e => { x0 = e.clientX; arrastrado = false; });
   $('#pila').addEventListener('pointerup', e => {
     if (x0 === null) return;
     const dx = e.clientX - x0;
     x0 = null;
+    arrastrado = Math.abs(dx) > 10;
     if (Math.abs(dx) > 40) girar(dx < 0 ? 1 : -1);
   });
+  $('#pila').querySelectorAll('[data-ficha]').forEach(t => t.onclick = () => {
+    if (!arrastrado) verFicha(+t.dataset.ficha);
+  });
 }
+
+// Hoy ningún producto del local tiene foto subida, y una tarjeta que solo enseña imagen y nombre
+// sin imagen no enseña nada. Pero la imagen ya existía: el servidor dibuja cada plato en
+// `/api/productos/{id}/foto.svg` —un cuenco con formas, estable por nombre— y las pantallas del
+// personal llevan tiempo usándolo. Lo que faltaba era que la carta pública lo sirviera, y eso se
+// arregla en el backend, no aquí. Así que esto se limita a preferir la foto de verdad y caer en
+// la dibujada; la inicial sobre el color de la categoría queda de último recurso, para cuando el
+// servidor no manda ni una cosa ni la otra.
+function fotoDe(d) {
+  const src = d.foto_url || d.foto;
+  if (src) return `<img src="${esc(src)}" alt="" loading="lazy">`;
+  return `<span class="sin-foto" aria-hidden="true">${esc((d.nombre || '?').trim()[0].toUpperCase())}</span>`;
+}
+
+// La ficha del producto: lo que la tarjeta no enseña. Los datos buenos (alérgenos, si queda) están
+// en la carta, no en el resumen de destacados, así que se cruzan por id.
+function verFicha(id) {
+  const d = destacados.find(x => x.id === id) || {};
+  const p = buscar(id) || d;
+  const hay = p.disponible === undefined ? true : !!p.disponible;
+  $('#p-foto').innerHTML = fotoDe(d.foto_url || d.foto ? d : p);
+  $('#p-foto').style.setProperty('--color', d.color || '#e67e22');
+  $('#p-categoria').textContent = d.categoria || '';
+  $('#p-nombre').textContent = p.nombre || d.nombre || '';
+  $('#p-alergenos').innerHTML = chipsDe(p);
+  $('#p-precio').textContent = euro(p.precio_cent ?? d.precio_cent);
+  $('#p-agotado').hidden = hay;
+  const boton = $('#p-pedir');
+  boton.disabled = !hay;
+  boton.textContent = hay ? 'Añadir' : 'Hoy no queda';
+  boton.onclick = () => { anadir(id, boton); $('#d-producto').close(); };
+  $('#d-producto').showModal();
+}
+$('#p-cerrar').onclick = () => $('#d-producto').close();
 
 function colocarPila() {
   const tarjetas = [...$('#pila').children];

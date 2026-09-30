@@ -97,6 +97,21 @@
   <button id="b-enviar" class="primario">Pedir</button>
 </footer>
 
+<!-- El producto entero, al pulsar una tarjeta de «Lo que más sale». La tarjeta solo enseña foto y
+     nombre: el precio, los alérgenos y el botón de pedir viven aquí. -->
+<dialog id="d-producto" class="ficha">
+  <div id="p-foto" class="foto"></div>
+  <small id="p-categoria" class="tenue"></small>
+  <h3 id="p-nombre"></h3>
+  <div id="p-alergenos"></div>
+  <p id="p-agotado" class="tenue" hidden>Hoy no queda.</p>
+  <div class="fila total-cesta"><span>Precio</span><b id="p-precio">0,00 €</b></div>
+  <div class="fila">
+    <button id="p-cerrar">Seguir mirando</button>
+    <button id="p-pedir" class="primario">Añadir</button>
+  </div>
+</dialog>
+
 <dialog id="d-cesta">
   <h3>Tu comanda</h3>
   <div id="lista-cesta"></div>

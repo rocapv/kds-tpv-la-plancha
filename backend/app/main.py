@@ -2437,6 +2437,13 @@ def publico_carta():
         marcas.setdefault(r["producto_id"], []).append(r["alergeno"])
     for p in prods:
         p["alergeno_claves"] = marcas.get(p["id"], [])
+        # El mismo `foto_url` que ya recibe el personal en /api/catalogo. Faltaba aquí, y por eso
+        # el cliente —el único que de verdad mira fotos— era justo quien no las veía: hoy ningún
+        # producto del local tiene foto subida, así que la carta del móvil salía entera sin
+        # imágenes mientras el TPV sí dibujaba cada plato. La ilustración la genera el servidor
+        # (`/api/productos/{id}/foto.svg`, público y estable por nombre) y una foto de verdad la
+        # sustituye en cuanto alguien la suba.
+        p["foto_url"] = p.get("foto") or f"/api/productos/{p['id']}/foto.svg"
     for c in cats:
         c["productos"] = [p for p in prods if p["categoria_id"] == c["id"]]
     return [c for c in cats if c["productos"]]
@@ -2455,12 +2462,14 @@ def publico_destacados():
                  WHERE p.estado='cobrado' AND p.cerrado_en >= NOW() - INTERVAL 7 DAY
                    AND pr.activo AND pr.disponible AND c.activa
                  GROUP BY pr.id ORDER BY unidades DESC LIMIT 6""")
-    if filas:
-        return filas
-    return q("""SELECT pr.id, pr.nombre, pr.precio_cent, pr.foto, c.nombre AS categoria, c.color,
-                       0 AS unidades
-                FROM productos pr JOIN categorias c ON c.id=pr.categoria_id
-                WHERE pr.activo AND pr.disponible AND c.activa ORDER BY pr.orden, pr.id LIMIT 6""")
+    if not filas:
+        filas = q("""SELECT pr.id, pr.nombre, pr.precio_cent, pr.foto, c.nombre AS categoria, c.color,
+                            0 AS unidades
+                     FROM productos pr JOIN categorias c ON c.id=pr.categoria_id
+                     WHERE pr.activo AND pr.disponible AND c.activa ORDER BY pr.orden, pr.id LIMIT 6""")
+    for p in filas:
+        p["foto_url"] = p.get("foto") or f"/api/productos/{p['id']}/foto.svg"
+    return filas
 
 
 @app.get("/api/publico/mesas")

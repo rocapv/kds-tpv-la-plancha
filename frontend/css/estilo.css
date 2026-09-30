@@ -546,14 +546,26 @@ body.cliente[data-tema="claro"] {
 .destacados { padding: .9rem 1rem .2rem; max-width: 720px; margin: 0 auto; }
 .destacados h2 { font-size: .82rem; text-transform: uppercase; letter-spacing: .08em; color: var(--tenue); margin-bottom: .6rem; }
 .pila { position: relative; height: 190px; perspective: 900px; touch-action: pan-y; }
-.pila .tarjeta { position: absolute; inset: 0; display: grid; grid-template-columns: 96px 1fr auto; gap: .8rem; align-items: center; padding: .7rem; border-radius: 14px; background: var(--panel); border: 1px solid var(--borde); border-left: 5px solid var(--color); box-shadow: var(--sombra); transition: transform .35s ease, opacity .35s ease; transform: translateY(calc(var(--pos) * 10px)) scale(calc(1 - var(--pos) * .05)); opacity: calc(1 - var(--pos) * .25); z-index: calc(10 - var(--pos)); pointer-events: none; }
+/* La tarjeta es un escaparate: la imagen grande y el nombre debajo, y nada más. El precio, los
+   alérgenos y el botón de pedir viven en la ficha que se abre al pulsarla —antes iban todos
+   encima de la tarjeta, que es mucho cartel para algo que se pasa con el dedo. Es un <button>,
+   así que hay que apagarle los estilos de botón de la hoja: aquí no debe parecer un botón, debe
+   parecer una tarjeta. Solo la de delante recibe el dedo; las otras asoman detrás, apiladas. */
+.pila .tarjeta { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: flex-start; gap: 0; padding: 0; overflow: hidden; text-align: left; font: inherit; color: inherit; cursor: pointer; border-radius: 14px; background: var(--panel); border: 1px solid var(--borde); border-left: 5px solid var(--color); box-shadow: var(--sombra); transition: transform .35s ease, opacity .35s ease; transform: translateY(calc(var(--pos) * 10px)) scale(calc(1 - var(--pos) * .05)); opacity: calc(1 - var(--pos) * .25); z-index: calc(10 - var(--pos)); pointer-events: none; }
 .pila .tarjeta.arriba { pointer-events: auto; }
-.pila .tarjeta img, .pila .tarjeta .sin-foto { width: 96px; height: 96px; object-fit: cover; border-radius: 10px; background: var(--panel2); }
-.pila .texto { display: flex; flex-direction: column; gap: .15rem; min-width: 0; }
-.pila .texto small { color: var(--tenue); font-size: .8rem; }
-.pila .texto b { font-size: 1.1rem; line-height: 1.15; }
-.pila .texto .precio { font-weight: 800; font-variant-numeric: tabular-nums; }
-.pila .pedir { align-self: center; height: 48px; min-width: 5rem; background: var(--acento); border-color: var(--acento); color: var(--acento-texto); }
+.pila .tarjeta img, .pila .tarjeta .sin-foto { width: 100%; height: 132px; object-fit: cover; background: var(--panel2); }
+.pila .tarjeta > b { display: block; width: 100%; padding: .55rem .8rem; font-size: 1.05rem; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* Último recurso, para cuando el servidor no manda ni foto subida ni plato dibujado: la inicial
+   sobre el color de su categoría. Distingue una tarjeta de otra y parece puesto a propósito. */
+.sin-foto { display: flex; align-items: center; justify-content: center; font-size: 2.6rem; font-weight: 800;
+            color: var(--color, var(--acento)); background: linear-gradient(140deg, var(--panel2), var(--panel3)); }
+/* La ficha del producto: lo que la tarjeta del escaparate no enseña. */
+.ficha .foto { margin: -1.1rem -1.1rem .8rem; border-radius: 12px 12px 0 0; overflow: hidden; }
+.ficha .foto img, .ficha .foto .sin-foto { display: flex; width: 100%; height: 170px; object-fit: cover; border-radius: 0; font-size: 3.4rem; }
+.ficha h3 { margin: .1rem 0 .5rem; }
+.ficha #p-alergenos:empty { display: none; }
+.ficha #p-alergenos { margin-bottom: .2rem; }
+.ficha .total-cesta b { font-size: 1.3rem; }
 .destacados .mandos { display: flex; align-items: center; justify-content: center; gap: 1rem; margin-top: .5rem; }
 .destacados .mandos button { min-width: 44px; min-height: 44px; font-size: 1.3rem; line-height: 1; padding: 0; }
 
