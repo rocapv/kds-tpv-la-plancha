@@ -872,19 +872,69 @@ button.sutil:active, .simulacion button:active, .faccion:active,
 .reserva .acciones button { padding: .35em .7em; }
 .reserva .nota { color: var(--aviso); font-size: .9rem; }
 .reserva ul.adelantado { margin: .3rem 0 0; padding-left: 1.1rem; }
-.reserva.anulada, .reserva.no_show { opacity: .5; }
+/* Apagadas, pero legibles: con `opacity: .5` la etiqueta roja caía a 3,6:1 (qa_gui.py). */
+.reserva.anulada, .reserva.no_show { color: var(--tenue); }
+.reserva.anulada .cuando b, .reserva.no_show .cuando b { text-decoration: line-through; color: var(--tenue); }
 .reserva.sentada .cuando b { color: var(--ok); }
 .marca { display: inline-block; padding: .05em .5em; border-radius: 999px; font-size: .8rem;
   border: 1px solid var(--borde); }
 .marca.ok { border-color: var(--ok); color: var(--ok); }
 .marca.aviso { border-color: var(--aviso); color: var(--aviso); }
-.marca.mal { border-color: var(--mal); color: var(--mal); }
+.marca.mal { border-color: var(--mal); color: var(--mal-tinta); }
 #f-nueva label { display: block; margin: .5rem 0; }
 #f-nueva input, #f-nueva select { width: 100%; }
 @media (max-width: 700px) {
   .reserva { grid-template-columns: 4.5rem 1fr; }
   .reserva .acciones { grid-column: 1 / -1; justify-content: flex-start; }
 }
+
+/* ── Planning de mesas (reservas.html → Planning, js/planning.js) ──
+   Una fila por mesa y el día en horizontal. Las barras van en porcentaje, así la tabla aguanta
+   trece mesas o cuarenta sin tocar nada. En el móvil no cabe el día a escala: se desplaza en
+   horizontal con la columna de la mesa fija a la izquierda. */
+.agenda-ancha { max-width: 1400px; }
+.planning-cab { align-items: center; }
+.planning-cab h3 { margin: 0; }
+.planning-leyenda { display: flex; flex-wrap: wrap; gap: .4rem 1.2rem; margin: .4rem 0 .8rem; font-size: .88rem; }
+.planning-leyenda span { display: inline-flex; align-items: center; gap: .4rem; }
+.planning-leyenda .barra-res { position: static; display: inline-block; width: 2.2rem; height: 1rem; min-height: 0; padding: 0; }
+.planning-marco { overflow-x: auto; border: 1px solid var(--borde); border-radius: var(--r-sm); }
+.planning { display: grid; grid-template-columns: 7.5rem 1fr; min-width: 880px; }
+.pl-esquina, .pl-mesa { position: sticky; left: 0; z-index: 3; background: var(--panel); border-right: 1px solid var(--borde); }
+.pl-esquina { padding: .4rem .6rem; font-size: .8rem; color: var(--tenue); border-bottom: 1px solid var(--borde-fuerte); }
+.pl-regla { position: relative; height: 2rem; border-bottom: 1px solid var(--borde-fuerte); }
+.pl-regla span { position: absolute; top: .45rem; transform: translateX(-50%); font-size: .8rem; color: var(--tenue);
+                 font-variant-numeric: tabular-nums; }
+.pl-regla span:first-child { transform: none; padding-left: .3rem; }
+.pl-zona { grid-column: 1 / -1; padding: .35rem .6rem; font-size: .8rem; font-weight: 700; text-transform: uppercase;
+           letter-spacing: .05em; color: var(--tenue); background: var(--panel2); border-bottom: 1px solid var(--borde); }
+.pl-mesa { display: flex; flex-direction: column; justify-content: center; padding: .2rem .6rem; min-height: 54px;
+           border-bottom: 1px solid var(--borde); line-height: 1.2; }
+.pl-mesa .tenue { font-size: .8rem; }
+.pl-mesa .ocupada { color: var(--ok-tinta); }
+.pl-pista { position: relative; min-height: 54px; border-bottom: 1px solid var(--borde); cursor: copy;
+            background-image: linear-gradient(to right, var(--borde) 1px, transparent 1px);
+            background-size: var(--hora) 100%; }
+.pl-pista.destino-ok { background-color: var(--ok-suave); outline: 2px solid var(--ok); outline-offset: -2px; }
+.pl-pista.destino-no { background-color: var(--mal-suave); outline: 2px solid var(--mal); outline-offset: -2px; }
+.pl-pista .fuera-horario, .pl-pista .ahora, .pl-regla .ahora { position: absolute; top: 0; bottom: 0; pointer-events: none; }
+.pl-pista .fuera-horario { background: repeating-linear-gradient(135deg, var(--panel3) 0 6px, transparent 6px 12px); opacity: .55; }
+.pl-pista .ahora, .pl-regla .ahora { width: 2px; margin-left: -1px; background: var(--mal); z-index: 2; }
+
+.barra-res { position: absolute; top: 5px; height: 44px; min-height: 44px; margin: 0; padding: 0 .5rem; z-index: 1;
+             display: flex; align-items: center; overflow: hidden; border-radius: var(--r-sm);
+             border: 2px solid var(--aviso); background: var(--panel); color: var(--texto);
+             font-size: .82rem; font-weight: 700; text-align: left; cursor: grab; touch-action: pan-x; }
+.barra-res span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.barra-res.confirmada { background: var(--aviso); color: var(--aviso-texto); }
+.barra-res.sentada { background: var(--ok); border-color: var(--ok); color: var(--ok-texto); }
+.barra-res.no_show { background: var(--panel3); border-color: var(--borde-fuerte); color: var(--tenue); text-decoration: line-through; cursor: default; }
+.barra-res.anulada { background: var(--panel2); border-style: dashed; border-color: var(--borde-fuerte); color: var(--tenue); text-decoration: line-through; cursor: default; }
+.barra-res.adelantado { box-shadow: inset 6px 0 0 var(--info); padding-left: .8rem; }
+.barra-res:focus-visible { outline: 3px solid var(--texto); outline-offset: 1px; z-index: 4; }
+.barra-res.arrastrando { z-index: 5; cursor: grabbing; opacity: .9; box-shadow: 0 6px 18px #0008; }
+.dialogo-reserva { width: min(40rem, calc(100vw - 1.5rem)); }
+.dialogo-reserva .reserva { border-bottom: 0; }
 
 /* ── Reservas en el móvil del cliente ── */
 .mi-reserva { margin: .6rem 1rem; padding: .8rem 1rem; border: 1px solid var(--ok);

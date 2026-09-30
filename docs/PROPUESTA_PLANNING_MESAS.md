@@ -1,6 +1,8 @@
 # Planning de mesas: el día entero de un vistazo
 
-Estado: **propuesta**, sin construir. Las reservas ya funcionan (`reservas.html` enseña la agenda
+Estado: **construido el 30/09/2026** (`reservas.html` → Planning, `js/planning.js`). Decisión del
+móvil: se desplaza en horizontal con la columna de la mesa fija. Lo único que tocó el servidor fue
+un `mesa_id` opcional en el alta de la sala, para que el hueco pulsado reserve esa mesa. Las reservas ya funcionan (`reservas.html` enseña la agenda
 del día como una lista, ordenada por hora). Esto es otra manera de mirar lo mismo: **una fila por
 mesa y el día entero en horizontal**, para ver de golpe qué mesa está libre a las nueve y media y
 cuál lleva tres turnos encadenados.

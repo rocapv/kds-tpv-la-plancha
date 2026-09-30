@@ -164,9 +164,13 @@ class NoSePuede(Exception):
 
 def revisar(hora: datetime, comensales: int, zona: str | None, cfg: dict,
             ahora: datetime | None = None, excluir: int | None = None,
-            saltar_antelacion: bool = False) -> dict:
+            saltar_antelacion: bool = False, mesa_id: int | None = None) -> dict:
     """Devuelve la mesa asignada o explota con el motivo. `saltar_antelacion` es para el
-    camarero que coge el teléfono con el cliente ya en la puerta."""
+    camarero que coge el teléfono con el cliente ya en la puerta.
+
+    `mesa_id` es para la sala, cuando pulsa un hueco del planning: quiere ESA mesa, no la que
+    toque. Pasa las mismas reglas que un cambio de mesa (que quepan y que no se pise con otra
+    reserva); lo que no hace es buscar otra si esa no vale, porque no es lo que se ha pedido."""
     ahora = ahora or datetime.now()
     if not cfg["activas"]:
         raise NoSePuede(409, "Ahora mismo no se admiten reservas")
@@ -179,6 +183,16 @@ def revisar(hora: datetime, comensales: int, zona: str | None, cfg: dict,
         raise NoSePuede(422, f"No se reserva con más de {cfg['max_dias']} días de antelación")
     if not en_horario(hora, cfg):
         raise NoSePuede(422, f"A esa hora no hay servicio (horario: {cfg['horario']})")
+    if mesa_id is not None:
+        mesa = q1("SELECT id, nombre, zona, plazas FROM mesas WHERE id=%s", (mesa_id,))
+        if not mesa:
+            raise NoSePuede(404, "Esa mesa no existe")
+        if mesa["plazas"] < comensales:
+            raise NoSePuede(409, f"En la {mesa['nombre']} caben {mesa['plazas']}, "
+                                 f"y son {comensales}")
+        if mesa_ocupada(mesa["id"], hora, cfg, excluir):
+            raise NoSePuede(409, f"La {mesa['nombre']} ya está reservada a esa hora")
+        return mesa
     if not mesas_para(comensales, zona):
         cabe = q1("SELECT MAX(plazas) m FROM mesas")["m"] or 0
         raise NoSePuede(409, f"No hay ninguna mesa para {comensales}; la mayor es de {cabe}")

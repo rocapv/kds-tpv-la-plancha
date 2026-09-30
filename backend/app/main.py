@@ -404,7 +404,7 @@ def catalogo(todo: bool = False, u: dict = Depends(usuario)):
 
 @app.get("/api/mesas")
 def mesas(u: dict = Depends(exige("camarero", "encargado"))):
-    return q("""SELECT m.*, p.id AS pedido_id, p.abierto_en, v.total_cent
+    return q("""SELECT m.*, p.id AS pedido_id, p.abierto_en, p.comensales AS sentados, v.total_cent
                 FROM mesas m
                 LEFT JOIN pedidos p ON p.mesa_id=m.id AND p.estado='abierto'
                 LEFT JOIN v_totales_pedido v ON v.pedido_id=p.id
@@ -2983,6 +2983,9 @@ class NuevaReserva(BaseModel):
     zona: str | None = None
     nota: str | None = Field(None, max_length=200)
     lineas: list[LineaReserva] = Field(default_factory=list, max_length=40)
+    # Solo lo usa la sala (el planning: «esta mesa, a esta hora»). El alta pública lo ignora:
+    # desde internet se pide hora y zona, y la mesa la pone el local.
+    mesa_id: int | None = None
 
 
 def _reserva_publica(r: dict) -> dict:
@@ -3140,7 +3143,8 @@ async def crear_reserva_en_sala(d: NuevaReserva, u: dict = Depends(exige("camare
     puede estar en la puerta, pero no el solape: la mesa sigue sin poder estar en dos sitios."""
     cfg = reservas.config()
     try:
-        mesa = reservas.revisar(d.hora, d.comensales, d.zona, cfg, saltar_antelacion=True)
+        mesa = reservas.revisar(d.hora, d.comensales, d.zona, cfg, saltar_antelacion=True,
+                                mesa_id=d.mesa_id)
     except reservas.NoSePuede as e:
         raise HTTPException(e.codigo, e.motivo)
     rid = _guardar_reserva(d, mesa, None, u["id"])
