@@ -507,6 +507,17 @@ let grupoElegido = null;          // a quién se le van a asignar los platos que
 async function cargarGrupo() {
   if (!pedido) return;
   const d = await api(`/pedidos/${pedido.id}/grupo`);
+  // La cuenta va aparte del reparto: una cosa es de quién es cada plato y otra quién ha pagado.
+  const cuenta = await api(`/pedidos/${pedido.id}/cuenta`).catch(() => null);
+  const suCuenta = id => cuenta?.cuentas.find(c => c.comensal_id === id);
+  const deuda = s => {
+    const c = suCuenta(s.id);
+    if (!c) return '';
+    if (c.pagado && !c.a_pagar_cent) return '<p class="pagado">✓ pagado</p>';
+    const parte = c.compartido_cent
+      ? ` <small class="tenue">(incluye ${euro(c.compartido_cent)} de la mesa)</small>` : '';
+    return `<button class="cobrar ok" data-cobrar="${s.id}">Cobrar ${euro(c.a_pagar_cent)}</button>${parte}`;
+  };
   $('#g-titulo').textContent = `Mesa ${d.mesa || ''} · ${euro(d.total_cent)}`;
   const sitio = s => {
     if (s.libre) return `<button class="sitio libre" data-sentar="${s.sitio}">
@@ -521,6 +532,7 @@ async function cargarGrupo() {
       <ul>${s.lineas.map(l => `<li><button data-suelta="${l.id}">${l.cantidad}× ${esc(l.producto)}</button></li>`).join('')
            || '<li class="tenue">Sin nada suyo</li>'}</ul>
       <b class="importe">${euro(s.total_cent)}</b>
+      ${deuda(s)}
     </div>`;
   };
   $('#g-rejilla').style.gridTemplateColumns = `repeat(${d.columnas}, 1fr)`;
@@ -566,6 +578,9 @@ async function cargarGrupo() {
       .catch(e => aviso(e.message, 'error'));
     recargar();
   });
+  $('#g-rejilla').querySelectorAll('[data-cobrar]').forEach(b => b.onclick = async () => {
+    await cobrarAComensal(+b.dataset.cobrar);
+  });
   $('#g-mesa').querySelectorAll('[data-coger]').forEach(b => b.onclick = async () => {
     if (!grupoElegido) return aviso('Elige antes a quién se lo pasas', 'error');
     await api(`/lineas/${b.dataset.coger}/comensal`, { method: 'PATCH', body: { comensal_id: grupoElegido } })
@@ -576,3 +591,58 @@ async function cargarGrupo() {
 
 $('#b-grupo').onclick = () => { grupoElegido = null; cargarGrupo().then(() => $('#d-grupo').showModal()); };
 $('#g-cerrar').onclick = () => $('#d-grupo').close();
+
+/** Cobra a uno lo suyo. Si paga en efectivo se pregunta con cuánto, para dar el cambio. */
+async function cobrarAComensal(cid) {
+  const metodo = prompt('¿Cómo paga?\n\n1 efectivo · 2 tarjeta · 3 bizum', '2');
+  if (!metodo) return;
+  const metodos = { 1: 'efectivo', 2: 'tarjeta', 3: 'bizum' };
+  const elegido = metodos[metodo.trim()] || metodo.trim();
+  const cuerpo = { metodo: elegido };
+  if (elegido === 'efectivo') {
+    const con = prompt('¿Con cuánto paga? (en euros, vacío = justo)');
+    if (con === null) return;
+    if (con.trim()) cuerpo.entregado_cent = Math.round(parseFloat(con.replace(',', '.')) * 100);
+  }
+  try {
+    const r = await api(`/pedidos/${pedido.id}/grupo/${cid}/cobrar`, { method: 'POST', body: cuerpo });
+    aviso(`Cobrado ${euro(r.importe_cent)} a ${r.concepto}`, 'ok');
+    if (confirm('¿Enseñar su ticket?')) verTicketDePago(r.pago_id);
+    pedido = await api(`/pedidos/${pedido.id}`).catch(() => pedido);
+    if (pedido.estado !== 'abierto') { $('#d-grupo').close(); verMesas(); return; }
+    cargarGrupo();
+  } catch (e) { aviso(e.message, 'error'); }
+}
+
+/** El ticket de un pago suelto, con el aviso de que la cuenta iba dividida. */
+async function verTicketDePago(pagoId) {
+  const d = await api(`/pagos/${pagoId}/documento`);
+  const lineas = d.lineas.map(l =>
+    `${String(l.cantidad).padStart(2)}× ${l.producto.padEnd(22).slice(0, 22)} ${euro(l.cantidad * l.precio_cent).padStart(9)}`).join('\n');
+  ticketEnPantalla([
+    d.local.local_nombre, d.local.local_direccion, '',
+    `Ticket de ${d.pago.concepto || 'un comensal'}${d.pago.mesa ? ' · mesa ' + d.pago.mesa : ''}`,
+    ''.padEnd(34, '-'), lineas, ''.padEnd(34, '-'),
+    `TOTAL${euro(d.pago.importe_cent).padStart(29)}`,
+    `Base${euro(d.base_cent).padStart(30)}`,
+    `IVA ${d.iva_pct}%${euro(d.iva_cent).padStart(24)}`,
+    d.de_varios ? `\nEsta cuenta se pagó en ${d.pagos_de_la_mesa} tickets.` : '',
+  ].join('\n'));
+}
+
+/** Enseña un texto como ticket, con el mismo visor que ya usa el ticket de la mesa. */
+function ticketEnPantalla(texto) {
+  let visor = document.querySelector('#visor-ticket-pago');
+  if (!visor) {
+    visor = document.createElement('div');
+    visor.id = 'visor-ticket-pago';
+    visor.className = 'visor';
+    visor.innerHTML = '<div class="papel"><pre></pre><div class="acciones">'
+      + '<button data-imprimir>Imprimir</button><button class="primario" data-cerrar>Cerrar</button></div></div>';
+    document.body.appendChild(visor);
+    visor.querySelector('[data-cerrar]').onclick = () => visor.remove();
+    visor.querySelector('[data-imprimir]').onclick = () => window.print();
+    visor.onclick = ev => { if (ev.target === visor) visor.remove(); };
+  }
+  visor.querySelector('pre').textContent = texto;
+}

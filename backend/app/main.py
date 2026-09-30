@@ -18,7 +18,7 @@ from pydantic import BaseModel, Field
 from .red import es_de_la_lan
 from .auth import (abrir_sesion, cerrar_sesion, cifrar_clave, exige, exige_nivel,
                    usuario, usuario_de_token)
-from . import almacen, clientes, comensales, mesaqr, pedido_cliente, reservas
+from . import almacen, clientes, comensales, cuenta, mesaqr, pedido_cliente, reservas
 from .db import conn, q, q1
 from .simulacion import simulacion
 
@@ -981,26 +981,97 @@ async def anadir_pago(pid: int, d: NuevoPago, u: dict = Depends(exige("camarero"
     if importe > p["pendiente_cent"]:
         raise HTTPException(422, "El importe supera lo que queda por pagar")
 
-    cambio = None
-    if d.metodo == "efectivo" and d.entregado_cent is not None:
-        if d.entregado_cent < importe:
-            raise HTTPException(422, "Importe entregado insuficiente")
-        cambio = d.entregado_cent - importe
-
-    with conn() as c, c.cursor() as cur:
-        cur.execute("""INSERT INTO pagos (pedido_id, metodo, concepto, importe_cent, entregado_cent, cambio_cent)
-                       VALUES (%s,%s,%s,%s,%s,%s)""",
-                    (pid, d.metodo, d.concepto, importe, d.entregado_cent, cambio))
-        pago_id = cur.lastrowid
-        if lineas:
-            marcas = ",".join(["%s"] * len(lineas))
-            cur.execute(f"UPDATE lineas_pedido SET pago_id=%s WHERE id IN ({marcas})",
-                        (pago_id, *[l["id"] for l in lineas]))
-        cur.execute("SELECT COALESCE(SUM(importe_cent),0) AS pagado FROM pagos WHERE pedido_id=%s", (pid,))
-        if cur.fetchone()["pagado"] >= p["total_cent"]:
-            cur.execute("UPDATE pedidos SET estado='cobrado', cerrado_en=NOW() WHERE id=%s", (pid,))
+    _registrar_pago(pid, d.metodo, importe, [l["id"] for l in lineas], d.concepto,
+                    d.entregado_cent)
     await hub.emitir("mesas")
     return pedido_completo(pid)
+
+
+# ─────────────── Cada uno lo suyo ───────────────
+# Cobrar comensal a comensal, o dividir a partes iguales. Lo que decide cuánto le toca a cada uno
+# está en `cuenta.py`; aquí solo se registra el cobro, con las mismas reglas de caja de siempre.
+class CobroDeComensal(BaseModel):
+    metodo: str
+    entregado_cent: int | None = None
+    con_compartido: bool = True        # ¿se lleva su parte de lo que comparte la mesa?
+
+
+def _registrar_pago(pid: int, metodo: str, importe: int, lineas_ids: list[int],
+                    concepto: str | None, entregado_cent: int | None,
+                    comensal_id: int | None = None) -> int:
+    """Apunta el pago, engancha sus líneas y cierra el pedido si con esto queda saldado.
+
+    Es la misma caja de siempre: el cambio se calcula aquí y el pedido se cierra solo cuando lo
+    cobrado alcanza el total. Lo usan el cobro por comensal y el de importe libre.
+    """
+    cambio = None
+    if metodo == "efectivo" and entregado_cent is not None:
+        if entregado_cent < importe:
+            raise HTTPException(422, "Importe entregado insuficiente")
+        cambio = entregado_cent - importe
+    with conn() as c, c.cursor() as cur:
+        cur.execute("""INSERT INTO pagos (pedido_id, metodo, concepto, comensal_id,
+                                          importe_cent, entregado_cent, cambio_cent)
+                       VALUES (%s,%s,%s,%s,%s,%s,%s)""",
+                    (pid, metodo, concepto, comensal_id, importe, entregado_cent, cambio))
+        pago_id = cur.lastrowid
+        if lineas_ids:
+            marcas = ",".join(["%s"] * len(lineas_ids))
+            cur.execute(f"UPDATE lineas_pedido SET pago_id=%s WHERE id IN ({marcas})",
+                        (pago_id, *lineas_ids))
+        cur.execute("""SELECT COALESCE(SUM(importe_cent),0) AS pagado FROM pagos
+                       WHERE pedido_id=%s""", (pid,))
+        pagado = cur.fetchone()["pagado"]
+        cur.execute("""SELECT COALESCE(SUM(CASE WHEN estado<>'anulada'
+                                           THEN cantidad*precio_cent END),0) AS total
+                       FROM lineas_pedido WHERE pedido_id=%s""", (pid,))
+        if pagado >= cur.fetchone()["total"]:
+            cur.execute("UPDATE pedidos SET estado='cobrado', cerrado_en=NOW() WHERE id=%s", (pid,))
+    return pago_id
+
+
+@app.get("/api/pedidos/{pid}/cuenta")
+def ver_cuenta(pid: int, u: dict = Depends(exige("camarero", "encargado"))):
+    """Cómo queda la cuenta si cada uno paga lo suyo: qué debe cada comensal ahora mismo."""
+    return cuenta.resumen(pid)
+
+
+@app.get("/api/pedidos/{pid}/reparto")
+def ver_reparto(pid: int, partes: int = 2, u: dict = Depends(exige("camarero", "encargado"))):
+    """Lo que sale a cada uno si se divide a partes iguales lo que queda por pagar."""
+    return cuenta.partes_iguales(pid, partes)
+
+
+@app.post("/api/pedidos/{pid}/grupo/{cid}/cobrar", status_code=201)
+async def cobrar_a_comensal(pid: int, cid: int, d: CobroDeComensal,
+                            u: dict = Depends(exige("camarero", "encargado"))):
+    """Le cobra a uno lo suyo (y su parte de lo compartido, si se quiere).
+
+    Al último que queda se le cobra el pendiente exacto, para que lo cobrado sume la cuenta.
+    """
+    exigir_abierto(pid)
+    if d.metodo not in ("efectivo", "tarjeta", "bizum"):
+        raise HTTPException(422, "Método de pago no válido")
+    p = pedido_completo(pid)
+    if any(l["estado"] == "pendiente" for l in p["lineas"]):
+        raise HTTPException(409, "Hay líneas sin enviar a cocina")
+    plan = cuenta.cobro_de(pid, cid, d.con_compartido)
+    pago_id = _registrar_pago(pid, d.metodo, plan["importe_cent"], plan["lineas"],
+                              plan["concepto"], d.entregado_cent, comensal_id=cid)
+    await hub.emitir("mesas")
+    return {"pago_id": pago_id, "importe_cent": plan["importe_cent"],
+            "concepto": plan["concepto"], "cuenta": cuenta.resumen(pid)}
+
+
+@app.get("/api/pagos/{pago_id}/documento")
+def documento_de_pago(pago_id: int, u: dict = Depends(exige("camarero", "encargado"))):
+    """El ticket de un pago suelto: lo que se llevó esa persona y lo que puso."""
+    d = cuenta.documento_de_pago(pago_id)
+    iva_pct = int(ajustes_dict().get("iva_pct", 10))
+    importe = d["pago"]["importe_cent"]
+    base = round(importe / (1 + iva_pct / 100))
+    return {**d, "local": ajustes_dict(), "iva_pct": iva_pct,
+            "base_cent": base, "iva_cent": importe - base}
 
 
 @app.delete("/api/pedidos/{pid}/pagos/{pago_id}")

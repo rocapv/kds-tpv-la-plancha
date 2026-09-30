@@ -964,3 +964,7 @@ body.pantalla-mesa { display: grid; place-items: center; min-height: 100vh; text
 .de-la-mesa ul { list-style: none; padding: 0; display: flex; flex-wrap: wrap; gap: .4rem; }
 @media (max-width: 640px) { .rejilla-mesa { grid-template-columns: 1fr !important; } }
 
+/* Cobro comensal a comensal dentro del popup del grupo. */
+.sitio .cobrar { width: 100%; margin-top: .3rem; }
+.sitio .pagado { color: var(--ok); margin: .3rem 0 0; font-weight: 600; }
+
