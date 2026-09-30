@@ -41,6 +41,52 @@ async function verDocumento(pedidoId) {
   mostrarDocumento(d, d.factura, async dd => { await pedirFactura(dd); cargar(); });
 }
 
+/** Una factura ya emitida, sea de la cuenta entera o de un cobro suelto. */
+async function verFactura(fid) {
+  const d = await api('/facturas/' + fid);
+  visorDeTexto(textoFacturaDeCobro(d.documento),
+    'factura_' + d.documento.numero_completo.replace('/', '-'));
+}
+
+// Los cobros de una cuenta, uno por uno, para poder facturar el de quien la pide. En una mesa a
+// escote es la ÚNICA factura que sirve: la de la cuenta entera no la pagó ninguno de los cuatro.
+// Y aquí es donde se atiende al que vuelve al día siguiente, que es lo que manda el reglamento de
+// facturación: mientras la caja del día siga abierta la emite cualquiera, y después el encargado.
+async function verCobrosDe(pedidoId) {
+  const d = await api('/pedidos/' + pedidoId + '/documento');
+  const porCabeza = {};
+  (d.facturas_por_cabeza || []).forEach(f => { porCabeza[f.pago_id] = f; });
+  const dlg = document.createElement('dialog');
+  const fila = g => {
+    const f = porCabeza[g.id];
+    return `<tr><td>#${g.id}</td><td>${esc(g.concepto || '—')}</td><td>${esc(g.metodo)}</td>
+      <td class="num">${euro(g.importe_cent)}</td>
+      <td>${f ? esc(f.numero_completo) : '<span class="tenue">—</span>'}</td>
+      <td class="num">${f ? `<button data-ver="${f.id}">Ver</button>`
+                          : `<button data-facturar="${g.id}" class="primario">Facturar</button>`}</td></tr>`;
+  };
+  dlg.innerHTML = `<h3>Cobros del pedido #${pedidoId}</h3>
+    ${d.factura ? `<p class="tenue">Esta cuenta ya tiene la factura ${esc(d.factura.numero_completo)}
+       de la cuenta entera, así que no puede facturarse además cobro a cobro: habría que
+       rectificar aquella.</p>` : ''}
+    <table>${'<tr><th>Cobro</th><th>Quién</th><th>Método</th><th class="num">Importe</th>'
+      + '<th>Factura</th><th></th></tr>'}${(d.pedido.pagos || []).map(fila).join('')}</table>
+    <div class="fila"><button data-cerrar class="primario">Cerrar</button></div>`;
+  document.body.appendChild(dlg);
+  dlg.showModal();
+  const fuera = () => { dlg.close(); dlg.remove(); };
+  dlg.querySelector('[data-cerrar]').onclick = fuera;
+  dlg.querySelectorAll('[data-ver]').forEach(b => b.onclick = () => { fuera(); verFactura(b.dataset.ver); });
+  dlg.querySelectorAll('[data-facturar]').forEach(b => b.onclick = async () => {
+    const f = await pedirFacturaDeCobro(b.dataset.facturar);
+    if (!f) return;
+    fuera();
+    visorDeTexto(textoFacturaDeCobro(f.documento),
+      'factura_' + f.documento.numero_completo.replace('/', '-'));
+    cargar();
+  });
+}
+
 async function cargar() {
   const fecha = $('#fecha').value, buscar = $('#buscar').value.trim();
   const [cobrados, facturas] = await Promise.all([
@@ -52,10 +98,14 @@ async function cargar() {
       <td>#${c.id}</td><td>${esc(c.mesa || (c.cliente ? '🛍 ' + c.cliente : 'Llevar'))}</td>
       <td>${esc(c.camarero)}</td><td>${new Date(c.cerrado_en).toLocaleTimeString('es-ES')}</td>
       <td class="num">${euro(c.total_cent)}</td>
-      <td>${c.numero_completo ? esc(c.numero_completo) : '<span class="tenue">—</span>'}</td>
-      <td class="num"><button data-doc="${c.id}">Ver documento</button></td></tr>`).join('')
+      <td>${c.numero_completo ? esc(c.numero_completo)
+            : c.facturas_por_cabeza ? `<span class="tenue">${c.facturas_por_cabeza} por cabeza</span>`
+            : '<span class="tenue">—</span>'}</td>
+      <td class="num"><button data-cobros="${c.id}">Cobros</button>
+        <button data-doc="${c.id}">Ver documento</button></td></tr>`).join('')
     || '<tr><td class="tenue">Sin cobros ese día</td></tr>';
   $('#cobros').querySelectorAll('[data-doc]').forEach(b => b.onclick = () => verDocumento(b.dataset.doc));
+  $('#cobros').querySelectorAll('[data-cobros]').forEach(b => b.onclick = () => verCobrosDe(b.dataset.cobros));
 
   $('#facturas').innerHTML = '<tr><th>Número</th><th>Tipo</th><th>Cliente</th><th>Hora</th><th class="num">Base</th><th class="num">IVA</th><th class="num">Total</th><th></th></tr>' +
     facturas.map(f => `<tr>
@@ -63,9 +113,11 @@ async function cargar() {
       <td>${esc(f.cliente_nombre || '—')}${f.cliente_nif ? ' · ' + esc(f.cliente_nif) : ''}</td>
       <td>${new Date(f.emitida_en).toLocaleTimeString('es-ES')}</td>
       <td class="num">${euro(f.base_cent)}</td><td class="num">${euro(f.iva_cent)}</td><td class="num">${euro(f.total_cent)}</td>
-      <td class="num"><button data-doc="${f.pedido_id}">Ver</button></td></tr>`).join('')
+      <td class="num"><button data-fac="${f.id}">Ver</button></td></tr>`).join('')
     || '<tr><td class="tenue">Sin facturas ese día</td></tr>';
-  $('#facturas').querySelectorAll('[data-doc]').forEach(b => b.onclick = () => verDocumento(b.dataset.doc));
+  // Se reimprime LA FACTURA, no el ticket de su pedido: desde que hay facturas por cabeza, el
+  // documento de la mesa y el de la factura ya no son el mismo papel.
+  $('#facturas').querySelectorAll('[data-fac]').forEach(b => b.onclick = () => verFactura(b.dataset.fac));
 
   const total = facturas.reduce((s, f) => s + f.total_cent, 0);
   $('#resumen').textContent = `${facturas.length} facturas · ${euro(total)}`;

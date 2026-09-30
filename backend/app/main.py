@@ -18,7 +18,7 @@ from pydantic import BaseModel, Field
 from .red import es_de_la_lan
 from .auth import (abrir_sesion, cerrar_sesion, cifrar_clave, exige, exige_nivel,
                    usuario, usuario_de_token)
-from . import almacen, clientes, comensales, cuenta, mesaqr, pedido_cliente, reservas
+from . import almacen, clientes, comensales, cuenta, facturacion, mesaqr, pedido_cliente, reservas
 from . import intentos
 from .db import conn, q, q1
 from .simulacion import simulacion
@@ -1104,6 +1104,13 @@ async def anular_pago(pid: int, pago_id: int, u: dict = Depends(exige("camarero"
     exigir_abierto(pid)
     if not q1("SELECT id FROM pagos WHERE id=%s AND pedido_id=%s", (pago_id, pid)):
         raise HTTPException(404, "Pago no encontrado")
+    ya = facturacion.de_pago(pago_id)
+    if ya:
+        # Un cobro con factura emitida ya no es un error de caja: es un documento en la serie
+        # fiscal. Borrarlo dejaría un número sin operación detrás, que es justo lo que no se puede
+        # hacer. Se rectifica la factura, no se borra el cobro.
+        raise HTTPException(409, f"Ese cobro ya tiene la factura {ya['numero_completo']}: "
+                                 "hay que rectificarla, no borrar el pago")
     q("UPDATE lineas_pedido SET pago_id=NULL WHERE pago_id=%s", (pago_id,))
     q("DELETE FROM pagos WHERE id=%s", (pago_id,))
     await hub.emitir("mesas")
@@ -1284,11 +1291,12 @@ def poner_ajuste(clave: str, d: Ajuste, u: dict = Depends(exige("encargado"))):
 
 
 # ─────────────── Facturación (todo en pantalla, sin impresora) ───────────────
+# La numeración, el plazo y la regla de «una por cabeza o una de todos» viven en `facturacion.py`,
+# porque las comparten el TPV y el teléfono del cliente. Dos implementaciones de una serie fiscal
+# es como se acaba teniendo dos facturas con el mismo número.
 def factura_completa(fid: int):
-    f = q1("SELECT * FROM facturas WHERE id=%s", (fid,))
-    if not f:
-        raise HTTPException(404, "Factura no encontrada")
-    f["numero_completo"] = f"{f['serie']}{f['ejercicio']}/{f['numero']:05d}"
+    """La factura como la ve la sala: el documento y el pedido entero detrás."""
+    f = facturacion.fila(fid)
     f["local"] = ajustes_dict()
     f["pedido"] = pedido_completo(f["pedido_id"])
     return f
@@ -1296,43 +1304,72 @@ def factura_completa(fid: int):
 
 @app.post("/api/pedidos/{pid}/factura", status_code=201)
 def emitir_factura(pid: int, d: DatosFactura, u: dict = Depends(exige("camarero", "encargado"))):
+    """La factura de la cuenta entera. La de siempre, con una puerta nueva al final.
+
+    Si la operación es de un día ya cerrado, sigue emitiéndose —el reglamento obliga a expedirla
+    cuando el cliente la pide— pero deja de ser un botón de camarero: cambia un arqueo que alguien
+    dio por bueno, así que lo firma el encargado y el documento lleva las dos fechas.
+    """
     p = pedido_completo(pid)
     if p["estado"] != "cobrado":
         raise HTTPException(409, "Solo se factura un pedido cobrado")
-    ya = q1("SELECT id FROM facturas WHERE pedido_id=%s", (pid,))
-    if ya:
-        return factura_completa(ya["id"])          # una factura por pedido: idempotente
-    if d.tipo == "completa" and not (d.cliente_nif and d.cliente_nombre):
-        raise HTTPException(422, "La factura completa necesita NIF y nombre del cliente")
-    iva_pct = int(ajustes_dict().get("iva_pct", 10))
-    total = p["total_cent"]
-    base = round(total / (1 + iva_pct / 100))
-    ejercicio = datetime.now().year
-    with conn() as c, c.cursor() as cur:
-        cur.execute("SELECT COALESCE(MAX(numero), 0) + 1 AS n FROM facturas WHERE serie='A' AND ejercicio=%s FOR UPDATE",
-                    (ejercicio,))
-        numero = cur.fetchone()["n"]
-        cur.execute("""INSERT INTO facturas (serie, ejercicio, numero, pedido_id, tipo,
-                         cliente_nif, cliente_nombre, cliente_direccion, base_cent, iva_cent, total_cent)
-                       VALUES ('A',%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
-                    (ejercicio, numero, pid, d.tipo, d.cliente_nif, d.cliente_nombre,
-                     d.cliente_direccion, base, total - base, total))
-        fid = cur.lastrowid
-    return factura_completa(fid)
+    plazo = facturacion.plazo(p["cerrado_en"])
+    if not plazo["abierto"] and not q1("SELECT id FROM facturas WHERE pedido_id=%s", (pid,)):
+        if not u["gestion"]:
+            raise HTTPException(403, f"{plazo['motivo']}: una factura de un día cerrado la emite "
+                                     "el encargado, porque mueve el arqueo de aquel día")
+    f = facturacion.emitir(pedido_id=pid, total_cent=p["total_cent"],
+                           operacion_en=p["cerrado_en"], tipo=d.tipo,
+                           nif=d.cliente_nif, nombre=d.cliente_nombre,
+                           direccion=d.cliente_direccion, pedida_por="local")
+    return factura_completa(f["id"])
+
+
+@app.post("/api/pagos/{pago_id}/factura", status_code=201)
+def emitir_factura_de_pago(pago_id: int, d: DatosFactura,
+                           u: dict = Depends(exige("camarero", "encargado"))):
+    """La factura de **un cobro suelto**: lo que puso esa persona, no lo que cenó la mesa.
+
+    Es el hermano fiscal del ticket individual que ya existía. Se puede emitir con la mesa todavía
+    abierta, porque para quien ya ha pagado la operación está terminada.
+    """
+    g = q1("""SELECT p.id, p.pedido_id, p.importe_cent, p.pagado_en, p.concepto
+              FROM pagos p WHERE p.id=%s""", (pago_id,))
+    if not g:
+        raise HTTPException(404, "Ese pago no existe")
+    plazo = facturacion.plazo(g["pagado_en"])
+    if not plazo["abierto"] and not facturacion.de_pago(pago_id) and not u["gestion"]:
+        raise HTTPException(403, f"{plazo['motivo']}: una factura de un día cerrado la emite "
+                                 "el encargado, porque mueve el arqueo de aquel día")
+    f = facturacion.emitir(pedido_id=g["pedido_id"], pago_id=pago_id,
+                           total_cent=g["importe_cent"], operacion_en=g["pagado_en"],
+                           tipo=d.tipo, nif=d.cliente_nif, nombre=d.cliente_nombre,
+                           direccion=d.cliente_direccion, pedida_por="local")
+    # `pedido` (que viene en `factura_completa`) lleva TODAS las líneas de la mesa; esta factura es
+    # de un cobro. Para imprimirla hace falta el detalle de ese cobro y cuadrado con su importe,
+    # que es justo lo que devuelve `publica()`.
+    return {**factura_completa(f["id"]), "documento": facturacion.publica(f)}
 
 
 @app.get("/api/cobros")
 def cobros(fecha: str | None = None, u: dict = Depends(exige("camarero", "encargado"))):
-    """Pedidos cobrados de un día, con su factura si ya se emitió."""
+    """Pedidos cobrados de un día, con su factura si ya se emitió.
+
+    El `pago_id=0` del JOIN no es un detalle: desde que hay factura por cabeza, un pedido puede
+    tener cuatro, y sin esa condición la lista de cobros mostraría el mismo ticket cuatro veces.
+    Las de cabeza se cuentan aparte, para que el camarero vea por qué no puede hacer una de todos.
+    """
     dia = fecha or datetime.now().strftime("%Y-%m-%d")
     return q("""SELECT p.id, p.tipo, p.cliente, p.cerrado_en, m.nombre AS mesa, e.nombre AS camarero,
                        v.total_cent, f.id AS factura_id,
-                       CONCAT(f.serie, f.ejercicio, '/', LPAD(f.numero, 5, '0')) AS numero_completo
+                       CONCAT(f.serie, f.ejercicio, '/', LPAD(f.numero, 5, '0')) AS numero_completo,
+                       (SELECT COUNT(*) FROM facturas x
+                         WHERE x.pedido_id=p.id AND x.pago_id<>0) AS facturas_por_cabeza
                 FROM pedidos p
                 JOIN v_totales_pedido v ON v.pedido_id=p.id
                 JOIN empleados e ON e.id=p.empleado_id
                 LEFT JOIN mesas m ON m.id=p.mesa_id
-                LEFT JOIN facturas f ON f.pedido_id=p.id
+                LEFT JOIN facturas f ON f.pedido_id=p.id AND f.pago_id=0
                 WHERE p.estado='cobrado' AND DATE(p.cerrado_en)=%s
                 ORDER BY p.cerrado_en DESC""", (dia,))
 
@@ -1356,19 +1393,28 @@ def listar_facturas(fecha: str | None = None, buscar: str | None = None, u: dict
 
 @app.get("/api/facturas/{fid}")
 def ver_factura(fid: int, u: dict = Depends(exige("camarero", "encargado"))):
-    return factura_completa(fid)
+    """La factura para reimprimirla, sea de la cuenta entera o de un cobro suelto.
+
+    `documento` es lo que se imprime: el detalle que corresponde a ESTA factura y cuadrado con su
+    importe. Sin él, reimprimir la factura de un cobro sacaba las líneas de toda la mesa, que es
+    un documento distinto del que se emitió.
+    """
+    return {**factura_completa(fid), "documento": facturacion.publica(fid)}
 
 
 @app.get("/api/pedidos/{pid}/documento")
 def documento_pedido(pid: int, u: dict = Depends(exige("camarero", "encargado"))):
     """Datos que necesita la pantalla para pintar el ticket o la factura del pedido."""
     p = pedido_completo(pid)
-    f = q1("SELECT id FROM facturas WHERE pedido_id=%s", (pid,))
+    f = facturacion.de_pedido(pid)
     iva_pct = int(ajustes_dict().get("iva_pct", 10))
     base = round(p["total_cent"] / (1 + iva_pct / 100))
     return {"pedido": p, "local": ajustes_dict(), "iva_pct": iva_pct,
             "base_cent": base, "iva_cent": p["total_cent"] - base,
-            "factura": factura_completa(f["id"]) if f else None}
+            "factura": factura_completa(f["id"]) if f else None,
+            # Las de cabeza no se pintan aquí (cada una es su propio documento), pero la pantalla
+            # tiene que saber que existen para no ofrecer una factura de la cuenta entera.
+            "facturas_por_cabeza": facturacion.del_pedido_por_cabezas(pid)}
 
 
 # ─────────────── Arqueo de caja y cierre Z (encargado) ───────────────
@@ -2771,7 +2817,197 @@ async def publico_pagar_lo_mio(d: PagoDesdeLaApp, v: dict = Depends(mesaqr.actua
     saldo = cuenta.resumen(pid)
     return {"pago_id": pago_id, "importe_cent": importe, "concepto": concepto,
             "mesa": visita["mesa"], "saldo_cent": saldo["pendiente_cent"],
-            "cuenta_saldada": saldo["pendiente_cent"] <= 0}
+            "cuenta_saldada": saldo["pendiente_cent"] <= 0,
+            "factura": _factura_automatica(pago_id, pid, v)}
+
+
+def _factura_automatica(pago_id: int, pid: int, v: dict) -> dict | None:
+    """«Factúrame siempre»: quien lo dejó puesto en su perfil no tiene que pedirla cada vez.
+
+    Se factura **el cobro que acaba de hacer**, nunca la cuenta de la mesa. Aunque haya pagado él
+    todo, lo que consta es lo que puso: así el automático no puede pisar la factura que pida otro
+    comensal, y la regla de «una por cabeza o una de todos» no se rompe sin que nadie lo pida.
+
+    Si algo falla, se calla y no se rompe el pago: el dinero ya está apuntado y una factura que no
+    salió se puede pedir después. Devolver un 500 aquí le diría al cliente que su pago no ha ido.
+    """
+    if not v.get("cliente_id") or not facturacion.app_activa():
+        return None
+    try:
+        perfil = clientes.perfil(v["cliente_id"])
+        if not perfil.get("factura_auto") or not perfil.get("nif"):
+            return None
+        g = q1("SELECT importe_cent, pagado_en FROM pagos WHERE id=%s", (pago_id,))
+        if not facturacion.plazo(g["pagado_en"])["abierto"]:
+            return None
+        f = facturacion.emitir(pedido_id=pid, pago_id=pago_id, total_cent=g["importe_cent"],
+                               operacion_en=g["pagado_en"], tipo="completa", nif=perfil["nif"],
+                               nombre=perfil.get("razon_social") or perfil.get("nombre"),
+                               direccion=perfil.get("direccion"), pedida_por="app",
+                               cliente_id=v["cliente_id"])
+        return facturacion.publica(f)
+    except HTTPException:
+        return None
+
+
+# ─────────────── La factura, pedida desde el teléfono ───────────────
+# El cliente pide su factura donde ya está: en la mesa, con el móvil en la mano. Lo que decide esta
+# ruta no es cómo se numera —eso es de `facturacion.py`— sino **de qué es la factura**:
+#
+#   · `mio`  → el cobro de esta persona. El que se usa cuando la mesa paga a escote.
+#   · `mesa` → la cuenta entera, y solo cuando está saldada del todo.
+#
+# Y una cosa que NO decide el cuerpo de la petición: de quién es el cobro. Igual que al pagar, eso
+# lo dice el token de la visita. Si viniera en el cuerpo, cualquiera sentado en la mesa podría
+# sacar la factura de otro con sus datos fiscales dentro.
+class FacturaDesdeLaApp(BaseModel):
+    alcance: str = "mio"                       # "mio" (mi cobro) | "mesa" (la cuenta entera)
+    nif: str | None = Field(None, max_length=20)
+    nombre: str | None = Field(None, max_length=80)
+    direccion: str | None = Field(None, max_length=120)
+    usar_mi_cuenta: bool = False               # coger los datos fiscales del perfil de cliente
+
+
+def _cobro_de_este_telefono(pid: int, token: str) -> dict:
+    """El cobro que hizo este teléfono, buscado por su comensal.
+
+    Dos pagos del mismo comensal es raro (pagar en dos veces) y no se resuelve a la ligera: la
+    factura es de un cobro, así que si hay dos, decide un camarero.
+    """
+    yo = comensales.de_dispositivo(pid, token)
+    if not yo:
+        raise HTTPException(409, "Desde este teléfono no se ha pagado nada de esta mesa")
+    pagos = q("""SELECT id, importe_cent, pagado_en FROM pagos
+                 WHERE pedido_id=%s AND comensal_id=%s ORDER BY id""", (pid, yo["id"]))
+    if not pagos:
+        raise HTTPException(409, "Todavía no has pagado tu parte de esta mesa")
+    if len(pagos) > 1:
+        raise HTTPException(409, "Has pagado en dos veces; pídele la factura a un camarero")
+    return pagos[0]
+
+
+def _datos_fiscales(d: FacturaDesdeLaApp, v: dict) -> tuple[str, dict]:
+    """Los datos que van en la factura, y si con ellos sale completa o simplificada.
+
+    Sin NIF no hay factura completa, pero tampoco hay error: sale la simplificada, que es el ticket
+    de siempre y es lo que necesita la mayoría. Pedirlo a gritos en un formulario de móvil, cuando
+    casi nadie lo quiere, es la manera de que nadie lo use.
+    """
+    nif, nombre, direccion = d.nif, d.nombre, d.direccion
+    if d.usar_mi_cuenta:
+        if not v.get("cliente_id"):
+            raise HTTPException(409, "Para usar tus datos hay que entrar con tu cuenta")
+        p = clientes.perfil(v["cliente_id"])
+        nif = nif or p.get("nif")
+        nombre = nombre or p.get("razon_social") or p.get("nombre")
+        direccion = direccion or p.get("direccion")
+    datos = {"nif": (nif or "").strip() or None, "nombre": (nombre or "").strip() or None,
+             "direccion": (direccion or "").strip() or None}
+    tipo = "completa" if datos["nif"] and datos["nombre"] else "simplificada"
+    return tipo, datos
+
+
+@app.post("/api/publico/visita/factura", status_code=201)
+def publico_pedir_factura(d: FacturaDesdeLaApp, v: dict = Depends(mesaqr.actual)):
+    """«Quiero factura», desde la mesa.
+
+    Mientras la caja del día siga abierta sale sola. Después no la emite la app —cambiaría un
+    arqueo ya cerrado— pero la respuesta no es «no se puede»: es a qué teléfono o correo pedirla,
+    porque el reglamento obliga al local a expedirla cuando el cliente la pide.
+    """
+    visita = mesaqr.estado(v["visita_id"])
+    pid = visita["pedido_id"]
+    if not pid:
+        raise HTTPException(409, "En esta mesa todavía no hay nada que facturar")
+    if d.alcance not in ("mio", "mesa"):
+        raise HTTPException(422, "La factura es de tu cobro o de la cuenta entera")
+
+    if d.alcance == "mesa":
+        p = pedido_completo(pid)
+        if p["estado"] != "cobrado":
+            raise HTTPException(409, "La cuenta de la mesa todavía no está saldada")
+        pago_id, total, cuando = facturacion.CUENTA_ENTERA, p["total_cent"], p["cerrado_en"]
+    else:
+        g = _cobro_de_este_telefono(pid, v["token"])
+        pago_id, total, cuando = g["id"], g["importe_cent"], g["pagado_en"]
+
+    ya = (facturacion.de_pedido(pid) if pago_id == facturacion.CUENTA_ENTERA
+          else facturacion.de_pago(pago_id))
+    if ya:
+        return facturacion.publica(ya)          # pulsar dos veces no emite dos facturas
+
+    plazo = facturacion.plazo(cuando)
+    if not facturacion.app_activa() or not plazo["abierto"]:
+        raise HTTPException(409, f"{plazo['motivo'] or 'Desde la app no se puede emitir ahora'}. "
+                                 f"{plazo['como_pedirla']} y te la mandan: están obligados a "
+                                 "hacerla si la pides.")
+    tipo, datos = _datos_fiscales(d, v)
+    f = facturacion.emitir(pedido_id=pid, pago_id=pago_id, total_cent=total, operacion_en=cuando,
+                           tipo=tipo, pedida_por="app", cliente_id=v.get("cliente_id"), **datos)
+    return facturacion.publica(f)
+
+
+@app.get("/api/publico/visita/factura")
+def publico_ver_factura(v: dict = Depends(mesaqr.actual)):
+    """Qué factura hay de esta mesa, y si la app puede emitirla ahora.
+
+    Lo consulta la pantalla antes de pintar el botón. `puedo_pedirla` no dice «la caja está
+    abierta»: dice **que si pulsa, sale factura**. Un botón que contesta 409 es peor que no tener
+    botón, así que aquí se comprueba también que haya algo que facturar (su cobro, o la cuenta
+    saldada) y que la regla de «una por cabeza o una de todos» lo permita. `alcance_sugerido` es
+    lo que tiene que mandar la pantalla, para que no tenga que repetir ese razonamiento en JS.
+    """
+    visita = mesaqr.estado(v["visita_id"])
+    pid = visita["pedido_id"]
+    if not pid:
+        return {"mia": None, "de_la_mesa": None, "puedo_pedirla": False,
+                "alcance_sugerido": None, "cuenta_saldada": False, "por_cabeza": 0,
+                "plazo": facturacion.plazo(None)}
+    mia, pague = None, False
+    yo = comensales.de_dispositivo(pid, v["token"])
+    if yo:
+        for g in q("SELECT id FROM pagos WHERE pedido_id=%s AND comensal_id=%s", (pid, yo["id"])):
+            pague = True
+            f = facturacion.de_pago(g["id"])
+            if f:
+                mia = facturacion.publica(f)
+    de_la_mesa = facturacion.de_pedido(pid)
+    por_cabeza = facturacion.del_pedido_por_cabezas(pid)
+    p = pedido_completo(pid)
+    cobrado = p["estado"] == "cobrado"
+    plazo = facturacion.plazo(p["cerrado_en"] if cobrado else datetime.now())
+    # Con facturas por cabeza emitidas, la de la cuenta entera cobraría dos veces lo mismo; y al
+    # revés. Es la misma regla que aplica `facturacion.emitir()`, dicha antes de pulsar.
+    puedo_mio = pague and not mia and not de_la_mesa
+    puedo_mesa = cobrado and not de_la_mesa and not por_cabeza
+    en_plazo = bool(facturacion.app_activa() and plazo["abierto"])
+    alcance = "mio" if puedo_mio else ("mesa" if puedo_mesa else None)
+    return {"mia": mia, "de_la_mesa": facturacion.publica(de_la_mesa) if de_la_mesa else None,
+            "cuenta_saldada": cobrado, "plazo": plazo,
+            "puedo_pedirla": bool(en_plazo and alcance),
+            "alcance_sugerido": alcance if en_plazo else None,
+            "por_cabeza": len(por_cabeza)}
+
+
+@app.get("/api/publico/clientes/facturas")
+def cliente_mis_facturas(yo: dict = Depends(clientes.cliente)):
+    """Las facturas de esta cuenta de cliente, las suyas y nada más.
+
+    Se filtra por `cliente_id`, no por NIF: dos personas de la misma empresa comparten el NIF y no
+    tienen por qué ver la cena de la otra.
+    """
+    filas = q("""SELECT id FROM facturas WHERE cliente_id=%s
+                 ORDER BY id DESC LIMIT 50""", (yo["id"],))
+    return [facturacion.publica(f["id"]) for f in filas]
+
+
+@app.get("/api/publico/clientes/facturas/{fid}")
+def cliente_mi_factura(fid: int, yo: dict = Depends(clientes.cliente)):
+    f = q1("SELECT id FROM facturas WHERE id=%s AND cliente_id=%s", (fid, yo["id"]))
+    if not f:
+        # 404 y no 403 a propósito: un 403 confirmaría que esa factura existe y es de otro.
+        raise HTTPException(404, "Esa factura no es de esta cuenta")
+    return facturacion.publica(f["id"])
 
 
 # ─────────────── Solicitudes (sala) ───────────────

@@ -43,16 +43,24 @@ function textoDocumento(d, factura = null) {
 function mostrarDocumento(d, factura = null, alPedirFactura = null) {
   document.querySelector('#visor-doc')?.remove();
   const texto = textoDocumento(d, factura);
+  // Con facturas por cabeza emitidas, la de la cuenta entera cobraría dos veces lo mismo sobre el
+  // papel y el servidor la rechaza. El botón no se pinta: enseñarlo para que dé error al pulsarlo
+  // deja al camarero delante del cliente sin saber qué ha hecho mal.
+  const porCabeza = (d.facturas_por_cabeza || []).length;
   const caja = document.createElement('div');
   caja.id = 'visor-doc';
   caja.className = 'visor';
   caja.innerHTML = `
     <div class="papel">
       <pre>${esc(texto)}</pre>
+      ${porCabeza && !factura ? `<p class="tenue">Esta cuenta ya tiene ${porCabeza} factura(s) de
+        quien pagó su parte, así que no puede hacerse además una de la cuenta entera. La de cada
+        cobro se saca desde su ticket.</p>` : ''}
       <div class="acciones">
         <button data-cerrar>Cerrar</button>
         <button data-descargar>Descargar .txt</button>
-        ${!factura && alPedirFactura ? '<button data-factura class="primario">Emitir factura</button>' : ''}
+        ${!factura && alPedirFactura && !porCabeza
+          ? '<button data-factura class="primario">Emitir factura</button>' : ''}
       </div>
     </div>`;
   document.body.appendChild(caja);
@@ -70,35 +78,118 @@ function mostrarDocumento(d, factura = null, alPedirFactura = null) {
   return caja;
 }
 
-/** Pide los datos del cliente y emite la factura. Devuelve la factura emitida. */
-async function pedirFactura(d) {
+/** Enseña un texto como documento, con lo justo: cerrar y descargar.
+ *
+ * No se llama a la impresora del sistema, igual que en el resto de la casa: el documento se ve y
+ * se descarga, e imprimirlo es decisión de quien lo tiene delante.
+ */
+function visorDeTexto(texto, nombre) {
+  document.querySelector('#visor-doc')?.remove();
+  const caja = document.createElement('div');
+  caja.id = 'visor-doc';
+  caja.className = 'visor';
+  caja.innerHTML = `<div class="papel"><pre>${esc(texto)}</pre>
+      <div class="acciones"><button data-cerrar>Cerrar</button>
+        <button data-descargar>Descargar .txt</button></div></div>`;
+  document.body.appendChild(caja);
+  const cerrar = () => caja.remove();
+  caja.onclick = e => { if (e.target === caja) cerrar(); };
+  caja.querySelector('[data-cerrar]').onclick = cerrar;
+  caja.querySelector('[data-descargar]').onclick = () => {
+    const url = URL.createObjectURL(new Blob([texto], { type: 'text/plain;charset=utf-8' }));
+    const a = document.createElement('a');
+    a.href = url; a.download = (nombre || 'documento') + '.txt'; a.click();
+    URL.revokeObjectURL(url);
+  };
+  return caja;
+}
+
+/** Pregunta los datos fiscales y llama a `emitir`. Devuelve lo que responda, o null si se cancela.
+ *
+ * El diálogo NO se cierra cuando el servidor rechaza: casi siempre es un dato mal puesto o una
+ * regla que hay que leer («esta mesa ya tiene factura por cabeza»), y cerrarlo obligaría a
+ * teclear otra vez el NIF entero para volver a intentarlo.
+ */
+function pedirDatosFiscales(titulo, emitir) {
   const dlg = document.createElement('dialog');
   dlg.innerHTML = `
-    <h3>Emitir factura del pedido #${d.pedido.id}</h3>
+    <h3>${esc(titulo)}</h3>
     <p class="tenue">Sin datos del cliente se emite una factura simplificada.</p>
-    <div class="fila"><input id="f-nombre" placeholder="Nombre o razón social" maxlength="80" style="flex:1"></div>
-    <div class="fila"><input id="f-nif" placeholder="NIF/CIF" maxlength="20" style="width:10em">
-      <input id="f-dir" placeholder="Dirección" maxlength="120" style="flex:1"></div>
+    <div class="fila"><input data-f-nombre placeholder="Nombre o razón social" maxlength="80" style="flex:1"></div>
+    <div class="fila"><input data-f-nif placeholder="NIF/CIF" maxlength="20" style="width:10em">
+      <input data-f-dir placeholder="Dirección" maxlength="120" style="flex:1"></div>
     <div class="fila"><button data-cancelar>Cancelar</button><button data-ok class="primario">Emitir</button></div>`;
   document.body.appendChild(dlg);
   dlg.showModal();
   return new Promise(resolve => {
-    dlg.querySelector('[data-cancelar]').onclick = () => { dlg.close(); dlg.remove(); resolve(null); };
+    const fuera = () => { dlg.close(); dlg.remove(); };
+    dlg.querySelector('[data-cancelar]').onclick = () => { fuera(); resolve(null); };
     dlg.querySelector('[data-ok]').onclick = async () => {
-      const nombre = dlg.querySelector('#f-nombre').value.trim();
-      const nif = dlg.querySelector('#f-nif').value.trim();
+      const nombre = dlg.querySelector('[data-f-nombre]').value.trim();
+      const nif = dlg.querySelector('[data-f-nif]').value.trim();
+      const dir = dlg.querySelector('[data-f-dir]').value.trim();
       const body = { tipo: nombre && nif ? 'completa' : 'simplificada' };
       if (nombre) body.cliente_nombre = nombre;
       if (nif) body.cliente_nif = nif;
-      const dir = dlg.querySelector('#f-dir').value.trim();
       if (dir) body.cliente_direccion = dir;
       try {
-        const f = await api(`/pedidos/${d.pedido.id}/factura`, { method: 'POST', body });
-        dlg.close(); dlg.remove();
-        aviso('Factura ' + f.numero_completo + ' emitida', 'ok');
-        mostrarDocumento(d, f);
-        resolve(f);
+        const r = await emitir(body);
+        fuera();
+        resolve(r);
       } catch (e) { aviso(e.message, 'error'); }
     };
   });
+}
+
+/** Pide los datos del cliente y emite la factura de la cuenta entera. */
+async function pedirFactura(d) {
+  const f = await pedirDatosFiscales(`Emitir factura del pedido #${d.pedido.id}`,
+    body => api(`/pedidos/${d.pedido.id}/factura`, { method: 'POST', body }));
+  if (!f) return null;
+  aviso('Factura ' + f.numero_completo + ' emitida', 'ok');
+  mostrarDocumento(d, f);
+  return f;
+}
+
+/** La factura de UN cobro: lo que puso esa persona, no lo que cenó la mesa.
+ *
+ * Hace falta porque en una mesa a escote la factura de la cuenta entera no le sirve a nadie:
+ * ninguno de los cuatro pagó eso. Es la que reclama quien pagó su parte, y el reglamento de
+ * facturación obliga a expedirla cuando la pide, también al día siguiente.
+ */
+async function pedirFacturaDeCobro(pagoId) {
+  const f = await pedirDatosFiscales(`Emitir factura del cobro #${pagoId}`,
+    body => api(`/pagos/${pagoId}/factura`, { method: 'POST', body }));
+  if (f) aviso('Factura ' + f.numero_completo + ' emitida', 'ok');
+  return f;
+}
+
+/** El texto de la factura de un cobro, con el mismo ancho de ticket que el resto. */
+function textoFacturaDeCobro(doc) {
+  const ancho = 40;
+  const col = (izq, der) => String(izq).slice(0, ancho - der.length - 1).padEnd(ancho - der.length) + der;
+  const raya = '-'.repeat(ancho);
+  const filas = [
+    doc.local.nombre.toUpperCase(), doc.local.direccion,
+    `NIF ${doc.local.nif}${doc.local.telefono ? ' · Tel. ' + doc.local.telefono : ''}`, raya,
+    `FACTURA ${doc.tipo === 'completa' ? '' : 'SIMPLIFICADA '}${doc.numero_completo}`,
+    new Date(doc.emitida_en).toLocaleString('es-ES'),
+  ];
+  // Las dos fechas, que es lo que distingue una factura hecha en el momento de una hecha después
+  // a petición del cliente. El reglamento las pide cuando no coinciden.
+  if (doc.fuera_de_fecha) filas.push(`Operación: ${new Date(doc.operacion_en).toLocaleString('es-ES')}`);
+  filas.push(doc.mesa ? `Mesa ${doc.mesa} · ${doc.alcance === 'mesa' ? 'cuenta entera' : 'un cobro'}`
+                      : 'Un cobro de la cuenta');
+  if (doc.cliente_nombre) {
+    filas.push(raya, 'CLIENTE', doc.cliente_nombre,
+      ...(doc.cliente_nif ? [`NIF ${doc.cliente_nif}`] : []),
+      ...(doc.cliente_direccion ? [doc.cliente_direccion] : []));
+  }
+  filas.push(raya, col('CONCEPTO', 'IMPORTE'));
+  doc.lineas.forEach(l => filas.push(col(`${l.cantidad ? l.cantidad + ' x ' : ''}${l.producto}`,
+    euro(l.importe_cent))));
+  filas.push(raya, col('Base imponible', euro(doc.base_cent)),
+    col(`IVA ${doc.iva_pct} %`, euro(doc.iva_cent)), col('TOTAL', euro(doc.total_cent)),
+    raya, 'Documento con validez fiscal', 'Gracias por su visita');
+  return filas.join('\n');
 }

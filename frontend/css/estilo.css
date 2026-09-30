@@ -1080,3 +1080,19 @@ body.pantalla-mesa { display: grid; place-items: center; min-height: 100vh; text
 .bump.hecha { background: var(--panel2); color: var(--tenue); border-style: dashed;
   cursor: default; font-size: .85rem; }
 
+
+/* La factura en la pantalla del cliente. Es un documento, no la lista de la compra: el número
+   arriba, el detalle cuadrado y el total abajo. Las filas llevan su propia rejilla porque la de
+   la cesta reserva columnas para los botones de sumar y restar, que aquí no existen. */
+.factura .fa-linea { display: grid; grid-template-columns: 2.2rem 1fr auto; gap: .5rem;
+  align-items: baseline; padding: .35rem 0; border-bottom: 1px solid var(--borde); }
+.factura .fa-linea .cant { text-align: center; font-weight: 700; }
+.factura .fa-linea .importe { font-variant-numeric: tabular-nums; }
+.factura .fa-total { font-size: 1.1rem; border-bottom: none; }
+.factura .fa-quien { margin: .7rem 0; }
+.factura .fa-pie { color: var(--tenue); font-size: .85rem; margin: .5rem 0; }
+/* Cada factura del listado es un botón de ancho completo: en un móvil, acertarle a un enlace de
+   dos palabras con el pulgar es pedir demasiado. */
+.lista-facturas button { display: grid; grid-template-columns: 1fr auto; gap: .5rem; width: 100%;
+  text-align: left; min-height: 44px; margin-bottom: .4rem; }
+.lista-facturas .importe { font-variant-numeric: tabular-nums; }

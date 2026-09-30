@@ -324,21 +324,31 @@ async function verComandaDeLaMesa() {
     ${botonDePagar(d)}`;
 }
 
-/** El pie de la cuenta: qué se puede pagar desde aquí, si es que queda algo. */
+/** El pie de la cuenta: qué se puede pagar desde aquí, si es que queda algo.
+ *
+ * El botón de la factura sale en cuanto hay algo cobrado en la mesa. No se consulta al servidor
+ * para decidir si pintarlo: eso duplicaría el sondeo de la cuenta cada quince segundos para una
+ * pregunta que solo importa cuando alguien la pulsa. Quien la pulsa se encuentra dentro con la
+ * respuesta de verdad —su factura, la de la mesa, o a quién pedirla—, que es donde tiene sentido.
+ */
 function botonDePagar(d) {
+  const factura = d.pagado_cent
+    ? '<button data-pagar="factura" class="sutil">Factura</button>' : '';
   if (d.saldo_cent <= 0) {
-    return d.total_cent ? '<p class="pagada">✓ Cuenta pagada</p>' : '';
+    return d.total_cent
+      ? `<div class="fila acciones-cuenta"><span class="pagada">✓ Cuenta pagada</span>${factura}</div>`
+      : '';
   }
   // Ya pagó lo suyo pero la mesa sigue debiendo: no se le empuja a pagar otra vez, se le dice en
   // qué va la mesa. Sin esto, el botón «Pagar» seguiría ahí después de haber pagado y parecería
   // que el pago no ha entrado.
   if (d.mio && d.mio.pagado) {
     return `<p class="tenue">Lo tuyo está pagado. La mesa debe todavía ${euro(d.saldo_cent)}.</p>
-      <div class="fila"><button data-pagar="todo" class="sutil">Pagar lo que queda</button></div>`;
+      <div class="fila"><button data-pagar="todo" class="sutil">Pagar lo que queda</button>${factura}</div>`;
   }
   return `<div class="fila acciones-cuenta">
       <span class="tenue">Queda por pagar ${euro(d.saldo_cent)}</span>
-      <button data-pagar="abrir" class="primario">Pagar</button>
+      ${factura}<button data-pagar="abrir" class="primario">Pagar</button>
     </div>`;
 }
 
@@ -350,6 +360,7 @@ $('#comanda-mesa')?.addEventListener('click', e => {
   const b = e.target.closest('[data-pagar]');
   if (!b) return;
   if (b.dataset.pagar === 'todo') pagar(true);
+  else if (b.dataset.pagar === 'factura') abrirFactura();
   else abrirPago();
 });
 
@@ -375,6 +386,12 @@ function abrirPago() {
          cuánto es «lo tuyo». Puedes pagar la cuenta entera, o pedirle al camarero que la reparta.</p>
        <label class="opcion-pago"><input type="radio" name="pg" value="todo" checked>
          <span><b>Toda la mesa · ${euro(d.saldo_cent)}</b></span></label>`;
+  // Con «factúrame siempre» puesto en el perfil, la factura sale con el propio pago: preguntarlo
+  // otra vez aquí sería hacerle repetir algo que ya dijo.
+  const sola = Boolean(cuenta && cuenta.factura_auto && cuenta.nif);
+  $('#pg-factura').checked = false;
+  $('#pg-factura-campo').hidden = sola;
+  $('#pg-factura-auto').hidden = !sola;
   $('#pg-hecho').hidden = true;
   $('#pg-elegir').hidden = false;
   $('#d-pagar').showModal();
@@ -390,6 +407,7 @@ async function pagar(todo) {
   const boton = $('#pg-pagar');
   if (boton) boton.disabled = true;
   claveDelPago = claveDelPago || uuidPago();
+  const queria = $('#pg-factura').checked && !$('#pg-factura-campo').hidden;
   try {
     const r = await api('/publico/visita/pagar',
       { method: 'POST', body: { todo: !!todo, con_compartido: true }, clave: claveDelPago });
@@ -403,6 +421,11 @@ async function pagar(todo) {
     if (!$('#d-pagar').open) $('#d-pagar').showModal();
     aviso('Pagado ' + euro(r.importe_cent), 'ok');
     verComandaDeLaMesa();
+    // El pago ya está hecho y apuntado. Lo de la factura viene DESPUÉS y por separado a propósito:
+    // si fallara, lo que hay que ver es «tu pago está hecho, la factura no ha salido», nunca un
+    // error que parezca que no se ha cobrado.
+    if (r.factura) pintarFactura(r.factura, true);
+    else if (queria) abrirFactura(true);
   } catch (e) {
     // Un fallo de red NO invalida la clave: puede que el cobro haya entrado y se haya perdido
     // la respuesta, y reintentar con la misma clave es justo lo que averigua cuál de las dos fue.
@@ -425,6 +448,142 @@ $('#pg-pagar').onclick = () => {
 };
 $('#pg-cerrar').onclick = () => { $('#d-pagar').close(); claveDelPago = null; };
 $('#pg-listo').onclick = () => $('#d-pagar').close();
+
+// ── La factura ──────────────────────────────────────────────────────────────────────────
+// De qué es la factura NO lo decide esta pantalla. Lo dice el servidor en `alcance_sugerido`:
+// «mio» si la persona ha pagado su parte, «mesa» si la cuenta está saldada del todo y nadie ha
+// sacado ya una por cabeza. Repetir esa lógica aquí sería tener dos reglas de una serie fiscal, y
+// la que se queda vieja es siempre la del navegador.
+//
+// Y una cosa que esta pantalla no hace: quemar un número de factura sin saber qué imprimir. Con
+// los datos fiscales en el perfil se pide sola; sin ellos se pregunta primero, porque una
+// simplificada emitida ya no se puede convertir en completa —hay que rectificarla— y quien marcó
+// «quiero factura» casi siempre la quiere con su NIF.
+const diaYhora = s => (s ? new Date(s).toLocaleString('es-ES',
+  { dateStyle: 'short', timeStyle: 'short' }) : '');
+
+function datosFiscalesDelPerfil() {
+  return {
+    nif: (cuenta && cuenta.nif) || '',
+    nombre: (cuenta && (cuenta.razon_social || cuenta.nombre)) || '',
+    direccion: (cuenta && cuenta.direccion) || '',
+  };
+}
+
+/** El documento, tal y como lo devuelve el servidor. */
+function pintarFactura(f, abrir = false) {
+  const d = $('#d-factura');
+  $('#fa-datos').hidden = true;
+  $('#fa-pedir').hidden = true;
+  const fila = (cant, texto, importe, clase = '') => `<div class="fa-linea ${clase}">
+      <span class="cant">${cant}</span><span>${texto}</span>
+      <span class="importe">${euro(importe)}</span></div>`;
+  $('#fa-cuerpo').innerHTML = `<div class="factura">
+    <p class="estado-grande aceptada">${esc(f.numero_completo)}</p>
+    <p class="fa-pie">${esc(f.local.nombre)} · NIF ${esc(f.local.nif)}<br>
+      ${esc(f.local.direccion || '')}</p>
+    ${f.cliente_nif ? `<p class="fa-quien"><b>${esc(f.cliente_nombre || '')}</b><br>
+        NIF ${esc(f.cliente_nif)}${f.cliente_direccion ? '<br>' + esc(f.cliente_direccion) : ''}</p>`
+      : '<p class="fa-quien tenue">Factura simplificada, sin datos de cliente.</p>'}
+    ${(f.lineas || []).map(l => fila(l.cantidad, esc(l.producto), l.importe_cent)).join('')}
+    ${fila('', 'Base', f.base_cent)}
+    ${fila('', `IVA ${f.iva_pct}%`, f.iva_cent)}
+    ${fila('', '<b>Total</b>', f.total_cent, 'fa-total')}
+    <p class="fa-pie">${f.alcance === 'mesa' ? 'De la cuenta entera' : 'De lo que pagaste tú'}${
+      f.mesa ? ' · mesa ' + esc(f.mesa) : ''}<br>
+      Expedida el ${esc(diaYhora(f.emitida_en))}${f.fuera_de_fecha
+        ? `<br>Operación del ${esc(diaYhora(f.operacion_en))}` : ''}</p>
+  </div>`;
+  if (abrir && !d.open) d.showModal();
+}
+
+/** Qué hay de la factura de esta mesa: la que ya existe, la que se puede pedir, o a quién pedirla. */
+async function abrirFactura(pedirYa = false) {
+  const d = $('#d-factura');
+  $('#fa-cuerpo').innerHTML = '<p class="tenue">Un momento…</p>';
+  $('#fa-datos').hidden = true;
+  $('#fa-pedir').hidden = true;
+  if (!d.open) d.showModal();
+  let e;
+  try { e = await api('/publico/visita/factura'); }
+  catch (err) { $('#fa-cuerpo').innerHTML = `<p class="rechazada">${esc(err.message)}</p>`; return; }
+
+  const ya = e.mia || e.de_la_mesa;
+  if (ya) return pintarFactura(ya);
+  if (!e.puedo_pedirla) {
+    // Aquí es donde NO se dice «ya no se puede». Se dice a quién pedirla, porque el local está
+    // obligado a expedirla cuando el cliente la pide, aunque la caja del día ya esté cerrada.
+    const plazo = e.plazo || {};
+    $('#fa-cuerpo').innerHTML = `
+      <p>${esc(plazo.motivo || 'Desde la app no se puede emitir ahora')}.</p>
+      ${plazo.como_pedirla ? `<p class="estado-grande">${esc(plazo.como_pedirla)}</p>
+        <p class="tenue">Están obligados a hacértela si la pides: el plazo de facturación no
+          termina cuando cierra la caja.</p>` : ''}
+      ${e.por_cabeza ? `<p class="tenue">En esta mesa ya hay ${e.por_cabeza} factura(s) de quien
+        pagó su parte, así que no puede hacerse además una de la cuenta entera.</p>` : ''}`;
+    return;
+  }
+
+  const perfil = datosFiscalesDelPerfil();
+  $('#fa-nif').value = perfil.nif;
+  $('#fa-nombre').value = perfil.nombre;
+  $('#fa-direccion').value = perfil.direccion;
+  if (pedirYa && perfil.nif && perfil.nombre) return pedirLaFactura(e.alcance_sugerido);
+  $('#fa-cuerpo').innerHTML = `<p>Se hará la factura de <b>${e.alcance_sugerido === 'mesa'
+    ? 'la cuenta entera' : 'lo que has pagado tú'}</b>.</p>`;
+  $('#fa-datos').hidden = false;
+  $('#fa-pedir').hidden = false;
+  $('#fa-pedir').dataset.alcance = e.alcance_sugerido || 'mio';
+}
+
+async function pedirLaFactura(alcance) {
+  const boton = $('#fa-pedir');
+  boton.disabled = true;
+  try {
+    const f = await api('/publico/visita/factura', { method: 'POST', body: {
+      alcance: alcance || 'mio',
+      nif: $('#fa-nif').value.trim() || null,
+      nombre: $('#fa-nombre').value.trim() || null,
+      direccion: $('#fa-direccion').value.trim() || null,
+    }});
+    pintarFactura(f, true);
+    aviso('Factura ' + f.numero_completo, 'ok');
+  } catch (err) {
+    // El mensaje del servidor ya trae el teléfono y el correo cuando toca pedirla al local, así
+    // que se muestra tal cual en vez de traducirlo a un «no se ha podido» que no dice nada.
+    $('#fa-cuerpo').innerHTML = `<p class="rechazada">${esc(err.message)}</p>`;
+    $('#fa-datos').hidden = true;
+    boton.hidden = true;
+  } finally { boton.disabled = false; }
+}
+
+/** Las facturas de la cuenta de cliente. Las suyas: se filtran por cuenta, no por NIF. */
+async function verMisFacturas() {
+  const d = $('#d-factura');
+  $('#fa-datos').hidden = true;
+  $('#fa-pedir').hidden = true;
+  $('#fa-cuerpo').innerHTML = '<p class="tenue">Un momento…</p>';
+  if (!d.open) d.showModal();
+  let lista;
+  try { lista = await api('/publico/clientes/facturas'); }
+  catch (e) { $('#fa-cuerpo').innerHTML = `<p class="rechazada">${esc(e.message)}</p>`; return; }
+  misFacturas = lista;
+  $('#fa-cuerpo').innerHTML = lista.length
+    ? `<div class="lista-facturas">${lista.map((f, i) => `<button data-factura="${i}">
+         <span>${esc(f.numero_completo)} · ${esc(diaYhora(f.emitida_en))}</span>
+         <span class="importe">${euro(f.total_cent)}</span></button>`).join('')}</div>`
+    : `<p class="tenue">Todavía no tienes ninguna. Las que pidas desde la app se guardan aquí,
+         y también las que salgan solas si dejas puesta la factura automática.</p>`;
+}
+
+// El listado ya trae cada factura entera, así que abrir una no vuelve a preguntar al servidor.
+let misFacturas = [];
+$('#fa-cuerpo').addEventListener('click', e => {
+  const b = e.target.closest('[data-factura]');
+  if (b) pintarFactura(misFacturas[+b.dataset.factura]);
+});
+$('#fa-pedir').onclick = () => pedirLaFactura($('#fa-pedir').dataset.alcance);
+$('#fa-cerrar').onclick = () => $('#d-factura').close();
 
 // ── Seguimiento de la propia comanda ──
 const TEXTO = {

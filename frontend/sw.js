@@ -11,7 +11,10 @@
 // Lo que NUNCA se guarda: nada de `/api`. Una respuesta vieja de la API sería un precio, una
 // mesa o una comanda mentirosa; para eso está la cola de `sinred.js`, que sabe lo que apuntó.
 
-const VERSION = 'kds-tpv-v9';
+// v10: `cliente.html` estrena el diálogo de la factura. El HTML del cliente se sirve de la copia
+// primero, así que sin cambiar de versión la primera carga tras el despliegue seguiría siendo la
+// de antes —sin ese diálogo— y el botón de la factura no encontraría dónde pintarse.
+const VERSION = 'kds-tpv-v10';
 const CONCHA = [
   '/tpv.html',
   '/css/estilo.css',

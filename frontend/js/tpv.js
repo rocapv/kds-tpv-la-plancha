@@ -639,22 +639,38 @@ async function verTicketDePago(pagoId) {
     `Base${euro(d.base_cent).padStart(30)}`,
     `IVA ${d.iva_pct}%${euro(d.iva_cent).padStart(24)}`,
     d.de_varios ? `\nEsta cuenta se pagó en ${d.pagos_de_la_mesa} tickets.` : '',
-  ].join('\n'));
+  ].join('\n'), { texto: 'Emitir factura', alPulsar: () => facturarUnCobro(pagoId) });
 }
 
-/** Enseña un texto como ticket, con el mismo visor que ya usa el ticket de la mesa. */
-function ticketEnPantalla(texto) {
-  let visor = document.querySelector('#visor-ticket-pago');
-  if (!visor) {
-    visor = document.createElement('div');
-    visor.id = 'visor-ticket-pago';
-    visor.className = 'visor';
-    visor.innerHTML = '<div class="papel"><pre></pre><div class="acciones">'
-      + '<button data-imprimir>Imprimir</button><button class="primario" data-cerrar>Cerrar</button></div></div>';
-    document.body.appendChild(visor);
-    visor.querySelector('[data-cerrar]').onclick = () => visor.remove();
-    visor.querySelector('[data-imprimir]').onclick = () => window.print();
-    visor.onclick = ev => { if (ev.target === visor) visor.remove(); };
-  }
+/** La factura de este cobro, con los datos fiscales de quien la reclama.
+ *
+ * El diálogo y el texto viven en `documento.js`, que es de donde salen todos los justificantes de
+ * esta casa: una segunda manera de imprimir una factura es una segunda manera de imprimirla mal.
+ */
+async function facturarUnCobro(pagoId) {
+  const f = await pedirFacturaDeCobro(pagoId);
+  if (f) ticketEnPantalla(textoFacturaDeCobro(f.documento));
+}
+
+/** Enseña un texto como ticket, con el mismo visor que ya usa el ticket de la mesa.
+ *
+ * `extra` añade un botón más (por ejemplo «Emitir factura»). Se vuelve a crear en cada llamada
+ * porque su acción cambia con el cobro que se está enseñando: reutilizar el botón de antes
+ * facturaría el pago anterior, que es la clase de error que nadie ve hasta que está emitido.
+ */
+function ticketEnPantalla(texto, extra = null) {
+  document.querySelector('#visor-ticket-pago')?.remove();
+  const visor = document.createElement('div');
+  visor.id = 'visor-ticket-pago';
+  visor.className = 'visor';
+  visor.innerHTML = `<div class="papel"><pre></pre><div class="acciones">
+      ${extra ? `<button data-extra>${esc(extra.texto)}</button>` : ''}
+      <button data-imprimir>Imprimir</button>
+      <button class="primario" data-cerrar>Cerrar</button></div></div>`;
+  document.body.appendChild(visor);
   visor.querySelector('pre').textContent = texto;
+  visor.querySelector('[data-cerrar]').onclick = () => visor.remove();
+  visor.querySelector('[data-imprimir]').onclick = () => window.print();
+  visor.onclick = ev => { if (ev.target === visor) visor.remove(); };
+  if (extra) visor.querySelector('[data-extra]').onclick = () => extra.alPulsar();
 }

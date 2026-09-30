@@ -161,6 +161,7 @@
     </details>
     <div class="fila">
       <button id="cu-salir" class="mal">Salir</button>
+      <button id="cu-facturas" class="sutil">Mis facturas</button>
       <button id="cu-guardar" class="primario">Guardar</button>
     </div>
   </div>
@@ -210,6 +211,9 @@
   <div id="pg-elegir">
     <p class="tenue">Queda por pagar <b id="pg-saldo">0,00 €</b></p>
     <div id="pg-opciones"></div>
+    <label class="campo" id="pg-factura-campo"><input type="checkbox" id="pg-factura"> Quiero factura</label>
+    <p class="tenue" id="pg-factura-auto" hidden>Tu cuenta tiene puesta la factura automática:
+      saldrá sola con este pago.</p>
     <div class="fila">
       <button id="pg-cerrar">Ahora no</button>
       <button id="pg-pagar" class="primario">Pagar</button>
@@ -219,6 +223,26 @@
     <p class="estado-grande aceptada">✓ Pagado <span id="pg-importe"></span></p>
     <p class="tenue" id="pg-resto"></p>
     <div class="fila"><button id="pg-listo" class="primario">Listo</button></div>
+  </div>
+</dialog>
+
+<!-- La factura. Lo que se pide desde aquí es el justificante de UN cobro: el propio, o el de la
+     cuenta entera si se ha pagado toda. Cuando la caja del día ya está cerrada la app no la emite
+     —movería un arqueo firmado— pero esto NO dice «no se puede»: dice a qué teléfono o correo
+     pedirla, porque el local está obligado a expedirla cuando el cliente la pide. -->
+<dialog id="d-factura">
+  <h3>Factura</h3>
+  <div id="fa-cuerpo"></div>
+  <div id="fa-datos" hidden>
+    <p class="tenue">Sin NIF sale la factura simplificada, que es el ticket de siempre y vale para
+      la mayoría. Con NIF y nombre sale la completa, la que se desgrava.</p>
+    <label class="campo">NIF <input id="fa-nif" maxlength="20"></label>
+    <label class="campo">Nombre o razón social <input id="fa-nombre" maxlength="80"></label>
+    <label class="campo">Dirección <input id="fa-direccion" maxlength="120"></label>
+  </div>
+  <div class="fila">
+    <button id="fa-cerrar">Cerrar</button>
+    <button id="fa-pedir" class="primario" hidden>Pedir factura</button>
   </div>
 </dialog>
 

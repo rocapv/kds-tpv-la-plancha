@@ -96,6 +96,11 @@ document.addEventListener('DOMContentLoaded', () => {
   $('#cu-alta').onclick = () => entrar(true);
   $('#cu-guardar').onclick = guardarPerfil;
   $('#cu-salir').onclick = salir;
+  // El listado de facturas vive en `cliente.js`, que es quien tiene el diálogo del documento.
+  $('#cu-facturas').onclick = () => {
+    $('#d-micuenta').close();
+    if (typeof verMisFacturas === 'function') verMisFacturas();
+  };
   $('#cu-cerrar').onclick = () => $('#d-micuenta').close();
   $('#cu-modo').onclick = () => {
     const alta = $('#cu-nombre-campo').hidden;
