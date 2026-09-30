@@ -111,12 +111,28 @@ RocaPV describió cinco cosas nuevas, especificadas en `PROPUESTA_APP_CLIENTE.md
 | 1 · QR de mesa rotativo (5-50 s, un solo uso) | **Hecho** (`4c8e047`, `e91fbf0`): `21_mesa_qr.sql`, `pantalla.html`, 17 pruebas |
 | 2 · Pedido directo con filtro | **Hecho** (`b756858`): lo absurdo se para con el motivo escrito y sala corrige la cantidad, 14 pruebas |
 | — · Paso cocina → mesa | **Hecho** (`89209e1`): cocina llega a «lista», la entrega la confirma sala desde el pase |
-| 3 · Cuenta y pago desde la app | **Pendiente.** El cliente ya ve sus platos en cola (`/api/publico/visita/comanda`); falta saldar la cuenta desde el móvil, entera o a trozos. Depende de la tarea 2 de abajo |
-| Visión por CCTV | **Sin construir.** Sin reconocimiento facial y sin medir a nadie por su nombre: lo exige la ley. DPIA y cartel antes de la primera cámara |
+| 3 · Cuenta y pago desde la app | **Hecho** (`f837b44`): `/api/publico/visita/pagar` y `26_pago_app.sql`. Lo suyo o la mesa entera; de quién es el dinero lo dice el token, no el cuerpo; el método lo pone el servidor (`app`, que el arqueo no suma al efectivo); reintentar con la misma clave devuelve el mismo recibo. 16 pruebas |
+| Visión por CCTV | **Sin construir, y bloqueada por lo de arriba** (ver nota). Sin reconocimiento facial y sin medir a nadie por su nombre: lo exige la ley. DPIA y cartel antes de la primera cámara |
+
+**Reparto de trabajo (30/09, decisión de RocaPV): la visión por CCTV y el estudio de vídeo se
+llevan en otro chat.** Y no son dos temas separados, por eso van juntos: la visión por cámara no se
+puede construir a ciegas —hace falta metraje de gente comiendo en una mesa para tener con qué
+probarla— y ese metraje es justo lo que produce el estudio de vídeo. Así que **la CCTV depende de
+que el estudio sepa generar vídeo realista de gente comiendo**, y hasta entonces no hay nada que
+programar aquí. Quien trabaje en este chat: no empieces ninguna de las dos, y no las cuentes como
+pendientes propias.
 
 Dos decisiones pendientes de RocaPV: qué son las pantallas de mesa (ESP32 con panel LED o
 tableta; el QR ya lo dibuja el servidor, así que valen las dos) y si el pago de la app se queda en
 simulacro o algún día cobra de verdad.
+
+Sobre lo segundo, ahora que la ruta existe conviene dejarlo escrito sin adornos: **el pago desde
+la app apunta el cobro, pero no mueve dinero.** Contabiliza igual que un cobro en barra —la cuenta
+queda saldada y el pedido se cierra—, y eso es exactamente lo que hace falta para el proyecto y
+para una demo. Si algún día tiene que cobrar de verdad, la pasarela entra en un solo sitio: entre
+la comprobación del saldo y la llamada a `_registrar_pago()`, que es la que da el hecho por bueno.
+Hasta que cobre de verdad, el método `app` en el arqueo hay que leerlo como «se lo llevó el
+teléfono», no como dinero en la caja.
 
 ## Tres tareas encadenadas (29/09/2026)
 
@@ -151,7 +167,10 @@ sala (internet lo ignora) y `sentados` en `/api/mesas`. 6 pruebas en `test_plann
   política de caja, pero no como norma absoluta, porque el reglamento de facturación obliga a
   expedirla cuando el cliente la pide.
 
-## Estudio de vídeo (`estudio_video/`)
+## Estudio de vídeo (`estudio_video/`) — se lleva en otro chat
+
+Desde el 30/09 esto **no se toca desde aquí** (decisión de RocaPV). Se queda apuntado porque la
+visión por CCTV cuelga de ello, no para que nadie de este chat lo coja.
 
 - **Primera tirada de generación de imagen** (casting de los nueve retratos + un clip de prueba):
   sin hacer. `esperar_gpu.py` la lanza solo cuando hay 5.200 MiB libres dos lecturas seguidas; el
