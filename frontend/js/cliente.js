@@ -135,9 +135,13 @@ function pintarDestacados() {
   colocarPila();
 
   // El gesto de pasar tarjeta y el de abrir la ficha salen del mismo dedo: sin esto, cada barrido
-  // terminaba abriendo la ficha de la tarjeta que acabas de apartar.
+  // terminaba abriendo la ficha de la tarjeta que acabas de apartar. Y `pointercancel` importa
+  // tanto como `pointerup`: si el sistema se queda el gesto a medias (otra app, un gesto del
+  // borde de la pantalla), sin esto el `x0` quedaba puesto y el siguiente toque se medía contra
+  // el punto de partida del gesto anterior.
   let x0 = null, arrastrado = false;
   $('#pila').addEventListener('pointerdown', e => { x0 = e.clientX; arrastrado = false; });
+  $('#pila').addEventListener('pointercancel', () => { x0 = null; arrastrado = true; });
   $('#pila').addEventListener('pointerup', e => {
     if (x0 === null) return;
     const dx = e.clientX - x0;
@@ -157,9 +161,13 @@ function pintarDestacados() {
 // arregla en el backend, no aquí. Así que esto se limita a preferir la foto de verdad y caer en
 // la dibujada; la inicial sobre el color de la categoría queda de último recurso, para cuando el
 // servidor no manda ni una cosa ni la otra.
+// `draggable="false"` no es adorno: una imagen se arrastra de fábrica, y el navegador tomaba el
+// barrido por un arrastre nativo de imagen. Entonces manda `dragstart`, detrás `pointercancel`, y
+// el `pointerup` que hace girar la pila NO LLEGA NUNCA: con la inicial de texto el carrusel se
+// pasaba con el dedo, y en cuanto hubo imágenes de verdad dejó de pasarse. Medido, no supuesto.
 function fotoDe(d) {
   const src = d.foto_url || d.foto;
-  if (src) return `<img src="${esc(src)}" alt="" loading="lazy">`;
+  if (src) return `<img src="${esc(src)}" alt="" loading="lazy" draggable="false">`;
   return `<span class="sin-foto" aria-hidden="true">${esc((d.nombre || '?').trim()[0].toUpperCase())}</span>`;
 }
 
