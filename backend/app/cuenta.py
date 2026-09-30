@@ -44,9 +44,14 @@ def resumen(pedido_id: int) -> dict:
     pagado = q1("SELECT COALESCE(SUM(importe_cent),0) n FROM pagos WHERE pedido_id=%s",
                 (pedido_id,))["n"]
     total = _importe(lineas)
-
     compartidas = [l for l in lineas if l["comensal_id"] is None]
-    compartido_pendiente = _importe([l for l in compartidas if not l["pago_id"]])
+    # Lo compartido que queda por pagar NO son «las líneas compartidas sin marcar»: quien paga su
+    # parte se lleva un trozo de la botella, y la botella no se puede partir en la base de datos.
+    # Se calcula por diferencia: lo que falta de la cuenta menos lo que falta de platos con dueño.
+    # Sin esto, el segundo en pagar cargaba con la parte del primero (0,66 / 1,00 / 0,34 en vez de
+    # 0,66 / 0,67 / 0,67): la caja cuadraba, pero el reparto era injusto.
+    pendiente_propio = _importe([l for l in lineas if l["comensal_id"] and not l["pago_id"]])
+    compartido_pendiente = max(0, (total - pagado) - pendiente_propio)
 
     # Quién ha pagado ya: lo dice su pago, no sus líneas. En una mesa donde todo es compartido
     # (tres personas y una botella) nadie tiene líneas propias, y sin esta marca el reparto se

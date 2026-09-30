@@ -96,6 +96,27 @@ def test_los_centimos_del_reparto_no_se_pierden(cliente, camarero):
     assert p["estado"] == "cobrado"
 
 
+def test_el_reparto_de_lo_compartido_es_justo(cliente, camarero):
+    """Cuadrar no basta: nadie puede pagar el doble que el de al lado por ir el segundo.
+
+    Con 2,00 € entre tres salía 0,66 / 1,00 / 0,34 — la caja cuadraba y el reparto era injusto,
+    porque al pagar el primero su parte no se descontaba de lo que quedaba de la botella.
+    """
+    mesa = mesa_libre(cliente, camarero)
+    pid = cliente.post("/api/pedidos", headers=camarero,
+                       json={"tipo": "sala", "mesa_id": mesa["id"]}).json()["id"]
+    cliente.post(f"/api/pedidos/{pid}/lineas", headers=camarero,
+                 json={"producto_id": AGUA, "cantidad": 1})
+    cliente.post(f"/api/pedidos/{pid}/enviar", headers=camarero)
+    ids = [cliente.post(f"/api/pedidos/{pid}/grupo", headers=camarero,
+                        json={"nombre": n}).json()["id"] for n in ("A", "B", "C")]
+    pagados = [cliente.post(f"/api/pedidos/{pid}/grupo/{cid}/cobrar", headers=camarero,
+                            json={"metodo": "efectivo"}).json()["importe_cent"] for cid in ids]
+    assert max(pagados) - min(pagados) <= 1          # como mucho, un céntimo de diferencia
+    p = cliente.get(f"/api/pedidos/{pid}", headers=camarero).json()
+    assert sum(pagados) == p["total_cent"]
+
+
 def test_no_se_cobra_dos_veces_al_mismo(cliente, camarero, mesa_con_grupo):
     pid = mesa_con_grupo["pedido_id"]
     cliente.post(f"/api/pedidos/{pid}/grupo/{mesa_con_grupo['ana']}/cobrar",
