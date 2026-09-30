@@ -19,13 +19,45 @@
   <span id="conexion" class="conexion"></span>
 </header>
 
-<main class="agenda">
+<nav class="pestanas">
+  <button data-vista="lista" class="activa">Lista</button>
+  <button data-vista="planning">Planning</button>
+</nav>
+
+<main class="agenda" id="v-lista">
   <section class="caja">
     <h3>Agenda del día</h3>
-    <p class="tenue" id="reglas"></p>
+    <p class="tenue reglas"></p>
     <div id="lista"></div>
   </section>
 </main>
+
+<main class="agenda agenda-ancha" id="v-planning" hidden>
+  <section class="caja">
+    <div class="fila planning-cab">
+      <h3>El día por mesas</h3>
+      <span class="hueco"></span>
+      <label class="tenue"><input type="checkbox" id="ver-anuladas"> Ver anuladas</label>
+    </div>
+    <p class="tenue reglas"></p>
+    <div class="planning-leyenda tenue">
+      <span><i class="barra-res pendiente"></i> por confirmar</span>
+      <span><i class="barra-res confirmada"></i> confirmada</span>
+      <span><i class="barra-res sentada"></i> sentada</span>
+      <span><i class="barra-res no_show"></i> no vino</span>
+      <span><i class="barra-res confirmada adelantado"></i> con pedido adelantado</span>
+    </div>
+    <div class="planning-marco" id="planning" role="grid" aria-label="Reservas del día por mesa"></div>
+    <p class="tenue">Toca una reserva para verla. Para cambiarla de mesa, arrástrala a otra fila, o
+      selecciónala y usa las flechas <kbd>↑</kbd> <kbd>↓</kbd>. Un hueco vacío abre una reserva
+      nueva en esa mesa y a esa hora. Las horas sombreadas están fuera del horario de reservas.</p>
+  </section>
+</main>
+
+<dialog id="d-reserva" class="dialogo-reserva">
+  <div id="d-reserva-cuerpo"></div>
+  <div class="fila"><button id="d-reserva-cerrar">Cerrar</button></div>
+</dialog>
 
 <dialog id="d-nueva">
   <form method="dialog" id="f-nueva">
@@ -36,7 +68,9 @@
     <label>Teléfono <input id="n-telefono" maxlength="20" inputmode="tel"></label>
     <label>Comensales <input id="n-comensales" type="number" min="1" max="30" value="2" required></label>
     <label>Día y hora <input id="n-hora" type="datetime-local" required></label>
-    <label>Zona
+    <p id="n-mesa-texto" class="tenue" hidden></p>
+    <input type="hidden" id="n-mesa">
+    <label id="n-zona-l">Zona
       <select id="n-zona">
         <option value="">la que haya</option>
         <option value="sala">Comedor presurizado</option>
@@ -55,5 +89,6 @@
 <script src="/js/comun.js?v=__V__"></script>
 <script src="/js/sesion.js?v=__V__"></script>
 <script src="/js/reservas.js?v=__V__"></script>
+<script src="/js/planning.js?v=__V__"></script>
 </body>
 </html>

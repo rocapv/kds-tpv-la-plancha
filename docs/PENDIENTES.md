@@ -27,20 +27,27 @@ aquí abajo.
 de intentos**. En el primer minuto de exposición los registros ya recogieron sondas automáticas
 pidiendo `/api/.env`, `/api/config` y `/api/settings`. Pendiente, por orden:
 
-1. Freno al `POST /api/login`: espera creciente y bloqueo temporal por IP.
-2. Registro de intentos fallidos (quién, desde dónde, cuántos) visible para el encargado.
+1. Freno al `POST /api/login`: espera creciente y bloqueo temporal por IP. **Sigue pendiente**, y
+   ahora se puede calibrar con datos: el registro del punto 2 dice cuántos fallos hace de verdad
+   el personal antes de acertar.
+2. ~~Registro de intentos fallidos~~ — **hecho el 30/09**: `24_intentos_login.sql` (`empleado_intentos`,
+   se guardan 30 días), `app/intentos.py`, `GET /api/seguridad/intentos` y la pestaña «Intentos de
+   entrada» en `usuarios.html`: fallos por dirección, si vienen de la red del local o de internet,
+   y quién entró después desde esa IP. Se apunta cada entrada, buena o mala, **nunca lo tecleado**.
 3. Contraseña larga obligatoria para los escalafones con gestión; el PIN, solo para la barra.
 
 ## Rediseño de la interfaz (23/09/2026)
 
-Hecho y medido (ver `deploy/_qa/gui/`). Lo que queda apuntado de esa tanda:
+Hecho y medido (ver `deploy/_qa/gui/`). Lo que quedó apuntado de esa tanda, **resuelto el 30/09**:
 
-- Los botones de categoría del TPV se pintan con el color de la categoría por estilo **en línea**
-  desde `tpv.js`, así que la hoja de estilos no puede gobernarlos. Funciona y el contraste da bien,
-  pero el día que una categoría se ponga de un color claro, el texto blanco dejará de leerse. Lo
-  suyo es que la carta guarde el color y el CSS decida el texto.
-- `qa_gui.py` mide con el navegador a 1280×800 y 390×844. Faltaría una pasada a 1024×600, que es
-  la resolución de muchas tabletas de TPV baratas.
+- ~~Color de categoría en línea~~: `tpv.js` solo pasa `--c` y la hoja de estilos pone borde y
+  tinte, con el texto del tema. Probado con una categoría `#ffff66` en noche y en día.
+- ~~Pasada a 1024×600~~: `qa_gui.py` tiene el tamaño `tableta_barata` (táctil; `--tamanos` para
+  elegir). Destapó que la barra se parte en dos filas y el pie del ticket del TPV quedaba fuera
+  de la vista; `comun.js` mide ahora la barra real (`--barra-alto`). Informe en
+  `deploy/_qa/gui/1024_oscuro/`.
+- Sale de la misma pasada, y **no es de esta tanda**: `cliente.html` se desborda en el móvil
+  (469 px en 390) por la cabecera `barra-cliente` («Mi mesa · Entrar · Reservar mesa»).
 
 ## Encargo del 29/09/2026: la app del cliente y la visión por cámara
 
@@ -65,17 +72,30 @@ simulacro o algún día cobra de verdad.
 
 1. **Grupo en la mesa** — **hecho** (`f6e66d8`): `23_comensales.sql`, popup con la rejilla del
    tamaño real de la mesa, lo que pide cada móvil nace a su nombre. Repartir es opcional.
-2. **Cuenta comensal a comensal** — pendiente: cada uno lo suyo o dividir, tickets individuales o
-   de la mesa.
-3. **Factura a petición** — pendiente: desde la app o al camarero.
+2. **Cuenta comensal a comensal** — **hecho** (`21d1e77`, `6365440`): cada uno lo suyo o dividir,
+   tickets individuales, `25_pago_comensal.sql`.
+3. **Factura a petición** — en curso (30/09): desde la app o al camarero.
 
 Diseño de las tres en `PROPUESTA_GRUPOS_Y_FACTURACION.md`.
 
-## Sin construir
+## Planning de mesas (30/09/2026)
 
-- `PROPUESTA_PLANNING_MESAS.md` — la agenda vista como planning, una fila por
-  mesa y el día en horizontal, con una barra por reserva. No necesita API nueva: sale de
-  `/api/reservas` y `/api/mesas`. Iría como pestaña de `reservas.html`, no como pantalla aparte.
+**Hecho**: pestaña «Planning» en `reservas.html` (`js/planning.js`), según
+`PROPUESTA_PLANNING_MESAS.md`. Una fila por mesa agrupada por zona, el día a escala con las horas
+fuera de horario sombreadas y la línea de «ahora»; colores de estado de la agenda y marca de
+pedido adelantado. Tocar abre la reserva con sus botones; arrastrar a otra fila la cambia de mesa
+(la fila se pinta verde o roja antes de soltar, con la misma regla que el servidor); ↑/↓ hace lo
+mismo con teclado; un hueco vacío abre el alta con esa mesa y esa hora. En el móvil se desplaza en
+horizontal con la mesa fija. Lo único que tocó el servidor: `mesa_id` opcional en el alta de la
+sala (internet lo ignora) y `sentados` en `/api/mesas`. 6 pruebas en `test_planning.py`.
+
+- Queda por probar **con el dedo en una tableta de verdad**: el arrastre táctil está escrito con
+  eventos de puntero y `touch-action: pan-x`, pero solo se ha probado con ratón en Chromium.
+- Si la duración de las reservas deja de ser única, la barra y el solape tienen que pasar a mirar
+  la de cada reserva (lo avisa la propuesta).
+
+## Pendiente de construir
+
 - Al construir la factura (tarea 3), recordar la corrección que trae
   `PROPUESTA_GRUPOS_Y_FACTURACION.md`: lo de «al cerrar el día ya no se puede emitir» vale como
   política de caja, pero no como norma absoluta, porque el reglamento de facturación obliga a
