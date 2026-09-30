@@ -68,6 +68,15 @@ fi
 if echo "$CAMBIADOS" | grep -qE '^frontend/'; then
   echo "· pantallas"
   bash deploy/raspa/publicar.sh
+  # El sitio de pruebas de la LAN (:8093) sirve OTRA copia del frontal y nadie la republicaba:
+  # se quedó congelada el 28/09. Contra esa copia corren el QA del cliente y las capturas de los
+  # vídeos, así que llevaban días dando por bueno código viejo y culpando al nuevo de fallos que
+  # ya estaban arreglados. Una copia de pruebas que no se actualiza no avisa: miente. O se
+  # publica junto con la de producción, o no tiene sentido tenerla.
+  if [ -d /var/www/kds_pruebas ]; then
+    echo "· pantallas del sitio de pruebas (:8093)"
+    bash deploy/raspa/publicar.sh "$DIR/frontend" /var/www/kds_pruebas
+  fi
 fi
 
 # 5 · La API, si ha cambiado su código

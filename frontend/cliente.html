@@ -19,13 +19,21 @@
     <small id="donde" class="tenue"></small>
   </div>
   <span class="hueco"></span>
-  <button id="b-unirme" class="sutil" title="Teclear el código de la mesa">Mi mesa</button>
-  <button id="b-cuenta" class="sutil">Entrar</button>
-  <button id="b-reservar" class="sutil">Reservar mesa</button>
+  <!-- En un móvil estrecho esta barra no cabe en una fila y baja de línea. Este orden es el que
+       hace que al bajar quede algo con sentido: arriba quién eres y en qué mesa, con el día/noche
+       y el puntito de conexión pegados al otro extremo; abajo los tres botones que se pulsan. Los
+       tres van juntos dentro de `.acciones` para que bajen los tres a la vez: sueltos, cabía uno
+       arriba y los otros dos abajo, que es donde la fila parecía rota. Y como este orden es
+       también el orden en que se tabula, lo que se ve y lo que recorre el teclado coinciden. -->
   <button id="b-tema" class="tema" title="Cambiar entre día y noche" aria-label="Cambiar tema">
     <span class="astro"></span>
   </button>
   <span id="conexion" class="conexion"></span>
+  <div class="acciones">
+    <button id="b-unirme" class="sutil" title="Teclear el código de la mesa">Mi mesa</button>
+    <button id="b-cuenta" class="sutil">Entrar</button>
+    <button id="b-reservar" class="sutil">Reservar mesa</button>
+  </div>
 </header>
 
 <p id="mensaje" class="aviso-local"></p>

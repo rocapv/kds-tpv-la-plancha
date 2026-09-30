@@ -180,12 +180,29 @@ def main():
         # Una comanda que entra mientras la sala no tiene línea no puede quedarse en el servidor
         # esperando a que alguien recargue la página: el cliente está sentado en la mesa.
         print("7 · entra una comanda con la sala sin wifi")
+        # Cortar la red con `set_offline` NO tira el socket que ya está abierto: se queda ahí,
+        # tan vivo, y el TPV nunca se entera de que se ha quedado sin línea. Así que se guarda
+        # cada socket que abre la página para poder cerrarlo a mano, que es lo que de verdad
+        # pasa cuando el wifi de la sala parpadea o se reinicia el servidor. A partir de ahí
+        # manda el código de producción: `onclose` pinta el punto rojo y reintenta cada 2 s.
+        camarera.add_init_script("""
+            window.__sockets = [];
+            const Original = window.WebSocket;
+            window.WebSocket = function (...args) {
+              const s = new Original(...args);
+              window.__sockets.push(s);
+              return s;
+            };
+            window.WebSocket.prototype = Original.prototype;
+            Object.assign(window.WebSocket, Original);
+        """)
         camarera.goto(a.url + "/tpv.html", wait_until="domcontentloaded")
         camarera.wait_for_selector("#v-mesas .mesa", timeout=20000)
         en_linea = "document.querySelector('#conexion')?.classList.contains('ok')"
         camarera.wait_for_function(en_linea, timeout=20000)
         bien("el TPV está en línea")
-        sala.set_offline(True)
+        sala.set_offline(True)                      # los reintentos no podrán volver a entrar
+        camarera.evaluate("window.__sockets.at(-1)?.close()")
         camarera.wait_for_function("!" + en_linea, timeout=20000)
         bien("se le cae la línea a la sala")
         sid2 = cliente.evaluate("""async mesa => {

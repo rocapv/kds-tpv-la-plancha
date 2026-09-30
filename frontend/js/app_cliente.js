@@ -30,7 +30,10 @@
       await invitacion.userChoice;
       invitacion = null;
     };
-    document.querySelector('header.barra-cliente')?.appendChild(b);
+    // Con los demás botones de la cabecera, no suelto en ella: ahí dentro acompaña a «Mi mesa» y
+    // compañía al bajar de línea en un móvil estrecho, en vez de abrirse una fila para él solo.
+    (document.querySelector('.barra-cliente .acciones')
+     || document.querySelector('header.barra-cliente'))?.appendChild(b);
   }
 
   window.addEventListener('appinstalled', () => document.querySelector('#b-instalar')?.remove());

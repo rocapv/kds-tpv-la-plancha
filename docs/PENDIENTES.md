@@ -46,8 +46,14 @@ Hecho y medido (ver `deploy/_qa/gui/`). Lo que quedó apuntado de esa tanda, **r
   elegir). Destapó que la barra se parte en dos filas y el pie del ticket del TPV quedaba fuera
   de la vista; `comun.js` mide ahora la barra real (`--barra-alto`). Informe en
   `deploy/_qa/gui/1024_oscuro/`.
-- Sale de la misma pasada, y **no es de esta tanda**: `cliente.html` se desborda en el móvil
-  (469 px en 390) por la cabecera `barra-cliente` («Mi mesa · Entrar · Reservar mesa»).
+- ~~Sale de la misma pasada: `cliente.html` se desborda en el móvil por la cabecera
+  `barra-cliente`~~. Medido honesto (sin `is_mobile`, que reescala y lo disimula) eran 78 px de
+  más: 484 px de contenido en 390. No era solo feo —el navegador ensancha el viewport para que
+  quepa y **toda la página se desplaza**, así que el botón «Pedir» dejaba de estar donde se veía
+  y el dedo caía en el plato de al lado. `flex-wrap` en la cabecera, los tres botones juntos en
+  `.acciones` para que bajen de línea a la vez, y el `top: 60px` escrito a mano de las categorías
+  sustituido por `--alto-barra`, que mide `cliente.js`. Cero desborde en las cuatro pantallas
+  públicas, y sin zonas de toque ni contrastes por debajo del mínimo en los dos temas.
 
 ## Encargo del 29/09/2026: la app del cliente y la visión por cámara
 

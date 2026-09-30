@@ -24,6 +24,23 @@ function aplicarTema(t) {
   if (document.readyState !== 'loading') aplicarTema(t);
 })();
 
+// La cinta de categorías se queda pegada justo debajo de la cabecera, y para eso necesita saber
+// cuánto mide. En el CSS estaba escrito «60px» a mano, que es lo que mide con UNA fila: en un móvil
+// estrecho la cabecera baja de línea, mide casi el doble, y las categorías se quedaban escondidas
+// detrás de ella. Así que se mide de verdad, y se vuelve a medir cuando cambia: al girar el
+// teléfono, o cuando aparece el botón de instalar la app.
+(function altoDeLaBarra() {
+  const arrancar = () => {
+    const barra = document.querySelector('header.barra-cliente');
+    if (!barra) return;
+    const medir = () => document.documentElement.style.setProperty('--alto-barra', barra.offsetHeight + 'px');
+    medir();
+    new ResizeObserver(medir).observe(barra);
+  };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', arrancar, { once: true });
+  else arrancar();
+})();
+
 const guardarCesta = () => { try { localStorage.setItem(LLAVE_CESTA, JSON.stringify(cesta)); } catch {} };
 const totalCesta = () => cesta.reduce((s, l) => s + l.cantidad * l.precio_cent, 0);
 

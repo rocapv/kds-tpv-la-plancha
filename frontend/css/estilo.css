@@ -465,12 +465,24 @@ body.cliente[data-tema="claro"] {
   --info: #1d63c2; --info-texto: #ffffff; --info-suave: #1d63c21a; --info-tinta: #174d97;
   --alerg: #a3341f; --sombra: 0 8px 24px #00000022;
 }
-.barra-cliente { position: sticky; top: 0; z-index: 20; display: flex; align-items: center; gap: .6rem; min-height: 60px; padding: .6rem 1rem; background: var(--panel); border-bottom: 1px solid var(--borde); }
+/* `flex-wrap` no es un adorno: sin él, esta cabecera medía 484 px dentro de un móvil de 390 y se
+   salía 78 px por la derecha. El navegador móvil entonces ensancha el viewport de maquetación para
+   que quepa, y TODA la página se desplaza: el botón «Pedir» de la cesta dejaba de estar donde se
+   veía y los toques caían en el plato de al lado. Y el número de botones no es fijo —«Instalar la
+   carta» aparece solo cuando el navegador ofrece instalar la app—, así que ninguna cuenta de anchos
+   aguanta: lo que aguanta es dejar que baje de línea. */
+.barra-cliente { position: sticky; top: 0; z-index: 20; display: flex; flex-wrap: wrap; align-items: center; gap: .6rem; min-height: 60px; padding: .6rem 1rem; background: var(--panel); border-bottom: 1px solid var(--borde); }
 .barra-cliente h1 { font-size: 1.15rem; }
 .barra-cliente .hueco { flex: 1; }
+.barra-cliente .acciones { display: flex; flex-wrap: wrap; align-items: center; gap: .6rem; }
 .barra-cliente .seguir { background: var(--acento); color: var(--acento-texto); border-color: var(--acento); }
 .aviso-local { margin: 0; padding: .7rem 1rem; background: var(--panel2); color: var(--tenue); font-size: .95rem; }
-.cats-cliente { position: sticky; top: 60px; z-index: 19; display: flex; gap: .4rem; overflow-x: auto; padding: .6rem 1rem; background: var(--fondo); border-bottom: 1px solid var(--borde); scrollbar-width: none; }
+/* El 60px de antes era la altura de la cabecera de UNA fila, a mano. En cuanto la cabecera baja de
+   línea (móvil estrecho, o con el botón de instalar) mide más, y estas categorías se quedaban
+   pegadas DEBAJO de ella: invisibles al bajar por la carta, porque la cabecera va por encima
+   (z-index 20 contra 19). La altura de verdad la mide `cliente.js` y la deja en `--alto-barra`; el
+   60px sigue aquí como valor de partida por si el JS aún no ha corrido. */
+.cats-cliente { position: sticky; top: var(--alto-barra, 60px); z-index: 19; display: flex; gap: .4rem; overflow-x: auto; padding: .6rem 1rem; background: var(--fondo); border-bottom: 1px solid var(--borde); scrollbar-width: none; }
 .cats-cliente::-webkit-scrollbar { display: none; }
 .cats-cliente button { white-space: nowrap; border-color: var(--color, var(--borde-fuerte)); border-left-width: 5px; background: var(--panel); }
 .cats-cliente button.activa { background: var(--panel3); border-color: var(--texto); color: var(--texto); }
