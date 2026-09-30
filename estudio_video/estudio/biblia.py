@@ -193,8 +193,14 @@ class Personaje:
     nombre: str
     papel: str                 # cliente | sala | cocina | direccion
     retrato: str               # prompt del retrato de referencia (inglés)
-    breve: str                 # cómo se nombra dentro de una escena (inglés)
+    breve: str                 # quién es, dentro de una escena (inglés)
     semilla: int               # fija: el retrato sale igual cada vez que se recasten
+    # La ropa es parte del personaje, igual que la cara, y va SEPARADA a
+    # propósito. Cuando iba dentro de `breve`, competía en la misma frase con la
+    # acción y el modelo la reinterpretaba: el mismo hombre salía con chaleco
+    # reflectante en una toma y con chaleco y pajarita en la siguiente. Aparte y
+    # con su propio peso, se repite.
+    vestuario: str = ""
 
 
 # Cinco moldes y no más: el camarero, dos clientes y dos clientas. Cuantas menos
@@ -210,12 +216,22 @@ ELENCO: dict[str, Personaje] = {p.clave: p for p in [
     Personaje("oliver", "Óliver Sanz", "sala",
               "portrait of a man in his thirties, short dark hair, trimmed dark beard, "
               "black apron over a dark shirt, alert and friendly expression",
-              "a waiter, a man in a black apron holding a rugged tablet", 2011),
+              "a waiter, a man in his thirties with short dark hair and a trimmed beard", 2011,
+              "wearing a black bib apron over a grey shirt with the sleeves rolled up, "
+              "dark trousers"),
     # Clientes
     Personaje("klaus", "Klaus Bergmann", "cliente",
               "portrait of a broad shouldered man in his fifties, full grey beard, high "
               "visibility vest over a dark thermal shirt, tired eyes, weathered skin",
-              "a broad shouldered man with a grey beard and a high visibility vest", 1004),
+              "a broad shouldered man in his fifties with a full grey beard", 1004,
+              # Escrito como sale, no como se pidió: al pedir «chaleco naranja
+              # sobre camisa oscura» el modelo devolvía, tomA tras toma, chaleco
+              # gris sobre camisa naranja. Como lo hacía SIEMPRE igual, la ficha
+              # se ajusta a lo que hace: lo que importa aquí es que se repita, y
+              # pelearse con el modelo por cuál prenda es naranja solo consigue
+              # que deje de repetirse.
+              "wearing a grey work waistcoat over an orange long sleeve shirt, "
+              "heavy work trousers"),
     # Sin gafas de soldar ni cuello alto en el retrato: con ellas el modelo le
     # puso las gafas sobre los ojos y una braga hasta la nariz, y un molde con la
     # cara tapada no le sirve a IP-Adapter para reconocer a nadie.
@@ -225,16 +241,19 @@ ELENCO: dict[str, Personaje] = {p.clave: p for p in [
               "portrait of a young man in his twenties, short dark curly hair, clean shaven, "
               "pale dry lips, open collar blue coverall, faint grease on one cheek, "
               "tired friendly look",
-              "a young man in a blue coverall", 1033),
+              "a young man in his twenties with short dark curly hair", 1033,
+              "wearing a blue work coverall unzipped at the collar over a grey t-shirt"),
     # Clientas
     Personaje("nadia", "Nadia Ostrov", "cliente",
               "portrait of a weathered woman in her sixties, veteran miner, worn orange jumpsuit, "
               "short grey cropped hair, deep lines on her face, dust on the collar",
-              "an older woman in a worn orange jumpsuit with short grey hair", 1001),
+              "a woman in her sixties with short grey cropped hair and a weathered face", 1001,
+              "wearing a worn orange work jumpsuit, dusty, zipped up to the chest"),
     Personaje("suri", "Suri Malabar", "cliente",
               "portrait of a woman in her thirties, geologist, green thermal jacket, long dark "
               "braid over one shoulder, rimless glasses, calm attentive look",
-              "a woman in a green thermal jacket with a long dark braid", 1003),
+              "a woman in her thirties with a long dark braid and rimless glasses", 1003,
+              "wearing a green thermal jacket over a white shirt, dark trousers"),
 ]}
 
 

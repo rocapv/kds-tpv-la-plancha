@@ -130,10 +130,38 @@ y su portada.
 | Resolución, fps, pasos, semilla base | `FORMATO` en `biblia.py` |
 | Los encuadres | `CAMARAS` en `biblia.py` (y `python estudio_cli.py camaras`) |
 | Quién sale | `ELENCO` en `biblia.py` + `casting --rehacer`, o las caras de la web |
+| Qué lleva puesto cada uno | `vestuario` en `ELENCO` (+ `probar_vestuario.py` para comprobarlo) |
 | Las vistas de la hoja de personaje | `VISTAS` en `elenco.py` + `hojas --rehacer` |
 | Cuánto manda la sala sobre el modelo | `FUERZA_PROFUNDIDAD` y `HASTA_PROFUNDIDAD` en `comfy.py` |
 | Qué se ve en las pantallas grabadas | `Servicio` en `pantallas.py` |
 | La voz | `VOZ_POR_DEFECTO` en `voz.py` (`sharvard` o `davefx`) |
+
+## La ropa es parte del personaje
+
+Un molde no es solo una cara: es una cara **y** una ropa. Al principio el
+vestuario iba dentro de la misma frase que describía a la persona, y ahí competía
+con la acción: el mismo hombre salía con chaleco reflectante en un plano y con
+chaleco y pajarita en el siguiente.
+
+Ahora se sujeta por dos sitios a la vez:
+
+- **En el prompt**, el campo `vestuario` va aparte y con su propio peso
+  (`(ropa:1.2)`), delante de la acción.
+- **En la imagen**, un segundo IP-Adapter encadenado mira la vista de plano medio
+  de la hoja —la que enseña la ropa entera— con peso bajo (0,30) y entrando
+  tarde. Flojo a propósito: si aprieta más, se lleva el color de la ropa a las
+  paredes.
+
+Comprobado con `probar_vestuario.py`, que pone al mismo molde en las cuatro
+cámaras para poder mirar la fila entera. Aguanta en los planos medios y cortos;
+**en el plano general muy lejano se pierde**, porque la persona ocupa poca imagen
+y ni el prompt ni la referencia llegan. Si la ropa tiene que leerse, el plano
+tiene que ser corto.
+
+Y una regla que cuesta aceptar: si el modelo interpreta una prenda de una forma
+distinta a la pedida pero lo hace SIEMPRE IGUAL, gana el modelo y se cambia la
+ficha. Lo que importa es que se repita; pelearse por cuál prenda es naranja solo
+consigue que deje de repetirse.
 
 ## Pendiente
 

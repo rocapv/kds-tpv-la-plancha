@@ -254,6 +254,17 @@ def falta_casting() -> list[str]:
     return [c for c in B.ELENCO if not ruta_de(c).exists()]
 
 
+def cuerpo_de(clave: str) -> Path | None:
+    """La vista de plano medio: la que enseña la ropa entera.
+
+    Va por separado de las de cara porque cumple otro papel y necesita otro
+    peso: la cara manda en quién es, y esta en qué lleva puesto. Metida en el
+    mismo montón, teñía la escena con el color de la ropa.
+    """
+    f = dir_hoja(clave) / "medio.png"
+    return f if f.exists() else None
+
+
 def referencia_para(personajes: list[str]) -> list[Path]:
     """Las imágenes de referencia que guían una escena.
 

@@ -86,6 +86,10 @@ HASTA_PROFUNDIDAD = 0.60       # a partir de ahí, ControlNet ya no opina
 # embedding aunque el adaptador sea el de caras, porque en un primer plano
 # también hay cuello y ropa.
 FUERZA_IDENTIDAD = 0.45
+# El vestuario, aún más flojo que la cara: tiene que repetirse sin arrastrar el
+# color de la ropa a las paredes, que es justo lo que pasaba cuando la vista de
+# cuerpo entero iba en el mismo montón que las de cara.
+FUERZA_VESTUARIO = 0.30
 
 CONTEXTO = 16          # fotogramas que AnimateDiff v3 mira a la vez
 SOLAPE = 4
@@ -350,7 +354,8 @@ def construir_fijo(prompt_positivo: str, prompt_negativo: str, control: Path,
                    semilla: int, prefijo: str, referencia: list[Path] | None = None,
                    ancho: int | None = None, alto: int | None = None,
                    pasos: int = 32, fuerza_control: float = FUERZA_PROFUNDIDAD,
-                   fuerza_identidad: float = FUERZA_IDENTIDAD) -> dict:
+                   fuerza_identidad: float = FUERZA_IDENTIDAD,
+                   cuerpo: Path | None = None) -> dict:
     """Un plano como IMAGEN, con toda la calidad, para animarlo luego con la cámara.
 
     Es el mismo grafo que el de vídeo sin AnimateDiff, y esa ausencia lo cambia
@@ -407,6 +412,22 @@ def construir_fijo(prompt_positivo: str, prompt_negativo: str, control: Path,
                              "start_at": 0.15, "end_at": 0.95,
                              "embeds_scaling": "K+V w/ C penalty"}}
         modelo = ["4", 0]
+
+        # Segundo adaptador, encadenado al primero y con OTRO trabajo: el de
+        # arriba mira la cara y dice QUIÉN es; este mira el plano medio y dice
+        # QUÉ LLEVA PUESTO. Va flojo y entra tarde a propósito: la ropa tiene que
+        # repetirse, pero si aprieta más se lleva por delante el color de la
+        # sala, que es lo que pasaba cuando ambas cosas iban en el mismo montón.
+        if cuerpo is not None and cuerpo.exists():
+            g["5c"] = {"class_type": "LoadImage",
+                       "inputs": {"image": _copiar_a_entradas(cuerpo)}}
+            g["5d"] = {"class_type": "IPAdapterAdvanced",
+                       "inputs": {"model": modelo, "ipadapter": ["2", 1], "image": ["5c", 0],
+                                  "weight": FUERZA_VESTUARIO, "weight_type": "linear",
+                                  "combine_embeds": "concat",
+                                  "start_at": 0.25, "end_at": 0.80,
+                                  "embeds_scaling": "K+V w/ C penalty"}}
+            modelo = ["5d", 0]
 
     g["14"] = {"class_type": "KSampler",
                "inputs": {"model": modelo, "seed": semilla, "steps": pasos, "cfg": f["cfg"],

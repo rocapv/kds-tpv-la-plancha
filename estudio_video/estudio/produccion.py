@@ -205,25 +205,35 @@ def producir(prompt: str, t: Trabajo, usar_llm: bool = True, con_voz: bool = Tru
                      "Con la hoja de personaje entera aguanta mucho mejor cuando gira la cabeza "
                      "(`python estudio_cli.py hojas`).")
 
-        # El orden importa y no es el natural: primero QUIÉN y QUÉ hace, con
-        # peso explícito, y el ambiente al final. Al revés, el decorado se come
-        # el prompt y la gente no llega a aparecer.
-        gente = ", ".join(B.ELENCO[c].breve for c in esc.personajes if c in B.ELENCO)
-        if esc.personajes:
-            cabeza = f"({gente}:1.3), {esc.accion}" if gente else esc.accion
-        else:
-            cabeza = esc.accion
-        positivo = ", ".join(x for x in [cabeza, B.ESTILO] if x)
+        # El orden importa y no es el natural: primero QUIÉN, luego QUÉ LLEVA
+        # PUESTO, luego qué hace, y el ambiente al final. Al revés, el decorado
+        # se come el prompt y la gente no llega a aparecer; y con la ropa metida
+        # en la misma frase que la persona, el modelo la reinterpretaba en cada
+        # toma —el mismo hombre con chaleco reflectante y, al plano siguiente,
+        # con chaleco y pajarita—. La ropa es parte del personaje: va aparte y
+        # con su propio peso.
+        quienes = [B.ELENCO[c] for c in esc.personajes if c in B.ELENCO]
+        gente = ", ".join(p.breve for p in quienes)
+        ropa = ", ".join(p.vestuario for p in quienes if p.vestuario)
+        trozos = []
+        if gente:
+            trozos.append(f"({gente}:1.3)")
+        if ropa:
+            trozos.append(f"({ropa}:1.2)")
+        trozos.append(esc.accion)
+        trozos.append(B.ESTILO)
+        positivo = ", ".join(x for x in trozos if x)
         fotogramas = max(16, esc.segundos * B.FORMATO["fps"])
 
         semilla = esc.semilla(B.FORMATO["semilla_base"], i)
         if B.FORMATO.get("modo", "fijo") == "fijo":
             # Plano fijo + movimiento de cámara: 36 s de GPU en vez de 17 min, y
             # con mejor imagen. El movimiento lo pone el montaje.
+            cuerpo = E.cuerpo_de(esc.personajes[0]) if esc.personajes else None
             grafo = C.construir_fijo(
                 prompt_positivo=positivo, prompt_negativo=B.ESTILO_NEGATIVO,
                 control=control, semilla=semilla,
-                prefijo=f"kds_{t.id}_{i:02d}", referencia=referencia)
+                prefijo=f"kds_{t.id}_{i:02d}", referencia=referencia, cuerpo=cuerpo)
             pid = C.encolar(grafo)
             salidas = C.esperar(pid, aviso=lambda s, e, i=i: t.anotar(
                 f"plano {i+1}: {e}, {s} s", None))
