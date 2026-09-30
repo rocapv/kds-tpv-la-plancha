@@ -1,12 +1,13 @@
-# QA de la interfaz · tanda «produccion» · 2026-09-28T02:35:32 · https://home.pr1.es
+# QA de la interfaz · tanda «completo_oscuro» · 2026-09-30T03:43:24 · http://127.0.0.1:8191
 
-Pantallas medidas: 74 · desbordes: 0 · textos con contraste bajo: 0 · botones pequeños en móvil: 0 · cortados: 0 · errores de consola: 0
+Pantallas medidas: 117 · desbordes: 1 · textos con contraste bajo: 0 · botones pequeños en pantallas táctiles: 0 · cortados: 0 · errores de consola: 0
 
 | Tamaño | Rol | Pantalla | Desborde | Contraste bajo | Botones < 40 px | Cortados | Consola |
 |---|---|---|---|---|---|---|---|
 | tableta | camarero | `/index.html` |  |  |  |  |  |
 | tableta | camarero | `/tpv.html` |  |  |  |  |  |
 | tableta | camarero | `/facturas.html` |  |  |  |  |  |
+| tableta | camarero | `/reservas.html` |  |  |  |  |  |
 | tableta | camarero | `/sala.html` |  |  |  |  |  |
 | tableta | camarero | `/plano.html` |  |  |  |  |  |
 | tableta | camarero | `/alergenos.html` |  |  |  |  |  |
@@ -30,6 +31,7 @@ Pantallas medidas: 74 · desbordes: 0 · textos con contraste bajo: 0 · botones
 | tableta | encargado | `/kds.html?pantalla=barra` |  |  |  |  |  |
 | tableta | encargado | `/kds.html?pantalla=caliente` |  |  |  |  |  |
 | tableta | encargado | `/kds.html?pantalla=pase` |  |  |  |  |  |
+| tableta | encargado | `/reservas.html` |  |  |  |  |  |
 | tableta | encargado | `/sala.html` |  |  |  |  |  |
 | tableta | encargado | `/informe.html` |  |  |  |  |  |
 | tableta | encargado | `/arqueo.html` |  |  |  |  |  |
@@ -41,9 +43,49 @@ Pantallas medidas: 74 · desbordes: 0 · textos con contraste bajo: 0 · botones
 | tableta | encargado | `/ajustes.html` |  |  |  |  |  |
 | tableta | publico | `/recogida.html` |  |  |  |  |  |
 | tableta | publico | `/cliente.html?mesa=3` |  |  |  |  |  |
+| tableta_barata | camarero | `/index.html` |  |  |  |  |  |
+| tableta_barata | camarero | `/tpv.html` |  |  |  |  |  |
+| tableta_barata | camarero | `/facturas.html` |  |  |  |  |  |
+| tableta_barata | camarero | `/reservas.html` |  |  |  |  |  |
+| tableta_barata | camarero | `/sala.html` |  |  |  |  |  |
+| tableta_barata | camarero | `/plano.html` |  |  |  |  |  |
+| tableta_barata | camarero | `/alergenos.html` |  |  |  |  |  |
+| tableta_barata | cocina | `/index.html` |  |  |  |  |  |
+| tableta_barata | cocina | `/recogida.html` |  |  |  |  |  |
+| tableta_barata | cocina | `/kds.html?pantalla=plancha` |  |  |  |  |  |
+| tableta_barata | cocina | `/kds.html?pantalla=freidora` |  |  |  |  |  |
+| tableta_barata | cocina | `/kds.html?pantalla=frios` |  |  |  |  |  |
+| tableta_barata | cocina | `/kds.html?pantalla=barra` |  |  |  |  |  |
+| tableta_barata | cocina | `/kds.html?pantalla=caliente` |  |  |  |  |  |
+| tableta_barata | cocina | `/kds.html?pantalla=pase` |  |  |  |  |  |
+| tableta_barata | cocina | `/plano.html` |  |  |  |  |  |
+| tableta_barata | cocina | `/alergenos.html` |  |  |  |  |  |
+| tableta_barata | encargado | `/index.html` |  |  |  |  |  |
+| tableta_barata | encargado | `/tpv.html` |  |  |  |  |  |
+| tableta_barata | encargado | `/facturas.html` |  |  |  |  |  |
+| tableta_barata | encargado | `/recogida.html` |  |  |  |  |  |
+| tableta_barata | encargado | `/kds.html?pantalla=plancha` |  |  |  |  |  |
+| tableta_barata | encargado | `/kds.html?pantalla=freidora` |  |  |  |  |  |
+| tableta_barata | encargado | `/kds.html?pantalla=frios` |  |  |  |  |  |
+| tableta_barata | encargado | `/kds.html?pantalla=barra` |  |  |  |  |  |
+| tableta_barata | encargado | `/kds.html?pantalla=caliente` |  |  |  |  |  |
+| tableta_barata | encargado | `/kds.html?pantalla=pase` |  |  |  |  |  |
+| tableta_barata | encargado | `/reservas.html` |  |  |  |  |  |
+| tableta_barata | encargado | `/sala.html` |  |  |  |  |  |
+| tableta_barata | encargado | `/informe.html` |  |  |  |  |  |
+| tableta_barata | encargado | `/arqueo.html` |  |  |  |  |  |
+| tableta_barata | encargado | `/carta.html` |  |  |  |  |  |
+| tableta_barata | encargado | `/almacen.html` |  |  |  |  |  |
+| tableta_barata | encargado | `/usuarios.html` |  |  |  |  |  |
+| tableta_barata | encargado | `/plano.html` |  |  |  |  |  |
+| tableta_barata | encargado | `/alergenos.html` |  |  |  |  |  |
+| tableta_barata | encargado | `/ajustes.html` |  |  |  |  |  |
+| tableta_barata | publico | `/recogida.html` |  |  |  |  |  |
+| tableta_barata | publico | `/cliente.html?mesa=3` |  |  |  |  |  |
 | movil | camarero | `/index.html` |  |  |  |  |  |
 | movil | camarero | `/tpv.html` |  |  |  |  |  |
 | movil | camarero | `/facturas.html` |  |  |  |  |  |
+| movil | camarero | `/reservas.html` |  |  |  |  |  |
 | movil | camarero | `/sala.html` |  |  |  |  |  |
 | movil | camarero | `/plano.html` |  |  |  |  |  |
 | movil | camarero | `/alergenos.html` |  |  |  |  |  |
@@ -67,6 +109,7 @@ Pantallas medidas: 74 · desbordes: 0 · textos con contraste bajo: 0 · botones
 | movil | encargado | `/kds.html?pantalla=barra` |  |  |  |  |  |
 | movil | encargado | `/kds.html?pantalla=caliente` |  |  |  |  |  |
 | movil | encargado | `/kds.html?pantalla=pase` |  |  |  |  |  |
+| movil | encargado | `/reservas.html` |  |  |  |  |  |
 | movil | encargado | `/sala.html` |  |  |  |  |  |
 | movil | encargado | `/informe.html` |  |  |  |  |  |
 | movil | encargado | `/arqueo.html` |  |  |  |  |  |
@@ -77,7 +120,7 @@ Pantallas medidas: 74 · desbordes: 0 · textos con contraste bajo: 0 · botones
 | movil | encargado | `/alergenos.html` |  |  |  |  |  |
 | movil | encargado | `/ajustes.html` |  |  |  |  |  |
 | movil | publico | `/recogida.html` |  |  |  |  |  |
-| movil | publico | `/cliente.html?mesa=3` |  |  |  |  |  |
+| movil | publico | `/cliente.html?mesa=3` | SÍ |  |  |  |  |
 
 ## Detalle
 - nada que señalar
