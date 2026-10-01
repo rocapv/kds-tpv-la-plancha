@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="760" viewBox="0 0 1600 760" font-family="Liberation Sans">
+<rect width="1600" height="760" fill="#ffffff"/>
+<defs><marker id="a" markerWidth="10" markerHeight="10" refX="5" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#555"/></marker></defs>
+<g stroke="#555" stroke-width="3" fill="none">
+<path d="M800 190 V250 H360 V300"/><path d="M800 250 H1240 V300"/>
+<path d="M360 420 V470 H200 V510"/><path d="M360 470 H520 V510"/><path d="M1240 420 V510"/>
+</g>
+<g stroke="#999" stroke-width="3" stroke-dasharray="10 8" fill="none"><path d="M960 130 H1180"/><path d="M640 130 H420"/></g>
+<rect x="640" y="70" width="320" height="120" rx="14" fill="#e67e22"/>
+<text x="800" y="120" text-anchor="middle" font-size="34" font-weight="bold" fill="#fff">Encargado</text>
+<text x="800" y="160" text-anchor="middle" font-size="24" fill="#fff">socio gerente</text>
+<rect x="1180" y="80" width="340" height="100" rx="14" fill="#f2f2f2" stroke="#999" stroke-width="2"/>
+<text x="1350" y="122" text-anchor="middle" font-size="26" fill="#333">Gestoría externa</text>
+<text x="1350" y="156" text-anchor="middle" font-size="21" fill="#666">contabilidad, nóminas, impuestos</text>
+<rect x="80" y="80" width="340" height="100" rx="14" fill="#f2f2f2" stroke="#999" stroke-width="2"/>
+<text x="250" y="122" text-anchor="middle" font-size="26" fill="#333">Proveedores</text>
+<text x="250" y="156" text-anchor="middle" font-size="21" fill="#666">alimentación, bebida, TIC</text>
+<rect x="190" y="300" width="340" height="120" rx="14" fill="#fdebd9" stroke="#e67e22" stroke-width="3"/>
+<text x="360" y="352" text-anchor="middle" font-size="30" font-weight="bold" fill="#333">Sala</text>
+<text x="360" y="390" text-anchor="middle" font-size="22" fill="#555">mesas, terraza, barra, caja</text>
+<rect x="1070" y="300" width="340" height="120" rx="14" fill="#fdebd9" stroke="#e67e22" stroke-width="3"/>
+<text x="1240" y="352" text-anchor="middle" font-size="30" font-weight="bold" fill="#333">Cocina</text>
+<text x="1240" y="390" text-anchor="middle" font-size="22" fill="#555">plancha, freidora, fríos</text>
+<rect x="80" y="510" width="240" height="110" rx="14" fill="#fff" stroke="#555" stroke-width="2"/>
+<text x="200" y="557" text-anchor="middle" font-size="26" fill="#333">Camarero 1</text>
+<text x="200" y="592" text-anchor="middle" font-size="20" fill="#666">sala y cobro</text>
+<rect x="400" y="510" width="240" height="110" rx="14" fill="#fff" stroke="#555" stroke-width="2"/>
+<text x="520" y="557" text-anchor="middle" font-size="26" fill="#333">Camarero 2</text>
+<text x="520" y="592" text-anchor="middle" font-size="20" fill="#666">terraza y barra</text>
+<rect x="1120" y="510" width="240" height="110" rx="14" fill="#fff" stroke="#555" stroke-width="2"/>
+<text x="1240" y="557" text-anchor="middle" font-size="26" fill="#333">Cocinera</text>
+<text x="1240" y="592" text-anchor="middle" font-size="20" fill="#666">todas las estaciones</text>
+<text x="800" y="700" text-anchor="middle" font-size="22" fill="#666">Línea continua: dependencia jerárquica · discontinua: relación externa</text>
+</svg>

@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1040" viewBox="0 0 1600 1040" font-family="Liberation Sans">
+<rect width="1600" height="1040" fill="#fff"/>
+<rect x="40" y="240" width="1520" height="770" rx="20" fill="#f7f7f7" stroke="#bbb" stroke-width="2" stroke-dasharray="12 8"/>
+<text x="70" y="975" font-size="25" fill="#555">Red única 192.168.1.0/24 · DHCP del router · sin VLAN · un solo SSID con WPA2</text>
+<ellipse cx="800" cy="90" rx="170" ry="60" fill="#eef3fa" stroke="#6b8cbf" stroke-width="3"/><text x="800" y="100" text-anchor="middle" font-size="30" fill="#2f4f7f">Internet</text>
+<line x1="800" y1="150" x2="800" y2="300" stroke="#555" stroke-width="5"/><text x="815" y="220" font-size="22" fill="#555">fibra 600 Mb/s</text>
+<rect x="590" y="300" width="420" height="120" rx="14" fill="#e67e22"/><text x="800" y="350" text-anchor="middle" font-size="30" font-weight="bold" fill="#fff">Router de la operadora</text><text x="800" y="390" text-anchor="middle" font-size="22" fill="#fff">wifi 5 · 4 puertos LAN · en el almacén</text>
+<path d="M640 420 V480 H330 V540" stroke="#555" stroke-width="5" fill="none"/><path d="M720 420 V540" stroke="#555" stroke-width="5" fill="none"/>
+<rect x="200" y="540" width="260" height="110" rx="12" fill="#fff" stroke="#555" stroke-width="2"/><text x="330" y="585" text-anchor="middle" font-size="24" fill="#333">PC del TPV</text><text x="330" y="620" text-anchor="middle" font-size="19" fill="#666">Windows 10 · impresora USB</text>
+<rect x="590" y="540" width="260" height="110" rx="12" fill="#fff" stroke="#555" stroke-width="2"/><text x="720" y="585" text-anchor="middle" font-size="24" fill="#333">Grabador + 2 cámaras</text><text x="720" y="620" text-anchor="middle" font-size="19" fill="#666">acceso remoto P2P</text>
+<path d="M940 420 V720" stroke="#e67e22" stroke-width="4" stroke-dasharray="12 9" fill="none"/>
+<path d="M177 720 H1417" stroke="#e67e22" stroke-width="4" stroke-dasharray="12 9" fill="none"/>
+<text x="960" y="600" font-size="22" fill="#b35f12">wifi «LaPlancha»</text>
+<path d="M177 720 V800" stroke="#e67e22" stroke-width="4" stroke-dasharray="12 9" fill="none"/>
+<rect x="64" y="800" width="226" height="105" rx="12" fill="#fff" stroke="#555" stroke-width="2"/>
+<text x="177" y="845" text-anchor="middle" font-size="22" fill="#333">Datáfono</text><text x="177" y="878" text-anchor="middle" font-size="19" fill="#666">del banco</text>
+<path d="M425 720 V800" stroke="#e67e22" stroke-width="4" stroke-dasharray="12 9" fill="none"/>
+<rect x="312" y="800" width="226" height="105" rx="12" fill="#fff" stroke="#555" stroke-width="2"/>
+<text x="425" y="845" text-anchor="middle" font-size="22" fill="#333">Portátil encargado</text><text x="425" y="878" text-anchor="middle" font-size="19" fill="#666">Windows 11 Home</text>
+<path d="M673 720 V800" stroke="#e67e22" stroke-width="4" stroke-dasharray="12 9" fill="none"/>
+<rect x="560" y="800" width="226" height="105" rx="12" fill="#fff" stroke="#555" stroke-width="2"/>
+<text x="673" y="845" text-anchor="middle" font-size="22" fill="#333">Tableta de reparto</text><text x="673" y="878" text-anchor="middle" font-size="19" fill="#666">Android 9</text>
+<path d="M921 720 V800" stroke="#e67e22" stroke-width="4" stroke-dasharray="12 9" fill="none"/>
+<rect x="808" y="800" width="226" height="105" rx="12" fill="#fff" stroke="#555" stroke-width="2"/>
+<text x="921" y="845" text-anchor="middle" font-size="22" fill="#333">Smart TV</text><text x="921" y="878" text-anchor="middle" font-size="19" fill="#666">música y fútbol</text>
+<path d="M1169 720 V800" stroke="#e67e22" stroke-width="4" stroke-dasharray="12 9" fill="none"/>
+<rect x="1056" y="800" width="226" height="105" rx="12" fill="#fdecea" stroke="#c0392b" stroke-width="3"/>
+<text x="1169" y="845" text-anchor="middle" font-size="22" fill="#333">Móviles de clientes</text><text x="1169" y="878" text-anchor="middle" font-size="19" fill="#666">clave en la pizarra</text>
+<path d="M1417 720 V800" stroke="#e67e22" stroke-width="4" stroke-dasharray="12 9" fill="none"/>
+<rect x="1304" y="800" width="226" height="105" rx="12" fill="#fff" stroke="#555" stroke-width="2"/>
+<text x="1417" y="845" text-anchor="middle" font-size="22" fill="#333">Móviles del personal</text><text x="1417" y="878" text-anchor="middle" font-size="19" fill="#666">WhatsApp del local</text>
+<g font-size="21" fill="#333"><line x1="1200" y1="290" x2="1260" y2="290" stroke="#555" stroke-width="5"/><text x="1275" y="297">cable</text><line x1="1200" y1="330" x2="1260" y2="330" stroke="#e67e22" stroke-width="4" stroke-dasharray="12 9"/><text x="1275" y="337">wifi</text><rect x="1200" y="355" width="60" height="30" fill="#fdecea" stroke="#c0392b" stroke-width="3"/><text x="1275" y="378">equipo ajeno al local</text></g></svg>
