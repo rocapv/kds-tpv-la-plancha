@@ -254,6 +254,12 @@ def producir(prompt: str, t: Trabajo, usar_llm: bool = True, con_voz: bool = Tru
         if not C.encendido():
             hay_gpu, motivo_sin_gpu = False, "ComfyUI no está arrancado (Kinemato\\run.bat)"
         else:
+            # Antes de medir, pedirle a ComfyUI que suelte lo que tenga cargado.
+            # Si no, el trabajo anterior deja residentes los 3,5 GB del modelo de
+            # vídeo más los 3,9 del codificador, y este aborta diciendo que «hay
+            # otro proceso usando la GPU» — que es cierto y es él mismo del rato
+            # anterior. Pasó con el primer vídeo de salas canónicas.
+            C.liberar()
             libre, total = C.vram_libre()
             if libre < VRAM_MINIMA:
                 hay_gpu = False
@@ -292,14 +298,20 @@ def producir(prompt: str, t: Trabajo, usar_llm: bool = True, con_voz: bool = Tru
         fotogramas = max(16, esc.segundos * B.FORMATO["fps"])
 
         semilla = esc.semilla(B.FORMATO["semilla_base"], i)
-        if B.FORMATO.get("modo", "fijo") == "fijo":
+        cuerpo = E.cuerpo_de(esc.personajes[0]) if esc.personajes else None
+        if B.FORMATO.get("modo", "fijo") in ("fijo", "wan"):
             # Plano fijo + movimiento de cámara: 36 s de GPU en vez de 17 min, y
             # con mejor imagen. El movimiento lo pone el montaje.
-            cuerpo = E.cuerpo_de(esc.personajes[0]) if esc.personajes else None
             grafo = C.construir_fijo(
                 prompt_positivo=positivo, prompt_negativo=negativo_de(esc),
                 control=control, semilla=semilla,
-                prefijo=f"kds_{t.id}_{i:02d}", referencia=referencia, cuerpo=cuerpo)
+                prefijo=f"kds_{t.id}_{i:02d}", referencia=referencia, cuerpo=cuerpo,
+                lineas=B.DIR_CONTROL / f"{esc.camara}_lineas.png",
+                # La cantina canónica de esa cámara, si está hecha
+                # (`preparar_salas.py`). Con ella el plano parte del comedor de
+                # verdad en vez de partir de ruido, y por eso todos los planos
+                # son el mismo sitio. Sin ella se genera como siempre.
+                sala=B.RAIZ / "biblia" / "salas" / f"{esc.camara}.png")
             pid = C.encolar(grafo)
             salidas = C.esperar(pid, aviso=lambda s, e, i=i: t.anotar(
                 f"plano {i+1}: {e}, {s} s", None))
@@ -309,11 +321,40 @@ def producir(prompt: str, t: Trabajo, usar_llm: bool = True, con_voz: bool = Tru
                 continue
             info["imagen"] = str(imagenes[0])
             info["origen"] = "fijo"
+
+            # Modo «wan»: el plano fijo no es el resultado, es la MATERIA PRIMA.
+            # Se acaba de generar con toda la calidad —IP-Adapter, hojas de
+            # personaje, ControlNet y el detallador de caras— y ahora WAN lo
+            # anima partiendo de él. Por eso va aquí dentro y no en una rama
+            # aparte: es exactamente el mismo plano fijo, más un paso.
+            #
+            # Si la animación falla, el plano NO se pierde: se queda la imagen y
+            # el montaje le pone movimiento de cámara, como en modo «fijo». Un
+            # plano de menos vale más que un vídeo de menos.
+            if B.FORMATO.get("modo") == "wan":
+                fot = C.para_segundos(esc.segundos)
+                t.anotar(f"plano {i+1}: animando con WAN ({fot} fotogramas)", None)
+                try:
+                    grafo = C.construir_wan(
+                        imagen=imagenes[0], accion=esc.accion or positivo,
+                        fotogramas=fot, prefijo=f"wan_{t.id}_{i:02d}", semilla=semilla)
+                    salidas = C.esperar(C.encolar(grafo), aviso=lambda s, e, i=i: t.anotar(
+                        f"plano {i+1}: {e}, {s} s", None))
+                    clips = [s for s in salidas if s.suffix.lower() == ".mp4"]
+                except Exception as e:
+                    clips = []
+                    t.avisar(f"Plano {i+1}: WAN falló ({e}).")
+                if clips:
+                    info["clip"] = str(clips[0])
+                    info["origen"] = "wan"
+                else:
+                    t.avisar(f"Plano {i+1}: sin clip de WAN; se queda la imagen fija "
+                             "y el montaje le pondrá movimiento de cámara.")
         else:
             grafo = C.construir(
                 prompt_positivo=positivo, prompt_negativo=negativo_de(esc),
                 control=control, fotogramas=fotogramas, semilla=semilla,
-                prefijo=f"kds_{t.id}_{i:02d}", referencia=referencia)
+                prefijo=f"kds_{t.id}_{i:02d}", referencia=referencia, cuerpo=cuerpo)
             pid = C.encolar(grafo)
             salidas = C.esperar(pid, aviso=lambda s, e, i=i: t.anotar(
                 f"plano {i+1}: {e}, {s} s", None))
@@ -344,17 +385,22 @@ def producir(prompt: str, t: Trabajo, usar_llm: bool = True, con_voz: bool = Tru
 
         destino = t.dir / "planos" / f"{i:02d}.mp4"
         try:
-            if info.get("imagen"):
+            # El CLIP manda sobre la imagen, y el orden importa: en modo «wan»
+            # un plano tiene las DOS cosas —la imagen fija es la materia prima
+            # de la que sale el clip—. Mirando la imagen primero, el clip
+            # animado se tiraba a la basura y se montaba otra vez el vídeo de
+            # fotos quietas, sin que lo dijera ningún aviso.
+            if info.get("clip"):
+                clip = Path(info["clip"])
+                normalizados.append(M.normalizar(clip, destino, segundos,
+                                                 rotulo=esc.rotulo, marca=marca,
+                                                 desde=P.desde_de(clip)))
+            else:
                 mov = M.movimiento_de(i, esc.camara)
                 info["movimiento"] = mov
                 normalizados.append(M.desde_imagen(
                     Path(info["imagen"]), destino, segundos, movimiento=mov,
                     rotulo=esc.rotulo, marca=marca))
-            else:
-                clip = Path(info["clip"])
-                normalizados.append(M.normalizar(clip, destino, segundos,
-                                                 rotulo=esc.rotulo, marca=marca,
-                                                 desde=P.desde_de(clip)))
         except Exception as e:
             t.avisar(f"Plano {i+1}: no se pudo montar ({e}); se salta.")
             continue

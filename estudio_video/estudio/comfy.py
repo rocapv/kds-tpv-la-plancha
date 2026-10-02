@@ -46,6 +46,36 @@ CHECKPOINT = "realisticVision_v60B1.safetensors"
 VAE = "vae-ft-mse-840000-ema-pruned.safetensors"
 MOVIMIENTO = "v3_sd15_mm.ckpt"
 
+# ── El motor de vídeo de verdad: WAN 2.2 TI2V-5B ────────────────────────────
+# AnimateDiff v3 mueve a la gente, pero reinventa la escena en cada fotograma:
+# medido el 01/10/2026, la sala derivaba a otra habitación, una persona de tres
+# se borraba entera y el detalle salía blando. No es cuestión de ajustes, es que
+# reparte un SD 1.5 entre veinticuatro fotogramas.
+#
+# WAN se usa SIEMPRE como imagen→vídeo, nunca desde el texto, y esa es la
+# decisión que lo hace viable aquí. La consistencia de personaje —cara, ropa,
+# que sea siempre el mismo— ya está resuelta del lado de la imagen fija, con
+# IP-Adapter, las hojas de personaje y ControlNet. Pedirle al modelo de vídeo
+# que la resuelva otra vez desde cero es rehacer lo que funciona y además
+# perderlo. Dándole el plano aprobado como primer fotograma, la identidad y la
+# nitidez vienen dadas y él solo pone el movimiento.
+#
+# Y por eso cabe en una 1080 Ti pese a no tener bf16: animar una imagen es mucho
+# menos trabajo que inventarse la escena. Medido a 704x384: 125 s de GPU por
+# segundo de vídeo, contra los 334 de AnimateDiff. Más rápido Y mejor.
+MODELO_VIDEO = "Wan2.2-TI2V-5B-Q5_K_M.gguf"      # en GGUF: en 11 GB no entra de otra forma
+CODIFICADOR_VIDEO = "umt5-xxl-encoder-Q5_K_M.gguf"
+VAE_VIDEO = "Wan2.2_VAE.safetensors"
+# El tamaño al que se entrenó. No es un lujo: a 704x384 la cara de alguien
+# sentado ocupa unos 60 píxeles y el modelo no tiene dónde poner los rasgos, así
+# que los reinventa y deja de ser el personaje.
+ANCHO_VIDEO, ALTO_VIDEO = 1280, 704
+DESPLAZAMIENTO_VIDEO = 8.0        # `shift`; sin esto el movimiento sale a tirones
+FPS_VIDEO = 16                    # los suyos; el montaje interpola a 24
+NEGATIVO_VIDEO = ("blurry, lowres, jpeg artifacts, distorted hands, extra fingers, "
+                  "deformed face, cartoon, anime, illustration, 3d render, "
+                  "watermark, text, static, still image, frozen")
+
 # Reparación de caras: detecta cada cara, la regenera a 512 px y la vuelve a
 # pegar. En un plano general la cara ocupa veinte píxeles y el modelo no puede
 # resolverla; esto le da esos mismos veinte píxeles ampliados y vuelve a
@@ -102,6 +132,35 @@ CONTROLNET_LINEAS = "control_v11p_sd15_lineart_fp16.safetensors"
 # plano feo: mirar el mapa de esa cámara.
 FUERZA_PROFUNDIDAD = 0.30
 HASTA_PROFUNDIDAD = 0.60       # a partir de ahí, ControlNet ya no opina
+# Y encima del volumen, los BORDES. La profundidad dice dónde hay bulto, no qué
+# forma tiene: por eso dos planos de la MISMA cámara salían en dos habitaciones
+# distintas —una oscura con cortinas, otra clara con puertas de madera— y el
+# vídeo de tres planos parecía rodado en tres sitios. El mapa de líneas sí lleva
+# el perfil de las mesas redondas, las sillas, los bancos y el borde de la barra.
+#
+# Los mapas estaban generados para todas las cámaras (`<camara>_lineas.png`) y el
+# modelo descargado desde el principio; simplemente no se usaban. Van flojas y
+# terminan pronto por lo de siempre: a más control, menos persona.
+# Cuánto se le deja reinventar a un plano que parte de la sala canónica. Se mide
+# barriendo: demasiado bajo y la persona no cabe, demasiado alto y la sala vuelve
+# a ser otra. Sin `sala` este número no se usa: se parte de ruido y es 1.0.
+DENOISE_SALA = 0.60
+FUERZA_LINEAS = 0.35
+HASTA_LINEAS = 0.50
+
+# Los mismos dos números, pero para el modo ANIMADO, porque el problema que
+# tienen que resolver no es el mismo. En una imagen fija el riesgo es que
+# ControlNet se coma a la persona —es lo que mide la tabla de arriba—. En un
+# clip el riesgo es el contrario: la geometría se suelta a lo largo de los
+# fotogramas. Medido el 01/10/2026 con los valores de la fija (0,30 / 0,60):
+# en el plano 1 Teo estaba sentado en el primer fotograma y en el último la
+# sala estaba VACÍA, y en los dos planos el comedor derivaba a otra habitación.
+#
+# Van en constantes aparte y no tocando las de arriba a propósito: las de la
+# fija están medidas y funcionan, y un solo número para los dos modos obliga a
+# estropear uno para arreglar el otro.
+FUERZA_PROFUNDIDAD_ANIM = 0.30
+HASTA_PROFUNDIDAD_ANIM = 0.60
 # La identidad, floja: con la cara basta. Subirla trae también la ropa, la luz y
 # el fondo del retrato, y la escena deja de ser la cantina. Medido: con 0,75 y
 # una referencia de alguien con chaqueta verde, la cantina entera salió verde
@@ -262,9 +321,10 @@ def construir(prompt_positivo: str, prompt_negativo: str, control: Path,
               fotogramas: int, semilla: int, prefijo: str,
               referencia: Path | list[Path] | None = None,
               ancho: int | None = None, alto: int | None = None,
-              fuerza_control: float = FUERZA_PROFUNDIDAD,
+              fuerza_control: float = FUERZA_PROFUNDIDAD_ANIM,
               fuerza_identidad: float = FUERZA_IDENTIDAD,
-              escalar: bool = True, arreglar_caras: bool = True) -> dict:
+              escalar: bool = True, arreglar_caras: bool = True,
+              cuerpo: Path | None = None) -> dict:
     """El grafo entero, listo para POST /prompt."""
     ancho = ancho or B.FORMATO["ancho"]
     alto = alto or B.FORMATO["alto"]
@@ -318,6 +378,22 @@ def construir(prompt_positivo: str, prompt_negativo: str, control: Path,
                              "embeds_scaling": "K+V w/ C penalty"}}
         modelo = ["4", 0]
 
+        # El mismo segundo adaptador que lleva `construir_fijo`: el de arriba
+        # mira la cara y dice QUIÉN es, este mira el plano medio y dice QUÉ LLEVA
+        # PUESTO. Faltaba aquí, y la ropa es parte del personaje tanto si el
+        # plano se mueve como si no: sin esto, el modo «animado» cambiaba de
+        # vestuario entre planos mientras el modo «fijo» lo mantenía.
+        if cuerpo is not None and cuerpo.exists():
+            g["5c"] = {"class_type": "LoadImage",
+                       "inputs": {"image": _copiar_a_entradas(cuerpo)}}
+            g["5d"] = {"class_type": "IPAdapterAdvanced",
+                       "inputs": {"model": modelo, "ipadapter": ["2", 1], "image": ["5c", 0],
+                                  "weight": FUERZA_VESTUARIO, "weight_type": "linear",
+                                  "combine_embeds": "concat",
+                                  "start_at": 0.25, "end_at": 0.80,
+                                  "embeds_scaling": "K+V w/ C penalty"}}
+            modelo = ["5d", 0]
+
     # Contexto estático: no hace falta el deslizante para clips de pocos
     # segundos, y además evita depender de la lista de `context_schedule`, que
     # ComfyUI no publica y cambia de nombres entre versiones del nodo.
@@ -344,7 +420,7 @@ def construir(prompt_positivo: str, prompt_negativo: str, control: Path,
                "inputs": {"positive": ["7", 0], "negative": ["8", 0],
                           "control_net": ["11", 0], "image": ["10", 0],
                           "strength": fuerza_control, "start_percent": 0.0,
-                          "end_percent": HASTA_PROFUNDIDAD}}
+                          "end_percent": HASTA_PROFUNDIDAD_ANIM}}
 
     g["13"] = {"class_type": "EmptyLatentImage",
                "inputs": {"width": ancho, "height": alto, "batch_size": fotogramas}}
@@ -404,12 +480,132 @@ def construir(prompt_positivo: str, prompt_negativo: str, control: Path,
     return g
 
 
+def construir_wan(imagen: Path, accion: str, fotogramas: int, prefijo: str,
+                  ancho: int = ANCHO_VIDEO, alto: int = ALTO_VIDEO,
+                  pasos: int = 20, semilla: int = 90210) -> dict:
+    """Anima una imagen YA generada. El primer fotograma ES esa imagen.
+
+    `fotogramas` tiene que ser 4n+1: el VAE de WAN comprime el tiempo de cuatro
+    en cuatro y el primero es el de la imagen. `para_segundos` lo calcula.
+
+    La imagen entra a 3072x1728 —así la deja `construir_fijo`, escalada x4— y se
+    baja aquí al tamaño del modelo. Bajar de ahí es supermuestreo: sale mejor
+    que generar directamente a 1280.
+    """
+    return {
+        "1": {"class_type": "UnetLoaderGGUF", "inputs": {"unet_name": MODELO_VIDEO}},
+        "2": {"class_type": "CLIPLoaderGGUF",
+              "inputs": {"clip_name": CODIFICADOR_VIDEO, "type": "wan"}},
+        "3": {"class_type": "VAELoader", "inputs": {"vae_name": VAE_VIDEO}},
+        "4": {"class_type": "ModelSamplingSD3",
+              "inputs": {"model": ["1", 0], "shift": DESPLAZAMIENTO_VIDEO}},
+        "5": {"class_type": "LoadImage", "inputs": {"image": _copiar_a_entradas(imagen)}},
+        "6": {"class_type": "ImageScale",
+              "inputs": {"image": ["5", 0], "upscale_method": "lanczos",
+                         "width": ancho, "height": alto, "crop": "center"}},
+        "7": {"class_type": "CLIPTextEncode", "inputs": {"text": accion, "clip": ["2", 0]}},
+        "8": {"class_type": "CLIPTextEncode",
+              "inputs": {"text": NEGATIVO_VIDEO, "clip": ["2", 0]}},
+        "9": {"class_type": "Wan22ImageToVideoLatent",
+              "inputs": {"vae": ["3", 0], "width": ancho, "height": alto,
+                         "length": fotogramas, "batch_size": 1, "start_image": ["6", 0]}},
+        "10": {"class_type": "KSampler",
+               "inputs": {"model": ["4", 0], "seed": semilla, "steps": pasos, "cfg": 5.0,
+                          "sampler_name": "uni_pc", "scheduler": "simple",
+                          "positive": ["7", 0], "negative": ["8", 0],
+                          "latent_image": ["9", 0], "denoise": 1.0}},
+        "11": {"class_type": "VAEDecode", "inputs": {"samples": ["10", 0], "vae": ["3", 0]}},
+        "12": {"class_type": "VHS_VideoCombine",
+               "inputs": {"images": ["11", 0], "frame_rate": float(FPS_VIDEO),
+                          "loop_count": 0, "filename_prefix": prefijo,
+                          "format": "video/h264-mp4", "pingpong": False,
+                          "save_output": True}},
+    }
+
+
+def para_segundos(segundos: float) -> int:
+    """Fotogramas que pide WAN para esa duración: el 4n+1 más cercano."""
+    crudos = max(1, int(round(segundos * FPS_VIDEO)))
+    return ((crudos - 1) // 4) * 4 + 1
+
+
+def construir_sala(control: Path, lineas: Path | None, prompt_sala: str,
+                   semilla: int, prefijo: str,
+                   ancho: int | None = None, alto: int | None = None) -> dict:
+    """La cantina VACÍA, una vez por cámara. Sin gente y a propósito.
+
+    Esto existe porque la sala se reinventaba en cada plano. Mismo mapa de
+    profundidad, mismo mapa de líneas, misma descripción y hasta la misma
+    semilla, y aun así dos planos de la MISMA cámara salían en dos habitaciones
+    distintas: una oscura con cortinas, otra clara con puertas de madera. Lo que
+    decide el color de las paredes, el material de las sillas y la luz no es
+    ninguna de esas cosas, es el ruido del que parte cada generación.
+
+    Y no hay número que lo arregle: subir ControlNet unifica la sala pero echa a
+    la persona del cuadro —medido tres veces, y ya estaba medido antes para la
+    profundidad—. Así que la sala deja de ser algo que se decide cada vez y pasa
+    a ser un DATO: se genera una vez, se mira, se aprueba y se guarda. Después
+    cada plano parte de ella (`construir_fijo(sala=...)`).
+
+    Aquí el control va FUERTE, al revés que en los planos con gente: sin nadie a
+    quien proteger, lo único que interesa es que la geometría del plano se
+    respete al milímetro.
+    """
+    ancho = ancho or B.FORMATO["ancho"]
+    alto = alto or B.FORMATO["alto"]
+    f = B.FORMATO
+    vacia = ("empty, no people, nobody, unoccupied, "
+             "person, people, man, woman, crowd, diner, waiter, "
+             "text, letters, watermark, blurry, lowres, cartoon, 3d render, "
+             "daylight, outdoors, sky")
+
+    g = {
+        "1": {"class_type": "CheckpointLoaderSimple", "inputs": {"ckpt_name": CHECKPOINT}},
+        "1v": {"class_type": "VAELoader", "inputs": {"vae_name": VAE}},
+        "7": {"class_type": "CLIPTextEncode",
+              "inputs": {"text": prompt_sala, "clip": ["1", 1]}},
+        "8": {"class_type": "CLIPTextEncode", "inputs": {"text": vacia, "clip": ["1", 1]}},
+        "9": {"class_type": "LoadImage", "inputs": {"image": _copiar_a_entradas(control)}},
+        "11": {"class_type": "ControlNetLoader",
+               "inputs": {"control_net_name": CONTROLNET_PROFUNDIDAD}},
+        "12": {"class_type": "ControlNetApplyAdvanced",
+               "inputs": {"positive": ["7", 0], "negative": ["8", 0], "control_net": ["11", 0],
+                          "image": ["9", 0], "strength": 0.65,
+                          "start_percent": 0.0, "end_percent": 0.85}},
+        "13": {"class_type": "EmptyLatentImage",
+               "inputs": {"width": ancho, "height": alto, "batch_size": 1}},
+    }
+    condicion = "12"
+    if lineas is not None and lineas.exists():
+        g["11b"] = {"class_type": "ControlNetLoader",
+                    "inputs": {"control_net_name": CONTROLNET_LINEAS}}
+        g["9b"] = {"class_type": "LoadImage",
+                   "inputs": {"image": _copiar_a_entradas(lineas)}}
+        g["12b"] = {"class_type": "ControlNetApplyAdvanced",
+                    "inputs": {"positive": ["12", 0], "negative": ["12", 1],
+                               "control_net": ["11b", 0], "image": ["9b", 0],
+                               "strength": 0.55, "start_percent": 0.0, "end_percent": 0.75}}
+        condicion = "12b"
+
+    g["14"] = {"class_type": "KSampler",
+               "inputs": {"model": ["1", 0], "seed": semilla, "steps": 32, "cfg": f["cfg"],
+                          "sampler_name": "dpmpp_2m", "scheduler": "karras",
+                          "positive": [condicion, 0], "negative": [condicion, 1],
+                          "latent_image": ["13", 0], "denoise": 1.0}}
+    g["15"] = {"class_type": "VAEDecode", "inputs": {"samples": ["14", 0], "vae": ["1v", 0]}}
+    g["30"] = {"class_type": "SaveImage",
+               "inputs": {"images": ["15", 0], "filename_prefix": prefijo}}
+    return g
+
+
 def construir_fijo(prompt_positivo: str, prompt_negativo: str, control: Path,
                    semilla: int, prefijo: str, referencia: list[Path] | None = None,
                    ancho: int | None = None, alto: int | None = None,
                    pasos: int = 32, fuerza_control: float = FUERZA_PROFUNDIDAD,
                    fuerza_identidad: float = FUERZA_IDENTIDAD,
-                   cuerpo: Path | None = None) -> dict:
+                   cuerpo: Path | None = None, lineas: Path | None = None,
+                   fuerza_lineas: float = FUERZA_LINEAS,
+                   sala: Path | None = None, denoise: float = DENOISE_SALA) -> dict:
     """Un plano como IMAGEN, con toda la calidad, para animarlo luego con la cámara.
 
     Es el mismo grafo que el de vídeo sin AnimateDiff, y esa ausencia lo cambia
@@ -443,6 +639,43 @@ def construir_fijo(prompt_positivo: str, prompt_negativo: str, control: Path,
         "13": {"class_type": "EmptyLatentImage",
                "inputs": {"width": ancho, "height": alto, "batch_size": 1}},
     }
+
+    # De dónde PARTE el plano. Con `sala`, de la imagen canónica de la cantina en
+    # vez de ruido: el comedor ya está ahí —su color, su luz, sus materiales— y el
+    # muestreador solo tiene que meter a la persona. Es lo que hace que los planos
+    # sean el mismo sitio, y no se consigue con ningún ajuste de ControlNet, que
+    # al apretar lo único que logra es quedarse sin persona.
+    #
+    # `denoise` es el reparto: a 1.0 se reinventa todo y volvemos al problema de
+    # siempre; demasiado bajo y no cabe nadie nuevo en el cuadro.
+    latente = ["13", 0]
+    if sala is not None and sala.exists():
+        g["13s"] = {"class_type": "LoadImage", "inputs": {"image": _copiar_a_entradas(sala)}}
+        g["13e"] = {"class_type": "ImageScale",
+                    "inputs": {"image": ["13s", 0], "upscale_method": "lanczos",
+                               "width": ancho, "height": alto, "crop": "center"}}
+        g["13v"] = {"class_type": "VAEEncode",
+                    "inputs": {"pixels": ["13e", 0], "vae": ["1v", 0]}}
+        latente = ["13v", 0]
+    else:
+        denoise = 1.0
+
+    # Segundo ControlNet, encadenado al de profundidad: el volumen lo pone aquel,
+    # la FORMA la ponen las líneas. Se engancha a la salida del primero —positivo
+    # y negativo ya condicionados— y de ahí en adelante el muestreador lee «12b»
+    # en vez de «12».
+    condicion = "12"
+    if lineas is not None and lineas.exists():
+        g["11b"] = {"class_type": "ControlNetLoader",
+                    "inputs": {"control_net_name": CONTROLNET_LINEAS}}
+        g["9b"] = {"class_type": "LoadImage",
+                   "inputs": {"image": _copiar_a_entradas(lineas)}}
+        g["12b"] = {"class_type": "ControlNetApplyAdvanced",
+                    "inputs": {"positive": ["12", 0], "negative": ["12", 1],
+                               "control_net": ["11b", 0], "image": ["9b", 0],
+                               "strength": fuerza_lineas,
+                               "start_percent": 0.0, "end_percent": HASTA_LINEAS}}
+        condicion = "12b"
 
     vistas = [v for v in (referencia or []) if v and v.exists()]
     modelo = ["1", 0]
@@ -486,8 +719,8 @@ def construir_fijo(prompt_positivo: str, prompt_negativo: str, control: Path,
     g["14"] = {"class_type": "KSampler",
                "inputs": {"model": modelo, "seed": semilla, "steps": pasos, "cfg": f["cfg"],
                           "sampler_name": "dpmpp_2m", "scheduler": "karras",
-                          "positive": ["12", 0], "negative": ["12", 1],
-                          "latent_image": ["13", 0], "denoise": 1.0}}
+                          "positive": [condicion, 0], "negative": [condicion, 1],
+                          "latent_image": latente, "denoise": denoise}}
     g["15"] = {"class_type": "VAEDecode", "inputs": {"samples": ["14", 0], "vae": ["1v", 0]}}
 
     salida = ["15", 0]
@@ -575,6 +808,27 @@ def esperar(prompt_id: str, url: str = COMFY, limite: int = 3600,
                 pendientes = -1
             aviso(int(time.time() - inicio), f"en cola ({pendientes} por delante)")
         time.sleep(3)
+
+
+def liberar(url: str = COMFY) -> bool:
+    """Le pide a ComfyUI que suelte los modelos que tiene en VRAM.
+
+    Hace falta desde que existe el modo «wan»: el modelo de vídeo son 3,5 GB más
+    los 3,9 del codificador de texto, y ComfyUI los deja residentes para no
+    recargarlos. Perfecto mientras se encadenan planos, y un problema en cuanto
+    termina el trabajo: el SIGUIENTE se encuentra la tarjeta ocupada por su
+    propio predecesor y aborta diciendo que «hay otro proceso usando la GPU»,
+    que es verdad y además es él mismo. Ya pasó.
+    """
+    try:
+        peticion = urllib.request.Request(f"{url}/free", method="POST",
+                                data=json.dumps({"unload_models": True,
+                                                  "free_memory": True}).encode(),
+                                headers={"Content-Type": "application/json"})
+        with urllib.request.urlopen(peticion, timeout=20):
+            return True
+    except Exception:
+        return False
 
 
 def interrumpir(url: str = COMFY) -> None:

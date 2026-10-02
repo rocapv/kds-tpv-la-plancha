@@ -143,10 +143,21 @@ FORMATO = {
     # Medido el 29/09/2026 en la 1080 Ti, para un plano de tres segundos:
     #   fijo    → 36 s de GPU, imagen nítida, cara reconocible
     #   animado → 16,7 min, detalle hundido y escena apagada
-    # 28 veces más caro para peor resultado, así que el movimiento lo pone la
-    # cámara. Con una GPU capaz de mover modelos de vídeo de verdad, esto se
-    # cambia a «animado» y ya está.
-    "modo": "fijo",
+    # 28 veces más caro para peor resultado, así que el movimiento lo ponía la
+    # cámara.
+    #
+    # Puesto en «animado» el 01/10/2026 por decisión del encargo: los vídeos con
+    # gente quieta no enseñan un servicio, y el coste de GPU es un problema menor
+    # que un ejemplo que no se parece a lo que pasa en una sala. La medición de
+    # arriba sigue siendo cierta y por eso se deja escrita; lo que cambió no es
+    # el dato, es qué se prefiere pagar.
+    # «wan» (01/10/2026): el plano se genera como imagen fija, con toda la
+    # calidad, y después WAN 2.2 lo anima partiendo de ella. Sustituye a
+    # «animado», que movía a la gente pero reinventaba la escena en cada
+    # fotograma —sala que deriva, persona que se borra, detalle hundido— y
+    # encima costaba 334 s de GPU por segundo de vídeo contra los 125 de WAN.
+    # Más rápido y mejor, y ya no hay que elegir entre movimiento y calidad.
+    "modo": "wan",
 }
 
 
