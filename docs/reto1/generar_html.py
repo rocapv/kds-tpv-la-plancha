@@ -22,20 +22,20 @@ S = []   # (clase, html, notas)
 S.append(("dark portada", f"""
 <div class="badge">R1</div>
 <h1 class="big">Lo que hay detrás de la barra</h1>
-<p class="sub">Análisis del contexto tecnológico de La Plancha</p>
+<p class="sub">Análisis del contexto tecnológico de Burglar King</p>
 <p class="pie">Reto 1 · Proyecto Intermodular I · 1.º CFGS ASIR · IES Conselleria<br>Riches Manuel y Roca · octubre de 2026</p>""",
-"Presentamos el análisis del contexto tecnológico de La Plancha, la empresa para la que estamos desarrollando el TPV con pantallas de cocina. El objetivo del reto es entender qué tecnología tiene hoy la empresa, en qué entorno se mueve y qué necesita, antes de proponer nada."))
+"Presentamos el análisis del contexto tecnológico de Burglar King, la empresa para la que estamos desarrollando el TPV con pantallas de cocina. El objetivo del reto es entender qué tecnología tiene hoy la empresa, en qué entorno se mueve y qué necesita, antes de proponer nada."))
 
 S.append(("", f"""
-<h2>La Plancha: una hamburguesería de barrio</h2>
+<h2>Burglar King: una hamburguesería de barrio</h2>
 {tarjetas([f'<b class="num">{n}</b><span>{t}</span>' for n, t in [("13","mesas en sala, terraza y barra"),("4","personas en plantilla"),("15-25 €","ticket medio por comensal"),("4","canales: sala, barra, llevar y reparto")]], 4, "card stat")}
 <p class="lead"><b>Burjassot (València), junto al campus universitario.</b> Servicio concentrado en franjas cortas y mucho pedido para llevar: el peor escenario para el papel.</p>
-<p class="nota">Empresa ficticia (La Plancha Burjassot, S.L.), construida con datos reales del sector. Restauración independiente, CNAE 56.10.</p>""",
-"La Plancha es una hamburguesería de barrio en Burjassot, al lado del campus. Trece mesas y cuatro personas. Es ficticia, como permite el enunciado, pero construida con datos reales. Pertenece al grupo más numeroso: el local independiente, el 93 % de los establecimientos. El servicio se concentra en franjas cortas, y ahí la tecnología no puede fallar."))
+<p class="nota">Empresa ficticia (Burglar King Burjassot, S.L.), construida con datos reales del sector. Restauración independiente, CNAE 56.10.</p>""",
+"Burglar King es una hamburguesería de barrio en Burjassot, al lado del campus. Trece mesas y cuatro personas. Es ficticia, como permite el enunciado, pero construida con datos reales. Pertenece al grupo más numeroso: el local independiente, el 93 % de los establecimientos. El servicio se concentra en franjas cortas, y ahí la tecnología no puede fallar."))
 
 S.append(("", f"""
 <h2>Una persona lo concentra todo</h2>
-<div class="split"><img src="{img('organigrama.png')}" alt="Organigrama de La Plancha">
+<div class="split"><img src="{img('organigrama.png')}" alt="Organigrama de Burglar King">
 <div class="card tint"><h3>El encargado es…</h3>{lista(["dirección y compras","caja y cierre del día","relación con la gestoría","<b>y, sin quererlo, el informático</b>"])}</div></div>
 <p class="lead"><i>Si él falta, nadie sabe reiniciar el router ni recuperar la contraseña del TPV: un punto único de fallo humano.</i></p>""",
 "La estructura es plana: sala, cocina y una persona que lo concentra todo. El encargado es dirección, compras, caja, administración y, en la práctica, el único responsable de informática. Igual que hay puntos únicos de fallo técnicos, aquí hay uno humano."))
@@ -81,7 +81,7 @@ pestel = [("P","Político","Verifactu aplazado: 1/1/2027 para sociedades"),("E",
 S.append(("", f"""
 <h2>PESTEL: lo que no controla, pero le condiciona</h2>
 {tarjetas([f'<div class="fila"><span class="dot g">{k}</span><b>{t}</b></div><p>{d}</p>' for k,t,d in pestel], 3)}""",
-"Lo político y legal que más pesa es Verifactu: desde el 1 de enero de 2027 una sociedad como La Plancha necesita facturación adaptada, y su TPV de 2016 no lo estará. Márgenes estrechos; cliente que paga con móvil, también en la terraza; fin de Windows 10 y una digitalización que no ha llegado a la cocina; papel térmico y residuos electrónicos; protección de datos, alérgenos y registro de jornada."))
+"Lo político y legal que más pesa es Verifactu: desde el 1 de enero de 2027 una sociedad como Burglar King necesita facturación adaptada, y su TPV de 2016 no lo estará. Márgenes estrechos; cliente que paga con móvil, también en la terraza; fin de Windows 10 y una digitalización que no ha llegado a la cocina; papel térmico y residuos electrónicos; protección de datos, alérgenos y registro de jornada."))
 
 S.append(("", f"""
 <h2>Clientes, proveedores y competencia</h2>
@@ -108,11 +108,11 @@ S.append(("dark", f"""
 <h1 class="big">No falta dinero.</h1>
 <p class="sub grande">Falta alguien que diseñe la infraestructura y la deje funcionando sola.</p>
 <div class="linea">{''.join(f'<div><span class="dot xl">{k}</span><p>{t}</p></div>' for k,t in [("R2","Diseño"),("R3","Viabilidad"),("R4","Presupuesto"),("R5","Documentación"),("R6","Plan de intervención")])}</div>""",
-"La Plancha trabaja a ciegas durante el servicio, guarda sus datos en un equipo sin soporte y sin copias y comparte una red plana con sus clientes. Hay una fecha, Verifactu, y una oportunidad, hardware barato y software sin cuotas por pantalla. Las medidas más urgentes casi no cuestan dinero: falta alguien que diseñe la infraestructura. Eso haremos en los próximos retos."))
+"Burglar King trabaja a ciegas durante el servicio, guarda sus datos en un equipo sin soporte y sin copias y comparte una red plana con sus clientes. Hay una fecha, Verifactu, y una oportunidad, hardware barato y software sin cuotas por pantalla. Las medidas más urgentes casi no cuestan dinero: falta alguien que diseñe la infraestructura. Eso haremos en los próximos retos."))
 
 S.append(("dark", """
 <h1 class="big">¿Preguntas?</h1>
-<p class="sub">Informe completo: «Análisis del contexto tecnológico de La Plancha» (Reto 1).</p>
+<p class="sub">Informe completo: «Análisis del contexto tecnológico de Burglar King» (Reto 1).</p>
 <p class="pie">Fuentes principales: INE (2025), Profesional Horeca (2025), Hosteltur (2026), El Periòdic (2025), Microsoft (2025), Garrigues (2025), Red.es (s.f.), normativa del BOE y del DOUE. Referencias completas en formato APA en el informe.</p>""",
 "Gracias. Quedamos abiertos a preguntas."))
 
@@ -187,7 +187,7 @@ cuerpo = "".join(
     for k, (c, h, n) in enumerate(S, 1))
 doc = f"""<!doctype html>
 <html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Reto 1 · La Plancha</title><style>{CSS}</style></head>
+<title>Reto 1 · Burglar King</title><style>{CSS}</style></head>
 <body><div id="deck">{cuerpo}</div><div id="notas"></div>
 <div id="ayuda">← → avanzar · N guion · F pantalla completa</div><script>{JS}</script></body></html>"""
 out = AQUI / "reto1_presentacion.html"

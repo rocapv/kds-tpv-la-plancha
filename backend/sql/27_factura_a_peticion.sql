@@ -49,5 +49,5 @@ UPDATE facturas f JOIN pedidos p ON p.id=f.pedido_id
  WHERE f.operacion_en IS NULL;
 
 INSERT IGNORE INTO ajustes (clave, valor) VALUES
- ('local_email',  'facturas@laplancha.example'),   -- sale en la factura y en el «cómo pedirla»
+ ('local_email',  'facturas@burglarking.example'),   -- sale en la factura y en el «cómo pedirla»
  ('factura_app',  'si');                           -- se puede apagar sin tocar el TPV

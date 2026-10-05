@@ -1,4 +1,4 @@
-# Sistema KDS + TPV para hostelería «La Plancha»
+# Sistema KDS + TPV para hostelería «Burglar King»
 
 **Proyecto Intermodular 1 · 1º CFGS Administración de Sistemas Informáticos en Red**
 Autor: RocaPV · Septiembre de 2026
@@ -99,7 +99,7 @@ La empresa simulada es ficticia, pero el sistema no: está desplegado, funcionan
 
 ### 2.1. Actividad y ubicación
 
-**La Plancha** es una hamburguesería de barrio situada en Burjassot (València), con 13 mesas
+**Burglar King** es una hamburguesería de barrio situada en Burjassot (València), con 13 mesas
 repartidas en sala, terraza y barra, y servicio de comida para llevar. Plantilla de cuatro personas:
 dos camareros, una cocinera y un encargado. Ticket medio previsto: entre 15 y 25 €.
 
@@ -117,7 +117,7 @@ escenario para el papel y el mejor para un KDS.
 | Glop Hostelería | Licencia perpetua + mantenimiento | ~600 € + cuota | Windows obligatorio; KDS como extra |
 | Ágora (Iberical) | Licencia por terminal | ~500 € y terminal | Licencia por puesto: escalar sale caro |
 | Cuiner / TPV genérico Android | Cuota baja o gratuito con publicidad | 0–20 €/mes | Datos fuera del local; funciones limitadas |
-| **La Plancha (este proyecto)** | Software propio | Coste de implantación | Requiere quien lo mantenga |
+| **Burglar King (este proyecto)** | Software propio | Coste de implantación | Requiere quien lo mantenga |
 
 Se ha estudiado además una demostración real de un KDS comercial (STARPOS) integrado en un TPV
 Windows: tres columnas por estado, despacho por producto o por comanda y filtro por fechas. El
@@ -158,8 +158,9 @@ variable de coste.
 
 ### 2.5. Cultura de empresa
 
-- **Nombre e imagen:** La Plancha. Identidad sobria en fondo oscuro, naranja como color de acción
+- **Nombre e imagen:** Burglar King. Identidad sobria en fondo oscuro, naranja como color de acción
   (`#e67e22`), pensada para verse en pantalla a dos metros y en cocina con las manos ocupadas.
+  Logo: corona de oro sobre antifaz de ladrón (`docs/logos/logo.svg`).
 - **Misión:** que el cliente reciba lo que pidió, caliente y a tiempo.
 - **Visión:** ser el local de barrio donde el servicio no se cae los viernes por la noche.
 - **Valores:** honestidad en la cuenta, respeto al tiempo del cliente y cuidado del equipo de cocina.

@@ -10,7 +10,7 @@
 <rect x="590" y="540" width="260" height="110" rx="12" fill="#fff" stroke="#555" stroke-width="2"/><text x="720" y="585" text-anchor="middle" font-size="24" fill="#333">Grabador + 2 cámaras</text><text x="720" y="620" text-anchor="middle" font-size="19" fill="#666">acceso remoto P2P</text>
 <path d="M940 420 V720" stroke="#e67e22" stroke-width="4" stroke-dasharray="12 9" fill="none"/>
 <path d="M177 720 H1417" stroke="#e67e22" stroke-width="4" stroke-dasharray="12 9" fill="none"/>
-<text x="960" y="600" font-size="22" fill="#b35f12">wifi «LaPlancha»</text>
+<text x="960" y="600" font-size="22" fill="#b35f12">wifi «BurglarKing»</text>
 <path d="M177 720 V800" stroke="#e67e22" stroke-width="4" stroke-dasharray="12 9" fill="none"/>
 <rect x="64" y="800" width="226" height="105" rx="12" fill="#fff" stroke="#555" stroke-width="2"/>
 <text x="177" y="845" text-anchor="middle" font-size="22" fill="#333">Datáfono</text><text x="177" y="878" text-anchor="middle" font-size="19" fill="#666">del banco</text>

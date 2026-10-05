@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS ajustes (
 ) ENGINE=InnoDB;
 
 INSERT IGNORE INTO ajustes (clave, valor) VALUES
- ('local_nombre',    'La Plancha'),
+ ('local_nombre',    'Burglar King'),
  ('local_nif',       'B00000000'),
  ('local_direccion', 'Av. de la Hamburguesa 42, 46100 Burjassot (València)'),
  ('local_telefono',  '960 00 00 00'),

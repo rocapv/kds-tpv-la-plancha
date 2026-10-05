@@ -1,4 +1,4 @@
--- KDS + TPV · Hamburguesería "La Plancha" · esquema MariaDB
+-- KDS + TPV · Hamburguesería "Burglar King" · esquema MariaDB
 -- Importes SIEMPRE en céntimos (INT) para evitar errores de coma flotante.
 SET NAMES utf8mb4;
 

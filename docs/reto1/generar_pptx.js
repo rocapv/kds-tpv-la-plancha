@@ -9,7 +9,7 @@ const fig = (f) => path.join(__dirname, 'fig', f);
 const pres = new pptxgen();
 pres.layout = 'LAYOUT_WIDE';            // 13.33 × 7.5 in
 pres.author = 'Riches Manuel y Roca';
-pres.title = 'Análisis del contexto tecnológico de La Plancha';
+pres.title = 'Análisis del contexto tecnológico de Burglar King';
 const W = 13.333, M = 0.6;
 
 const T = (s, text, o) => s.addText(text, { isTextBox: true, fontFace: F, color: C.txt, margin: 0, valign: 'top', ...o });
@@ -35,15 +35,15 @@ function tarjeta(s, x, y, w, h, fill = C.claro) {
   const s = base(null, true);
   circulo(s, M, 1.2, 0.9, 'R1', { size: 20 });
   T(s, 'Lo que hay detrás de la barra', { x: M, y: 2.4, w: 11, h: 1.1, fontSize: 48, bold: true, color: C.blanco });
-  T(s, 'Análisis del contexto tecnológico de La Plancha', { x: M, y: 3.5, w: 11, h: 0.6, fontSize: 24, color: C.nar });
+  T(s, 'Análisis del contexto tecnológico de Burglar King', { x: M, y: 3.5, w: 11, h: 0.6, fontSize: 24, color: C.nar });
   T(s, 'Reto 1 · Proyecto Intermodular I · 1.º CFGS ASIR · IES Conselleria', { x: M, y: 5.6, w: 11, h: 0.4, fontSize: 16, color: 'CCCCCC' });
   T(s, 'Riches Manuel y Roca · octubre de 2026', { x: M, y: 6.05, w: 11, h: 0.4, fontSize: 16, color: 'CCCCCC' });
-  s.addNotes('Presentamos el análisis del contexto tecnológico de La Plancha, la empresa para la que estamos desarrollando el TPV con pantallas de cocina. El objetivo del reto es entender qué tecnología tiene hoy la empresa, en qué entorno se mueve y qué necesita, antes de proponer nada. El título lo resume: vamos a mirar lo que hay detrás de la barra.');
+  s.addNotes('Presentamos el análisis del contexto tecnológico de Burglar King, la empresa para la que estamos desarrollando el TPV con pantallas de cocina. El objetivo del reto es entender qué tecnología tiene hoy la empresa, en qué entorno se mueve y qué necesita, antes de proponer nada. El título lo resume: vamos a mirar lo que hay detrás de la barra.');
 }
 
 // 2 · La empresa
 {
-  const s = base('La Plancha: una hamburguesería de barrio');
+  const s = base('Burglar King: una hamburguesería de barrio');
   const datos = [['13', 'mesas en sala,\nterraza y barra'], ['4', 'personas en\nplantilla'], ['15-25 €', 'ticket medio\npor comensal'], ['4', 'canales: sala, barra,\nllevar y reparto']];
   datos.forEach(([num, lab], i) => {
     const x = M + i * 3.05;
@@ -55,8 +55,8 @@ function tarjeta(s, x, y, w, h, fill = C.claro) {
     { text: 'Burjassot (València), junto al campus universitario. ', options: { bold: true } },
     { text: 'Servicio concentrado en franjas cortas y mucho pedido para llevar: el peor escenario para el papel.' },
   ], { x: M, y: 4.8, w: 11.5, h: 0.9, fontSize: 18 });
-  T(s, 'Empresa ficticia (La Plancha Burjassot, S.L.), construida con datos reales del sector. Restauración independiente, CNAE 56.10.', { x: M, y: 6.3, w: 11, h: 0.4, fontSize: 12, color: C.gris });
-  s.addNotes('La Plancha es una hamburguesería de barrio en Burjassot, al lado del campus de la Universitat de València. Tiene trece mesas y cuatro personas: el encargado, dos camareros y una cocinera. Es una empresa ficticia, como permite el enunciado, pero la hemos construido con datos reales del sector. Pertenece al grupo más numeroso de la hostelería: el local independiente, que es el 93 por ciento de los establecimientos. Lo importante es que el servicio se concentra en franjas cortas, y ahí es donde la tecnología no puede fallar.');
+  T(s, 'Empresa ficticia (Burglar King Burjassot, S.L.), construida con datos reales del sector. Restauración independiente, CNAE 56.10.', { x: M, y: 6.3, w: 11, h: 0.4, fontSize: 12, color: C.gris });
+  s.addNotes('Burglar King es una hamburguesería de barrio en Burjassot, al lado del campus de la Universitat de València. Tiene trece mesas y cuatro personas: el encargado, dos camareros y una cocinera. Es una empresa ficticia, como permite el enunciado, pero la hemos construido con datos reales del sector. Pertenece al grupo más numeroso de la hostelería: el local independiente, que es el 93 por ciento de los establecimientos. Lo importante es que el servicio se concentra en franjas cortas, y ahí es donde la tecnología no puede fallar.');
 }
 
 // 3 · Organización
@@ -162,7 +162,7 @@ function tarjeta(s, x, y, w, h, fill = C.claro) {
     T(s, lab, { x: x + 0.35, y: y + 1.25, w: 5.2, h: 0.5, fontSize: 17 });
     T(s, src, { x: x + 0.35, y: y + 1.7, w: 5.2, h: 0.35, fontSize: 12, color: C.gris });
   });
-  s.addNotes('Ahora el entorno. La hostelería española tiene más de 280.000 establecimientos y el 93 por ciento son independientes, como La Plancha. En la Comunitat Valenciana hay más de 31.000 bares y restaurantes, uno por cada 174 habitantes. Y el dato clave: el sector factura más, pero la restauración tuvo rentabilidad negativa en 2025. Conclusión para el proyecto: cualquier inversión se mide en euros ahorrados, no en funciones.');
+  s.addNotes('Ahora el entorno. La hostelería española tiene más de 280.000 establecimientos y el 93 por ciento son independientes, como Burglar King. En la Comunitat Valenciana hay más de 31.000 bares y restaurantes, uno por cada 174 habitantes. Y el dato clave: el sector factura más, pero la restauración tuvo rentabilidad negativa en 2025. Conclusión para el proyecto: cualquier inversión se mide en euros ahorrados, no en funciones.');
 }
 
 // 10 · PESTEL
@@ -177,7 +177,7 @@ function tarjeta(s, x, y, w, h, fill = C.claro) {
     T(s, t, { x: x + 1.15, y: y + 0.3, w: 2.5, h: 0.7, fontSize: 18, bold: true, valign: 'middle' });
     T(s, d, { x: x + 0.3, y: y + 1.15, w: 3.3, h: 0.85, fontSize: 15, color: C.txt });
   });
-  s.addNotes('El análisis PESTEL. En lo político y legal, lo que más pesa es Verifactu: desde el 1 de enero de 2027 una sociedad como La Plancha necesita un sistema de facturación adaptado, y su TPV de 2016 sin mantenimiento no lo estará. En lo económico, márgenes estrechos. En lo social, un cliente joven que paga con el móvil, así que el datáfono tiene que funcionar también en la terraza. En lo tecnológico, el fin de Windows 10 y una digitalización que se ha quedado en el cobro y no ha llegado a la cocina. En lo ambiental, el papel térmico y los residuos electrónicos. Y en lo legal, además, protección de datos con las cámaras, alérgenos y registro de jornada.');
+  s.addNotes('El análisis PESTEL. En lo político y legal, lo que más pesa es Verifactu: desde el 1 de enero de 2027 una sociedad como Burglar King necesita un sistema de facturación adaptado, y su TPV de 2016 sin mantenimiento no lo estará. En lo económico, márgenes estrechos. En lo social, un cliente joven que paga con el móvil, así que el datáfono tiene que funcionar también en la terraza. En lo tecnológico, el fin de Windows 10 y una digitalización que se ha quedado en el cobro y no ha llegado a la cocina. En lo ambiental, el papel térmico y los residuos electrónicos. Y en lo legal, además, protección de datos con las cámaras, alérgenos y registro de jornada.');
 }
 
 // 11 · Microentorno
@@ -249,14 +249,14 @@ function tarjeta(s, x, y, w, h, fill = C.claro) {
     circulo(s, x, 4.5, 0.9, k, { size: 18 });
     T(s, t, { x: x - 0.5, y: 5.55, w: 1.9, h: 0.6, fontSize: 15, color: C.blanco, align: 'center' });
   });
-  s.addNotes('Para terminar. La Plancha tiene tres problemas de fondo: trabaja a ciegas durante el servicio, guarda sus datos en un equipo sin soporte y sin copias, y comparte una red plana con sus clientes. El entorno añade una fecha, Verifactu, y una oportunidad, el hardware barato y un software sin cuotas por pantalla. Y la conclusión que más nos ha sorprendido: las medidas más urgentes casi no cuestan dinero. No falta dinero; falta alguien que diseñe la infraestructura y la deje funcionando sola. Eso es lo que haremos en los próximos retos: diseño, viabilidad, presupuesto, documentación y plan de intervención.');
+  s.addNotes('Para terminar. Burglar King tiene tres problemas de fondo: trabaja a ciegas durante el servicio, guarda sus datos en un equipo sin soporte y sin copias, y comparte una red plana con sus clientes. El entorno añade una fecha, Verifactu, y una oportunidad, el hardware barato y un software sin cuotas por pantalla. Y la conclusión que más nos ha sorprendido: las medidas más urgentes casi no cuestan dinero. No falta dinero; falta alguien que diseñe la infraestructura y la deje funcionando sola. Eso es lo que haremos en los próximos retos: diseño, viabilidad, presupuesto, documentación y plan de intervención.');
 }
 
 // 15 · Cierre
 {
   const s = base(null, true);
   T(s, '¿Preguntas?', { x: M, y: 2.2, w: 12, h: 1.2, fontSize: 54, bold: true, color: C.blanco });
-  T(s, 'Informe completo: «Análisis del contexto tecnológico de La Plancha» (Reto 1).', { x: M, y: 3.6, w: 12, h: 0.5, fontSize: 18, color: C.nar });
+  T(s, 'Informe completo: «Análisis del contexto tecnológico de Burglar King» (Reto 1).', { x: M, y: 3.6, w: 12, h: 0.5, fontSize: 18, color: C.nar });
   T(s, 'Fuentes principales: INE (2025), Profesional Horeca (2025), Hosteltur (2026), El Periòdic (2025), Microsoft (2025), Garrigues (2025), Red.es (s.f.), normativa del BOE y del DOUE. Referencias completas en formato APA en el informe.', { x: M, y: 5.4, w: 12, h: 0.9, fontSize: 13, color: 'BBBBBB' });
   s.addNotes('Gracias. Quedamos abiertos a preguntas. Todas las fuentes están citadas en formato APA en el informe.');
 }
