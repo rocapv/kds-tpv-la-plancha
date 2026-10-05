@@ -91,7 +91,7 @@ function tarjeta(s, x, y, w, h, fill = C.claro) {
 {
   const s = base('Inventario: lo que hay, sin diseño');
   const items = [
-    ['PC del TPV', '2015 · Celeron · 4 GB · disco mecánico con sectores dañados'],
+    ['PC del TPV', '2015 · Celeron · 4 GB · disco mecánico con sectores reasignados'],
     ['Sin SAI', 'un corte de luz apaga la caja de golpe'],
     ['Router de la operadora', 'en una balda del almacén, junto a la cámara frigorífica'],
     ['Grabador de vídeo', 'firmware de 2019 y contraseña de fábrica'],

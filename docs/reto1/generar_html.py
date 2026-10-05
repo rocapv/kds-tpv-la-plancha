@@ -50,7 +50,7 @@ S.append(("", f"""
 <img class="ancho" src="{img('flujo_comanda.png')}" alt="Flujo actual de una comanda">
 <div class="banda">Durante el servicio, el local trabaja a ciegas: no sabe qué mesa espera ni cuánto tarda la cocina.</div>"""))
 
-inv = [("PC del TPV","2015 · Celeron · 4 GB · disco mecánico con sectores dañados"),("Sin SAI","un corte de luz apaga la caja de golpe"),("Router de la operadora","en una balda del almacén, junto a la cámara frigorífica"),("Grabador de vídeo","firmware de 2019 y contraseña de fábrica"),("Tableta de reparto","Android 9, siempre enchufada"),("Portátil y móviles","personales: el negocio vive en cuentas privadas")]
+inv = [("PC del TPV","2015 · Celeron · 4 GB · disco mecánico con sectores reasignados"),("Sin SAI","un corte de luz apaga la caja de golpe"),("Router de la operadora","en una balda del almacén, junto a la cámara frigorífica"),("Grabador de vídeo","firmware de 2019 y contraseña de fábrica"),("Tableta de reparto","Android 9, siempre enchufada"),("Portátil y móviles","personales: el negocio vive en cuentas privadas")]
 S.append(("", f"""
 <h2>Inventario: lo que hay, sin diseño</h2>
 {tarjetas([f'<div class="fila"><span class="dot">{i+1}</span><b>{t}</b></div><p>{d}</p>' for i,(t,d) in enumerate(inv)], 3)}

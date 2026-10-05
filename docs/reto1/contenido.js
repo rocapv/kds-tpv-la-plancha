@@ -54,7 +54,7 @@ const CUERPO = [
     [`Ticket medio`, `Entre 15 y 25 euros por comensal`],
     [`Canales de venta`, `Sala y terraza, barra, para llevar y dos plataformas de reparto a domicilio`],
   ], [2600, 6400], `Nota. Datos del escenario ficticio, coherentes con la memoria del proyecto.`],
-  ['p', `La empresa pertenece al segmento más numeroso de la hostelería española: la restauración independiente, que reúne el 93 % de los establecimientos frente al 7,5 % de la restauración organizada en cadenas (Profesional Horeca, 2025). Por tamaño es una microempresa, como el 81,6 % de las empresas españolas, que tienen dos asalariados o menos (Instituto Nacional de Estadística [INE], 2025a). Esta clasificación importa para el proyecto: el cliente típico de una solución tecnológica en este sector no tiene a nadie que sepa de informática, y cualquier infraestructura que se le proponga tiene que poder funcionar sin un técnico presente.`],
+  ['p', `La empresa pertenece al segmento más numeroso de la hostelería española: la restauración independiente, que reúne en torno al 93 % de los establecimientos frente al 7,5 % de la restauración organizada en cadenas (Profesional Horeca, 2025; cifras redondeadas, tal como las publica la fuente). Por tamaño es una microempresa, con menos de diez personas, y en España las más pequeñas son la gran mayoría: el 81,6 % de las empresas tiene dos asalariados o menos (Instituto Nacional de Estadística [INE], 2025a). Esta clasificación importa para el proyecto: el cliente típico de una solución tecnológica en este sector no tiene a nadie que sepa de informática, y cualquier infraestructura que se le proponga tiene que poder funcionar sin un técnico presente.`],
 
   ['h2', `3.2. Estructura organizativa`],
   ['p', `La estructura es la de cualquier microempresa de hostelería: plana, con dos áreas operativas y una persona que concentra la dirección y todas las funciones de apoyo (figura 1). No hay departamentos en sentido formal, pero sí funciones bien diferenciadas, que se recogen en la tabla 2.`],
@@ -73,7 +73,7 @@ const CUERPO = [
     [`Reserva de mesa`, `Llamada o WhatsApp al móvil del encargado`, `Depende de una persona; no queda registro común`],
     [`Toma de comanda`, `Comandero de papel por duplicado`, `Letra ilegible, notas que se pierden, sin hora`],
     [`Paso a cocina`, `Copia pinchada en la cocina y aviso a voz`, `Sin orden fiable ni aviso de retraso`],
-    [`Pedido a domicilio`, `Tableta de cada plataforma; se copia a mano en papel`, `Doble tecleo y pedidos que se olvidan en la tableta`],
+    [`Pedido a domicilio`, `Tableta de reparto, con los pedidos de las dos plataformas; se copia a mano en papel`, `Doble tecleo y pedidos que se olvidan en la tableta`],
     [`Cobro`, `Se teclea el pedido en el TPV y se cobra en efectivo o con datáfono`, `El dato entra por primera vez al final; errores de tecleo`],
     [`Cierre de caja`, `Informe del TPV y recuento en papel`, `Descuadres difíciles de explicar`],
     [`Compras`, `WhatsApp y teléfono con cada proveedor`, `Sin histórico ni relación con lo vendido`],
@@ -98,7 +98,7 @@ const CUERPO = [
     [`Smart TV`, `Televisor de 43″ conectado por wifi`, `Sala; música y retransmisiones`, `Funciona`],
     [`Alimentación eléctrica`, `Regletas domésticas; no hay SAI`, `Barra y almacén`, `Un corte apaga el TPV de golpe`],
   ], [1700, 2900, 2300, 2100], `Nota. Inventario del escenario ficticio.`],
-  ['p', `Desde el punto de vista del hardware destacan tres hechos. El primero es que el único equipo que guarda datos del negocio, el PC del TPV, es el más viejo y el que tiene el disco en peor estado. El segundo es que no hay ningún sistema de alimentación ininterrumpida (SAI), de modo que un corte de luz en pleno servicio apaga el TPV y puede corromper su base de datos. El tercero es la ubicación del equipamiento de red: router y grabador comparten balda en un almacén caluroso, junto a la cámara frigorífica y cerca de la salida de humos de la cocina. No es un centro de proceso de datos, ni hace falta que lo sea, pero las condiciones ambientales (calor, grasa y humedad) acortan la vida de los equipos, y la obligación de cuidar esas condiciones también se aplica a un armario de comunicaciones pequeño.`],
+  ['p', `Desde el punto de vista del hardware destacan tres hechos. El primero es que el único equipo que guarda la base de datos de ventas, facturas y cierres de caja, el PC del TPV, es el más viejo y el que tiene el disco en peor estado. El segundo es que no hay ningún sistema de alimentación ininterrumpida (SAI), de modo que un corte de luz en pleno servicio apaga el TPV y puede corromper su base de datos. El tercero es la ubicación del equipamiento de red: router y grabador comparten balda en un almacén caluroso, junto a la cámara frigorífica y cerca de la salida de humos de la cocina. No es un centro de proceso de datos, ni hace falta que lo sea, pero las condiciones ambientales (calor, grasa y humedad) acortan la vida de los equipos, y la obligación de cuidar esas condiciones también se aplica a un armario de comunicaciones pequeño.`],
   ['p', `Hay también una cuestión de prevención de riesgos y de medio ambiente. El cableado del TPV y de la tableta cruza el suelo de la barra con regletas encadenadas, lo que supone riesgo de tropiezo y de sobrecarga. Además, el local acumula en el almacén un TPV anterior y dos móviles viejos que deberían entregarse como residuos de aparatos eléctricos y electrónicos, y no tirarse a la basura.`],
 
   ['h2', `4.2. Red`],
@@ -123,7 +123,7 @@ const CUERPO = [
     [`Grabador de vídeo`, `Firmware del fabricante (2019)`, `Sin actualizar`, `Acceso remoto P2P activado`],
     [`Router`, `Firmware de la operadora`, `Lo actualiza la operadora`, `Sin control del local`],
     [`Móviles del personal`, `Android e iOS, varias versiones`, `Variable`, `Son personales; uno de ellos guarda el WhatsApp Business del local`],
-  ], [1900, 2100, 2000, 3000], `Nota. Fechas de soporte de Windows según Microsoft (2025).`],
+  ], [1900, 2100, 2000, 3000], `Nota. Equipos y versiones del escenario ficticio; fechas de soporte de Windows según Microsoft (2025).`],
   ['p', `El hallazgo principal es que el equipo de cobro funciona con un sistema operativo que ya no recibe actualizaciones de seguridad: el soporte de Windows 10 terminó el 14 de octubre de 2025 (Microsoft, 2025). El procesador del equipo no está en la lista de los compatibles con Windows 11, así que tampoco puede actualizarse: hay que sustituirlo o cambiar de sistema operativo.`],
   ['p', `El segundo hallazgo tiene que ver con la centralización. La información del negocio está repartida entre el disco del TPV, el portátil personal del encargado y varias cuentas personales en la nube. No hay ningún servidor ni ningún lugar común donde estén los datos, las cuentas de usuario o las copias. Ninguno de los equipos podría unirse hoy a un dominio: el TPV, por su sistema operativo sin soporte, y el portátil, por ser de edición Home. Con cuatro personas no tiene sentido un dominio completo, pero sí un servidor local que concentre los datos del negocio, las cuentas individuales y las copias de seguridad. Es una decisión que el proyecto tendrá que justificar en los retos siguientes.`],
 
@@ -133,11 +133,11 @@ const CUERPO = [
     [`Correo del negocio`, `Proveedor de correo gratuito en la nube`, `Cuenta personal del encargado`, `Mezcla de lo personal y lo profesional`],
     [`Reservas y proveedores`, `WhatsApp Business en el móvil del encargado`, `Número personal`, `Si se pierde el móvil, se pierden los contactos y el histórico`],
     [`Facturas escaneadas`, `Almacenamiento personal en la nube`, `Cuenta personal`, `Datos fiscales en una cuenta ajena a la empresa`],
-    [`Plataformas de reparto`, `Nube de cada plataforma y su tableta`, `Una cuenta por plataforma`, `Contraseñas apuntadas en un pósit en la tableta`],
+    [`Plataformas de reparto`, `Nube de cada plataforma y tableta de reparto`, `Una cuenta por plataforma`, `Contraseñas apuntadas en un pósit en la tableta`],
     [`Banca en línea`, `Navegador del portátil`, `Encargado`, `Doble factor en el móvil personal`],
     [`Videovigilancia`, `Grabador local y aplicación del fabricante`, `Usuario de fábrica`, `Exposición a internet; tratamiento de datos personales`],
   ], [2000, 2400, 2100, 2500], `Nota. Servicios del escenario ficticio.`],
-  ['p', `Llama la atención que el local no tiene ninguna copia de seguridad. La única base de datos con ventas, facturas y cierres de caja está en el disco mecánico de un equipo de diez años. El resto de la información del negocio está en cuentas personales, que dependen de que el encargado siga en la empresa y de que no pierda el móvil.`],
+  ['p', `Llama la atención que el local no tiene ninguna copia de seguridad. La única base de datos con ventas, facturas y cierres de caja está en el disco mecánico de un equipo de 2015, con más de diez años. El resto de la información del negocio está en cuentas personales, que dependen de que el encargado siga en la empresa y de que no pierda el móvil.`],
 
   ['h2', `4.5. Seguridad`],
   ['p', `La tabla 8 reúne los riesgos detectados en el inventario, valorados con la matriz de probabilidad por impacto descrita en la metodología.`],
@@ -153,13 +153,13 @@ const CUERPO = [
     [`R9`, `Videovigilancia sin cartel ni registro actualizado`, `2`, `2`, `Alto (4)`],
     [`R10`, `Contraseñas apuntadas a la vista (pósit, pizarra)`, `3`, `1`, `Alto (3)`],
   ], [700, 5300, 700, 700, 1600], `Nota. P = probabilidad; I = impacto; escala de 1 a 3. Elaboración propia.`],
-  ['p', `Seis de los diez riesgos son críticos, pero ninguno exige tecnología cara. Separar la red de los clientes de la del negocio, cambiar las credenciales de fábrica, cerrar el acceso remoto del grabador y empezar a hacer copias son medidas de coste casi nulo. Que no se hayan tomado no se debe a la falta de dinero, sino a que nadie en la empresa tiene el conocimiento ni el encargo de hacerlo. Esa es la necesidad de fondo que un técnico de sistemas puede cubrir.`],
+  ['p', `Seis de los diez riesgos son críticos, pero las medidas más urgentes no exigen tecnología cara. Separar la red de los clientes de la del negocio, cambiar las credenciales de fábrica, cerrar el acceso remoto del grabador y empezar a hacer copias son medidas de coste casi nulo. Sustituir el equipo de caja y comprar un SAI sí suponen un gasto, pero con hardware que hoy tiene precios asumibles (apartado 5.4). Que no se hayan tomado no se debe a la falta de dinero, sino a que nadie en la empresa tiene el conocimiento ni el encargo de hacerlo. Esa es la necesidad de fondo que un técnico de sistemas puede cubrir.`],
 
   ['h1', `5. Análisis del macroentorno (PESTEL)`],
   ['p', `El macroentorno son los factores generales que la empresa no controla pero que condicionan su actividad. La tabla 9 los resume y el texto que sigue desarrolla los que más influyen en la infraestructura tecnológica del local.`],
   ['table', `Análisis PESTEL de Burglar King`, [`Factor`, `Hecho relevante`, `Influencia en la infraestructura`], [
     [`Político`, `Calendario de Verifactu aplazado al 1/1/2027 para sociedades y al 1/7/2027 para el resto (Garrigues, 2025); programas públicos de digitalización de pymes`, `La empresa, al ser una sociedad, deberá tener un sistema de facturación adaptado antes del 1/1/2027`],
-    [`Económico`, `El sector factura más pero gana menos: crecimiento del 2 % al 4 % frente a una rentabilidad del −0,9 % en 2025 (Hosteltur, 2026)`, `Cualquier inversión debe justificarse por lo que ahorra; las cuotas por terminal pesan`],
+    [`Económico`, `El sector factura más (crecimiento del 2 % al 4 %), pero la restauración gana menos: rentabilidad del −0,9 % en 2025 (Hosteltur, 2026)`, `Cualquier inversión debe justificarse por lo que ahorra; las cuotas por terminal pesan`],
     [`Social`, `Población universitaria; entre el 65 % y el 70 % de los pagos ya son digitales, según un fabricante (El Independiente, 2026)`, `El cobro con tarjeta y móvil debe funcionar en toda la superficie, terraza incluida`],
     [`Tecnológico`, `Fin del soporte de Windows 10 (Microsoft, 2025); la digitalización del sector se ha concentrado en el cobro y no en la cocina`, `Hay que renovar el puesto de caja; la oportunidad está entre la comanda y el plato`],
     [`Ambiental (ecológico)`, `Restricción del bisfenol A en el papel térmico (Reglamento [UE] 2016/2235) y gestión de RAEE (Real Decreto 110/2015)`, `Ticket en pantalla y papel solo a petición; retirada correcta de los equipos viejos`],
@@ -204,12 +204,12 @@ const CUERPO = [
   ['h1', `7. Diagnóstico y necesidades`],
   ['p', `Al cruzar el análisis interno con el del entorno, las necesidades de Burglar King se pueden agrupar y priorizar. La tabla 12 las ordena por urgencia, teniendo en cuenta el riesgo que cubren y las fechas legales que las condicionan.`],
   ['table', `Necesidades priorizadas`, [`Prioridad`, `Necesidad`, `Por qué`, `Riesgos que cubre`], [
-    [`1`, `Separar la red: negocio, cocina, cámaras y clientes`, `Riesgo crítico, coste bajo y requisito para todo lo demás`, `R1, R2, R7, R10`],
+    [`1`, `Separar la red: negocio, cocina, cámaras e invitados`, `Riesgo crítico, coste bajo y requisito para todo lo demás`, `R1, R2, R7, R10`],
     [`2`, `Copias de seguridad automáticas y verificadas, y un SAI`, `Hoy un fallo de disco o un corte de luz se lleva el negocio`, `R3, R6`],
     [`3`, `Sustituir el sistema de caja por uno con soporte y adaptable a Verifactu`, `Obligación legal desde el 1/1/2027 y sistema operativo sin soporte`, `R4, R5`],
     [`4`, `Llevar la comanda a la cocina en pantalla (KDS) con tiempos`, `Es el flujo central del negocio y hoy no tiene datos`, `—`],
     [`5`, `Cuentas individuales y datos del negocio fuera de las cuentas personales`, `Trazabilidad (Ley 11/2021) y continuidad si falta el encargado`, `R5, R8`],
-    [`6`, `Cobertura wifi profesional en sala, terraza y cocina`, `El datáfono y las tabletas no pueden perder la conexión en servicio`, `—`],
+    [`6`, `Cobertura wifi profesional en sala, terraza y cocina`, `El datáfono y la tableta de reparto no pueden perder la conexión en servicio`, `—`],
     [`7`, `Adecuar la videovigilancia al RGPD`, `Cartel, plazo de conservación y acceso seguro`, `R1, R9`],
   ], [1100, 2900, 3200, 1800], `Nota. Elaboración propia. Los identificadores de riesgo remiten a la tabla 8.`],
   ['h2', `7.1. Oportunidades de negocio`],
@@ -218,7 +218,7 @@ const CUERPO = [
   ['p', `La respuesta que exigen estas necesidades es un proyecto de implantación de infraestructura: rediseñar la red del local, instalar un servidor propio con los servicios del negocio, desplegar los puestos de sala y de cocina y dejar en marcha las copias y la supervisión. El software que lo hace posible, el TPV con KDS, ya lo está desarrollando el equipo. La tabla 13 fija las características específicas que el proyecto debe cumplir y que servirán para evaluarlo.`],
   ['table', `Características específicas que debe cumplir el proyecto`, [`Característica`, `Criterio medible`], [
     [`Funcionar sin internet`, `Con la fibra cortada, el local sigue tomando nota, enviando a cocina y cobrando con tarjeta por el 4G del datáfono`],
-    [`Redes separadas`, `Al menos cuatro segmentos (gestión, puntos de venta, cámaras e invitados); desde la red de invitados no se alcanza ningún equipo del negocio`],
+    [`Redes separadas`, `Al menos cuatro segmentos (negocio, cocina, cámaras e invitados); desde la red de invitados no se alcanza ningún equipo del negocio`],
     [`Tráfico cifrado`, `Todo el tráfico entre los puestos y el servidor va por HTTPS, incluido el de tiempo real`],
     [`Recuperación`, `Copia diaria verificada automáticamente; restaurar el sistema completo en menos de una hora`],
     [`Continuidad eléctrica`, `Servidor y red en un SAI con autonomía suficiente para un apagado ordenado`],
@@ -227,7 +227,7 @@ const CUERPO = [
     [`Facilidad de uso`, `Una persona sin conocimientos técnicos puede arrancar, usar y reiniciar el sistema con una hoja de instrucciones`],
   ], [2600, 6400], `Nota. Elaboración propia.`],
 
-  ['h2', `7.3. Obligaciones fiscales, laborales y de prevención de riesgos`],
+  ['h2', `7.3. Obligaciones fiscales, laborales, de prevención de riesgos y de protección de datos`],
   ['table', `Obligaciones que afectan al proyecto`, [`Ámbito`, `Obligación`, `Cómo afecta a la infraestructura`], [
     [`Fiscal`, `IVA del 10 % en hostelería (Ley 37/1992); obligación de expedir factura (Real Decreto 1619/2012)`, `El sistema debe emitir tickets y facturas simplificadas y completas con numeración correlativa`],
     [`Fiscal`, `Ley 11/2021 y Verifactu (Real Decreto 1007/2023 y Real Decreto-ley 15/2025)`, `Registro íntegro e inalterable de las ventas, con adaptación antes del 1/1/2027`],
@@ -240,7 +240,7 @@ const CUERPO = [
   ['p', `La principal referencia para financiar la digitalización de una microempresa ha sido el programa Kit Digital, gestionado por Red.es con fondos europeos Next Generation EU. Ha ofrecido bonos para contratar soluciones de categorías como la gestión de procesos, la factura electrónica o la ciberseguridad, con importes según el número de empleados (Red.es, s.f.). Por su tamaño, Burglar King estaría en el tramo de entre 3 y 9 empleados. Las líneas de digitalización de pymes de la Generalitat Valenciana, que gestiona el IVACE+i, completan el panorama. Como todas estas ayudas dependen de convocatorias con plazos y fondos limitados, el proyecto no las dará por hechas: el presupuesto del Reto 4 se calculará sin ayudas, y la búsqueda de convocatorias abiertas en el momento de ejecutar el proyecto será una tarea más del plan.`],
 
   ['h1', `8. Conclusiones y guion de trabajo`],
-  ['p', `Burglar King es un caso típico de la restauración independiente: un negocio sano en un sector con márgenes estrechos, con una tecnología que se ha ido acumulando sin diseño. El análisis muestra tres problemas de fondo. El primero es que la información de la comanda no entra en ningún sistema hasta el cobro, de modo que el local trabaja a ciegas durante el servicio. El segundo es que el único equipo que guarda datos del negocio funciona con un sistema operativo sin soporte, en un disco que falla y sin copias de seguridad. El tercero es que toda la actividad comparte una red plana con los teléfonos de los clientes y con un grabador expuesto en internet.`],
+  ['p', `Burglar King es un caso típico de la restauración independiente: un negocio sano en un sector con márgenes estrechos, con una tecnología que se ha ido acumulando sin diseño. El análisis muestra tres problemas de fondo. El primero es que la información de la comanda no entra en ningún sistema hasta el cobro, de modo que el local trabaja a ciegas durante el servicio. El segundo es que el único equipo que guarda la base de datos de ventas, facturas y cierres de caja funciona con un sistema operativo sin soporte, en un disco que falla y sin copias de seguridad. El tercero es que toda la actividad comparte una red plana con los teléfonos de los clientes y con un grabador expuesto en internet.`],
   ['p', `El entorno añade urgencia y oportunidad. Verifactu fija una fecha, el 1 de enero de 2027, a partir de la cual el sistema de facturación actual dejará de ser legal para una sociedad. El fin del soporte de Windows 10 obliga a renovar el puesto de caja en cualquier caso. Y el mercado ofrece hoy hardware asequible y, con este proyecto, software sin cuotas por pantalla. La mayoría de las medidas más urgentes, como separar redes, cambiar credenciales y hacer copias, cuestan muy poco. Lo que le falta a la empresa no es dinero, sino alguien que diseñe la infraestructura y la deje funcionando sola.`],
   ['p', `El guion de trabajo para los retos siguientes parte de estas conclusiones (tabla 15).`],
   ['table', `Guion de trabajo del proyecto`, [`Fase`, `Contenido`, `Resultado esperado`], [
