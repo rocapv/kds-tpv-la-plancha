@@ -2,6 +2,8 @@
 """Presentación del Reto 1 en un solo HTML autónomo (figuras incrustadas en base64).
 
 Teclas: ← → / espacio / clic para avanzar, N muestra el guion del orador, F pantalla completa.
+Animado con CSS y JS a pelo: transición con dirección, aparición escalonada, contadores, barras que
+crecen y barra de progreso. Respeta `prefers-reduced-motion` y no toca la impresión.
 Uso: python3 generar_html.py  ->  reto1_presentacion.html
 """
 import base64, html
@@ -10,6 +12,7 @@ from pathlib import Path
 AQUI = Path(__file__).resolve().parent
 img = lambda f: "data:image/png;base64," + base64.b64encode((AQUI / "fig" / f).read_bytes()).decode()
 e = html.escape
+LOGO = "data:image/svg+xml;base64," + base64.b64encode((AQUI.parent / "logos" / "logo.svg").read_bytes()).decode()
 
 def tarjetas(items, cols, clase="card"):
     return f'<div class="grid c{cols}">' + "".join(f'<div class="{clase}">{x}</div>' for x in items) + "</div>"
@@ -21,6 +24,7 @@ S = []   # (clase, html, notas)
 
 S.append(("dark portada", f"""
 <div class="badge">R1</div>
+<img class="logo" src="{LOGO}" alt="Logo de Burglar King">
 <h1 class="big">Lo que hay detrás de la barra</h1>
 <p class="sub">Análisis del contexto tecnológico de Burglar King</p>
 <p class="pie">Reto 1 · Proyecto Intermodular I · 1.º CFGS ASIR · IES Conselleria<br>Riches Manuel y Roca · octubre de 2026</p>""",
@@ -122,7 +126,7 @@ CSS = """
 html,body{height:100%;background:#111;font-family:Arial,Helvetica,sans-serif;color:var(--txt)}
 #deck{position:fixed;inset:0;display:grid;place-items:center}
 .slide{position:absolute;width:1280px;height:720px;background:#fff;padding:48px 58px;display:none;transform-origin:center;overflow:hidden}
-.slide.on{display:block}
+.slide.on,.slide.sale{display:block}
 .slide.dark{background:var(--osc);color:#fff}
 h1.big{font-size:56px;line-height:1.1;margin-top:150px}
 .portada h1.big{margin-top:60px}
@@ -165,13 +169,79 @@ ul{padding-left:22px}li{margin:16px 0;font-size:20px}
 #ayuda{position:fixed;right:12px;top:10px;color:#888;font-size:12px}
 @media print{@page{size:1280px 720px;margin:0}html,body{background:#fff}#deck{position:static;display:block}
  .slide{display:block!important;position:relative;transform:none!important;page-break-after:always}#notas,#ayuda{display:none!important}}
+/* ---- Movimiento ---- */
+.slide.on{z-index:2;animation:entra .55s cubic-bezier(.2,.7,.2,1) both}
+.slide.sale{z-index:1;pointer-events:none;animation:sale .38s ease both}
+body[data-dir=atras] .slide.on{animation-name:entraAtras}
+body[data-dir=atras] .slide.sale{animation-name:saleAtras}
+@keyframes entra{from{opacity:0;translate:70px 0}to{opacity:1;translate:0 0}}
+@keyframes entraAtras{from{opacity:0;translate:-70px 0}to{opacity:1;translate:0 0}}
+@keyframes sale{to{opacity:0;translate:-70px 0}}
+@keyframes saleAtras{to{opacity:0;translate:70px 0}}
+.slide.on .rev{animation:sube .65s cubic-bezier(.2,.7,.2,1) both;animation-delay:calc(var(--i,0)*85ms + 250ms)}
+@keyframes sube{from{opacity:0;translate:0 26px}to{opacity:1;translate:0 0}}
+.slide.portada{background:linear-gradient(115deg,#23272b 0%,#2f353b 45%,#23272b 100%);background-size:220% 220%}
+.slide.on.portada{animation:entra .55s cubic-bezier(.2,.7,.2,1) both,flujo 16s ease-in-out infinite}
+body[data-dir=atras] .slide.on.portada{animation-name:entraAtras,flujo}
+@keyframes flujo{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+.logo{position:absolute;right:90px;top:120px;width:340px;border-radius:30px;box-shadow:0 20px 60px rgba(0,0,0,.45)}
+.slide.on .logo.rev{animation:cae .9s cubic-bezier(.3,1.4,.5,1) .35s both,flota 5s ease-in-out 1.5s infinite}
+@keyframes cae{from{opacity:0;translate:0 -140px;rotate:-6deg}to{opacity:1;translate:0 0;rotate:0deg}}
+@keyframes flota{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+.slide.on .badge.rev{animation:pop .6s cubic-bezier(.3,1.6,.5,1) .2s both,anillo 2.6s ease-out 1s infinite}
+@keyframes pop{from{opacity:0;scale:0}to{opacity:1;scale:1}}
+@keyframes anillo{0%{box-shadow:0 0 0 0 rgba(230,126,34,.55)}70%,100%{box-shadow:0 0 0 22px rgba(230,126,34,0)}}
+.slide.on .barra i{transform-origin:left;animation:crece .9s cubic-bezier(.2,.7,.2,1) both;animation-delay:calc(var(--i,0)*120ms + 500ms)}
+.slide.on .barra i.r{animation:crece .9s cubic-bezier(.2,.7,.2,1) calc(var(--i,0)*120ms + 500ms) both,brillo 2.4s ease-in-out 2.4s infinite}
+.slide.on .barra b{animation:sube .5s ease both;animation-delay:calc(var(--i,0)*120ms + 1200ms)}
+@keyframes crece{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+@keyframes brillo{0%,100%{filter:brightness(1)}50%{filter:brightness(1.35)}}
+.slide.on .linea:before{transform-origin:left;animation:traza 1.1s cubic-bezier(.3,.7,.2,1) .5s both}
+@keyframes traza{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+.slide.on .dot.xl{animation:pop .5s cubic-bezier(.3,1.6,.5,1) both;animation-delay:calc(var(--i,0)*140ms + 800ms)}
+.card{transition:transform .25s ease,box-shadow .25s ease}
+.card:hover{transform:translateY(-5px);box-shadow:0 12px 26px rgba(0,0,0,.16)}
+.card.oscura:hover,.card.tint:hover{box-shadow:0 12px 26px rgba(0,0,0,.25)}
+.dot{transition:scale .2s ease}.fila:hover .dot{scale:1.12}
+#prog{position:fixed;top:0;left:0;right:0;height:4px;background:rgba(255,255,255,.08);z-index:10}
+#prog i{display:block;height:100%;background:var(--nar);transform-origin:left;transition:transform .5s cubic-bezier(.2,.7,.2,1)}
+@media (prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important}}
+@media print{#prog{display:none}.slide,.slide *,.slide *:before{animation:none!important;transition:none!important;translate:none!important;scale:none!important}}
 """
 
-JS = """
-const sl=[...document.querySelectorAll('.slide')],notas=document.getElementById('notas');let i=0;
+JS = r"""
+const sl=[...document.querySelectorAll('.slide')],notas=document.getElementById('notas'),prog=document.querySelector('#prog i');
+const quieto=matchMedia('(prefers-reduced-motion: reduce)').matches;
+let i=-1,tok=0,salida=null;
+// Qué entra escalonado en cada diapositiva: lo más exterior de cada bloque, en orden de lectura.
+const SEL='h1,h2,.badge,.logo,.sub,.pie,.lead,.nota,.banda,.card,.fila,.num.xl,.split>img,img.ancho,.pila>*,.necesidades>*,.barras>*,.linea>div';
+sl.forEach(s=>{const c=[...s.querySelectorAll(SEL)];
+ c.filter(a=>!c.some(o=>o!==a&&o.contains(a))).forEach((el,k)=>{el.classList.add('rev');
+  el.style.setProperty('--i',el.parentElement.classList.contains('barras')?Math.floor(k/3):Math.min(k,12))})});
+// Contadores: solo cifras limpias («280.403», «93 %», «−0,9 %»); fechas, rangos y textos se quedan como están.
+const CIFRA=/^([−-]?)(\d{1,3}(?:\.\d{3})+|\d+)(?:,(\d+))?(\s*%)?$/;
+function contar(el,t){
+ const f=el.dataset.final||(el.dataset.final=el.textContent.trim()),m=f.match(CIFRA);el.textContent=f;
+ if(!m||quieto)return;
+ const dec=(m[3]||'').length,val=parseFloat(m[2].replace(/\./g,'')+(dec?'.'+m[3]:'')),suf=m[4]||'';
+ const fmt=x=>{const[a,b]=x.toFixed(dec).split('.');return a.replace(/\B(?=(\d{3})+(?!\d))/g,'.')+(b?','+b:'')};
+ const r=el.closest('.rev'),ini=performance.now()+250+85*(r?parseInt(r.style.getPropertyValue('--i'))||0:0)+150;
+ el.textContent=fmt(0)+suf;
+ const paso=now=>{if(t!==tok){el.textContent=f;return}
+  const p=Math.min(1,Math.max(0,(now-ini)/1300));{const v=fmt(val*(1-Math.pow(1-p,3)));el.textContent=p<1?(/[1-9]/.test(v)?m[1]:'')+v+suf:f}
+  if(p<1)requestAnimationFrame(paso)};
+ requestAnimationFrame(paso)}
+const restaura=v=>v.querySelectorAll('.num[data-final]').forEach(e=>e.textContent=e.dataset.final);
 function fit(){const k=Math.min(innerWidth/1280,innerHeight/720);sl.forEach(s=>s.style.transform=`scale(${k})`)}
-function ver(n){i=Math.max(0,Math.min(sl.length-1,n));sl.forEach((s,k)=>s.classList.toggle('on',k===i));
- notas.textContent=sl[i].dataset.notas;try{history.replaceState(null,'','#'+(i+1))}catch(e){}}
+function ver(n){n=Math.max(0,Math.min(sl.length-1,n));if(n===i)return;
+ document.body.dataset.dir=n<i?'atras':'adelante';
+ if(i>=0){const v=sl[i];restaura(v);v.classList.remove('on');
+  if(!quieto){v.classList.add('sale');clearTimeout(salida);salida=setTimeout(()=>sl.forEach(s=>s.classList.remove('sale')),400)}}
+ i=n;sl[i].classList.remove('sale');sl[i].classList.add('on');
+ prog.style.transform=`scaleX(${(i+1)/sl.length})`;
+ notas.textContent=sl[i].dataset.notas;try{history.replaceState(null,'','#'+(i+1))}catch(e){}
+ const t=++tok;sl[i].querySelectorAll('.num').forEach(el=>contar(el,t))}
+addEventListener('beforeprint',()=>{tok++;sl.forEach(restaura)});
 addEventListener('keydown',ev=>{if(['ArrowRight','PageDown',' '].includes(ev.key)){ev.preventDefault();ver(i+1)}
  else if(['ArrowLeft','PageUp'].includes(ev.key))ver(i-1);else if(ev.key==='Home')ver(0);else if(ev.key==='End')ver(sl.length-1);
  else if(ev.key==='n'||ev.key==='N')notas.classList.toggle('on');
@@ -188,7 +258,7 @@ cuerpo = "".join(
 doc = f"""<!doctype html>
 <html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Reto 1 · Burglar King</title><style>{CSS}</style></head>
-<body><div id="deck">{cuerpo}</div><div id="notas"></div>
+<body><div id="prog"><i></i></div><div id="deck">{cuerpo}</div><div id="notas"></div>
 <div id="ayuda">← → avanzar · N guion · F pantalla completa</div><script>{JS}</script></body></html>"""
 out = AQUI / "reto1_presentacion.html"
 out.write_text(doc, encoding="utf-8")
