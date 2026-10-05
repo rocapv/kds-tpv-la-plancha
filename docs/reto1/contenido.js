@@ -153,7 +153,7 @@ const CUERPO = [
     [`R9`, `Videovigilancia sin cartel ni registro actualizado`, `2`, `2`, `Alto (4)`],
     [`R10`, `Contraseñas apuntadas a la vista (pósit, pizarra)`, `3`, `1`, `Alto (3)`],
   ], [700, 5300, 700, 700, 1600], `Nota. P = probabilidad; I = impacto; escala de 1 a 3. Elaboración propia.`],
-  ['p', `La mitad de los riesgos son críticos, pero ninguno exige tecnología cara. Separar la red de los clientes de la del negocio, cambiar las credenciales de fábrica, cerrar el acceso remoto del grabador y empezar a hacer copias son medidas de coste casi nulo. Que no se hayan tomado no se debe a la falta de dinero, sino a que nadie en la empresa tiene el conocimiento ni el encargo de hacerlo. Esa es la necesidad de fondo que un técnico de sistemas puede cubrir.`],
+  ['p', `Seis de los diez riesgos son críticos, pero ninguno exige tecnología cara. Separar la red de los clientes de la del negocio, cambiar las credenciales de fábrica, cerrar el acceso remoto del grabador y empezar a hacer copias son medidas de coste casi nulo. Que no se hayan tomado no se debe a la falta de dinero, sino a que nadie en la empresa tiene el conocimiento ni el encargo de hacerlo. Esa es la necesidad de fondo que un técnico de sistemas puede cubrir.`],
 
   ['h1', `5. Análisis del macroentorno (PESTEL)`],
   ['p', `El macroentorno son los factores generales que la empresa no controla pero que condicionan su actividad. La tabla 9 los resume y el texto que sigue desarrolla los que más influyen en la infraestructura tecnológica del local.`],
