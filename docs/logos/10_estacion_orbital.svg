@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" role="img" aria-label="Burglar King, planeta con anillo y corona (estación espacial)">
+  <rect width="400" height="400" rx="40" fill="#0b1020"/>
+  <g fill="#f6ead2" opacity=".85"><circle cx="48" cy="58" r="2"/><circle cx="352" cy="74" r="2"/><circle cx="90" cy="330" r="1.5"/><circle cx="320" cy="320" r="2"/><circle cx="30" cy="200" r="1.5"/><circle cx="372" cy="210" r="1.5"/></g>
+  <circle cx="200" cy="170" r="84" fill="#c8321e"/>
+  <path d="M130 140 Q200 108 270 140 Q262 188 224 186 Q208 184 200 172 Q192 184 176 186 Q138 188 130 140Z" fill="#0b1020"/>
+  <ellipse cx="170" cy="152" rx="15" ry="7" fill="#f6ead2" transform="rotate(8 170 152)"/><ellipse cx="230" cy="152" rx="15" ry="7" fill="#f6ead2" transform="rotate(-8 230 152)"/>
+  <ellipse cx="200" cy="200" rx="150" ry="34" fill="none" stroke="#f2b632" stroke-width="9" transform="rotate(-14 200 200)" stroke-dasharray="none"/>
+  <path d="M130 140 Q200 108 270 140 Q262 188 224 186 Q208 184 200 172 Q192 184 176 186 Q138 188 130 140Z" fill="none"/>
+  <g transform="translate(200 80)"><path d="M-36 24 L-36 -12 L-18 6 L0 -24 L18 6 L36 -12 L36 24 Z" fill="#f2b632" stroke="#0b1020" stroke-width="5" stroke-linejoin="round"/></g>
+  <circle cx="318" cy="150" r="9" fill="#f6ead2"/>
+  <text x="200" y="316" text-anchor="middle" font-family="Impact, 'Arial Black', sans-serif" font-size="58" letter-spacing="4" fill="#f6ead2">BURGLAR KING</text>
+  <text x="200" y="350" text-anchor="middle" font-family="Arial, sans-serif" font-size="15" letter-spacing="8" fill="#f2b632">ESTACIÓN ORBITAL</text>
+</svg>

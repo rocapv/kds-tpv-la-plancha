@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" role="img" aria-label="Burglar King, versión tipográfica minimalista">
+  <rect width="400" height="400" rx="40" fill="#f6ead2"/>
+  <g transform="translate(200 128)"><path d="M-34 20 L-34 -16 L-17 0 L0 -26 L17 0 L34 -16 L34 20 Z" fill="#14110f"/></g>
+  <text x="200" y="228" text-anchor="middle" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-weight="300" font-size="62" letter-spacing="12" fill="#14110f">BURGLAR</text>
+  <rect x="60" y="248" width="280" height="2" fill="#14110f"/>
+  <text x="200" y="312" text-anchor="middle" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-weight="900" font-size="72" letter-spacing="16" fill="#14110f">KING</text>
+  <rect x="104" y="330" width="192" height="14" fill="#14110f"/>
+  <rect x="128" y="334" width="144" height="6" fill="#f6ead2"/>
+</svg>

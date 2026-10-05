@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" role="img" aria-label="Burglar King, sello circular">
+  <rect width="400" height="400" rx="40" fill="#f6ead2"/>
+  <defs>
+    <path id="arriba" d="M82 200 A118 118 0 0 1 318 200"/>
+    <path id="abajo" d="M58 200 A142 142 0 0 0 342 200"/>
+  </defs>
+  <circle cx="200" cy="200" r="168" fill="#c8321e"/>
+  <circle cx="200" cy="200" r="158" fill="none" stroke="#f6ead2" stroke-width="3"/>
+  <circle cx="200" cy="200" r="100" fill="#14110f"/>
+  <text font-family="Impact, 'Arial Black', sans-serif" font-size="38" letter-spacing="5" fill="#f6ead2"><textPath href="#arriba" startOffset="50%" text-anchor="middle">BURGLAR KING</textPath></text>
+  <text font-family="Arial, sans-serif" font-weight="700" font-size="18" letter-spacing="5" fill="#f6ead2"><textPath href="#abajo" startOffset="50%" text-anchor="middle">COCINA · NOCTURNA · 24H</textPath></text>
+  <g transform="translate(200 188)">
+    <path d="M-52 22 L-52 -22 L-26 0 L0 -36 L26 0 L52 -22 L52 22 Z" fill="#f2b632"/>
+    <rect x="-52" y="22" width="104" height="10" rx="3" fill="#d99a14"/>
+  </g>
+  <rect x="146" y="236" width="108" height="30" rx="15" fill="#0a0908" stroke="#f6ead2" stroke-width="3"/>
+  <ellipse cx="177" cy="251" rx="13" ry="7" fill="#f6ead2"/><ellipse cx="223" cy="251" rx="13" ry="7" fill="#f6ead2"/>
+  <circle cx="177" cy="251" r="4" fill="#14110f"/><circle cx="223" cy="251" r="4" fill="#14110f"/>
+</svg>

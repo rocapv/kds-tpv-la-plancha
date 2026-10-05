@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" role="img" aria-label="Burglar King, hamburguesa con antifaz y corona">
+  <rect width="400" height="400" rx="40" fill="#f2b632"/>
+  <g transform="translate(200 58)">
+    <path d="M-44 28 L-44 -14 L-22 6 L0 -26 L22 6 L44 -14 L44 28 Z" fill="#c8321e" stroke="#14110f" stroke-width="5" stroke-linejoin="round"/>
+  </g>
+  <path d="M82 170 Q82 96 200 96 Q318 96 318 170 Z" fill="#e08a2c" stroke="#14110f" stroke-width="6" stroke-linejoin="round"/>
+  <g fill="#f6ead2"><ellipse cx="140" cy="126" rx="7" ry="4"/><ellipse cx="200" cy="112" rx="7" ry="4"/><ellipse cx="258" cy="126" rx="7" ry="4"/></g>
+  <path d="M96 150 Q200 122 304 150 Q298 188 250 186 Q220 184 200 172 Q180 184 150 186 Q102 188 96 150Z" fill="#14110f"/>
+  <ellipse cx="150" cy="158" rx="20" ry="9" fill="#f6ead2" transform="rotate(8 150 158)"/><ellipse cx="250" cy="158" rx="20" ry="9" fill="#f6ead2" transform="rotate(-8 250 158)"/>
+  <path d="M78 196 q20 16 40 0 q20 16 40 0 q20 16 40 0 q20 16 40 0 q20 16 40 0 q20 16 40 0 v10 h-240z" fill="#6aa84f" stroke="#14110f" stroke-width="5" stroke-linejoin="round"/>
+  <rect x="84" y="210" width="232" height="26" rx="13" fill="#6b3a1e" stroke="#14110f" stroke-width="5"/>
+  <path d="M90 236 h220 l-14 22 h-26 l-14 -14 l-14 14 h-26 l-14 -14 l-14 14 h-26 z" fill="#f6d34a" stroke="#14110f" stroke-width="5" stroke-linejoin="round"/>
+  <path d="M82 268 H318 Q318 296 280 296 H120 Q82 296 82 268Z" fill="#e08a2c" stroke="#14110f" stroke-width="6" stroke-linejoin="round"/>
+  <text x="200" y="350" text-anchor="middle" font-family="Impact, 'Arial Black', sans-serif" font-size="50" letter-spacing="3" fill="#14110f">BURGLAR KING</text>
+  <text x="200" y="378" text-anchor="middle" font-family="Arial, sans-serif" font-weight="700" font-size="14" letter-spacing="8" fill="#c8321e">ROBAMOS TU HAMBRE</text>
+</svg>

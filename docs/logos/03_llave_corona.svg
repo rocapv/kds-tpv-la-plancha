@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" role="img" aria-label="Burglar King, llave con empuñadura de corona">
+  <rect width="400" height="400" rx="40" fill="#1d2b3a"/>
+  <g transform="translate(200 120)">
+    <path d="M-70 36 L-70 -34 L-35 0 L0 -52 L35 0 L70 -34 L70 36 Z" fill="#f2b632"/>
+    <circle cx="0" cy="-2" r="16" fill="#1d2b3a"/>
+  </g>
+  <rect x="190" y="156" width="20" height="130" fill="#f2b632"/>
+  <path d="M210 232 h40 v16 h-18 v14 h18 v16 h-40 z" fill="#f2b632"/>
+  <rect x="190" y="156" width="20" height="14" fill="#d99a14"/>
+  <text x="200" y="336" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-weight="700" font-size="46" letter-spacing="2" fill="#f6ead2">Burglar King</text>
+  <text x="200" y="364" text-anchor="middle" font-family="Arial, sans-serif" font-size="15" letter-spacing="9" fill="#f2b632">LLAVE MAESTRA</text>
+</svg>

@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" role="img" aria-label="Burglar King, escudo con monograma BK">
+  <rect width="400" height="400" rx="40" fill="#14110f"/>
+  <path d="M200 70 L318 100 V210 Q318 298 200 352 Q82 298 82 210 V100 Z" fill="#7a1a12" stroke="#f2b632" stroke-width="8" stroke-linejoin="round"/>
+  <path d="M200 90 L300 115 V210 Q300 284 200 330 Q100 284 100 210 V115 Z" fill="none" stroke="#f2b632" stroke-width="2.5"/>
+  <g transform="translate(200 78)">
+    <path d="M-48 22 L-48 -14 L-24 6 L0 -26 L24 6 L48 -14 L48 22 Z" fill="#f2b632" stroke="#14110f" stroke-width="5" stroke-linejoin="round"/>
+  </g>
+  <text x="200" y="244" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-weight="900" font-size="128" letter-spacing="-4" fill="#f6ead2">BK</text>
+  <text x="200" y="276" text-anchor="middle" font-family="Arial, sans-serif" font-weight="700" font-size="13" letter-spacing="3" fill="#f2b632">BURGLAR KING</text>
+</svg>

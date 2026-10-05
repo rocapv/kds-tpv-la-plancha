@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" role="img" aria-label="Burglar King, ojos de ladrón sobre el nombre">
+  <rect width="400" height="400" rx="40" fill="#0b1020"/>
+  <g fill="#f6ead2" opacity=".8"><circle cx="50" cy="60" r="2"/><circle cx="120" cy="36" r="1.5"/><circle cx="330" cy="52" r="2"/><circle cx="360" cy="120" r="1.5"/><circle cx="40" cy="150" r="1.5"/><circle cx="290" cy="30" r="1.5"/></g>
+  <path d="M60 170 Q60 100 200 100 Q340 100 340 170 Z" fill="#05070f"/>
+  <path d="M60 170 H340" stroke="#05070f" stroke-width="2"/>
+  <path d="M96 140 Q122 122 160 142 Q128 156 96 140Z" fill="#f2f6d0"/>
+  <path d="M240 142 Q278 122 304 140 Q272 156 240 142Z" fill="#f2f6d0"/>
+  <circle cx="132" cy="141" r="6" fill="#c8321e"/><circle cx="268" cy="141" r="6" fill="#c8321e"/>
+  <g transform="translate(200 94)"><path d="M-30 14 L-30 -10 L-15 2 L0 -18 L15 2 L30 -10 L30 14 Z" fill="#f2b632"/></g>
+  <text x="200" y="250" text-anchor="middle" font-family="Impact, 'Arial Black', sans-serif" font-size="78" letter-spacing="2" fill="#f6ead2">BURGLAR</text>
+  <rect x="62" y="270" width="276" height="62" rx="6" fill="#f2b632"/>
+  <text x="200" y="318" text-anchor="middle" font-family="Impact, 'Arial Black', sans-serif" font-size="56" letter-spacing="22" fill="#0b1020">KING</text>
+  <text x="200" y="368" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" letter-spacing="8" fill="#8ea0c8">ABIERTO TODA LA NOCHE</text>
+</svg>

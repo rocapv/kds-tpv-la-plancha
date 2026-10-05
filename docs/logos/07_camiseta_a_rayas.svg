@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" role="img" aria-label="Burglar King, emblema de camiseta a rayas">
+  <rect width="400" height="400" rx="40" fill="#f6ead2"/>
+  <defs>
+    <clipPath id="c"><circle cx="200" cy="170" r="130"/></clipPath>
+  </defs>
+  <circle cx="200" cy="170" r="138" fill="#14110f"/>
+  <g clip-path="url(#c)">
+    <rect x="60" y="40" width="280" height="260" fill="#f6ead2"/>
+    <g fill="#14110f">
+      <rect x="60" y="60" width="280" height="26"/><rect x="60" y="112" width="280" height="26"/><rect x="60" y="164" width="280" height="26"/><rect x="60" y="216" width="280" height="26"/><rect x="60" y="268" width="280" height="26"/>
+    </g>
+  </g>
+  <path d="M96 150 Q200 118 304 150 Q298 200 250 198 Q220 196 200 178 Q180 196 150 198 Q102 200 96 150Z" fill="#c8321e" stroke="#14110f" stroke-width="6" stroke-linejoin="round"/>
+  <ellipse cx="150" cy="166" rx="22" ry="10" fill="#f6ead2" transform="rotate(8 150 166)"/><ellipse cx="250" cy="166" rx="22" ry="10" fill="#f6ead2" transform="rotate(-8 250 166)"/>
+  <circle cx="153" cy="167" r="5" fill="#14110f"/><circle cx="247" cy="167" r="5" fill="#14110f"/>
+  <g transform="translate(200 62)"><path d="M-40 26 L-40 -12 L-20 6 L0 -24 L20 6 L40 -12 L40 26 Z" fill="#f2b632" stroke="#14110f" stroke-width="6" stroke-linejoin="round"/></g>
+  <text x="200" y="362" text-anchor="middle" font-family="Impact, 'Arial Black', sans-serif" font-size="56" letter-spacing="3" fill="#14110f">BURGLAR KING</text>
+</svg>

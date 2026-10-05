@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" role="img" aria-label="Burglar King, cerradura con hamburguesa dentro">
+  <rect width="400" height="400" rx="40" fill="#c8321e"/>
+  <g transform="translate(200 62)"><path d="M-42 24 L-42 -12 L-21 6 L0 -24 L21 6 L42 -12 L42 24 Z" fill="#f2b632" stroke="#14110f" stroke-width="5" stroke-linejoin="round"/></g>
+  <path d="M200 98 a74 74 0 0 1 36 138 L262 322 H138 L164 236 a74 74 0 0 1 36 -138Z" fill="#14110f"/>
+  <path d="M158 168 Q158 138 200 138 Q242 138 242 168Z" fill="#e08a2c"/>
+  <rect x="156" y="172" width="88" height="10" rx="5" fill="#6aa84f"/>
+  <rect x="158" y="184" width="84" height="14" rx="7" fill="#6b3a1e"/>
+  <path d="M158 200 H242 Q242 218 224 218 H176 Q158 218 158 200Z" fill="#e08a2c"/>
+  <rect x="190" y="248" width="20" height="56" rx="4" fill="#c8321e"/>
+  <text x="200" y="366" text-anchor="middle" font-family="Impact, 'Arial Black', sans-serif" font-size="54" letter-spacing="3" fill="#f6ead2">BURGLAR KING</text>
+</svg>

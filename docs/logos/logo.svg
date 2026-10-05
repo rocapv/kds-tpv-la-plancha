@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" role="img" aria-label="Burglar King, corona con antifaz">
+  <rect width="400" height="400" rx="40" fill="#14110f"/>
+  <g transform="translate(200 128)">
+    <path d="M-90 40 L-90 -40 L-45 0 L0 -62 L45 0 L90 -40 L90 40 Z" fill="#f2b632"/>
+    <rect x="-90" y="40" width="180" height="16" rx="4" fill="#d99a14"/>
+    <circle cx="-90" cy="-46" r="9" fill="#f2b632"/><circle cx="0" cy="-70" r="10" fill="#f2b632"/><circle cx="90" cy="-46" r="9" fill="#f2b632"/>
+  </g>
+  <path d="M84 196 Q200 168 316 196 Q308 262 252 258 Q218 254 200 236 Q182 254 148 258 Q92 262 84 196Z" fill="#0a0908" stroke="#f6ead2" stroke-width="5" stroke-linejoin="round"/>
+  <ellipse cx="146" cy="214" rx="26" ry="14" fill="#f6ead2" transform="rotate(8 146 214)"/>
+  <ellipse cx="254" cy="214" rx="26" ry="14" fill="#f6ead2" transform="rotate(-8 254 214)"/>
+  <circle cx="150" cy="215" r="7" fill="#14110f"/><circle cx="250" cy="215" r="7" fill="#14110f"/>
+  <text x="200" y="326" text-anchor="middle" font-family="Impact, 'Arial Black', sans-serif" font-size="52" letter-spacing="3" fill="#f6ead2">BURGLAR</text>
+  <text x="200" y="366" text-anchor="middle" font-family="Impact, 'Arial Black', sans-serif" font-size="34" letter-spacing="14" fill="#f2b632">KING</text>
+</svg>
