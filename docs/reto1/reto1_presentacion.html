@@ -53,15 +53,21 @@ ul{padding-left:22px}li{margin:16px 0;font-size:20px}
  .slide{display:block!important;position:relative;transform:none!important;page-break-after:always}#notas,#ayuda{display:none!important}}
 /* ---- Movimiento ---- */
 .slide.on{z-index:2;animation:entra .55s cubic-bezier(.2,.7,.2,1) both}
-.slide.sale{z-index:1;pointer-events:none;animation:sale .38s ease both}
+.slide.sale{z-index:1;pointer-events:none;animation:sale .5s ease both}
 body[data-dir=atras] .slide.on{animation-name:entraAtras}
 body[data-dir=atras] .slide.sale{animation-name:saleAtras}
-@keyframes entra{from{opacity:0;translate:70px 0}to{opacity:1;translate:0 0}}
-@keyframes entraAtras{from{opacity:0;translate:-70px 0}to{opacity:1;translate:0 0}}
-@keyframes sale{to{opacity:0;translate:-70px 0}}
-@keyframes saleAtras{to{opacity:0;translate:70px 0}}
-.slide.on .rev{animation:sube .65s cubic-bezier(.2,.7,.2,1) both;animation-delay:calc(var(--i,0)*85ms + 250ms)}
-@keyframes sube{from{opacity:0;translate:0 26px}to{opacity:1;translate:0 0}}
+@keyframes entra{from{opacity:0;translate:90px 0;scale:.985}to{opacity:1;translate:0 0;scale:1}}
+@keyframes entraAtras{from{opacity:0;translate:-90px 0;scale:.985}to{opacity:1;translate:0 0;scale:1}}
+@keyframes sale{to{opacity:0;translate:-90px 0}}
+@keyframes saleAtras{to{opacity:0;translate:90px 0}}
+/* Cada bloque entra desde donde le toca (--dx, --dy, --sc los pone el JS según el tipo) y, al volver atrás, desde el lado contrario (--k). */
+.slide.on .rev{animation:sube .85s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i,0)*95ms + 250ms)}
+@keyframes sube{from{opacity:0;translate:calc(var(--dx,0px)*var(--k,1)) var(--dy,36px);scale:var(--sc,1)}to{opacity:1;translate:0 0;scale:1}}
+body[data-dir=atras] .slide.on .rev{--k:-1}
+/* Al irse, el contenido se aparta hacia el lado contrario mientras la diapositiva se desvanece. */
+.slide.sale .rev{animation:salir .42s ease both;animation-delay:calc(var(--i,0)*22ms)}
+@keyframes salir{to{opacity:0;translate:calc(var(--dx,0px)*var(--k,1)*-.7) -16px}}
+body[data-dir=atras] .slide.sale .rev{--k:-1}
 .slide.portada{background:linear-gradient(115deg,#23272b 0%,#2f353b 45%,#23272b 100%);background-size:220% 220%}
 .slide.on.portada{animation:entra .55s cubic-bezier(.2,.7,.2,1) both,flujo 16s ease-in-out infinite}
 body[data-dir=atras] .slide.on.portada{animation-name:entraAtras,flujo}
@@ -87,7 +93,10 @@ body[data-dir=atras] .slide.on.portada{animation-name:entraAtras,flujo}
 .dot{transition:scale .2s ease}.fila:hover .dot{scale:1.12}
 #prog{position:fixed;top:0;left:0;right:0;height:4px;background:rgba(255,255,255,.08);z-index:10}
 #prog i{display:block;height:100%;background:var(--nar);transform-origin:left;transition:transform .5s cubic-bezier(.2,.7,.2,1)}
-@media (prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important}}
+/* Sin movimiento: lo decide el JS (preferencia del sistema, salvo que se fuerce con M o ?movimiento=). */
+html[data-mov="off"] *,html[data-mov="off"] *:before,html[data-mov="off"] *:after{animation:none!important;transition:none!important}
+#toast{position:fixed;top:16px;left:50%;translate:-50% 0;background:#23272b;color:#fff;font-size:15px;padding:10px 18px;border-radius:10px;border:1px solid #e67e22;z-index:20;opacity:0;pointer-events:none;transition:opacity .3s;max-width:90vw;text-align:center}
+#toast.on{opacity:1}
 @media print{#prog{display:none}.slide,.slide *,.slide *:before{animation:none!important;transition:none!important;translate:none!important;scale:none!important}}
 </style></head>
 <body><div id="prog"><i></i></div><div id="deck"><section class="slide dark portada" data-notas="Hola, somos Riches Manuel y Roca, de primero de ASIR, Administración de Sistemas Informáticos en Red, en el IES Conselleria. Presentamos el Reto 1 del Proyecto Intermodular I.
@@ -289,15 +298,31 @@ Nuestro guion de trabajo prevé, del Reto 2 al 6: diseño, viabilidad, presupues
 <h1 class="big">¿Preguntas?</h1>
 <p class="sub">Informe completo: «Análisis del contexto tecnológico de Burglar King» (Reto 1).</p>
 <p class="pie">Fuentes principales: INE (2025), Profesional Horeca (2025), Hosteltur (2026), El Periòdic (2025), Microsoft (2025), Garrigues (2025), Red.es (s.f.), normativa del BOE y del DOUE. Referencias completas en formato APA en el informe.</p><span class="num-pag">15</span></section></div><div id="notas"></div>
-<div id="reloj"></div><div id="ayuda">← → avanzar · N guion · T cronómetro · F pantalla completa</div><script>
+<div id="toast"></div><div id="reloj"></div><div id="ayuda">← → avanzar · N guion · T cronómetro · M movimiento · F pantalla completa</div><script>
 const sl=[...document.querySelectorAll('.slide')],notas=document.getElementById('notas'),prog=document.querySelector('#prog i');
-const quieto=matchMedia('(prefers-reduced-motion: reduce)').matches;
+// Movimiento: manda lo que se elija (tecla M, que se recuerda, o ?movimiento=1/0); si no, la preferencia del sistema.
+const SO_QUIETO=matchMedia('(prefers-reduced-motion: reduce)').matches;
+let eleccion=null;try{eleccion=localStorage.getItem('reto1_mov')}catch(e){}
+const pedido=new URLSearchParams(location.search).get('movimiento');
+if(pedido==='1'||pedido==='0'){eleccion=pedido==='1'?'on':'off';try{localStorage.setItem('reto1_mov',eleccion)}catch(e){}}
+let quieto=eleccion?eleccion==='off':SO_QUIETO;
+document.documentElement.dataset.mov=quieto?'off':'on';
 let i=-1,tok=0,salida=null;
 // Qué entra escalonado en cada diapositiva: lo más exterior de cada bloque, en orden de lectura.
 const SEL='h1,h2,.badge,.logo,.sub,.pie,.lead,.nota,.banda,.card,.fila,.num.xl,.split>img,img.ancho,.pila>*,.necesidades>*,.barras>*,.linea>div';
+// De dónde viene cada cosa: títulos desde la izquierda, tarjetas desde su columna, figuras que se acercan, listas desde el lado.
 sl.forEach(s=>{const c=[...s.querySelectorAll(SEL)];
  c.filter(a=>!c.some(o=>o!==a&&o.contains(a))).forEach((el,k)=>{el.classList.add('rev');
-  el.style.setProperty('--i',el.parentElement.classList.contains('barras')?Math.floor(k/3):Math.min(k,12))})});
+  const st=el.style,p=el.parentElement,hijo=[...p.children].indexOf(el);let dx=0,dy=36,sc=1;
+  if(/^H[12]$/.test(el.tagName)){dx=-80;dy=0}
+  else if(el.matches('.sub,.lead')){dx=-50;dy=12}
+  else if(el.tagName==='IMG'){sc=.9;dy=34}
+  else if(p.classList.contains('grid')){const n=+(/c(\d)/.exec(p.className)||[0,3])[1];dx=(hijo%n-(n-1)/2)*80;dy=50}
+  else if(p.classList.contains('pila')){dx=80;dy=0}
+  else if(el.closest('.pasos,.necesidades')){dx=-60;dy=0}
+  else if(p.classList.contains('barras')){dx=hijo%3===2?0:-50;dy=0}
+  st.setProperty('--i',p.classList.contains('barras')?Math.floor(hijo/3):Math.min(k,12));
+  st.setProperty('--dx',dx+'px');st.setProperty('--dy',dy+'px');st.setProperty('--sc',sc)})});
 // Contadores: solo cifras limpias («280.403», «93 %», «−0,9 %»); fechas, rangos y textos se quedan como están.
 const CIFRA=/^([−-]?)(\d{1,3}(?:\.\d{3})+|\d+)(?:,(\d+))?(\s*%)?$/;
 function contar(el,t){
@@ -327,19 +352,28 @@ function fit(){const k=Math.min(innerWidth/1280,innerHeight/720);sl.forEach(s=>s
 function ver(n){n=Math.max(0,Math.min(sl.length-1,n));if(n===i)return;
  document.body.dataset.dir=n<i?'atras':'adelante';
  if(i>=0){const v=sl[i];restaura(v);v.classList.remove('on');
-  if(!quieto){v.classList.add('sale');clearTimeout(salida);salida=setTimeout(()=>sl.forEach(s=>s.classList.remove('sale')),400)}}
+  if(!quieto){v.classList.add('sale');clearTimeout(salida);salida=setTimeout(()=>sl.forEach(s=>s.classList.remove('sale')),650)}}
  i=n;sl[i].classList.remove('sale');sl[i].classList.add('on');
  prog.style.transform=`scaleX(${(i+1)/sl.length})`;
  pinta();try{history.replaceState(null,'','#'+(i+1))}catch(e){}
  const t=++tok;sl[i].querySelectorAll('.num').forEach(el=>contar(el,t))}
+const toast=document.getElementById('toast');let tt=null;
+function aviso(t,ms){toast.textContent=t;toast.classList.add('on');clearTimeout(tt);tt=setTimeout(()=>toast.classList.remove('on'),ms||2200)}
+function alterna(){quieto=!quieto;document.documentElement.dataset.mov=quieto?'off':'on';
+ try{localStorage.setItem('reto1_mov',quieto?'off':'on')}catch(e){}
+ aviso(quieto?'Movimiento desactivado':'Movimiento activado');
+ const s=sl[i];s.classList.remove('on','sale');void s.offsetWidth;s.classList.add('on');
+ const t=++tok;s.querySelectorAll('.num').forEach(el=>contar(el,t))}
 addEventListener('beforeprint',()=>{tok++;sl.forEach(restaura)});
 addEventListener('keydown',ev=>{if(['ArrowRight','PageDown',' '].includes(ev.key)){ev.preventDefault();ver(i+1)}
  else if(['ArrowLeft','PageUp'].includes(ev.key))ver(i-1);else if(ev.key==='Home')ver(0);else if(ev.key==='End')ver(sl.length-1);
  else if(ev.key==='n'||ev.key==='N')notas.classList.toggle('on');
+ else if(ev.key==='m'||ev.key==='M')alterna();
  else if(ev.key==='T'){acum=0;t0=performance.now();tic()}
  else if(ev.key==='t'){if(corre){acum+=(performance.now()-t0)/1000;corre=false}else{t0=performance.now();corre=true;reloj.classList.add('on')}tic()}
  else if(ev.key==='f'||ev.key==='F'){document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen()}});
 document.getElementById('deck').addEventListener('click',ev=>ver(ev.clientX>innerWidth/3?i+1:i-1));
 let x0=null;addEventListener('touchstart',e=>x0=e.touches[0].clientX);addEventListener('touchend',e=>{if(x0===null)return;const d=e.changedTouches[0].clientX-x0;if(Math.abs(d)>40)ver(d<0?i+1:i-1);x0=null});
 addEventListener('resize',fit);fit();ver((parseInt(location.hash.slice(1))||1)-1);
+if(SO_QUIETO&&!eleccion)aviso('Tu sistema tiene las animaciones desactivadas. Pulsa M para activar el movimiento.',9000);
 </script></body></html>
