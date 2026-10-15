@@ -28,7 +28,7 @@
 <text x="520" y="557" text-anchor="middle" font-size="26" fill="#333">Camarero 2</text>
 <text x="520" y="592" text-anchor="middle" font-size="20" fill="#666">terraza y barra</text>
 <rect x="1120" y="510" width="240" height="110" rx="14" fill="#fff" stroke="#555" stroke-width="2"/>
-<text x="1240" y="557" text-anchor="middle" font-size="26" fill="#333">Cocinera</text>
+<text x="1240" y="557" text-anchor="middle" font-size="26" fill="#333">Cocinero</text>
 <text x="1240" y="592" text-anchor="middle" font-size="20" fill="#666">todas las estaciones</text>
 <text x="800" y="700" text-anchor="middle" font-size="22" fill="#666">Línea continua: dependencia jerárquica · discontinua: relación externa</text>
 </svg>
