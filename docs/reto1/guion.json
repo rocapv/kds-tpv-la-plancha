@@ -1,6 +1,6 @@
 {
  "ppm": 125,
- "minutos": 13.25,
+ "minutos": 13.0,
  "diapositivas": [
   {
    "n": 1,
@@ -12,7 +12,7 @@
    "n": 2,
    "titulo": "Los ocho puntos",
    "min": 0.5,
-   "texto": "El informe sigue el guion que acordamos: contextualización de la empresa, empresa de referencia, entorno económico con sus factores macro y micro, modelo de negocio y finanzas, servicios, publicidad, conclusiones y bibliografía. Por el camino haremos tres laboratorios con números que se pueden tocar, y al final un pequeño cuestionario de tres preguntas."
+   "texto": "El informe sigue el guion que acordamos: contextualización de la empresa, empresa de referencia, entorno económico con sus factores macro y micro, modelo de negocio y finanzas, servicios, publicidad, conclusiones y bibliografía."
   },
   {
    "n": 3,
@@ -29,13 +29,13 @@
   {
    "n": 5,
    "titulo": "2. Empresa de referencia",
-   "min": 1,
+   "min": 1.25,
    "texto": "Buscamos una empresa real del mismo producto y del mismo territorio. Hundred Burgers nació en València en 2020; en 2024 fue elegida la mejor hamburguesa del mundo y en octubre de 2025 el fondo Buenavista compró el ochenta por ciento: ocho locales, más de veinticinco millones de ingresos, ticket medio de veinte euros y un treinta y cinco por ciento del negocio en reparto. El contrapunto es Goiko: ciento diecisiete restaurantes, pero en 2025 vendió un once por ciento menos y perdió treinta y seis millones. De Hundred tomamos la carta corta, el peso del reparto y el pedido digital desde el primer día. De Goiko, la advertencia: el mercado de la hamburguesa está saturado y solo sobrevive quien controla los costes."
   },
   {
    "n": 6,
    "titulo": "3.1. Factores macroeconómicos (PESTEL)",
-   "min": 0.75,
+   "min": 1,
    "texto": "El macroentorno con el método PESTEL. Político: Verifactu, aplazado al uno de enero de 2027 para las sociedades, y el fin del Kit Digital. Económico: el sector factura más pero gana menos, con rentabilidad negativa en 2025, y el salario mínimo sube a mil doscientos veintiún euros. Social: el cliente paga con el móvil y decide mirando reseñas. Tecnológico: Windows 10 sin soporte y una digitalización que se quedó en el cobro. Ambiental: el papel térmico y los envases de un solo uso. Legal: trazabilidad de ventas, protección de datos, alérgenos, registro de jornada y convenio provincial."
   },
   {
@@ -47,62 +47,44 @@
   {
    "n": 8,
    "titulo": "4. Modelo de negocio: cada 100 euros de ventas",
-   "min": 1,
+   "min": 1.25,
    "texto": "Las cifras del modelo. De cada cien euros de ventas, treinta y dos se van en materia prima, treinta y tres en personal, dos en alquiler, ocho en suministros, cinco en comisiones de reparto y tres en publicidad, financiación e impuestos. Quedan dieciséis antes de impuestos. Son ratios coherentes con las bandas del sector: producto entre el veintiocho y el treinta y cinco, personal entre el treinta y el treinta y cinco, alquiler por debajo del diez. El margen es holgado comparado con la media del sector, que fue negativa, y se evapora con dos meses flojos."
   },
   {
    "n": 9,
-   "titulo": "Laboratorio 1: la cuenta de resultados",
-   "min": 0.75,
-   "texto": "Primer laboratorio. Movemos las ventas, el salario del que menos cobra, el coste de producto y la comisión de reparto, y vemos qué pasa con el resultado. Si el salario mínimo del local sube a dos mil trescientos, el resultado baja a la mitad. Si las ventas caen un quince por ciento, como le pasó a Goiko, el local entra en pérdidas. La lección es la del sector: el negocio funciona, pero no tiene colchón."
-  },
-  {
-   "n": 10,
    "titulo": "4.1 y 4.2. Financiación y salarios",
-   "min": 1,
+   "min": 1.25,
    "texto": "Financiación: la empresa se constituyó con sesenta mil euros, treinta y cinco de capital y un préstamo de veinticinco mil, del que quedan siete mil. El proyecto tecnológico, de cinco a ocho mil euros, se paga con tesorería y, si hace falta, con un microcrédito de MicroBank; el Kit Digital cerró en 2025 y las ayudas de la Generalitat no se dan por hechas. Salarios: el convenio de hostelería de Valencia fija el mínimo por niveles, en ultraactividad desde enero. Burglar King paga por encima: dos mil euros brutos el que menos cobra, y el resto en proporción. Es una decisión de negocio: retener al equipo vale más que ahorrar pagando el mínimo."
   },
   {
-   "n": 11,
-   "titulo": "Laboratorio 2: lo que cuesta un salario",
-   "min": 0.75,
-   "texto": "Segundo laboratorio. Un salario bruto no es lo que cuesta a la empresa. Sobre el bruto, la empresa paga el veintitrés sesenta de contingencias comunes, el cinco cincuenta de desempleo, el cero veinte del FOGASA, el cero sesenta de formación, el cero setenta y cinco del mecanismo de equidad intergeneracional y el uno cincuenta de accidentes para la hostelería: un treinta y dos coma quince por ciento. Dos mil euros en quince pagas son treinta mil al año de bruto y casi cuarenta mil de coste. Con contrato temporal, el desempleo sube al seis setenta."
-  },
-  {
-   "n": 12,
+   "n": 10,
    "titulo": "4.3 y 4.4. Gastos materiales y el local",
-   "min": 1,
+   "min": 1.25,
    "texto": "Gastos materiales: el escandallo de la hamburguesa clásica da tres euros con veinticuatro de coste sobre diez cuarenta y cinco de venta sin IVA, un treinta y uno por ciento. Suministros, tres mil seiscientos al mes; la electricidad es lo que más pesa. El local: ciento veinte metros en planta baja por mil euros al mes, unos ocho euros el metro, en la media de Burjassot. Fotocasa tiene treinta y cinco locales en oferta y los precios van de tres a catorce euros el metro. El contrato es de diez años con fianza de dos meses, como exige la Ley de Arrendamientos Urbanos."
   },
   {
-   "n": 13,
-   "titulo": "Laboratorio 3: el alquiler",
-   "min": 0.5,
-   "texto": "Tercer laboratorio. Metros por precio del metro, contra las ventas. La regla del sector dice que el alquiler no debería pasar del diez por ciento de la facturación. Probamos con los anuncios reales de Burjassot: el local de cuarenta metros junto al campus sale a casi catorce euros el metro, pero son solo quinientos cincuenta al mes. Lo que importa no es el precio del metro sino la cuota sobre las ventas."
-  },
-  {
-   "n": 14,
+   "n": 11,
    "titulo": "5 y 6. Servicios y publicidad",
-   "min": 0.75,
+   "min": 1,
    "texto": "Servicios: sala y terraza son dos tercios de las ventas; barra, para llevar y reparto, el resto. Las plataformas son canal y coste a la vez: dos mil cien euros de comisiones al mes, el doble del alquiler. Por eso el proyecto empujará el pedido para llevar directo. Publicidad: cuatrocientos cincuenta euros al mes, el uno por ciento. Según TheFork, el sesenta y dos por ciento descarta un restaurante por una mala reseña y el setenta y tres lee opiniones antes de ir; las redes solo influyen en el diecisiete. Prioridad: el perfil de Google y la carta; después Instagram y la promoción universitaria."
   },
   {
-   "n": 15,
+   "n": 12,
    "titulo": "7. Conclusiones",
-   "min": 0.75,
+   "min": 1,
    "texto": "Conclusiones. Burglar King es un negocio sano en un sector con márgenes estrechos. Las cifras cuadran con el sector, y el margen depende de controlar producto y personal. El entorno añade urgencia: Verifactu fija el uno de enero de 2027, Windows 10 obliga a renovar la caja, y el cliente decide mirando reseñas. Lo que le falta no es dinero: es alguien que diseñe la infraestructura y la deje funcionando sola. Ese es el proyecto que este informe deja planteado."
   },
   {
-   "n": 16,
-   "titulo": "Cuestionario",
+   "n": 13,
+   "titulo": "8. Bibliografía",
    "min": 0.5,
-   "texto": "Tres preguntas rápidas sobre lo que hemos visto. Quien quiera, que responda en la pantalla."
+   "texto": "Las fuentes principales: INE, Profesional Horeca y Hosteltur para el sector; Buenavista, Economía 3 y Forbes para las empresas de referencia; el convenio de hostelería de Valencia, el Real Decreto del SMI e Ibermutua para salarios y cotización; idealista, Fotocasa, Habitaclia y Nuroa para los alquileres; y la normativa del BOE y del DOUE. Las cuarenta y cinco referencias están en formato APA en el informe."
   },
   {
-   "n": 17,
-   "titulo": "8. Bibliografía y preguntas",
+   "n": 14,
+   "titulo": "Tres preguntas para terminar",
    "min": 0.5,
-   "texto": "Las fuentes principales: INE, Profesional Horeca y Hosteltur para el sector; Buenavista, Economía 3 y Forbes para las empresas de referencia; el convenio de hostelería de Valencia, el Real Decreto del SMI e Ibermutua para salarios y cotización; idealista, Fotocasa, Habitaclia y Nuroa para los alquileres; y la normativa del BOE y del DOUE. Las cuarenta y cinco referencias están en formato APA en el informe. Gracias; quedamos abiertos a preguntas."
+   "texto": "Para terminar, tres preguntas rápidas sobre lo que hemos contado. Quien quiera, que responda en la pantalla. Después, quedamos abiertos a vuestras preguntas. Gracias."
   }
  ]
 }

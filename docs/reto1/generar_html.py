@@ -1,22 +1,21 @@
 #!/usr/bin/env python3
-"""Presentación del Reto 1 en un solo HTML autónomo (figuras en base64), con laboratorios y cuestionario.
+"""Presentación del Reto 1 (HTML + CSS + JS en ficheros separados) y ZIP de entrega con los laboratorios.
 
 Sigue los ocho puntos del informe (contextualización, empresa de referencia, entorno económico, modelo de
-negocio y finanzas, servicios, publicidad, conclusiones y bibliografía), intercala tres laboratorios
-interactivos (cuenta de resultados, coste de un salario con la cotización desglosada, alquiler por m²) y
-termina con un cuestionario de tres preguntas. 12-15 minutos: el guion hablado vive en guion.json.
+negocio y finanzas, servicios, publicidad, conclusiones y bibliografía), termina con un cuestionario de tres preguntas (sin anunciarlo antes). 12-15 minutos: el guion hablado vive en
+guion.json. Los laboratorios son páginas aparte en laboratorios/ y van en el ZIP, no en la presentación.
 
 Teclas: ← → / espacio / clic para avanzar, N guion del orador, T cronómetro de ensayo, M movimiento,
 F pantalla completa. Respeta `prefers-reduced-motion` salvo que se fuerce (M o ?movimiento=1).
-Uso: python3 generar_html.py  ->  reto1_presentacion.html
+Uso: python3 generar_html.py  ->  entrega/ (presentacion.html, css/, js/, fig/, laboratorios/, LEEME.txt) y reto1_entrega.zip
 """
-import base64, html, json
+import html, json, shutil, zipfile
 from pathlib import Path
 
 AQUI = Path(__file__).resolve().parent
-img = lambda f: "data:image/png;base64," + base64.b64encode((AQUI / "fig" / f).read_bytes()).decode()
+img = lambda f: "fig/" + f          # las figuras van como ficheros en entrega/fig/
 e = html.escape
-LOGO = "data:image/svg+xml;base64," + base64.b64encode((AQUI.parent / "logos" / "logo.svg").read_bytes()).decode()
+LOGO = "fig/logo.svg"
 GUION = {d["n"]: d for d in json.loads((AQUI / "guion.json").read_text(encoding="utf-8"))["diapositivas"]}
 
 
@@ -49,8 +48,7 @@ S.append(("", f"""
 <div class="ocho">{''.join(f'<div class="fila"><span class="dot">{k}</span><p>{t}</p></div>' for k, t in enumerate([
   "Contextualización de la empresa", "Empresa de referencia", "Análisis del entorno económico <small>macro y micro</small>",
   "Modelo de negocio y finanzas <small>financiación · salarios · gastos · local</small>", "Servicios prestados",
-  "Publicidad (marketing)", "Conclusiones", "Bibliografía"], 1))}</div>
-<div class="banda">Por el camino: <b>3 laboratorios</b> con números que se pueden tocar · al final: <b>cuestionario</b> de 3 preguntas</div>"""))
+  "Publicidad (marketing)", "Conclusiones", "Bibliografía"], 1))}</div>"""))
 
 # 3 · Punto 1: la empresa
 S.append(("", f"""
@@ -109,23 +107,6 @@ S.append(("", f"""
 <div class="barras g">{''.join(f'<span class="id">{round(v / 450)} %</span><div class="barra"><i style="width:{v / 450 * 5.2}%;background:{c}"></i><b>{v:,} €</b></div><span>{t}</span>'.replace(',', '.') for t, v, c in PARTIDAS)}</div>
 <p class="nota">Ventas estimadas: 45.000 €/mes sin IVA (1.500 comensales en sala × 19,50 € · 300 en barra · 300 pedidos para llevar · 550 de reparto × 15 €). Bandas del sector: producto 28-35 %, personal 30-35 %, alquiler ≤ 10 % (Tourinews, 2025).</p>"""))
 
-# 9 · Laboratorio 1: cuenta de resultados
-S.append(("lab", f"""
-<h2><span class="pt lab">LAB 1</span>¿Qué pasa con el resultado si…?</h2>
-<div class="split ancho2">
- <div class="mandos">
-  <label>Ventas al mes (sin IVA) <output id="l1v">45.000 €</output><input type="range" id="l1_v" min="30000" max="60000" step="1000" value="45000"></label>
-  <label>Salario del que menos cobra (bruto/mes, 15 pagas) <output id="l1s">2.000 €</output><input type="range" id="l1_s" min="1215" max="2600" step="5" value="2000"></label>
-  <label>Coste de producto <output id="l1f">32 %</output><input type="range" id="l1_f" min="25" max="40" step="1" value="32"></label>
-  <label>Comisión de las plataformas (sobre el 18 % de reparto) <output id="l1c">25 %</output><input type="range" id="l1_c" min="0" max="35" step="1" value="25"></label>
-  <div class="presets"><button data-p="base">Escenario base</button><button data-p="goiko">Ventas −15 % (Goiko)</button><button data-p="sal">Salario 2.300 €</button><button data-p="sin">Sin plataformas</button></div>
- </div>
- <div class="panel">
-  <div class="res"><span>Resultado antes de impuestos</span><b class="num xl" id="l1r">7.350 €</b><em id="l1p">16 % de las ventas</em></div>
-  <div class="apilada" id="l1b"></div>
-  <table class="mini" id="l1t"></table>
- </div>
-</div>"""))
 
 # 10 · Punto 4.1 y 4.2
 S.append(("", f"""
@@ -140,21 +121,6 @@ S.append(("", f"""
   <p>Convenio de hostelería de Valencia en ultraactividad desde enero de 2026. Coste de personal: <b>14.800 €/mes</b>, el 33 % de las ventas.</p></div>
 </div>"""))
 
-# 11 · Laboratorio 2: coste de un salario
-S.append(("lab", f"""
-<h2><span class="pt lab">LAB 2</span>Lo que cuesta un salario a la empresa</h2>
-<div class="split ancho2">
- <div class="mandos">
-  <label>Salario bruto al mes (15 pagas) <output id="l2s">2.000 €</output><input type="range" id="l2_s" min="1100" max="3500" step="10" value="2000"></label>
-  <label class="check"><input type="checkbox" id="l2_t"> Contrato temporal (desempleo al 6,70 %)</label>
-  <table class="mini" id="l2t"></table>
- </div>
- <div class="panel">
-  <div class="res"><span>Coste anual para la empresa</span><b class="num xl" id="l2r">39.645 €</b><em id="l2p">bruto 30.000 € + 32,15 % de cotización</em></div>
-  <div class="apilada" id="l2b"></div>
-  <p class="lead" id="l2m">Al mes: <b>3.304 €</b> de coste por <b>2.000 €</b> de bruto.</p>
- </div>
-</div>"""))
 
 # 12 · Punto 4.3 y 4.4
 S.append(("", f"""
@@ -167,24 +133,6 @@ S.append(("", f"""
  <div class="card tint"><h3>El local · 120 m² en alquiler</h3>{lista(["<b>1.000 €/mes</b> + IVA: 8,30 €/m², en la media de Burjassot (7,05 €/m² en idealista)", "Fotocasa: 35 locales en oferta, de 3 a 14 €/m²", "Contrato LAU de 10 años, IPC anual, fianza de 2 meses (art. 36)", "Tasas: licencia, terraza e IBI repercutido, 400 €/mes", "Las obras de red necesitan permiso del propietario"])}</div>
 </div>"""))
 
-# 13 · Laboratorio 3: alquiler
-S.append(("lab", f"""
-<h2><span class="pt lab">LAB 3</span>El alquiler frente a las ventas</h2>
-<div class="split ancho2">
- <div class="mandos">
-  <label>Superficie <output id="l3m">120 m²</output><input type="range" id="l3_m" min="40" max="300" step="5" value="120"></label>
-  <label>Precio por metro <output id="l3e">8,30 €/m²</output><input type="range" id="l3_e" min="3" max="14" step="0.1" value="8.3"></label>
-  <label>Ventas al mes <output id="l3v">45.000 €</output><input type="range" id="l3_v" min="20000" max="60000" step="1000" value="45000"></label>
-  <p class="peq">Anuncios reales de Burjassot (octubre de 2026), pulsa para cargar:</p>
-  <div class="presets chips">{''.join(f'<button data-m="{m}" data-e="{p}">{z} · {m} m² · {r} €</button>' for z, m, p, r in [
-   ("El Castell", 81, 8.02, 650), ("Zona campus", 40, 13.75, 550), ("Empalme", 280, 4.46, 1250), ("Cantereria", 128, 7.03, 900), ("L'Eixereta", 60, 13.33, 800), ("Nuroa", 146, 6.85, 1000), ("Burglar King", 120, 8.3, 1000)])}</div>
- </div>
- <div class="panel">
-  <div class="res"><span>Alquiler al mes</span><b class="num xl" id="l3r">996 €</b><em id="l3p">2,2 % de las ventas</em></div>
-  <div class="semaforo" id="l3s"><i></i><i></i><i></i></div>
-  <p class="lead" id="l3x">Por debajo del 5 %: holgado. La regla del sector: alquiler ≤ 10 % de la facturación.</p>
- </div>
-</div>"""))
 
 # 14 · Puntos 5 y 6
 S.append(("", f"""
@@ -211,20 +159,21 @@ S.append(("dark", f"""
   "El entorno pone fecha: <b>Verifactu el 1/1/2027</b>, Windows 10 sin soporte, y un cliente que decide por las reseñas.",
   "No le falta dinero: le falta <b>alguien que diseñe la infraestructura</b> y la deje funcionando sola. Ese es el proyecto."], 1))}</div>"""))
 
-# 16 · Cuestionario
-S.append(("lab quiz", """
-<h2><span class="pt lab">QUIZ</span>Tres preguntas</h2>
-<div id="quiz"></div>"""))
-
 # 17 · Bibliografía y preguntas
 S.append(("dark", f"""
-{punto(8, "Bibliografía · ¿preguntas?")}
+{punto(8, "Bibliografía")}
 <div class="grid c3 bib">
  <div class="card oscura"><h3>Sector y empresas</h3>{lista(["INE (2025) · Profesional Horeca (2025) · Hosteltur (2026)", "Buenavista Equity Partners (2025) · Economía 3 (2024)", "Forbes España (2026) · El Confidencial Digital (2025)"])}</div>
  <div class="card oscura"><h3>Finanzas y trabajo</h3>{lista(["Convenio de hostelería de Valencia (CCOO, 2025; Turnozo, 2026)", "Real Decreto 126/2026 (SMI) · Ibermutua (2026)", "Cámara de España (2022) · ICO (s.f.) · idealista/news (2026)"])}</div>
  <div class="card oscura"><h3>Mercado y normativa</h3>{lista(["idealista, Fotocasa, Habitaclia y Nuroa (2026)", "Qamarero (2025) · L'Express Franchise (2026)", "Leyes 11/2021, 7/2022, 7/2024, 29/1994 · RD 1007/2023 · RGPD"])}</div>
 </div>
-<p class="pie">45 referencias en formato APA (7.ª ed.) en el punto 8 del informe. Gracias.</p>"""))
+<p class="pie">45 referencias en formato APA (7.ª ed.) en el punto 8 del informe.</p>"""))
+
+# 16 · Cuestionario
+S.append(("lab quiz", """
+<h2><span class="pt">¿?</span>Tres preguntas para terminar</h2>
+<div id="quiz"></div>"""))
+
 
 CSS = """
 :root{--osc:#23272b;--nar:#e67e22;--nar2:#fdebd9;--txt:#2b2b2b;--gris:#6b6b6b;--claro:#f4f4f4;--rojo:#c0392b;--verde:#27ae60}
@@ -355,7 +304,7 @@ if(pedido==='1'||pedido==='0'){eleccion=pedido==='1'?'on':'off';try{localStorage
 let quieto=eleccion?eleccion==='off':SO_QUIETO;
 document.documentElement.dataset.mov=quieto?'off':'on';
 let i=-1,tok=0,salida=null;
-const SEL='h1,h2,.badge,.logo,.sub,.pie,.lead,.nota,.banda,.card,.fila,.num.xl,.split>img,img.ancho,.barras>*,.mandos,.panel,#quiz';
+const SEL='h1,h2,.badge,.logo,.sub,.pie,.lead,.nota,.banda,.card,.fila,.num.xl,.split>img,img.ancho,.barras>*,#quiz';
 sl.forEach(s=>{const c=[...s.querySelectorAll(SEL)];
  c.filter(a=>!c.some(o=>o!==a&&o.contains(a))).forEach((el,k)=>{el.classList.add('rev');
   const st=el.style,p=el.parentElement,hijo=[...p.children].indexOf(el);let dx=0,dy=36,sc=1;
@@ -410,7 +359,7 @@ function alterna(){quieto=!quieto;document.documentElement.dataset.mov=quieto?'o
  const t=++tok;s.querySelectorAll('.num').forEach(el=>contar(el,t))}
 addEventListener('beforeprint',()=>{tok++;sl.forEach(restaura)});
 // Dentro de un laboratorio o del cuestionario, el teclado y el ratón son suyos: las flechas mueven los deslizadores, no las diapositivas.
-const interactivo=el=>el&&el.closest&&el.closest('.mandos,.panel,#quiz,input,button');
+const interactivo=el=>el&&el.closest&&el.closest('#quiz,input,button');
 addEventListener('keydown',ev=>{if(interactivo(ev.target)&&['ArrowRight','ArrowLeft',' '].includes(ev.key))return;
  if(['ArrowRight','PageDown',' '].includes(ev.key)){ev.preventDefault();ver(i+1)}
  else if(['ArrowLeft','PageUp'].includes(ev.key))ver(i-1);else if(ev.key==='Home')ver(0);else if(ev.key==='End')ver(sl.length-1);
@@ -422,47 +371,6 @@ addEventListener('keydown',ev=>{if(interactivo(ev.target)&&['ArrowRight','ArrowL
 document.getElementById('deck').addEventListener('click',ev=>{if(interactivo(ev.target))return;ver(ev.clientX>innerWidth/3?i+1:i-1)});
 let x0=null;addEventListener('touchstart',e=>{x0=interactivo(e.target)?null:e.touches[0].clientX});addEventListener('touchend',e=>{if(x0===null)return;const d=e.changedTouches[0].clientX-x0;if(Math.abs(d)>40)ver(d<0?i+1:i-1);x0=null});
 
-/* ---------- Laboratorios ---------- */
-const $=id=>document.getElementById(id),eur=x=>fmtN(Math.round(x),0)+' €',pct=x=>fmtN(x,1)+' %',pct2=x=>fmtN(x,2)+' %';
-const COT={cc:23.60,des:5.50,desT:6.70,fog:0.20,fp:0.60,mei:0.75,at:1.50};
-const cotiza=temporal=>COT.cc+(temporal?COT.desT:COT.des)+COT.fog+COT.fp+COT.mei+COT.at;
-function apilada(el,partes){ // [[etiqueta, valor, color]]
- const tot=partes.reduce((a,p)=>a+Math.max(0,p[1]),0);
- if(el.children.length!==partes.length)el.replaceChildren(...partes.map(()=>document.createElement('i')));
- partes.forEach((p,k)=>{const i=el.children[k];i.style.background=p[2];i.style.flexBasis=(100*Math.max(0,p[1])/tot)+'%';i.title=p[0]+': '+eur(p[1])})}
-// LAB 1: cuenta de resultados. Comisiones = % sobre el 18 % de reparto más 75 € de cuotas fijas de las plataformas. Personal = 2 camareros + cocinero (×1,0608) con cotización, + encargado (×1,975 en 12 pagas) y su cuota de autónomo, + pluses.
-function lab1(){const v=+$('l1_v').value,s=+$('l1_s').value,f=+$('l1_f').value,c=+$('l1_c').value;
- $('l1v').value=eur(v);$('l1s').value=eur(s);$('l1f').value=f+' %';$('l1c').value=c+' %';
- const k=1+cotiza(false)/100,personal=((2*s*15+s*1.0608*15)*k+s*1.975*12+530*12)/12+208;
- const partes=[['Materia prima',v*f/100,'#E67E22'],['Personal',personal,'#D35400'],['Alquiler',1000,'#7F8C8D'],['Suministros',v*0.08,'#95A5A6'],
-  ['Comisiones de reparto',v*0.18*c/100+(c?75:0),'#BDC3C7'],['Publicidad, financiación e impuestos',v*0.01+900+400,'#AEB6BF']];
- const gastos=partes.reduce((a,p)=>a+p[1],0),r=v-gastos;
- $('l1r').textContent=eur(r);$('l1r').className='num xl '+(r<0?'rojo':r/v<0.08?'':'verde');$('l1p').textContent=(r<0?'pérdidas: ':'')+pct(100*r/v)+' de las ventas';
- apilada($('l1b'),[...partes,['Resultado',r,'#27AE60']]);
- $('l1t').innerHTML=partes.map(p=>`<tr><td>${p[0]}</td><td>${eur(p[1])} · ${pct(100*p[1]/v)}</td></tr>`).join('')+`<tr class="tot"><td>Ventas</td><td>${eur(v)}</td></tr>`}
-['l1_v','l1_s','l1_f','l1_c'].forEach(id=>$(id).addEventListener('input',lab1));
-const PRE={base:[45000,2000,32,25],goiko:[38000,2000,32,25],sal:[45000,2300,32,25],sin:[45000,2000,32,0]};
-document.querySelectorAll('#deck .presets button[data-p]').forEach(b=>b.addEventListener('click',()=>{const p=PRE[b.dataset.p];
- [['l1_v',0],['l1_s',1],['l1_f',2],['l1_c',3]].forEach(([id,k])=>$(id).value=p[k]);lab1();
- b.parentElement.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b))}));
-// LAB 2: coste de un salario con la cotización desglosada
-function lab2(){const s=+$('l2_s').value,t=$('l2_t').checked,bruto=s*15,tipo=cotiza(t),coste=bruto*(1+tipo/100);
- $('l2s').value=eur(s);$('l2r').textContent=eur(coste);$('l2p').textContent=`bruto ${eur(bruto)} + ${pct2(tipo)} de cotización a cargo de la empresa`;
- const filas=[['Contingencias comunes',COT.cc],['Desempleo'+(t?' (temporal)':' (indefinido)'),t?COT.desT:COT.des],['FOGASA',COT.fog],['Formación profesional',COT.fp],['MEI (equidad intergeneracional)',COT.mei],['Accidentes de trabajo (CNAE 56)',COT.at]];
- $('l2t').innerHTML=filas.map(f=>`<tr><td>${f[0]}</td><td>${pct2(f[1])} · ${eur(bruto*f[1]/100)}</td></tr>`).join('')+`<tr class="tot"><td>Total a cargo de la empresa</td><td>${pct2(tipo)} · ${eur(bruto*tipo/100)}</td></tr>`;
- apilada($('l2b'),[['Salario bruto',bruto,'#E67E22'],...filas.map((f,k)=>[f[0],bruto*f[1]/100,['#D35400','#c0392b','#7F8C8D','#95A5A6','#8e44ad','#BDC3C7'][k]])]);
- $('l2m').innerHTML=`Al mes: <b>${eur(coste/12)}</b> de coste por <b>${eur(s)}</b> de bruto (${eur(bruto/12)} prorrateado).`}
-['l2_s','l2_t'].forEach(id=>$(id).addEventListener('input',lab2));
-// LAB 3: alquiler frente a ventas
-function lab3(){const m=+$('l3_m').value,p=+$('l3_e').value,v=+$('l3_v').value,a=m*p,q=100*a/v;
- $('l3m').value=m+' m²';$('l3e').value=fmtN(p,2)+' €/m²';$('l3v').value=eur(v);$('l3r').textContent=eur(a);$('l3p').textContent=pct(q)+' de las ventas';
- const s=$('l3s');s.className='semaforo '+(q<=5?'v':q<=10?'a':'r');
- $('l3x').textContent=q<=5?'Por debajo del 5 %: holgado. La regla del sector: alquiler ≤ 10 % de la facturación.':q<=10?'Entre el 5 % y el 10 %: aceptable, pero vigila el margen.':'Por encima del 10 %: el local se come el beneficio. Negocia o busca otro.'}
-['l3_m','l3_e','l3_v'].forEach(id=>$(id).addEventListener('input',lab3));
-document.querySelectorAll('.chips button').forEach(b=>b.addEventListener('click',()=>{$('l3_m').value=b.dataset.m;$('l3_e').value=b.dataset.e;lab3();
- b.parentElement.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b))}));
-lab1();lab2();lab3();
-
 /* ---------- Cuestionario ---------- */
 const PREG=[
  {q:'¿Qué parte de las ventas de Burglar King se va en personal?',o:['16 %','28 %','33 %','45 %'],ok:2,
@@ -471,7 +379,7 @@ const PREG=[
   x:'<b>1 de enero de 2027</b> para las sociedades (1 de julio de 2027 para el resto), tras el aplazamiento del Real Decreto-ley 15/2025. Su TPV de 2016 no se va a adaptar.'},
  {q:'Según el estudio de TheFork (2026), ¿qué hace que más españoles descarten un restaurante?',o:['El precio','La ubicación','No poder reservar en línea','Una mala reseña en internet'],ok:3,
   x:'<b>Una mala reseña</b>, para el 62 %; el precio solo para el 24 %. Por eso la prioridad del marketing es el perfil de Google, que cuesta 0 €.'}];
-let qi=0,qp=0;const Q=$('quiz');
+let qi=0,qp=0;const Q=document.getElementById('quiz');
 function quizInicio(){qi=0;qp=0;quizPinta()}
 function quizPinta(){if(qi>=PREG.length){quizFin();return}
  const p=PREG[qi];Q.innerHTML=`<div class="qn">Pregunta ${qi+1} de ${PREG.length} · aciertos: ${qp}</div><div class="q">${p.q}</div>
@@ -497,11 +405,48 @@ cuerpo = "".join(
     + (f'<span class="num-pag">{k}</span>' if k > 1 else "") + "</section>"
     for k, (c, h) in enumerate(S, 1))
 assert len(S) == len(GUION), (len(S), len(GUION))
+ENTREGA = AQUI / "entrega"
+if ENTREGA.exists():
+    shutil.rmtree(ENTREGA)
+for d in ("css", "js", "fig"):
+    (ENTREGA / d).mkdir(parents=True)
+for f in ("organigrama.png", "flujo_comanda.png", "red_actual.png", "costes.png"):
+    shutil.copy(AQUI / "fig" / f, ENTREGA / "fig" / f)
+shutil.copy(AQUI.parent / "logos" / "logo.svg", ENTREGA / "fig" / "logo.svg")
+shutil.copytree(AQUI / "laboratorios", ENTREGA / "laboratorios")
+(ENTREGA / "css" / "presentacion.css").write_text(CSS, encoding="utf-8")
+(ENTREGA / "js" / "presentacion.js").write_text(JS, encoding="utf-8")
 doc = f"""<!doctype html>
 <html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Reto 1 · Burglar King</title><style>{CSS}</style></head>
+<title>Reto 1 · Burglar King</title><link rel="stylesheet" href="css/presentacion.css"></head>
 <body><div id="prog"><i></i></div><div id="deck">{cuerpo}</div><div id="notas"></div>
-<div id="toast"></div><div id="reloj"></div><div id="ayuda">← → avanzar · N guion · T cronómetro · M movimiento · F pantalla completa</div><script>{JS}</script></body></html>"""
-out = AQUI / "reto1_presentacion.html"
-out.write_text(doc, encoding="utf-8")
-print("HTML:", out, f"{out.stat().st_size/1024:.0f} KB · {len(S)} diapositivas · {sum(d['min'] for d in GUION.values())} min")
+<div id="toast"></div><div id="reloj"></div><div id="ayuda">← → avanzar · N guion · T cronómetro · M movimiento · F pantalla completa</div><script src="js/presentacion.js"></script></body></html>"""
+(ENTREGA / "presentacion.html").write_text(doc, encoding="utf-8")
+MIN = sum(d["min"] for d in GUION.values())
+(ENTREGA / "LEEME.txt").write_text(f"""Reto 1 · Proyecto Intermodular I · Burglar King
+Riches Manuel y Roca · 1.º CFGS ASIR · IES Conselleria · octubre de 2026
+
+Descomprimir la carpeta entera y abrir los ficheros con cualquier navegador (no hace falta conexión ni servidor).
+
+presentacion.html      Presentación ({len(S)} diapositivas, {MIN:g} min).
+                       Teclas: flechas o espacio para avanzar, N guion del orador, T cronómetro de ensayo,
+                       M animaciones sí/no, F pantalla completa. La última diapositiva es un cuestionario de 3 preguntas.
+css/presentacion.css   Estilos y animaciones de la presentación.
+js/presentacion.js     Navegación, contadores, cronómetro y cuestionario.
+fig/                   Figuras del informe (organigrama, flujo de la comanda, red actual, costes) y logo.
+laboratorios/          Tres ejercicios interactivos (abrir laboratorios/index.html):
+  red.html             Lab 1 · Segmenta la red: dispositivos a VLAN y pings contra el cortafuegos.
+  verifactu.html       Lab 2 · Cadena de facturas con SHA-256 al estilo Verifactu.
+  hora_punta.html      Lab 3 · Minijuego de servicio: comandero de papel contra KDS, con el mismo flujo de pedidos.
+  css/lab.css, js/     Estilos y lógica de cada laboratorio (JavaScript sin dependencias).
+
+El informe en PDF (reto1_contexto_tecnologico.pdf) se entrega aparte.
+""", encoding="utf-8")
+ZIP = AQUI / "reto1_entrega.zip"
+with zipfile.ZipFile(ZIP, "w", zipfile.ZIP_DEFLATED) as z:
+    for f in sorted(ENTREGA.rglob("*")):
+        if f.is_file():
+            z.write(f, "reto1_entrega/" + f.relative_to(ENTREGA).as_posix())
+    n = len(z.namelist())
+print("HTML:", ENTREGA / "presentacion.html", f"{len(S)} diapositivas · {MIN:g} min")
+print("ZIP:", ZIP, f"{ZIP.stat().st_size / 1024:.0f} KB ·", n, "ficheros")

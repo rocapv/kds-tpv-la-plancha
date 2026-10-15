@@ -1,0 +1,63 @@
+/* Estilo común de los laboratorios del Reto 1 (Burglar King). */
+:root{--osc:#23272b;--nar:#e67e22;--nar2:#fdebd9;--txt:#2b2b2b;--gris:#6b6b6b;--claro:#f4f4f4;--rojo:#c0392b;--verde:#27ae60;--azul:#2980b9;--amar:#f1c40f}
+*{box-sizing:border-box;margin:0}
+html{background:#111}
+body{font-family:Arial,Helvetica,sans-serif;color:var(--txt);background:#fff;max-width:1180px;margin:0 auto;min-height:100vh;padding:28px 36px 60px}
+header{display:flex;align-items:center;gap:18px;border-bottom:3px solid var(--nar);padding-bottom:14px;margin-bottom:22px}
+header .pt{background:var(--osc);color:#fff;border-radius:10px;padding:6px 14px;font-size:18px;letter-spacing:.06em;white-space:nowrap}
+header h1{font-size:28px;flex:1}
+header a{color:var(--gris);font-size:14px;text-decoration:none}header a:hover{color:var(--nar)}
+.intro{font-size:17px;line-height:1.5;color:var(--txt);margin-bottom:18px;max-width:900px}
+.intro b{color:var(--nar)}
+h2{font-size:20px;margin:18px 0 10px}
+.grid{display:grid;gap:16px}.c2{grid-template-columns:1fr 1fr}.c3{grid-template-columns:repeat(3,1fr)}.c4{grid-template-columns:repeat(4,1fr)}
+.card{background:var(--claro);border-radius:12px;padding:16px 18px;font-size:15px;line-height:1.4}
+.card.tint{background:var(--nar2)}.card.oscura{background:var(--osc);color:#fff}
+button{font:inherit;font-size:15px;padding:9px 16px;border-radius:8px;border:1px solid #ccc;background:#fff;cursor:pointer;transition:background .2s,transform .15s}
+button:hover{background:var(--nar2);transform:translateY(-1px)}button.prim{background:var(--nar);color:#fff;border-color:var(--nar)}button.prim:hover{background:#cf6d14}
+button:disabled{opacity:.5;cursor:default;transform:none}
+.acciones{display:flex;flex-wrap:wrap;gap:10px;margin:14px 0}
+.ok{color:var(--verde)}.ko{color:var(--rojo)}
+.msg{margin-top:12px;font-size:16px;line-height:1.5;min-height:24px}
+table{width:100%;border-collapse:collapse;font-size:14px}td,th{padding:7px 8px;border-bottom:1px solid #ddd;text-align:left;vertical-align:top}th{background:var(--nar2);font-weight:bold}
+.num{font-variant-numeric:tabular-nums}
+footer{margin-top:40px;font-size:13px;color:var(--gris);border-top:1px solid #ddd;padding-top:10px}
+/* Menú */
+.menu a{display:block;text-decoration:none;color:inherit}.menu .card{min-height:170px;transition:transform .2s,box-shadow .2s}.menu .card:hover{transform:translateY(-4px);box-shadow:0 12px 26px rgba(0,0,0,.14)}
+.menu h3{font-size:19px;margin-bottom:8px;color:var(--nar)}
+/* Lab red */
+.vlans{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-top:10px}
+.vlan{border:2px dashed #bbb;border-radius:12px;min-height:230px;padding:10px;background:#fafafa;transition:background .2s,border-color .2s}
+.vlan.sobre{background:var(--nar2);border-color:var(--nar)}.vlan h3{font-size:15px;margin-bottom:8px;display:flex;justify-content:space-between}
+.vlan small{color:var(--gris);font-weight:normal;font-size:12px}
+.disp{background:#fff;border:1px solid #ccc;border-radius:8px;padding:8px 10px;margin:6px 0;font-size:14px;cursor:grab;display:flex;align-items:center;gap:8px;user-select:none;transition:box-shadow .2s}
+.disp:hover{box-shadow:0 4px 12px rgba(0,0,0,.12)}.disp.sel{outline:3px solid var(--nar)}.disp.bien{border-color:var(--verde);background:#e9f7ef}.disp.mal{border-color:var(--rojo);background:#fdecea;animation:tiembla .4s}
+.disp i{width:26px;height:26px;border-radius:6px;display:grid;place-items:center;font-style:normal;font-size:14px;background:var(--claro);flex:none}
+@keyframes tiembla{0%,100%{translate:0}25%{translate:-6px 0}75%{translate:6px 0}}
+.ping{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:8px}select{font:inherit;padding:8px;border-radius:8px;border:1px solid #ccc}
+.term{background:#111;color:#9fe7a6;font-family:monospace;font-size:14px;padding:12px 14px;border-radius:10px;min-height:120px;white-space:pre-wrap;margin-top:10px}
+.term .r{color:#ff8a80}.term .g{color:#9fe7a6}.term .y{color:#ffe082}
+.puntos{font-size:22px;color:var(--nar);font-weight:bold}
+/* Lab verifactu */
+.fact{display:grid;grid-template-columns:70px 1fr 110px 1fr;gap:8px 12px;align-items:center;padding:10px 12px;border-radius:10px;background:#fff;border:1px solid #ddd;margin:8px 0;font-size:14px;transition:background .3s,border-color .3s}
+.fact.rota{background:#fdecea;border-color:var(--rojo)}.fact.alterada{background:#fff6e0;border-color:var(--amar)}.fact .h{font-family:monospace;font-size:12px;color:var(--gris);word-break:break-all;grid-column:1/-1}
+.fact .h b{color:var(--txt)}.fact .h.ko{color:var(--rojo)}
+.fact input{font:inherit;width:90px;padding:4px 6px;border:1px solid #ccc;border-radius:6px;text-align:right}
+.cadena{margin-top:12px}
+.form{display:flex;gap:10px;flex-wrap:wrap;align-items:end}.form label{display:flex;flex-direction:column;font-size:13px;color:var(--gris);gap:4px}.form input,.form select{font:inherit;padding:8px;border:1px solid #ccc;border-radius:8px}
+.estado{font-size:18px;font-weight:bold;margin:10px 0}
+/* Lab hora punta */
+.tablero{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-top:10px}
+.col{background:var(--claro);border-radius:12px;padding:12px;min-height:380px}
+.col h3{font-size:16px;display:flex;justify-content:space-between;margin-bottom:8px}
+.ped{background:#fff;border-radius:10px;border:1px solid #ddd;padding:10px;margin:8px 0;font-size:14px;position:relative;overflow:hidden;animation:aparece .3s ease}
+.ped.rep{border-left:5px solid var(--azul)}.ped.mesa{border-left:5px solid var(--nar)}
+.ped .t{position:absolute;left:0;bottom:0;height:4px;background:var(--verde);transition:width 1s linear,background .3s}
+.ped .t.ya{background:var(--rojo)}.ped button{margin-top:8px;font-size:13px;padding:6px 10px}.ped small{color:var(--gris);display:block}
+.ped.listo{border-color:var(--verde);background:#e9f7ef}
+@keyframes aparece{from{opacity:0;translate:0 10px}to{opacity:1;translate:0 0}}
+.hud{display:flex;gap:18px;align-items:center;flex-wrap:wrap;font-size:16px;margin:10px 0}.hud b{font-size:26px;color:var(--nar)}.hud .reloj{font-size:30px;font-variant-numeric:tabular-nums}
+.modo{display:inline-flex;border:1px solid #ccc;border-radius:10px;overflow:hidden}.modo button{border:0;border-radius:0}.modo button.on{background:var(--osc);color:#fff}
+.resultado td:nth-child(n+2){text-align:right}
+.mejor{color:var(--verde);font-weight:bold}
+@media (max-width:800px){.vlans{grid-template-columns:1fr 1fr}.tablero{grid-template-columns:1fr}.c3,.c2{grid-template-columns:1fr}body{padding:16px}}

@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Lab 1 · Segmenta la red · Burglar King</title><link rel="stylesheet" href="css/lab.css"></head>
+<body>
+<header><span class="pt">LAB 1</span><h1>Segmenta la red de Burglar King</h1><a href="index.html">← laboratorios</a></header>
+<p class="intro">Hoy el local tiene <b>una sola red</b>, 192.168.1.0/24, en la que conviven la caja, el datáfono, las cámaras y los móviles de los clientes. El proyecto propone cuatro segmentos: <b>Negocio</b> (caja, servidor, administración), <b>Cocina</b> (pantallas KDS), <b>Cámaras</b> (videovigilancia) e <b>Invitados</b> (wifi de clientes). Arrastra cada dispositivo a su VLAN (o pulsa el dispositivo y después la VLAN) y comprueba el resultado. Después, lanza pings entre dispositivos para ver qué deja pasar el cortafuegos.</p>
+
+<h2>1. Reparte los dispositivos</h2>
+<div class="vlans" id="vlans">
+ <div class="vlan" data-v="0"><h3>Sin asignar <small id="n0"></small></h3></div>
+ <div class="vlan" data-v="10"><h3>VLAN 10 · Negocio <small>192.168.10.0/24</small></h3></div>
+ <div class="vlan" data-v="20"><h3>VLAN 20 · Cocina <small>192.168.20.0/24</small></h3></div>
+ <div class="vlan" data-v="30"><h3>VLAN 30 · Cámaras <small>192.168.30.0/24</small></h3></div>
+ <div class="vlan" data-v="40"><h3>VLAN 40 · Invitados <small>192.168.40.0/24</small></h3></div>
+</div>
+<div class="acciones"><button class="prim" id="comprobar">Comprobar</button><button id="pista">Dame una pista</button><button id="reiniciar">Reiniciar</button><span class="puntos" id="puntos"></span></div>
+<div class="msg" id="msg"></div>
+
+<h2>2. Lanza pings entre segmentos</h2>
+<div class="card">
+ <div class="ping">Desde <select id="origen"></select> hasta <select id="destino"></select> <button class="prim" id="ping">ping</button> <button id="limpiar">limpiar</button></div>
+ <div class="term" id="term">Reparte primero los dispositivos y pulsa «Comprobar»: el cortafuegos se configura con las VLAN correctas.</div>
+</div>
+<div class="grid c2" style="margin-top:16px">
+ <div class="card"><h3>Reglas del cortafuegos del proyecto</h3>
+  <table><tr><th>Desde</th><th>Hacia</th><th>Permitido</th></tr>
+  <tr><td>Misma VLAN</td><td>Misma VLAN</td><td class="ok">Sí</td></tr>
+  <tr><td>Cocina (KDS)</td><td>Negocio: solo el servidor, HTTPS</td><td class="ok">Sí</td></tr>
+  <tr><td>Negocio (encargado)</td><td>Cámaras: solo el grabador</td><td class="ok">Sí</td></tr>
+  <tr><td>Invitados</td><td>Cualquier equipo del local</td><td class="ko">No (solo internet)</td></tr>
+  <tr><td>Cámaras</td><td>Internet o cualquier otra VLAN</td><td class="ko">No</td></tr>
+  <tr><td>Cualquiera</td><td>Internet (salvo cámaras)</td><td class="ok">Sí</td></tr></table></div>
+ <div class="card tint"><h3>Por qué importa</h3><p>Con la red actual, cualquier cliente conectado al wifi está en el mismo dominio de difusión que la caja y el grabador de las cámaras, que además tiene la contraseña de fábrica (riesgos R1 y R2 del informe, los dos críticos). Separar la red cuesta un conmutador gestionable y un punto de acceso con varios SSID: es la necesidad número 1 del proyecto y la de menor coste.</p></div>
+</div>
+<footer>Lab 1 · Reto 1 · Riches Manuel y Roca · 1.º CFGS ASIR · IES Conselleria</footer>
+<script src="js/red.js"></script>
+</body></html>

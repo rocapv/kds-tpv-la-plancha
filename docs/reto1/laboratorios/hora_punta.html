@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Lab 3 · Hora punta · Burglar King</title><link rel="stylesheet" href="css/lab.css"></head>
+<body>
+<header><span class="pt">LAB 3</span><h1>Hora punta: papel contra KDS</h1><a href="index.html">← laboratorios</a></header>
+<p class="intro">Sesenta segundos de servicio en Burglar King. Llegan <b>comandas de mesa</b> y <b>pedidos de reparto</b>. En el modo <b>papel</b> tú eres el camarero: apuntas la comanda, la llevas a la cocina y copias a mano los pedidos de la tableta antes de que se olviden. En el modo <b>KDS</b> la comanda entra en la pantalla de cocina en cuanto la tomas, y los pedidos de reparto entran solos. La cocina tarda lo mismo en los dos casos. Juega una ronda en cada modo y compara.</p>
+
+<div class="hud">
+ <span class="modo"><button id="m_papel" class="on">Papel</button><button id="m_kds">KDS</button></span>
+ <button class="prim" id="empezar">Empezar ronda</button>
+ <span class="reloj" id="reloj">60</span>
+ <span>Servidos <b id="serv">0</b></span><span>Perdidos <b id="perd">0</b></span><span>Ingresos <b id="ing">0 €</b></span>
+</div>
+<div class="tablero">
+ <div class="col"><h3>Sala y tableta <small id="c1"></small></h3><div id="sala"></div></div>
+ <div class="col"><h3>Cocina <small id="c2"></small></h3><div id="cocina"></div></div>
+ <div class="col"><h3>Pase · listos para servir <small id="c3"></small></h3><div id="pase"></div></div>
+</div>
+<div class="msg" id="msg">Elige el modo y pulsa «Empezar ronda».</div>
+<h2>Resultados</h2>
+<table class="resultado"><tr><th>Modo</th><th>Pedidos llegados</th><th>Servidos</th><th>Perdidos u olvidados</th><th>Espera media</th><th>Ingresos</th></tr>
+<tr id="r_papel"><td>Papel y tableta</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
+<tr id="r_kds"><td>KDS</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td></tr></table>
+<p class="msg" id="comparativa"></p>
+<footer>Lab 3 · Reto 1 · Riches Manuel y Roca · 1.º CFGS ASIR · IES Conselleria</footer>
+<script src="js/hora_punta.js"></script>
+</body></html>
