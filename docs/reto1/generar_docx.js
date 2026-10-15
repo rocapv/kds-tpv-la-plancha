@@ -1,4 +1,6 @@
 // Maqueta el informe del Reto 1 en .docx con el formato del manual del módulo (APA 7.ª):
+// Portada, índice, cabecera con los logos oficiales (UE y Conselleria), pie con empresa, página y proyecto,
+// y solo los puntos 1-8 del guion acordado (sin resumen ni anexos).
 // Arial 11, márgenes de 2,54 cm, interlineado doble, alineado a la izquierda y sangría de 1,27 cm.
 // Uso: node generar_docx.js  ->  reto1_contexto_tecnologico.docx (índice sin paginar; lo pagina actualizar.py)
 const fs = require('fs');
@@ -8,7 +10,7 @@ const {
   AlignmentType, HeadingLevel, LevelFormat, WidthType, ShadingType, BorderStyle, PageNumber,
   TableOfContents, PageBreak, TabStopType, VerticalAlign,
 } = require('docx');
-const { META, RESUMEN, CUERPO, REFERENCIAS, NORMATIVA, ANEXO_RA } = require('./contenido');
+const { META, CUERPO, BIBLIOGRAFIA } = require('./contenido');
 
 const AQUI = __dirname;
 const FUENTE = 'Arial';
@@ -120,18 +122,8 @@ function portada() {
     centrado(META.reto),
     centrado(META.ciclo),
     centrado(META.centro),
-    centrado(META.fecha, { after: 960 }),
-    centrado(`Resultados de aprendizaje: PAR RA1 · ISO RA4 · FH RA4 y RA5 · IPE I RA2 y RA5`, { size: 18, color: '666666' }),
+    centrado(META.fecha),
   ];
-}
-
-function resumen() {
-  const out = [];
-  RESUMEN.forEach(([titulo, texto], i) => {
-    out.push(new Paragraph({ heading: HeadingLevel.HEADING_1, pageBreakBefore: i === 0, children: [new TextRun(titulo)] }));
-    out.push(new Paragraph({ indent: { firstLine: 0 }, children: runs(texto) }));
-  });
-  return out;
 }
 
 function indice() {
@@ -142,33 +134,32 @@ function indice() {
 }
 
 function finales() {
-  const out = [H1('Referencias')];
-  out.push(...REFERENCIAS.map(referencia));
-  out.push(H2('Normativa consultada'));
-  out.push(...NORMATIVA.map(referencia));
-  out.push(H1('Anexo I. Relación con los resultados de aprendizaje'));
-  out.push(P(`El enunciado del reto vincula el trabajo a los resultados de aprendizaje de cuatro módulos, además del RA1 del propio proyecto intermodular, del que este reto supone el 50 % (IES Conselleria, 2025a). La tabla siguiente indica en qué apartados del informe se trabaja cada uno.`));
-  out.push(...tabla('Resultados de aprendizaje y apartados del informe que los trabajan', ['Módulo', 'Resultado de aprendizaje', 'Apartados'],
-    ANEXO_RA, [2300, 4000, 2726], 'Nota. Textos de los resultados de aprendizaje según los documentos de contenidos y criterios de cada módulo (curso 2025-2026).'));
-  return out;
+  return [H1('8. Bibliografía'), ...BIBLIOGRAFIA.map(referencia)];
 }
 
-const cabecera = new Header({ children: [new Paragraph({
-  indent: { firstLine: 0 }, spacing: { line: 240 },
-  tabStops: [{ type: TabStopType.RIGHT, position: ANCHO }],
-  border: { bottom: { style: BorderStyle.SINGLE, size: 6, color: NARANJA, space: 4 } },
-  children: [new TextRun({ text: META.cabecera, size: 18, color: '555555' }), new TextRun({ text: '\t1.º ASIR · IES Conselleria', size: 18, color: '555555' })],
-})] });
+// Cabecera: logos oficiales de la guía (UE y Conselleria, 1361×154 px) a todo el ancho y debajo el título corto
+const LOGOS = fs.readFileSync(path.join(AQUI, '..', 'competencia', 'cabecera_guia.png'));
+const cabecera = new Header({ children: [
+  new Paragraph({ alignment: AlignmentType.CENTER, indent: { firstLine: 0 }, spacing: { line: 240, after: 60 },
+    children: [new ImageRun({ type: 'png', data: LOGOS, transformation: { width: 450, height: 51 },
+      altText: { title: 'Logos', description: 'Unión Europea y Conselleria de Educación', name: 'cabecera_guia.png' } })] }),
+  new Paragraph({
+    indent: { firstLine: 0 }, spacing: { line: 240 },
+    tabStops: [{ type: TabStopType.RIGHT, position: ANCHO }],
+    border: { bottom: { style: BorderStyle.SINGLE, size: 6, color: NARANJA, space: 4 } },
+    children: [new TextRun({ text: META.cabecera, size: 18, color: '555555' }), new TextRun({ text: '\t1.º ASIR · IES Conselleria', size: 18, color: '555555' })],
+  }),
+] });
 const pie = new Footer({ children: [new Paragraph({
   indent: { firstLine: 0 }, spacing: { line: 240 },
   tabStops: [{ type: TabStopType.RIGHT, position: ANCHO }],
   children: [
-    new TextRun({ text: META.autores, size: 18, color: '555555' }),
+    new TextRun({ text: META.pie, size: 18, color: '555555' }),
     new TextRun({ children: ['\tPágina ', PageNumber.CURRENT, ' de ', PageNumber.TOTAL_PAGES], size: 18, color: '555555' }),
   ],
 })] });
 
-const pagina = { size: { width: 11906, height: 16838 }, margin: { top: 1440, right: 1440, bottom: 1440, left: 1440, header: 708, footer: 708 } };
+const pagina = { size: { width: 11906, height: 16838 }, margin: { top: 1700, right: 1440, bottom: 1440, left: 1440, header: 420, footer: 708 } };
 
 const doc = new Document({
   creator: META.autores, title: META.titulo, description: META.subtitulo, language: 'es-ES',
@@ -190,7 +181,7 @@ const doc = new Document({
   sections: [
     { properties: { page: pagina, titlePage: true }, headers: { default: cabecera, first: new Header({ children: [] }) },
       footers: { default: pie, first: new Footer({ children: [] }) },
-      children: [...portada(), ...resumen(), ...indice(), ...cuerpo(), ...finales()] },
+      children: [...portada(), ...indice(), ...cuerpo(), ...finales()] },
   ],
 });
 

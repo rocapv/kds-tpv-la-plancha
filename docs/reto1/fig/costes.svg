@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="700" viewBox="0 0 1600 700" font-family="Liberation Sans">
+<rect width="1600" height="700" fill="#ffffff"/>
+<!-- Barra apilada: estructura de costes sobre ventas de 32.700 € (100 %) -->
+<text x="60" y="70" font-size="34" font-weight="bold" fill="#222">Reparto de cada 100 € de ventas (sin IVA)</text>
+<text x="60" y="108" font-size="24" fill="#666">Ventas mensuales estimadas: 32.700 € · resultado antes de impuestos: 3.580 € (11 %)</text>
+<g transform="translate(60,150)">
+  <!-- anchura total 1480 px = 100 % -->
+  <rect x="0" y="0" width="473.6" height="120" fill="#E67E22"/>
+  <rect x="473.6" y="0" width="414.4" height="120" fill="#D35400"/>
+  <rect x="888" y="0" width="44.4" height="120" fill="#7F8C8D"/>
+  <rect x="932.4" y="0" width="103.6" height="120" fill="#95A5A6"/>
+  <rect x="1036" y="0" width="74" height="120" fill="#BDC3C7"/>
+  <rect x="1110" y="0" width="14.8" height="120" fill="#D5DBDB"/>
+  <rect x="1124.8" y="0" width="29.6" height="120" fill="#AEB6BF"/>
+  <rect x="1154.4" y="0" width="14.8" height="120" fill="#CCD1D1"/>
+  <rect x="1169.2" y="0" width="310.8" height="120" fill="#27AE60"/>
+  <g font-size="30" font-weight="bold" fill="#fff" text-anchor="middle">
+    <text x="236.8" y="72">32 %</text>
+    <text x="680.8" y="72">28 %</text>
+    <text x="984.2" y="72">7 %</text>
+    <text x="1324.6" y="72">11 %</text>
+  </g>
+</g>
+<!-- Leyenda -->
+<g transform="translate(60,320)" font-size="24" fill="#333">
+  <g><rect x="0" y="0" width="26" height="26" fill="#E67E22"/><text x="40" y="21">Materia prima y consumibles · 10.470 €</text></g>
+  <g transform="translate(0,46)"><rect x="0" y="0" width="26" height="26" fill="#D35400"/><text x="40" y="21">Personal (sueldos, cotizaciones y autónomo) · 9.100 €</text></g>
+  <g transform="translate(0,92)"><rect x="0" y="0" width="26" height="26" fill="#7F8C8D"/><text x="40" y="21">Alquiler del local · 1.000 € (3 %)</text></g>
+  <g transform="translate(0,138)"><rect x="0" y="0" width="26" height="26" fill="#95A5A6"/><text x="40" y="21">Suministros, seguros, gestoría y mantenimiento · 2.300 €</text></g>
+  <g transform="translate(0,184)"><rect x="0" y="0" width="26" height="26" fill="#BDC3C7"/><text x="40" y="21">Comisiones de las plataformas de reparto · 1.500 € (5 %)</text></g>
+  <g transform="translate(780,0)"><rect x="0" y="0" width="26" height="26" fill="#D5DBDB"/><text x="40" y="21">Publicidad · 300 € (1 %)</text></g>
+  <g transform="translate(780,46)"><rect x="0" y="0" width="26" height="26" fill="#AEB6BF"/><text x="40" y="21">Amortización y financiación · 600 € (2 %)</text></g>
+  <g transform="translate(780,92)"><rect x="0" y="0" width="26" height="26" fill="#CCD1D1"/><text x="40" y="21">Impuestos y tasas locales · 350 € (1 %)</text></g>
+  <g transform="translate(780,138)"><rect x="0" y="0" width="26" height="26" fill="#27AE60"/><text x="40" y="21" font-weight="bold">Resultado antes de impuestos · 3.580 €</text></g>
+</g>
+<!-- Referencia del sector -->
+<g transform="translate(60,580)" font-size="22" fill="#555">
+  <text x="0" y="0">Bandas del sector: producto 28-35 % · personal 30-35 % · alquiler ≤ 10 % · gastos generales 13-20 % (Tourinews, 2025).</text>
+  <text x="0" y="36">Rentabilidad media de la restauración española en 2025: −0,9 % (Hosteltur, 2026).</text>
+</g>
+</svg>
