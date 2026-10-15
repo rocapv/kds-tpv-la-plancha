@@ -268,7 +268,7 @@ table.mini tr.tot td{font-weight:bold;border-top:2px solid #999;border-bottom:0}
 #notas{position:fixed;left:0;right:0;bottom:0;background:#fffbe8;color:#222;font-size:19px;line-height:1.55;padding:14px 28px 18px;display:none;max-height:48vh;overflow:auto;border-top:3px solid var(--nar);white-space:pre-wrap}
 #notas .cab{display:block;font-size:13px;letter-spacing:.04em;text-transform:uppercase;color:#8a5a14;margin-bottom:8px;white-space:normal}
 #notas.on{display:block}
-#ayuda{position:fixed;right:12px;top:10px;color:#888;font-size:12px}
+#ayuda{position:fixed;right:12px;top:10px;color:#888;font-size:12px}body.lab #ayuda{display:none}
 #reloj{position:fixed;left:12px;top:10px;color:#bbb;font-size:13px;font-variant-numeric:tabular-nums;display:none;z-index:11}#reloj.on{display:block}
 @media print{@page{size:1280px 720px;margin:0}html,body{background:#fff}#deck{position:static;display:block}
  .slide{display:block!important;position:relative;transform:none!important;page-break-after:always}#notas,#ayuda{display:none!important}}
@@ -368,6 +368,7 @@ function ver(n){n=Math.max(0,Math.min(sl.length-1,n));if(n===i)return;
  prog.style.transform=`scaleX(${(i+1)/sl.length})`;
  pinta();try{history.replaceState(null,'','#'+(i+1))}catch(e){}
  const t=++tok;sl[i].querySelectorAll('.num').forEach(el=>contar(el,t));
+ document.body.classList.toggle('lab',sl[i].classList.contains('labframe'));
  sl[i].querySelectorAll('iframe[data-src]').forEach(f=>{f.src=f.dataset.src;f.removeAttribute('data-src')});
  if(sl[i].classList.contains('quiz'))quizInicio()}
 const toast=document.getElementById('toast');let tt=null;
