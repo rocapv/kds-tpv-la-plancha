@@ -2,12 +2,13 @@
 <html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Lab 2 · Verifactu · Burglar King</title><link rel="stylesheet" href="css/lab.css"></head>
 <body>
-<header><span class="pt">LAB 2</span><h1>Verifactu: la cadena de facturas</h1><a href="index.html">← laboratorios</a></header>
-<p class="intro">El Real Decreto 1007/2023 (reglamento <b>Verifactu</b>) obliga a que cada factura lleve una <b>huella</b> (hash SHA-256) calculada sobre sus datos <b>y sobre la huella de la factura anterior</b>. Así cada registro queda encadenado al anterior: si alguien cambia o borra una venta, la cadena se rompe y se nota. Para una sociedad como Burglar King es obligatorio desde el <b>1 de enero de 2027</b>. Emite unas cuantas facturas, altera una y verifica la cadena.</p>
+<header><span class="pt">LAB 2</span><h1>Simulación: Verifactu, la cadena de facturas</h1><a href="index.html">← laboratorios</a></header>
+<p class="intro">El Real Decreto 1007/2023 (reglamento <b>Verifactu</b>) obliga a que cada factura lleve una <b>huella</b> (hash SHA-256) calculada sobre sus datos <b>y sobre la huella de la factura anterior</b>. Así cada registro queda encadenado al anterior: si alguien cambia o borra una venta, la cadena se rompe y se nota. Para una sociedad como Burglar King es obligatorio desde el <b>1 de enero de 2027</b>. La simulación emite seis facturas, altera una «como haría un TPV sin Verifactu», verifica la cadena y muestra cómo se corrige de verdad: con una factura rectificativa.</p>
+<div class="acciones"><button class="prim" id="simular">▶ Simular</button><span class="estado" id="paso"></span></div>
 
 <div class="grid c2">
  <div class="card">
-  <h2 style="margin-top:0">1. Emite facturas</h2>
+  <h2 style="margin-top:0">Modo manual</h2>
   <div class="form">
    <label>Concepto <select id="concepto"><option>Hamburguesa clásica</option><option>Menú de mediodía</option><option>Doble queso + patatas</option><option>Bebida</option><option>Pedido de reparto</option></select></label>
    <label>Importe (€, IVA incluido) <input id="importe" type="number" step="0.05" min="0.5" value="11.50"></label>
@@ -26,7 +27,7 @@
  </div>
 </div>
 
-<h2>2. Registro de facturación</h2>
+<h2>Registro de facturación</h2>
 <div class="cadena" id="cadena"><p class="msg">Todavía no hay facturas.</p></div>
 <footer>Lab 2 · Reto 1 · Riches Manuel y Roca · 1.º CFGS ASIR · IES Conselleria</footer>
 <script src="js/verifactu.js"></script>

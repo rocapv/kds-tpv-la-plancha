@@ -28,9 +28,9 @@
   },
   {
    "n": 5,
-   "titulo": "Práctica: segmenta la red",
+   "titulo": "Simulación: la red",
    "min": 0.75,
-   "texto": "Antes de seguir, una práctica corta. Esta es la red que proponemos: cuatro VLAN. Reparte los dispositivos del local y comprueba con pings que los invitados no llegan a la caja ni a las cámaras."
+   "texto": "Una simulación rápida. Pulsamos «Las dos seguidas»: primero la red de hoy, con todo en la misma subred, y la misma batería de pings sobre las cuatro VLAN del proyecto. Hoy un móvil de cliente llega a la caja y al grabador de las cámaras; con la red segmentada, lo necesario funciona y lo peligroso queda bloqueado."
   },
   {
    "n": 6,
@@ -46,9 +46,9 @@
   },
   {
    "n": 8,
-   "titulo": "Práctica: Verifactu",
+   "titulo": "Simulación: Verifactu",
    "min": 0.75,
-   "texto": "Segunda práctica, sobre el factor legal. Cada factura lleva una huella calculada sobre sus datos y la huella de la anterior. Emitimos unas cuantas, alteramos una y la cadena se rompe. Por eso el TPV de 2016 deja de ser legal en enero de 2027."
+   "texto": "Segunda simulación, sobre el factor legal. Se emiten seis facturas, cada una con la huella de la anterior. Alguien rebaja una para pagar menos IVA, como permite un TPV sin Verifactu: al verificar, la cadena se rompe desde esa factura. La única corrección válida es una rectificativa. Por eso el TPV de 2016 deja de ser legal en enero de 2027."
   },
   {
    "n": 9,
@@ -82,9 +82,9 @@
   },
   {
    "n": 14,
-   "titulo": "Práctica: hora punta",
+   "titulo": "Simulación: hora punta",
    "min": 0.75,
-   "texto": "Tercera práctica: sesenta segundos de servicio con el comandero de papel y la tableta, y después con la pantalla de cocina. Mismo flujo de pedidos; lo que cambia es dónde entra la información."
+   "texto": "Tercera simulación: el mismo servicio dos veces a la vez, con idéntico flujo de pedidos. A la izquierda, papel, voz y tableta; a la derecha, la pantalla de cocina. La cocina tarda lo mismo: lo que cambia es cuántos pedidos se pierden por el camino y cuánto espera el cliente."
   },
   {
    "n": 15,

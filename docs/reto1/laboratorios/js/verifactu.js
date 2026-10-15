@@ -44,6 +44,29 @@ $('#borrar').addEventListener('click', () => { if (!F.length) return; F.pop(); p
 $('#reiniciar').addEventListener('click', () => { F.length = 0; pinta(); $('#msg').textContent = ''; });
 $('#verificar').addEventListener('click', verificar);
 
+// ---- Simulación guiada (unos 25 s) ----
+const espera = ms => new Promise(r => setTimeout(r, ms));
+const paso = t => { $('#paso').textContent = t; };
+let simulando = false;
+$('#simular').addEventListener('click', async () => {
+  if (simulando) return; simulando = true; $('#simular').disabled = true;
+  F.length = 0; pinta(); $('#msg').textContent = '';
+  const ops = [...$('#concepto').options].map(o => o.text);
+  paso('1/5 · Un servicio normal: se emiten seis facturas, cada una encadenada con la huella de la anterior.');
+  for (let i = 0; i < 6; i++) { await emitir(ops[i % ops.length], Math.round((6 + Math.random() * 28) * 20) / 20); await espera(650); }
+  await espera(900); paso('2/5 · Se verifica la cadena: todas las huellas cuadran.'); await verificar(); await espera(2200);
+  const f = F[2]; const antes = f.importe; f.importe = Math.round(antes * 0.4 * 20) / 20;
+  paso(`3/5 · Alguien rebaja la factura F-0003 de ${eur(antes)} a ${eur(f.importe)} para pagar menos IVA, como permite un TPV sin Verifactu.`);
+  pinta(); $('#msg').innerHTML = 'Importe alterado en F-0003.'; await espera(3200);
+  paso('4/5 · Se vuelve a verificar: la huella de F-0003 ya no coincide, y desde ahí ninguna encaja. La alteración se detecta.');
+  await verificar(); await espera(3600);
+  paso('5/5 · La única corrección válida: dejar F-0003 como estaba y emitir una factura rectificativa encadenada al final.');
+  f.importe = antes; pinta(); await espera(900);
+  await emitir('Rectificativa de F-0003', -(antes - Math.round(antes * 0.4 * 20) / 20)); await espera(700); await verificar();
+  $('#msg').innerHTML += ' <b>Así queda rastro de la corrección y la cadena sigue íntegra.</b> Para Burglar King, S.L., obligatorio desde el 1 de enero de 2027.';
+  simulando = false; $('#simular').disabled = false;
+});
+
 async function verificar() {
   let rota = -1, prev = '';
   for (const f of F) {

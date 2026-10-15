@@ -74,7 +74,7 @@ S.append(("", f"""
   ("Una sola red para todo", "caja, cámaras y móviles de los clientes juntos")], 1)], 3)}"""))
 
 # Lab 1 (tras la red actual)
-S.append(lab("Práctica: segmenta la red de Burglar King", "red.html"))
+S.append(lab("Simulación: la red actual frente a la red segmentada", "red.html"))
 
 # 5 · Punto 2: empresa de referencia
 S.append(("", f"""
@@ -101,7 +101,7 @@ S.append(("", f"""
   ("L", "Legal", "Ley antifraude, RGPD, alérgenos, registro de jornada, convenio provincial")]], 3, "card pestel")}"""))
 
 # Lab 2 (tras el factor legal del PESTEL)
-S.append(lab("Práctica: Verifactu, la cadena de facturas", "verifactu.html"))
+S.append(lab("Simulación: Verifactu, la cadena de facturas", "verifactu.html"))
 
 # 7 · Punto 3.2: micro
 S.append(("", f"""
@@ -164,7 +164,7 @@ S.append(("", f"""
 <p class="nota">Estudio de TheFork Lab, julio de 2026 (L'Express Franchise, 2026).</p>"""))
 
 # Lab 3 (tras los servicios)
-S.append(lab("Práctica: hora punta, papel contra KDS", "hora_punta.html"))
+S.append(lab("Simulación: una hora punta con papel y con KDS", "hora_punta.html"))
 
 # 15 · Punto 7: conclusiones
 S.append(("dark", f"""
@@ -456,10 +456,10 @@ presentacion.html      Presentación ({len(S)} diapositivas, {MIN:g} min).
 css/presentacion.css   Estilos y animaciones de la presentación.
 js/presentacion.js     Navegación, contadores, cronómetro y cuestionario.
 fig/                   Figuras del informe (organigrama, flujo de la comanda, red actual, costes) y logo.
-laboratorios/          Tres ejercicios interactivos (abrir laboratorios/index.html):
-  red.html             Lab 1 · Segmenta la red: dispositivos a VLAN y pings contra el cortafuegos.
-  verifactu.html       Lab 2 · Cadena de facturas con SHA-256 al estilo Verifactu.
-  hora_punta.html      Lab 3 · Minijuego de servicio: comandero de papel contra KDS, con el mismo flujo de pedidos.
+laboratorios/          Tres simulaciones (abrir laboratorios/index.html); cada una se lanza con «Simular» y tiene modo manual:
+  red.html             Lab 1 · La red actual frente a la segmentada: misma batería de pings en los dos escenarios.
+  verifactu.html       Lab 2 · Cadena de facturas con SHA-256: alteración detectada y corrección con rectificativa.
+  hora_punta.html      Lab 3 · Hora punta simulada en paralelo: papel, voz y tableta contra KDS, mismo flujo de pedidos.
   css/lab.css, js/     Estilos y lógica de cada laboratorio (JavaScript sin dependencias).
 
 El informe en PDF (reto1_contexto_tecnologico.pdf) se entrega aparte.

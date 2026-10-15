@@ -1,26 +1,30 @@
 <!doctype html>
 <html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Lab 1 · Segmenta la red · Burglar King</title><link rel="stylesheet" href="css/lab.css"></head>
+<title>Lab 1 · Segmentación de la red · Burglar King</title><link rel="stylesheet" href="css/lab.css"></head>
 <body>
-<header><span class="pt">LAB 1</span><h1>Segmenta la red de Burglar King</h1><a href="index.html">← laboratorios</a></header>
-<p class="intro">Hoy el local tiene <b>una sola red</b>, 192.168.1.0/24, en la que conviven la caja, el datáfono, las cámaras y los móviles de los clientes. El proyecto propone cuatro segmentos: <b>Negocio</b> (caja, servidor, administración), <b>Cocina</b> (pantallas KDS), <b>Cámaras</b> (videovigilancia) e <b>Invitados</b> (wifi de clientes). Arrastra cada dispositivo a su VLAN (o pulsa el dispositivo y después la VLAN) y comprueba el resultado. Después, lanza pings entre dispositivos para ver qué deja pasar el cortafuegos.</p>
+<header><span class="pt">LAB 1</span><h1>Simulación: la red actual frente a la red segmentada</h1><a href="index.html">← laboratorios</a></header>
+<p class="intro">Hoy el local tiene <b>una sola red</b>, 192.168.1.0/24, en la que conviven la caja, el datáfono, las cámaras y los móviles de los clientes. El proyecto propone cuatro VLAN: <b>Negocio</b>, <b>Cocina</b>, <b>Cámaras</b> e <b>Invitados</b>. La simulación coloca los dispositivos y lanza la misma batería de pings en los dos escenarios: lo que hoy llega a todas partes, mañana se queda donde debe.</p>
 
-<h2>1. Reparte los dispositivos</h2>
+<div class="acciones"><button class="prim" id="sim_actual">▶ Simular la red actual</button><button class="prim" id="sim_prop">▶ Simular la red segmentada</button><button id="sim_ambas">▶ Las dos seguidas</button><button id="reiniciar">Reiniciar</button><span class="puntos" id="puntos"></span></div>
 <div class="vlans" id="vlans">
- <div class="vlan" data-v="0"><h3>Sin asignar <small id="n0"></small></h3></div>
+ <div class="vlan" data-v="0"><h3><span id="t0">Sin asignar</span> <small id="n0"></small></h3></div>
  <div class="vlan" data-v="10"><h3>VLAN 10 · Negocio <small>192.168.10.0/24</small></h3></div>
  <div class="vlan" data-v="20"><h3>VLAN 20 · Cocina <small>192.168.20.0/24</small></h3></div>
  <div class="vlan" data-v="30"><h3>VLAN 30 · Cámaras <small>192.168.30.0/24</small></h3></div>
  <div class="vlan" data-v="40"><h3>VLAN 40 · Invitados <small>192.168.40.0/24</small></h3></div>
 </div>
-<div class="acciones"><button class="prim" id="comprobar">Comprobar</button><button id="pista">Dame una pista</button><button id="reiniciar">Reiniciar</button><span class="puntos" id="puntos"></span></div>
-<div class="msg" id="msg"></div>
-
-<h2>2. Lanza pings entre segmentos</h2>
-<div class="card">
- <div class="ping">Desde <select id="origen"></select> hasta <select id="destino"></select> <button class="prim" id="ping">ping</button> <button id="limpiar">limpiar</button></div>
- <div class="term" id="term">Reparte primero los dispositivos y pulsa «Comprobar»: el cortafuegos se configura con las VLAN correctas.</div>
+<div class="grid c2" style="margin-top:16px">
+ <div class="card"><h3>Batería de pings</h3><div class="term" id="term">Pulsa «Simular».</div></div>
+ <div class="card"><h3>Resultado</h3>
+  <table id="res"><tr><th>Prueba</th><th>Red actual</th><th>Red segmentada</th></tr></table>
+  <div class="msg" id="msg"></div></div>
 </div>
+
+<details style="margin-top:18px"><summary style="cursor:pointer;color:var(--gris)">Modo manual: reparte tú los dispositivos y lanza tus propios pings</summary>
+ <div class="acciones" style="margin-top:10px"><button class="prim" id="comprobar">Comprobar</button><button id="pista">Dame una pista</button>
+  <span class="ping">Desde <select id="origen"></select> hasta <select id="destino"></select> <button id="ping">ping</button></span></div>
+ <p class="msg" id="msg2">Arrastra cada dispositivo a su VLAN (o pulsa el dispositivo y después la VLAN) en el tablero de arriba.</p>
+</details>
 <div class="grid c2" style="margin-top:16px">
  <div class="card"><h3>Reglas del cortafuegos del proyecto</h3>
   <table><tr><th>Desde</th><th>Hacia</th><th>Permitido</th></tr>
