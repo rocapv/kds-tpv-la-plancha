@@ -32,6 +32,13 @@ def punto(n, titulo):
     return f'<h2><span class="pt">{n}</span>{titulo}</h2>'
 
 
+def lab(titulo, fichero):
+    """Diapositiva que carga un laboratorio de laboratorios/ a pantalla completa; no se anuncia antes."""
+    return ("labframe", f'''<div class="labbar"><span>{titulo}</span><span><button onclick="ver(i-1)">← anterior</button>
+<a href="laboratorios/{fichero}" target="_blank" rel="noopener">abrir en una pestaña nueva ↗</a><button onclick="ver(i+1)">siguiente →</button></span></div>
+<iframe data-src="laboratorios/{fichero}" title="{titulo}"></iframe>''')
+
+
 S = []   # (clase, html)
 
 # 1 · Portada
@@ -66,6 +73,9 @@ S.append(("", f"""
   ("TPV de 2015 con Windows 10", "sin soporte desde octubre de 2025, sin copias"),
   ("Una sola red para todo", "caja, cámaras y móviles de los clientes juntos")], 1)], 3)}"""))
 
+# Lab 1 (tras la red actual)
+S.append(lab("Práctica: segmenta la red de Burglar King", "red.html"))
+
 # 5 · Punto 2: empresa de referencia
 S.append(("", f"""
 {punto(2, "Empresa de referencia: Hundred Burgers (y Goiko como contrapunto)")}
@@ -89,6 +99,9 @@ S.append(("", f"""
   ("T", "Tecnológico", "Windows 10 sin soporte; la digitalización se quedó en el cobro, no en la cocina"),
   ("A", "Ambiental", "Bisfenol A en el papel térmico; impuesto a los envases de plástico; RAEE"),
   ("L", "Legal", "Ley antifraude, RGPD, alérgenos, registro de jornada, convenio provincial")]], 3, "card pestel")}"""))
+
+# Lab 2 (tras el factor legal del PESTEL)
+S.append(lab("Práctica: Verifactu, la cadena de facturas", "verifactu.html"))
 
 # 7 · Punto 3.2: micro
 S.append(("", f"""
@@ -149,6 +162,9 @@ S.append(("", f"""
   {lista(["<b>Perfil de Google</b> y carta digital: coste 0, prioridad 1", "Instagram y TikTok: 3 publicaciones por semana", "Menú universitario con carné; fidelización desde el TPV", "Calendario: inicio de curso, exámenes, Fallas"])}</div>
 </div>
 <p class="nota">Estudio de TheFork Lab, julio de 2026 (L'Express Franchise, 2026).</p>"""))
+
+# Lab 3 (tras los servicios)
+S.append(lab("Práctica: hora punta, papel contra KDS", "hora_punta.html"))
 
 # 15 · Punto 7: conclusiones
 S.append(("dark", f"""
@@ -217,6 +233,9 @@ img.ancho{width:100%;display:block;margin-bottom:18px}
 .barras.s{grid-template-columns:92px 1fr 120px;font-size:15px;gap:10px 12px}.barras.s .barra i{height:22px}.barras.s .barra b{font-size:14px}
 ul{padding-left:20px}li{margin:9px 0;font-size:17px;line-height:1.35}
 .num-pag{position:absolute;right:40px;bottom:20px;font-size:14px;color:#999}
+.slide.labframe{padding:0}.labbar{height:44px;background:var(--osc);color:#fff;display:flex;justify-content:space-between;align-items:center;padding:0 18px;font-size:15px}
+.labbar span{display:flex;gap:10px;align-items:center}.labbar a{color:var(--nar);font-size:14px}.labbar button{font:inherit;font-size:14px;padding:5px 12px;border-radius:8px;border:1px solid #666;background:#2f353b;color:#fff;cursor:pointer}.labbar button:hover{background:var(--nar);border-color:var(--nar)}
+.slide.labframe iframe{display:block;width:1280px;height:676px;border:0;background:#fff}.slide.labframe .num-pag{color:#aaa;bottom:auto;top:14px;right:auto;left:50%;translate:-50% 0}
 .bib li{font-size:15px}
 /* Laboratorios */
 .mandos{display:flex;flex-direction:column;gap:14px}
@@ -304,7 +323,7 @@ if(pedido==='1'||pedido==='0'){eleccion=pedido==='1'?'on':'off';try{localStorage
 let quieto=eleccion?eleccion==='off':SO_QUIETO;
 document.documentElement.dataset.mov=quieto?'off':'on';
 let i=-1,tok=0,salida=null;
-const SEL='h1,h2,.badge,.logo,.sub,.pie,.lead,.nota,.banda,.card,.fila,.num.xl,.split>img,img.ancho,.barras>*,#quiz';
+const SEL='h1,h2,.badge,.logo,.sub,.pie,.lead,.nota,.banda,.card,.fila,.num.xl,.split>img,img.ancho,.barras>*,#quiz,.labbar,iframe';
 sl.forEach(s=>{const c=[...s.querySelectorAll(SEL)];
  c.filter(a=>!c.some(o=>o!==a&&o.contains(a))).forEach((el,k)=>{el.classList.add('rev');
   const st=el.style,p=el.parentElement,hijo=[...p.children].indexOf(el);let dx=0,dy=36,sc=1;
@@ -349,6 +368,7 @@ function ver(n){n=Math.max(0,Math.min(sl.length-1,n));if(n===i)return;
  prog.style.transform=`scaleX(${(i+1)/sl.length})`;
  pinta();try{history.replaceState(null,'','#'+(i+1))}catch(e){}
  const t=++tok;sl[i].querySelectorAll('.num').forEach(el=>contar(el,t));
+ sl[i].querySelectorAll('iframe[data-src]').forEach(f=>{f.src=f.dataset.src;f.removeAttribute('data-src')});
  if(sl[i].classList.contains('quiz'))quizInicio()}
 const toast=document.getElementById('toast');let tt=null;
 function aviso(t,ms){toast.textContent=t;toast.classList.add('on');clearTimeout(tt);tt=setTimeout(()=>toast.classList.remove('on'),ms||2200)}
@@ -359,7 +379,7 @@ function alterna(){quieto=!quieto;document.documentElement.dataset.mov=quieto?'o
  const t=++tok;s.querySelectorAll('.num').forEach(el=>contar(el,t))}
 addEventListener('beforeprint',()=>{tok++;sl.forEach(restaura)});
 // Dentro de un laboratorio o del cuestionario, el teclado y el ratón son suyos: las flechas mueven los deslizadores, no las diapositivas.
-const interactivo=el=>el&&el.closest&&el.closest('#quiz,input,button');
+const interactivo=el=>el&&el.closest&&el.closest('#quiz,.labbar,iframe,input,button');
 addEventListener('keydown',ev=>{if(interactivo(ev.target)&&['ArrowRight','ArrowLeft',' '].includes(ev.key))return;
  if(['ArrowRight','PageDown',' '].includes(ev.key)){ev.preventDefault();ver(i+1)}
  else if(['ArrowLeft','PageUp'].includes(ev.key))ver(i-1);else if(ev.key==='Home')ver(0);else if(ev.key==='End')ver(sl.length-1);
@@ -430,7 +450,8 @@ Descomprimir la carpeta entera y abrir los ficheros con cualquier navegador (no 
 
 presentacion.html      Presentación ({len(S)} diapositivas, {MIN:g} min).
                        Teclas: flechas o espacio para avanzar, N guion del orador, T cronómetro de ensayo,
-                       M animaciones sí/no, F pantalla completa. La última diapositiva es un cuestionario de 3 preguntas.
+                       M animaciones sí/no, F pantalla completa. Tres diapositivas cargan los laboratorios (se pueden abrir
+                       también en una pestaña aparte); la última es un cuestionario de 3 preguntas.
 css/presentacion.css   Estilos y animaciones de la presentación.
 js/presentacion.js     Navegación, contadores, cronómetro y cuestionario.
 fig/                   Figuras del informe (organigrama, flujo de la comanda, red actual, costes) y logo.
