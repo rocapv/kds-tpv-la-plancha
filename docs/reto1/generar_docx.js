@@ -70,7 +70,9 @@ function tabla(titulo, cab, filas, anchos, pie) {
     verticalAlign: VerticalAlign.TOP,
     shading: esCab ? { fill: 'FDEBD9', type: ShadingType.CLEAR, color: 'auto' } : undefined,
     borders: { top: esCab ? linea : sinBorde, bottom: (esCab || ultima) ? linea : { style: BorderStyle.SINGLE, size: 2, color: 'DDDDDD' }, left: sinBorde, right: sinBorde },
-    children: [new Paragraph({ indent: { firstLine: 0 }, spacing: { line: 252, before: 0, after: 0 }, children: runs(t, { size: 19, bold: esCab || undefined }) })],
+    // keepNext en todas las celdas: Word mantiene la tabla entera en una página y unida a su nota.
+    // LibreOffice no lo aplica a la tabla; para él lo fija actualizar.py (Split = False).
+    children: [new Paragraph({ keepNext: true, indent: { firstLine: 0 }, spacing: { line: 252, before: 0, after: 0 }, children: runs(t, { size: 19, bold: esCab || undefined }) })],
   });
   const t = new Table({
     width: { size: ANCHO, type: WidthType.DXA }, columnWidths: anchos,

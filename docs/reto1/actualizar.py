@@ -24,6 +24,12 @@ try:
     desk = rctx.ServiceManager.createInstanceWithContext("com.sun.star.frame.Desktop", rctx)
     doc = desk.loadComponentFromURL(src.as_uri(), "_blank", 0, (pv("Hidden", True),))
     if src.suffix == ".docx":
+        # Ninguna tabla puede partirse entre dos páginas: se prohíbe el corte y se une a la nota que la sigue
+        tablas = doc.getTextTables()
+        for i in range(tablas.getCount()):
+            t = tablas.getByIndex(i)
+            t.Split = False
+            t.KeepTogether = True
         for _ in range(2):                       # dos pasadas: el índice cambia la paginación
             idx = doc.getDocumentIndexes()
             for i in range(idx.getCount()):
