@@ -111,9 +111,19 @@ function cuerpo() {
   return out;
 }
 
+// Logo de la empresa en la portada (META.logo, PNG); 150 pt de ancho y el alto según la proporción del fichero
+function logoPortada() {
+  if (!META.logo) return [new Paragraph({ spacing: { before: 1800 }, children: [] })];
+  const png = fs.readFileSync(path.join(AQUI, META.logo));
+  const w = png.readUInt32BE(16), h = png.readUInt32BE(20);
+  return [new Paragraph({ alignment: AlignmentType.CENTER, indent: { firstLine: 0 }, spacing: { before: 600, after: 480, line: 240 },
+    children: [new ImageRun({ type: 'png', data: png, transformation: { width: 150, height: Math.round(150 * h / w) },
+      altText: { title: `Logo de ${META.empresa}`, description: `Logo de ${META.empresa}`, name: path.basename(META.logo) } })] })];
+}
+
 function portada() {
   return [
-    new Paragraph({ spacing: { before: 1800 }, children: [] }),
+    ...logoPortada(),
     centrado(META.titulo, { bold: true, size: 32 }),
     centrado(META.subtitulo, { size: 24, after: 480 }),
     new Paragraph({ alignment: AlignmentType.CENTER, indent: { firstLine: 0 }, spacing: { after: 960 },

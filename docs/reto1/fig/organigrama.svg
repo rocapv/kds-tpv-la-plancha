@@ -1,40 +1,50 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1600" height="760" viewBox="0 0 1600 760" font-family="Liberation Sans">
 <rect width="1600" height="760" fill="#ffffff"/>
-<g stroke="#555" stroke-width="3" fill="none">
-<path d="M800 190 V250 H420 V300"/><path d="M800 250 H1180 V300"/>
-<path d="M420 420 V470 H160 V510"/><path d="M420 470 V510"/><path d="M420 470 H680 V510"/>
-<path d="M1180 420 V470 H1040 V510"/><path d="M1180 470 H1320 V510"/>
-</g>
+<g stroke="#555" stroke-width="3" fill="none"><path d="M800 190 V250"/><path d="M245 250 H1355"/><path d="M245 250 V300"/><path d="M615 250 V300"/><path d="M985 250 V300"/><path d="M1355 250 V300"/></g>
 <g stroke="#999" stroke-width="3" stroke-dasharray="10 8" fill="none"><path d="M960 130 H1180"/><path d="M640 130 H420"/></g>
 <rect x="640" y="70" width="320" height="120" rx="14" fill="#e67e22"/>
-<text x="800" y="120" text-anchor="middle" font-size="34" font-weight="bold" fill="#fff">Encargado</text>
-<text x="800" y="160" text-anchor="middle" font-size="24" fill="#fff">socio gerente · caja</text>
-<rect x="1180" y="80" width="340" height="100" rx="14" fill="#f2f2f2" stroke="#999" stroke-width="2"/>
-<text x="1350" y="122" text-anchor="middle" font-size="26" fill="#333">Gestoría externa</text>
-<text x="1350" y="156" text-anchor="middle" font-size="21" fill="#666">contabilidad, nóminas, impuestos</text>
-<rect x="80" y="80" width="340" height="100" rx="14" fill="#f2f2f2" stroke="#999" stroke-width="2"/>
-<text x="250" y="122" text-anchor="middle" font-size="26" fill="#333">Proveedores</text>
-<text x="250" y="156" text-anchor="middle" font-size="21" fill="#666">alimentación, bebida, TIC</text>
-<rect x="250" y="300" width="340" height="120" rx="14" fill="#fdebd9" stroke="#e67e22" stroke-width="3"/>
-<text x="420" y="352" text-anchor="middle" font-size="30" font-weight="bold" fill="#333">Sala</text>
-<text x="420" y="390" text-anchor="middle" font-size="22" fill="#555">mesas, terraza, barra</text>
-<rect x="1010" y="300" width="340" height="120" rx="14" fill="#fdebd9" stroke="#e67e22" stroke-width="3"/>
-<text x="1180" y="352" text-anchor="middle" font-size="30" font-weight="bold" fill="#333">Cocina</text>
-<text x="1180" y="390" text-anchor="middle" font-size="22" fill="#555">plancha, freidora, fríos</text>
-<rect x="50" y="510" width="220" height="110" rx="14" fill="#fff" stroke="#555" stroke-width="2"/>
-<text x="160" y="557" text-anchor="middle" font-size="25" fill="#333">Camarero 1</text>
-<text x="160" y="592" text-anchor="middle" font-size="19" fill="#666">martes a sábado</text>
-<rect x="310" y="510" width="220" height="110" rx="14" fill="#fff" stroke="#555" stroke-width="2"/>
-<text x="420" y="557" text-anchor="middle" font-size="25" fill="#333">Camarero 2</text>
-<text x="420" y="592" text-anchor="middle" font-size="19" fill="#666">miércoles a domingo</text>
-<rect x="550" y="510" width="260" height="110" rx="14" fill="#fff" stroke="#555" stroke-width="2" stroke-dasharray="8 6"/>
-<text x="680" y="557" text-anchor="middle" font-size="25" fill="#333">Extra de sala</text>
-<text x="680" y="592" text-anchor="middle" font-size="19" fill="#666">media jornada, vie.-dom.</text>
-<rect x="930" y="510" width="220" height="110" rx="14" fill="#fff" stroke="#555" stroke-width="2"/>
-<text x="1040" y="557" text-anchor="middle" font-size="25" fill="#333">Cocinero</text>
-<text x="1040" y="592" text-anchor="middle" font-size="19" fill="#666">martes a sábado</text>
-<rect x="1190" y="510" width="260" height="110" rx="14" fill="#fff" stroke="#555" stroke-width="2"/>
-<text x="1320" y="557" text-anchor="middle" font-size="25" fill="#333">Ayudante de cocina</text>
-<text x="1320" y="592" text-anchor="middle" font-size="19" fill="#666">miércoles a domingo</text>
-<text x="800" y="700" text-anchor="middle" font-size="22" fill="#666">Línea continua: dependencia jerárquica · discontinua: relación externa · recuadro discontinuo: media jornada</text>
+<text x="800" y="120" text-anchor="middle" font-size="34" font-weight="bold" fill="#fff">Dirección</text>
+<text x="800" y="160" text-anchor="middle" font-size="24" fill="#fff">los dos socios</text>
+<rect x="80" y="80" width="340" height="100" rx="14" fill="#f2f2f2" stroke="#999" stroke-width="3"/>
+<text x="250.0" y="124.0" text-anchor="middle" font-size="26" fill="#333">Proveedores</text>
+<text x="250.0" y="160.0" text-anchor="middle" font-size="21" fill="#666">mayorista de informática</text>
+
+<rect x="1180" y="80" width="340" height="100" rx="14" fill="#f2f2f2" stroke="#999" stroke-width="3"/>
+<text x="1350.0" y="124.0" text-anchor="middle" font-size="26" fill="#333">Externos</text>
+<text x="1350.0" y="160.0" text-anchor="middle" font-size="21" fill="#666">gestoría y aseguradora</text>
+
+<rect x="80" y="300" width="330" height="150" rx="14" fill="#fdebd9" stroke="#e67e22" stroke-width="3"/>
+<text x="245.0" y="352" text-anchor="middle" font-size="30" font-weight="bold" fill="#333">Comercial</text>
+<text x="245.0" y="392" text-anchor="middle" font-size="22" fill="#555">visitas, presupuestos,</text>
+<text x="245.0" y="422" text-anchor="middle" font-size="22" fill="#555">compras y facturación</text>
+<path d="M245.0 450 V500" stroke="#555" stroke-width="3"/>
+<rect x="105" y="500" width="280" height="100" rx="14" fill="#fff" stroke="#555" stroke-width="2"/>
+<text x="245.0" y="543" text-anchor="middle" font-size="23" fill="#333">un socio responsable</text>
+<text x="245.0" y="577" text-anchor="middle" font-size="21" fill="#666">y el otro, suplente</text>
+<rect x="450" y="300" width="330" height="150" rx="14" fill="#fdebd9" stroke="#e67e22" stroke-width="3"/>
+<text x="615.0" y="352" text-anchor="middle" font-size="30" font-weight="bold" fill="#333">Implantación</text>
+<text x="615.0" y="392" text-anchor="middle" font-size="22" fill="#555">auditoría, red, equipos</text>
+<text x="615.0" y="422" text-anchor="middle" font-size="22" fill="#555">e instalación</text>
+<path d="M615.0 450 V500" stroke="#555" stroke-width="3"/>
+<rect x="475" y="500" width="280" height="100" rx="14" fill="#fff" stroke="#555" stroke-width="2"/>
+<text x="615.0" y="543" text-anchor="middle" font-size="23" fill="#333">un socio responsable</text>
+<text x="615.0" y="577" text-anchor="middle" font-size="21" fill="#666">y el otro, suplente</text>
+<rect x="820" y="300" width="330" height="150" rx="14" fill="#fdebd9" stroke="#e67e22" stroke-width="3"/>
+<text x="985.0" y="352" text-anchor="middle" font-size="30" font-weight="bold" fill="#333">Software</text>
+<text x="985.0" y="392" text-anchor="middle" font-size="22" fill="#555">TPV + KDS, Verifactu</text>
+<text x="985.0" y="422" text-anchor="middle" font-size="22" fill="#555">y ampliaciones</text>
+<path d="M985.0 450 V500" stroke="#555" stroke-width="3"/>
+<rect x="845" y="500" width="280" height="100" rx="14" fill="#fff" stroke="#555" stroke-width="2"/>
+<text x="985.0" y="543" text-anchor="middle" font-size="23" fill="#333">un socio responsable</text>
+<text x="985.0" y="577" text-anchor="middle" font-size="21" fill="#666">y el otro, suplente</text>
+<rect x="1190" y="300" width="330" height="150" rx="14" fill="#fdebd9" stroke="#e67e22" stroke-width="3"/>
+<text x="1355.0" y="352" text-anchor="middle" font-size="30" font-weight="bold" fill="#333">Soporte</text>
+<text x="1355.0" y="392" text-anchor="middle" font-size="22" fill="#555">guardia, copias</text>
+<text x="1355.0" y="422" text-anchor="middle" font-size="22" fill="#555">y formación</text>
+<path d="M1355.0 450 V500" stroke="#555" stroke-width="3"/>
+<rect x="1215" y="500" width="280" height="100" rx="14" fill="#fff" stroke="#555" stroke-width="2"/>
+<text x="1355.0" y="543" text-anchor="middle" font-size="23" fill="#333">un socio responsable</text>
+<text x="1355.0" y="577" text-anchor="middle" font-size="21" fill="#666">y el otro, suplente</text>
+<text x="800" y="680" text-anchor="middle" font-size="22" fill="#666">Línea continua: dependencia · discontinua: relación externa · cada área tiene un responsable y un suplente</text>
+<text x="800" y="715" text-anchor="middle" font-size="22" fill="#666">Primera contratación prevista: un técnico de implantación y soporte, a partir de 30 instalaciones al año</text>
 </svg>

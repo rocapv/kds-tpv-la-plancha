@@ -1,40 +1,37 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1600" height="700" viewBox="0 0 1600 700" font-family="Liberation Sans">
 <rect width="1600" height="700" fill="#ffffff"/>
-<!-- Barra apilada: estructura de costes sobre ventas de 45.000 € (100 %); 1480 px = 45.000 € -->
-<text x="60" y="70" font-size="34" font-weight="bold" fill="#222">Reparto de cada 100 € de ventas (sin IVA)</text>
-<text x="60" y="108" font-size="24" fill="#666">Ventas mensuales estimadas: 45.000 € · resultado antes de impuestos: 7.760 € (17 %) · tras el impuesto: 6.214 € (14 %)</text>
-<g transform="translate(60,150)">
-  <rect x="0" y="0" width="473.6" height="120" fill="#E67E22"/>
-  <rect x="473.6" y="0" width="486.76" height="120" fill="#D35400"/>
-  <rect x="960.36" y="0" width="32.89" height="120" fill="#7F8C8D"/>
-  <rect x="993.25" y="0" width="120.37" height="120" fill="#95A5A6"/>
-  <rect x="1113.62" y="0" width="69.07" height="120" fill="#BDC3C7"/>
-  <rect x="1182.69" y="0" width="14.8" height="120" fill="#D5DBDB"/>
-  <rect x="1197.49" y="0" width="13.16" height="120" fill="#CCD1D1"/>
-  <rect x="1210.65" y="0" width="14.14" height="120" fill="#AEB6BF"/>
-  <rect x="1224.79" y="0" width="255.21" height="120" fill="#27AE60"/>
-  <g font-size="30" font-weight="bold" fill="#fff" text-anchor="middle">
-    <text x="236.8" y="72">32 %</text>
-    <text x="716.98" y="72">33 %</text>
-    <text x="1053.43" y="72">8 %</text>
-    <text x="1352.4" y="72">17 %</text>
-  </g>
-</g>
-<!-- Leyenda -->
-<g transform="translate(60,320)" font-size="24" fill="#333">
-  <g><rect x="0" y="0" width="26" height="26" fill="#E67E22"/><text x="40" y="21">Materia prima (comida y bebida) · 14.400 €</text></g>
-  <g transform="translate(0,46)"><rect x="0" y="0" width="26" height="26" fill="#D35400"/><text x="40" y="21">Personal (sueldos, cotizaciones y autónomo) · 14.800 €</text></g>
-  <g transform="translate(0,92)"><rect x="0" y="0" width="26" height="26" fill="#7F8C8D"/><text x="40" y="21">Alquiler del local · 1.000 € (2 %)</text></g>
-  <g transform="translate(0,138)"><rect x="0" y="0" width="26" height="26" fill="#95A5A6"/><text x="40" y="21">Suministros, consumibles, seguros, gestoría, mantenimiento y prevención · 3.660 €</text></g>
-  <g transform="translate(0,184)"><rect x="0" y="0" width="26" height="26" fill="#BDC3C7"/><text x="40" y="21">Comisiones de las plataformas de reparto · 2.100 € (5 %)</text></g>
-  <g transform="translate(1000,0)"><rect x="0" y="0" width="26" height="26" fill="#D5DBDB"/><text x="40" y="21">Publicidad · 450 € (1 %)</text></g>
-  <g transform="translate(1000,46)"><rect x="0" y="0" width="26" height="26" fill="#CCD1D1"/><text x="40" y="21">Impuestos y tasas locales · 400 € (1 %)</text></g>
-  <g transform="translate(1000,92)"><rect x="0" y="0" width="26" height="26" fill="#AEB6BF"/><text x="40" y="21">Amortización e intereses · 430 € (1 %)</text></g>
-  <g transform="translate(1000,138)"><rect x="0" y="0" width="26" height="26" fill="#27AE60"/><text x="40" y="21" font-weight="bold">Resultado antes de impuestos · 7.760 €</text></g>
-</g>
-<!-- Referencia del sector -->
-<g transform="translate(60,580)" font-size="22" fill="#555">
-  <text x="0" y="0">Referencias de una guía del sector: producto en torno al 30 % · personal 30-35 % · alquiler ideal ≤ 5 % · gastos generales 13-20 % · EBITDA 10-13 % (Tourinews, 2025).</text>
-  <text x="0" y="36">La rentabilidad de la restauración española cayó un 0,9 % hasta septiembre de 2025 (Hosteltur, 2026).</text>
-</g>
+<text x="60" y="64" font-size="34" font-weight="bold" fill="#222">Año 1 (2027): ingresos y gastos de ServiPass (sin IVA)</text>
+<text x="60" y="102" font-size="24" fill="#666">18 instalaciones · ingresos 136.710 € · gastos 138.299 € · resultado antes de impuestos −1.589 €</text>
+<text x="60" y="198" font-size="26" font-weight="bold" fill="#333">Ingresos</text>
+<rect x="180.0" y="140" width="693.0" height="90" fill="#E67E22"/>
+<text x="526.5" y="196" text-anchor="middle" font-size="24" font-weight="bold" fill="#fff">69k</text>
+<rect x="873.0" y="140" width="324.0" height="90" fill="#D35400"/>
+<text x="1035.0" y="196" text-anchor="middle" font-size="24" font-weight="bold" fill="#fff">32k</text>
+<rect x="1197.0" y="140" width="170.1" height="90" fill="#F5B041"/>
+<text x="1282.0" y="196" text-anchor="middle" font-size="24" font-weight="bold" fill="#fff">17k</text>
+<rect x="1367.1" y="140" width="144.0" height="90" fill="#F8C471"/>
+<text x="1439.1" y="196" text-anchor="middle" font-size="24" font-weight="bold" fill="#fff">14k</text>
+<rect x="1511.1" y="140" width="36.0" height="90" fill="#FAD7A0"/>
+<text x="60" y="318" font-size="26" font-weight="bold" fill="#333">Gastos</text>
+<rect x="180.0" y="260" width="577.8" height="90" fill="#566573"/>
+<text x="468.9" y="316" text-anchor="middle" font-size="24" font-weight="bold" fill="#fff">58k</text>
+<rect x="757.8" y="260" width="57.6" height="90" fill="#7F8C8D"/>
+<rect x="815.4" y="260" width="554.1" height="90" fill="#2C3E50"/>
+<text x="1092.5" y="316" text-anchor="middle" font-size="24" font-weight="bold" fill="#fff">55k</text>
+<rect x="1369.5" y="260" width="58.8" height="90" fill="#95A5A6"/>
+<rect x="1428.3" y="260" width="112.8" height="90" fill="#BDC3C7"/>
+<text x="1484.7" y="316" text-anchor="middle" font-size="24" font-weight="bold" fill="#fff">11k</text>
+<rect x="1541.1" y="260" width="21.9" height="90" fill="#D5DBDB"/>
+<g transform="translate(60,400)"><rect width="26" height="26" fill="#E67E22"/><text x="40" y="21" font-size="22" fill="#333">Equipos vendidos · 69.300 €</text></g>
+<g transform="translate(60,442)"><rect width="26" height="26" fill="#D35400"/><text x="40" y="21" font-size="22" fill="#333">Instalación y formación · 32.400 €</text></g>
+<g transform="translate(60,484)"><rect width="26" height="26" fill="#F5B041"/><text x="40" y="21" font-size="22" fill="#333">Licencias · 17.010 €</text></g>
+<g transform="translate(60,526)"><rect width="26" height="26" fill="#F8C471"/><text x="40" y="21" font-size="22" fill="#333">Infraestructura · 14.400 €</text></g>
+<g transform="translate(60,568)"><rect width="26" height="26" fill="#FAD7A0"/><text x="40" y="21" font-size="22" fill="#333">Ampliaciones · 3.600 €</text></g>
+<g transform="translate(820,400)"><rect width="26" height="26" fill="#566573"/><text x="40" y="21" font-size="22" fill="#333">Coste de los equipos · 57.780 €</text></g>
+<g transform="translate(820,442)"><rect width="26" height="26" fill="#7F8C8D"/><text x="40" y="21" font-size="22" fill="#333">Material · 5.760 €</text></g>
+<g transform="translate(820,484)"><rect width="26" height="26" fill="#2C3E50"/><text x="40" y="21" font-size="22" fill="#333">Personal (dos socios) · 55.411 €</text></g>
+<g transform="translate(820,526)"><rect width="26" height="26" fill="#95A5A6"/><text x="40" y="21" font-size="22" fill="#333">Alquiler · 5.880 €</text></g>
+<g transform="translate(820,568)"><rect width="26" height="26" fill="#BDC3C7"/><text x="40" y="21" font-size="22" fill="#333">Otros gastos generales · 11.280 €</text></g>
+<g transform="translate(820,610)"><rect width="26" height="26" fill="#D5DBDB"/><text x="40" y="21" font-size="22" fill="#333">Amortización e intereses · 2.188 €</text></g>
+<text x="60" y="672" font-size="21" fill="#555">Las licencias cuentan el derecho de uso y la parte del año del soporte; además se cobran 15.390 € de soporte por adelantado que aún no son ingreso.</text>
 </svg>
