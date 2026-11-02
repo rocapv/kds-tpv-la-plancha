@@ -15,7 +15,7 @@ from pathlib import Path
 AQUI = Path(__file__).resolve().parent
 img = lambda f: "fig/" + f          # las figuras van como ficheros en entrega/fig/
 e = html.escape
-LOGO = "fig/logo.svg"
+LOGO = "fig/logo_servipass.png"
 GUION = {d["n"]: d for d in json.loads((AQUI / "guion.json").read_text(encoding="utf-8"))["diapositivas"]}
 
 
@@ -44,8 +44,8 @@ S = []   # (clase, html)
 # 1 · Portada
 S.append(("dark portada", f"""
 <div class="badge">R1</div>
-<img class="logo" src="{LOGO}" alt="Logo de Burglar King">
-<h1 class="big">Burglar King,<br>por dentro y por fuera</h1>
+<img class="logo" src="{LOGO}" alt="Logo de ServiPass">
+<h1 class="big">ServiPass,<br>por dentro y por fuera</h1>
 <p class="sub">Contextualización de la empresa y análisis de su entorno económico</p>
 <p class="pie">Reto 1 · Proyecto Intermodular I · 1.º CFGS ASIR · IES Conselleria<br>Riches Manuel y Roca · octubre de 2026</p>"""))
 
@@ -59,46 +59,50 @@ S.append(("", f"""
 
 # 3 · Punto 1: la empresa
 S.append(("", f"""
-{punto(1, "Burglar King: una hamburguesería de barrio")}
-{tarjetas([f'<b class="num">{n}</b><span>{t}</span>' for n, t in [("13", "mesas · 44 plazas"), ("4", "personas en plantilla"), ("45.000 €", "ventas al mes sin IVA"), ("4", "canales: sala, barra, llevar y reparto")]], 4, "card stat")}
-<div class="split mitad"><img src="{img('organigrama.png')}" alt="Organigrama de Burglar King">
-<div class="card tint"><h3>Burjassot, junto al campus</h3>{lista(["Restauración independiente: el <b>93 %</b> de los locales", "Microempresa: nadie sabe de informática", "El encargado es dirección, compras, caja… <b>y el informático</b>", "Empresa ficticia; datos del sector reales"])}</div></div>"""))
+{punto(1, "ServiPass: la tecnología de la hostelería pequeña")}
+{tarjetas([f'<b class="num">{n}</b><span>{t}</span>' for n, t in [("2", "socios que trabajan en la empresa"), ("7.450 €", "proyecto tipo, sin IVA"), ("10", "años de licencia con soporte"), ("18", "instalaciones el primer año")]], 4, "card stat")}
+<div class="split mitad"><img src="{img('organigrama.png')}" alt="Organigrama de ServiPass">
+<div class="card tint"><h3>Burjassot, 2026</h3>{lista(["Red, wifi, caja, Verifactu, copias y un <b>TPV + KDS propio</b>", "Microempresa que vende a microempresas: el <b>93 %</b> de los locales es independiente", "Dos socios, cuatro áreas: cada uno es <b>suplente</b> del otro", "Empresa ficticia; datos del sector reales"])}</div></div>"""))
 
-# 4 · Punto 1: flujo e infraestructura
+# 4 · Punto 1: flujo de trabajo y cliente piloto
 S.append(("", f"""
-{punto(1, "El dato llega cuando el cliente ya se va")}
-<img class="ancho" src="{img('flujo_comanda.png')}" alt="Flujo actual de una comanda">
+{punto(1, "Del primer contacto a diez años de soporte")}
+<div class="ciclo">{''.join(f'<div class="card"><span class="dot">{k}</span><b>{t}</b><span>{d}</span></div>' for k, (t, d) in enumerate([
+  ("Captación", "visita en horas valle"), ("Auditoría", "un día en el local"), ("Presupuesto", "cerrado, con un 50 % de anticipo"),
+  ("Preparación", "1,5 días en la maqueta"), ("Instalación", "2-3 días, en el cierre del local"), ("Puesta en marcha", "formación y primer servicio"),
+  ("Soporte", "diez años de licencia")], 1))}</div>
+<h3 class="sec">Lo que encontró la auditoría del cliente piloto, Burglar King</h3>
 {tarjetas([f'<div class="fila"><span class="dot rojo">{k}</span><b>{t}</b></div><p>{d}</p>' for k, (t, d) in enumerate([
   ("La comanda no entra en ningún sistema", "hasta que se teclea para cobrar"),
-  ("TPV de 2015 con Windows 10", "sin soporte desde octubre de 2025, sin copias"),
-  ("Una sola red para todo", "caja, cámaras y móviles de los clientes juntos")], 1)], 3)}"""))
+  ("TPV de 2015 con Windows 10", "sin soporte, sin copias y sin Verifactu"),
+  ("Una sola red para todo", "caja, cámaras expuestas y móviles de los clientes")], 1)], 3)}"""))
 
-# Lab 1 (tras la red actual)
+# Lab 1 (tras la red del cliente piloto)
 S.append(lab("Simulación: la red actual frente a la red segmentada", "red.html"))
 
-# 5 · Punto 2: empresa de referencia
+# 5 · Punto 2: empresas de referencia
 S.append(("", f"""
-{punto(2, "Empresa de referencia: Hundred Burgers (y Goiko como contrapunto)")}
+{punto(2, "Empresas de referencia: Revo (y Last.app como contrapunto)")}
 <div class="grid c2">
- <div class="card tint"><h3>Hundred Burgers · València, 2020</h3>
-  <div class="minis"><div><b class="num m">8</b><span>locales</span></div><div><b class="num m">25 M€</b><span>ingresos</span></div><div><b class="num m">20 €</b><span>ticket medio</span></div><div><b class="num m">35 %</b><span>en reparto</span></div></div>
-  <p>Mejor hamburguesa del mundo en 2024. En octubre de 2025 el fondo Buenavista compró el 80 %; los fundadores siguen al frente.</p></div>
- <div class="card oscura"><h3>Goiko · Madrid, 2013</h3>
-  <div class="minis"><div><b class="num m">117</b><span>restaurantes</span></div><div><b class="num m neg">−11,2 %</b><span>ventas 2025</span></div><div><b class="num m neg">−36,4 M€</b><span>pérdidas 2025</span></div><div><b class="num m">1.737</b><span>empleados</span></div></div>
-  <p>«Disminución del tráfico» y «menores niveles de consumo»: el mercado de la hamburguesa ya no admite a todos.</p></div>
+ <div class="card tint"><h3>Revo · Manresa, 2013</h3>
+  <div class="minis"><div><b class="num m">37</b><span>personas (2023)</span></div><div><b class="num m">1.900</b><span>clientes</span></div><div><b class="num m">6.500</b><span>cuentas activas</span></div><div><b class="num m">50 %</b><span>de las cuotas, por distribuidores</span></div></div>
+  <p>TPV en la nube para tabletas. En 2023 la compró Cegid (4.400 empleados, 791 M€): los grupos grandes compran a los fabricantes pequeños con clientes fieles.</p></div>
+ <div class="card oscura"><h3>Last.app · Barcelona, 2019</h3>
+  <div class="minis"><div><b class="num m">2,2 M€</b><span>ronda de 2022</span></div><div><b class="num m">5 M€</b><span>ronda de 2023</span></div><div><b class="num m">500 €</b><span>de alta</span></div><div><b class="num m">35 €</b><span>al mes por la pantalla de cocina</span></div></div>
+  <p>Suscripción en la nube y crecimiento con capital riesgo. No publica su facturación ni su plantilla.</p></div>
 </div>
-<div class="banda">Lo que toma Burglar King: carta corta · reparto como tercio del negocio · pedido digital desde el primer día · costes controlados</div>"""))
+<div class="banda">Lo que toma ServiPass: especialización · cercanía (fabricante y distribuidor a la vez) · crecer según el soporte · competir en precio, no en funciones</div>"""))
 
 # 6 · Punto 3.1: PESTEL
 S.append(("", f"""
 {punto("3.1", "Factores macroeconómicos (PESTEL)")}
 {tarjetas([f'<b class="letra">{l}</b><h3>{t}</h3><p>{d}</p>' for l, t, d in [
-  ("P", "Político", "Verifactu el <b>1/1/2027</b> para sociedades; Kit Digital cerrado en 2025"),
-  ("E", "Económico", "El sector vende más y gana menos: rentabilidad <b>−0,9 %</b>; SMI 2026 de <b>1.221 €</b>"),
-  ("S", "Social", "65-70 % de pagos digitales; el <b>62 %</b> descarta un local por una mala reseña"),
+  ("P", "Político", "Verifactu el <b>1/1/2027</b> para sociedades: la principal fuente de demanda; Kit Digital cerrado"),
+  ("E", "Económico", "<b>13.698</b> bares y restaurantes en la provincia; rentabilidad <b>−0,9 %</b>; IPC del <b>4,9 %</b>"),
+  ("S", "Social", "El <b>81,6 %</b> de las empresas tiene dos asalariados o menos: el cliente no tiene informático"),
   ("T", "Tecnológico", "Windows 10 sin soporte; la digitalización se quedó en el cobro, no en la cocina"),
-  ("A", "Ambiental", "Bisfenol A en el papel térmico; impuesto a los envases de plástico; RAEE"),
-  ("L", "Legal", "Ley antifraude, RGPD, alérgenos, registro de jornada, convenio provincial")]], 3, "card pestel")}"""))
+  ("A", "Ambiental", "Retirada de los equipos viejos como RAEE; bisfenol A en el papel térmico; ticket electrónico"),
+  ("L", "Legal", "Verifactu también para quien hace el software (hasta <b>150.000 €</b>); encargado del tratamiento (RGPD)")]], 3, "card pestel")}"""))
 
 # Lab 2 (tras el factor legal del PESTEL)
 S.append(lab("Simulación: Verifactu, la cadena de facturas", "verifactu.html"))
@@ -107,85 +111,82 @@ S.append(lab("Simulación: Verifactu, la cadena de facturas", "verifactu.html"))
 S.append(("", f"""
 {punto("3.2", "Factores microeconómicos")}
 <div class="grid c3">
- <div class="card"><h3>Clientes</h3>{lista(["Estudiantes <b>45 %</b>", "Familias y barrio <b>27 %</b>", "Reparto <b>18 %</b> · para llevar <b>10 %</b>", "Todos en franjas cortas: nada puede fallar en hora punta"])}</div>
- <div class="card"><h3>Proveedores</h3>{lista(["Cash and carry, carnicería y obrador", "Operadora, banco y fabricante del TPV: dependencia <b>alta</b>", "Plataformas de reparto: <b>15-30 %</b> de cada pedido"])}</div>
- <div class="card"><h3>Competencia</h3>{lista(["Cadenas con cocina en pantalla: la experiencia con la que compara el cliente", "TPV comerciales que cobran <b>por terminal y por pantalla</b>", "La oportunidad: añadir pantallas sin pagar licencias"])}</div>
+ <div class="card"><h3>Clientes</h3>{lista(["Hamburguesería y comida rápida: prioridad <b>1</b>", "Bar de barrio: volumen de mercado", "Restaurante de mantel: tercera", "Cadenas: ya tienen su sistema, fuera de mercado"])}</div>
+ <div class="card"><h3>Proveedores</h3>{lista(["Mayorista de informática: dependencia <b>alta</b>", "Repositorio y copias, operadoras y gestoría: media", "Aseguradora: baja", "Sin almacén: los equipos se compran con el anticipo"])}</div>
+ <div class="card tint"><h3>Competencia</h3>{lista(["Cobran <b>por terminal o por pantalla</b>; la de cocina, casi siempre aparte", "Last.app con pantalla de cocina: <b>85 €/mes</b>, 10.700 € en diez años", "ServiPass: <b>1.800 €</b> por diez años", "Competencia monopolística: cercanía y confianza"])}</div>
 </div>"""))
 
 # 8 · Punto 4: modelo de negocio (barras HTML animadas)
-PARTIDAS = [("Materia prima", 14400, "#E67E22"), ("Personal", 14800, "#D35400"), ("Alquiler", 1000, "#7F8C8D"), ("Suministros", 3600, "#95A5A6"),
-            ("Comisiones de reparto", 2100, "#BDC3C7"), ("Publicidad, financiación e impuestos", 1750, "#AEB6BF"), ("Resultado antes de impuestos", 7350, "#27AE60")]
+PROYECTO = [("Equipos (20 % de margen)", 3850, "#E67E22"), ("Instalación y formación", 1800, "#D35400"),
+            ("Licencia: derecho de uso", 900, "#27AE60"), ("Licencia: soporte en diez años", 900, "#7F8C8D")]
 S.append(("", f"""
-{punto(4, "Modelo de negocio: cada 100 € de ventas")}
-<div class="barras g">{''.join(f'<span class="id">{round(v / 450)} %</span><div class="barra"><i style="width:{v / 450 * 5.2}%;background:{c}"></i><b>{v:,} €</b></div><span>{t}</span>'.replace(',', '.') for t, v, c in PARTIDAS)}</div>
-<p class="nota">Ventas estimadas: 45.000 €/mes sin IVA (1.500 comensales en sala × 19,50 € · 300 en barra · 300 pedidos para llevar · 550 de reparto × 15 €). Bandas del sector: producto 28-35 %, personal 30-35 %, alquiler ≤ 10 % (Tourinews, 2025).</p>"""))
+{punto(4, "Modelo de negocio: un proyecto tipo de 7.450 €")}
+<div class="barras g">{''.join(f'<span class="id">{round(v / 74.5)} %</span><div class="barra"><i style="width:{v / 74.5 * 1.5:.1f}%;background:{c}"></i><b>{v:,} €</b></div><span>{t}</span>'.replace(',', '.') for t, v, c in PROYECTO)}</div>
+<div class="tras-barras">{tarjetas([f'<b class="num">{n}</b><span>{t}</span>' for n, t in [("3.340 €", "de margen por instalación"), ("18,5", "instalaciones al año: punto muerto"), ("53.229 €", "antes de impuestos el tercer año (−1.589 € el primero)")]], 3, "card stat")}</div>
+<p class="nota">Escenario: 18, 24 y 30 instalaciones en los años 1 a 3. El soporte se cobra al instalar, pero cuenta como ingreso en diez años: 90 € por cliente y año (Resolución del ICAC de 10/02/2021).</p>"""))
 
 
-# 10 · Punto 4.1 y 4.2
+# 9 · Punto 4.1 y 4.2
 S.append(("", f"""
 {punto("4.1 · 4.2", "Financiación y salarios")}
 <div class="grid c2">
- <div class="card"><h3>Financiación</h3>{lista(["Constituida en 2022 con <b>60.000 €</b>: 35.000 de capital y un préstamo de 25.000 (quedan 7.000)", "Proyecto tecnológico: <b>5.000-8.000 €</b>, con tesorería y, si hace falta, microcrédito de MicroBank (hasta 25.000 €, sin garantías)", "Kit Digital: cerrado en 2025 · Digitaliza-CV (IVACE): solo si hay convocatoria", "Renting descartado: el proyecto no quiere cuotas"])}</div>
- <div class="card tint"><h3>Salarios: el convenio es el mínimo</h3>
-  <div class="barras s"><span class="id">Nivel III</span><div class="barra"><i style="width:61%;background:#aaa"></i><b>1.215 €</b></div><span>convenio</span>
-  <span class="id">Camarero</span><div class="barra"><i style="width:100%"></i><b>2.000 €</b></div><span>Burglar King</span>
-  <span class="id">Cocinero</span><div class="barra"><i style="width:106%"></i><b>2.122 €</b></div><span>Burglar King</span>
-  <span class="id">Encargado</span><div class="barra"><i style="width:197%;background:#D35400"></i><b>3.950 €</b></div><span>autónomo</span></div>
-  <p>Convenio de hostelería de Valencia en ultraactividad desde enero de 2026. Coste de personal: <b>14.800 €/mes</b>, el 33 % de las ventas.</p></div>
+ <div class="card"><h3>Financiación · 25.000 €</h3>{lista(["Equipos de trabajo, fianza y, sobre todo, un <b>colchón de tres meses</b> de gastos fijos", "<b>10.000 €</b> de los socios y un microcrédito de MicroBank de <b>15.000 €</b> a tres años, sin garantías", "ICO y ENISA como alternativas · Kit Digital cerrado · Digitaliza-CV pide unos 20.000 € de proyecto", "El anticipo del 50 % paga los equipos de cada cliente"])}</div>
+ <div class="card tint"><h3>Salarios: convenio estatal TIC</h3>
+  <div class="barras s"><span class="id">C3</span><div class="barra"><i style="width:100%"></i><b>24.105 €</b></div><span>cada socio</span>
+  <span class="id">D1</span><div class="barra"><i style="width:85%;background:#D35400"></i><b>20.436 €</b></div><span>primer técnico</span>
+  <span class="id">SMI</span><div class="barra"><i style="width:71%;background:#aaa"></i><b>17.094 €</b></div><span>mínimo legal</span></div>
+  <p>XIX Convenio de consultoría y tecnologías de la información, área 3 (BOE-A-2026-9024). Coste de los dos socios: <b>55.411 €/año</b>. Se contrata al pasar de 30 instalaciones al año.</p></div>
 </div>"""))
 
 
-# 12 · Punto 4.3 y 4.4
+# 10 · Punto 4.3 y 4.4
 S.append(("", f"""
 {punto("4.3 · 4.4", "Gastos materiales y el local")}
 <div class="grid c3">
- <div class="card"><h3>Escandallo · hamburguesa clásica</h3>
-  <table class="mini esc"><tr><td>Carne 160 g</td><td>1,52 €</td></tr><tr><td>Pan brioche</td><td>0,45 €</td></tr><tr><td>Queso, verduras y salsa</td><td>0,64 €</td></tr><tr><td>Patatas y aceite</td><td>0,38 €</td></tr><tr><td>Envase</td><td>0,25 €</td></tr><tr class="tot"><td>Coste</td><td>3,24 €</td></tr><tr class="tot"><td>Venta sin IVA</td><td>10,45 €</td></tr></table>
-  <p><b class="num">31 %</b> de coste de producto</p></div>
- <div class="card"><h3>Suministros · 3.600 €/mes</h3>{lista(["Electricidad <b>1.500 €</b>: plancha, cámaras, aire", "Envases para llevar 770 € (cartón, sin plástico)", "Mantenimiento y limpieza 450 €", "Gas 280 · gestoría 180 · seguros 150 · agua 130", "Software y licencias: <b>0 €</b>"])}</div>
- <div class="card tint"><h3>El local · 120 m² en alquiler</h3>{lista(["<b>1.000 €/mes</b> + IVA: 8,30 €/m², en la media de Burjassot (7,05 €/m² en idealista)", "Fotocasa: 35 locales en oferta, de 3 a 14 €/m²", "Contrato LAU de 10 años, IPC anual, fianza de 2 meses (art. 36)", "Tasas: licencia, terraza e IBI repercutido, 400 €/mes", "Las obras de red necesitan permiso del propietario"])}</div>
+ <div class="card"><h3>Equipos · proyecto tipo</h3>
+  <table class="mini esc"><tr><td>Servidor de bajo consumo</td><td>450 €</td></tr><tr><td>Terminal de caja</td><td>700 €</td></tr><tr><td>Dos tabletas de sala</td><td>500 €</td></tr><tr><td>Dos pantallas de cocina</td><td>600 €</td></tr><tr><td>Red: conmutador, wifi y router</td><td>560 €</td></tr><tr><td>SAI, armario y cableado</td><td>400 €</td></tr><tr class="tot"><td>Coste</td><td>3.210 €</td></tr><tr class="tot"><td>Venta sin IVA</td><td>3.850 €</td></tr></table>
+  <p><b class="num">20 %</b> de margen sobre el coste</p></div>
+ <div class="card"><h3>Gastos generales · 1.430 €/mes</h3>{lista(["Alquiler <b>490 €</b> · publicidad 300 €", "Desplazamientos 250 €: visitas, instalaciones y guardias", "Suministros y telefonía 150 € · gestoría 120 €", "Seguros 60 € · software y servicios 60 €", "Licencias de terceros: <b>0 €</b>, programas libres"])}</div>
+ <div class="card tint"><h3>El local · 65 m² en Burjassot</h3>{lista(["<b>490 €/mes</b>: 7,54 €/m², el más barato de la muestra (Nuroa)", "Fotocasa: 35 locales en oferta, de 4,46 a 13,75 €/m²", "Oficina, taller con la maqueta y un almacén pequeño", "LAU: IPC anual y fianza de dos meses (art. 36)", "Las obras en los locales de los clientes necesitan permiso del propietario"])}</div>
 </div>"""))
 
 
-# 14 · Puntos 5 y 6
+# 11 · Puntos 5 y 6
 S.append(("", f"""
 {punto("5 · 6", "Servicios prestados y publicidad")}
 <div class="grid c2">
- <div class="card"><h3>Servicios · peso en ventas</h3>
-  <div class="barras s"><span class="id">65 %</span><div class="barra"><i style="width:100%"></i></div><span>Sala y terraza</span>
-  <span class="id">18 %</span><div class="barra"><i style="width:28%"></i></div><span>Reparto a domicilio</span>
-  <span class="id">10 %</span><div class="barra"><i style="width:15%"></i></div><span>Para llevar</span>
-  <span class="id">7 %</span><div class="barra"><i style="width:11%"></i></div><span>Barra</span></div>
-  <p>Más reservas, menú de mediodía, celebraciones, wifi y alérgenos. Las plataformas cobran <b>2.100 €/mes</b>: el doble del alquiler. El pedido para llevar directo es la salida.</p></div>
- <div class="card tint"><h3>Publicidad · 450 €/mes (1 %)</h3>
-  <div class="minis"><div><b class="num m">62 %</b><span>descarta un local por una mala reseña</span></div><div><b class="num m">73 %</b><span>lee opiniones antes de ir</span></div><div><b class="num m">17 %</b><span>mira redes o web</span></div></div>
-  {lista(["<b>Perfil de Google</b> y carta digital: coste 0, prioridad 1", "Instagram y TikTok: 3 publicaciones por semana", "Menú universitario con carné; fidelización desde el TPV", "Calendario: inicio de curso, exámenes, Fallas"])}</div>
+ <div class="card"><h3>Servicios · precio sin IVA</h3>
+  <table class="mini"><tr><td>Proyecto TPV + KDS</td><td>desde 7.450 €</td></tr><tr><td>Licencia sola, diez años</td><td>1.800 €</td></tr><tr><td>Auditoría tecnológica (se descuenta)</td><td>150 €</td></tr><tr><td>Red segmentada y wifi profesional</td><td>desde 600 €</td></tr><tr><td>Videovigilancia conforme a la ley</td><td>desde 300 €</td></tr><tr><td>Ampliaciones</td><td>37,50 €/h</td></tr></table>
+  <p>Soporte: número único, guardia en comidas y cenas, respuesta en <b>menos de 15 minutos</b> y equipo de repuesto en 24 horas.</p></div>
+ <div class="card tint"><h3>Publicidad · 300 €/mes</h3>
+  <p class="lema">«Se paga una vez. Funciona diez años.»</p>
+  {lista(["<b>Burglar King como caso de éxito</b>: visitas en hora punta", "Visita comercial en horas valle, nunca durante el servicio", "Jornadas sobre Verifactu con las gestorías de la zona", "Web con la calculadora del coste a diez años · una pantalla gratis por recomendación"])}</div>
 </div>
-<p class="nota">Estudio de TheFork Lab, julio de 2026 (L'Express Franchise, 2026).</p>"""))
+<p class="nota">Calendario: los meses antes de los plazos de Verifactu y el inicio del curso universitario.</p>"""))
 
 # Lab 3 (tras los servicios)
 S.append(lab("Simulación: una hora punta con papel y con KDS", "hora_punta.html"))
 
-# 15 · Punto 7: conclusiones
+# 12 · Punto 7: conclusiones
 S.append(("dark", f"""
 {punto(7, "Conclusiones")}
 <div class="pasos">{''.join(f'<div class="fila"><span class="dot g">{k}</span><p>{t}</p></div>' for k, t in enumerate([
-  "Un negocio <b>sano en un sector con márgenes estrechos</b>: 45.000 €/mes, ratios del sector, 16 % antes de impuestos… que se evapora con dos meses flojos.",
-  "Lo que más pesa: producto (32 %) y personal (33 %). Lo que más margen tiene de bajar: las <b>comisiones de reparto</b>.",
-  "El entorno pone fecha: <b>Verifactu el 1/1/2027</b>, Windows 10 sin soporte, y un cliente que decide por las reseñas.",
-  "No le falta dinero: le falta <b>alguien que diseñe la infraestructura</b> y la deje funcionando sola. Ese es el proyecto."], 1))}</div>"""))
+  "Una microempresa que vende a microempresas: un <b>TPV + KDS propio</b> con pago único y diez años de soporte.",
+  "Viable pero ajustada: punto muerto en <b>18,5 instalaciones</b>; −1.589 € el primer año, 25.238 € y 53.229 € los dos siguientes.",
+  "El entorno pone fecha: <b>Verifactu el 1/1/2027</b>, Windows 10 sin soporte y una cocina que sigue en papel.",
+  "<b>1.800 €</b> de licencia frente a 10.700 € de suscripción: competir en precio, no en funciones, y crecer según el soporte."], 1))}</div>"""))
 
-# 17 · Bibliografía y preguntas
+# 13 · Bibliografía
 S.append(("dark", f"""
 {punto(8, "Bibliografía")}
 <div class="grid c3 bib">
- <div class="card oscura"><h3>Sector y empresas</h3>{lista(["INE (2025) · Profesional Horeca (2025) · Hosteltur (2026)", "Buenavista Equity Partners (2025) · Economía 3 (2024)", "Forbes España (2026) · El Confidencial Digital (2025)"])}</div>
- <div class="card oscura"><h3>Finanzas y trabajo</h3>{lista(["Convenio de hostelería de Valencia (CCOO, 2025; Turnozo, 2026)", "Real Decreto 126/2026 (SMI) · Ibermutua (2026)", "Cámara de España (2022) · ICO (s.f.) · idealista/news (2026)"])}</div>
- <div class="card oscura"><h3>Mercado y normativa</h3>{lista(["idealista, Fotocasa, Habitaclia y Nuroa (2026)", "Qamarero (2025) · L'Express Franchise (2026)", "Leyes 11/2021, 7/2022, 7/2024, 29/1994 · RD 1007/2023 · RGPD"])}</div>
+ <div class="card oscura"><h3>Sector y empresas</h3>{lista(["INE (2025) · Profesional Horeca (2025) · Hosteltur (2026)", "Cegid (2023) · capital-riesgo.es (2022, 2023) · Taylor (2023)", "El Periòdic (2025) · Riches Manuel y Roca (2026)"])}</div>
+ <div class="card oscura"><h3>Finanzas y trabajo</h3>{lista(["XIX Convenio TIC (BOE-A-2026-9024) · RD 126/2026 (SMI)", "Cámara de España (2022) · ICO (s.f.) · Intelectium (s.f.)", "Billin (2026) · idealista/news (2026) · Digitaliza CV (2026)"])}</div>
+ <div class="card oscura"><h3>Mercado y normativa</h3>{lista(["idealista, Fotocasa, Habitaclia y Nuroa (2026)", "Garrigues (2025) · Microsoft (2025) · L'Express Franchise (2026)", "Ley 11/2021 · RD 1007/2023 · RGPD · Resolución del ICAC (2021)"])}</div>
 </div>
-<p class="pie">45 referencias en formato APA (7.ª ed.) en el punto 8 del informe.</p>"""))
+<p class="pie">47 referencias en formato APA (7.ª ed.) en el punto 8 del informe.</p>"""))
 
-# 16 · Cuestionario
+# 14 · Cuestionario
 S.append(("lab quiz", """
 <h2><span class="pt">¿?</span>Tres preguntas para terminar</h2>
 <div id="quiz"></div>"""))
@@ -237,6 +238,10 @@ ul{padding-left:20px}li{margin:9px 0;font-size:17px;line-height:1.35}
 .labbar span{display:flex;gap:10px;align-items:center}.labbar a{color:var(--nar);font-size:14px}.labbar button{font:inherit;font-size:14px;padding:5px 12px;border-radius:8px;border:1px solid #666;background:#2f353b;color:#fff;cursor:pointer}.labbar button:hover{background:var(--nar);border-color:var(--nar)}
 .slide.labframe iframe{display:block;width:1280px;height:676px;border:0;background:#fff}.slide.labframe .num-pag{color:#aaa;bottom:auto;top:14px;right:auto;left:50%;translate:-50% 0}
 .bib li{font-size:15px}
+.tras-barras{margin-top:36px}
+.ciclo{display:grid;grid-template-columns:repeat(7,1fr);gap:12px;margin-bottom:24px}.ciclo .card{padding:14px 12px;display:flex;flex-direction:column;gap:8px}
+.ciclo .card b{font-size:17px}.ciclo .card span:last-child{color:var(--gris);font-size:14px;line-height:1.3}.ciclo .dot{width:34px;height:34px;font-size:15px}
+h3.sec{font-size:19px;color:var(--gris);margin:0 0 14px}.lema{font-size:22px!important;font-weight:bold;color:var(--txt)!important;margin:2px 0 6px!important}
 /* Laboratorios */
 .mandos{display:flex;flex-direction:column;gap:14px}
 .mandos label{display:flex;flex-direction:column;gap:6px;font-size:16px;color:var(--txt)}.mandos output{float:right;font-weight:bold;color:var(--nar);font-size:18px}
@@ -394,12 +399,12 @@ let x0=null;addEventListener('touchstart',e=>{x0=interactivo(e.target)?null:e.to
 
 /* ---------- Cuestionario ---------- */
 const PREG=[
- {q:'¿Qué parte de las ventas de Burglar King se va en personal?',o:['16 %','28 %','33 %','45 %'],ok:2,
-  x:'<b>33 %</b>: 14.800 € de 45.000 €. Dentro de la banda del 30-35 % habitual en el servicio en mesa. El producto se lleva otro 32 %.'},
- {q:'Burglar King es una sociedad limitada. ¿Desde cuándo debe tener su facturación adaptada a Verifactu?',o:['1 de enero de 2026','1 de enero de 2027','1 de julio de 2027','No le afecta: es una microempresa'],ok:1,
-  x:'<b>1 de enero de 2027</b> para las sociedades (1 de julio de 2027 para el resto), tras el aplazamiento del Real Decreto-ley 15/2025. Su TPV de 2016 no se va a adaptar.'},
- {q:'Según el estudio de TheFork (2026), ¿qué hace que más españoles descarten un restaurante?',o:['El precio','La ubicación','No poder reservar en línea','Una mala reseña en internet'],ok:3,
-  x:'<b>Una mala reseña</b>, para el 62 %; el precio solo para el 24 %. Por eso la prioridad del marketing es el perfil de Google, que cuesta 0 €.'}];
+ {q:'¿Cuántas instalaciones al año necesita ServiPass para no perder dinero?',o:['12','18,5','24','30'],ok:1,
+  x:'<b>Unas 18,5</b>: cada instalación deja 3.340 € de margen y los costes fijos que deben cubrir son unos 61.700 €. Con 18 instalaciones, el primer año cierra con −1.589 €.'},
+ {q:'Si ServiPass vendiera un programa de facturación que no cumple Verifactu, ¿a qué sanción se expondría?',o:['A ninguna: la multa es para el restaurante','50.000 € por ejercicio','150.000 € por ejercicio y por tipo de programa','Al cierre del local'],ok:2,
+  x:'<b>150.000 € por ejercicio y por cada tipo de programa</b> (art. 201 bis de la Ley General Tributaria); el restaurante que lo usa, 50.000 €. Por eso el TPV de ServiPass cumple Verifactu antes de vender la primera licencia.'},
+ {q:'¿Cuánto pagaría en diez años un local por el plan básico de Last.app con su pantalla de cocina?',o:['1.800 €','4.250 €','10.700 €','25.000 €'],ok:2,
+  x:'<b>10.700 €</b>: 85 € al mes durante diez años más 500 € de alta, solo por el software. La licencia de ServiPass del mismo periodo cuesta 1.800 €.'}];
 let qi=0,qp=0;const Q=document.getElementById('quiz');
 function quizInicio(){qi=0;qp=0;quizPinta()}
 function quizPinta(){if(qi>=PREG.length){quizFin();return}
@@ -433,18 +438,18 @@ for d in ("css", "js", "fig"):
     (ENTREGA / d).mkdir(parents=True)
 for f in ("organigrama.png", "flujo_comanda.png", "red_actual.png", "costes.png"):
     shutil.copy(AQUI / "fig" / f, ENTREGA / "fig" / f)
-shutil.copy(AQUI.parent / "logos" / "logo.svg", ENTREGA / "fig" / "logo.svg")
+shutil.copy(AQUI / "fig" / "logo_servipass.png", ENTREGA / "fig" / "logo_servipass.png")
 shutil.copytree(AQUI / "laboratorios", ENTREGA / "laboratorios")
 (ENTREGA / "css" / "presentacion.css").write_text(CSS, encoding="utf-8")
 (ENTREGA / "js" / "presentacion.js").write_text(JS, encoding="utf-8")
 doc = f"""<!doctype html>
 <html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Reto 1 · Burglar King</title><link rel="stylesheet" href="css/presentacion.css"></head>
+<title>Reto 1 · ServiPass</title><link rel="stylesheet" href="css/presentacion.css"></head>
 <body><div id="prog"><i></i></div><div id="deck">{cuerpo}</div><div id="notas"></div>
 <div id="toast"></div><div id="reloj"></div><div id="ayuda">← → avanzar · N guion · T cronómetro · M movimiento · F pantalla completa</div><script src="js/presentacion.js"></script></body></html>"""
 (ENTREGA / "presentacion.html").write_text(doc, encoding="utf-8")
 MIN = sum(d["min"] for d in GUION.values())
-(ENTREGA / "LEEME.txt").write_text(f"""Reto 1 · Proyecto Intermodular I · Burglar King
+(ENTREGA / "LEEME.txt").write_text(f"""Reto 1 · Proyecto Intermodular I · ServiPass
 Riches Manuel y Roca · 1.º CFGS ASIR · IES Conselleria · octubre de 2026
 
 Descomprimir la carpeta entera y abrir los ficheros con cualquier navegador (no hace falta conexión ni servidor).
@@ -455,8 +460,10 @@ presentacion.html      Presentación ({len(S)} diapositivas, {MIN:g} min).
                        también en una pestaña aparte); la última es un cuestionario de 3 preguntas.
 css/presentacion.css   Estilos y animaciones de la presentación.
 js/presentacion.js     Navegación, contadores, cronómetro y cuestionario.
-fig/                   Figuras del informe (organigrama, flujo de la comanda, red actual, costes) y logo.
-laboratorios/          Tres simulaciones (abrir laboratorios/index.html); cada una se lanza con «Simular» y tiene modo manual:
+fig/                   Figuras del informe (organigrama de ServiPass; flujo de la comanda y red actual del
+                       cliente piloto, Burglar King; costes) y logo de ServiPass.
+laboratorios/          Tres simulaciones sobre Burglar King, el cliente piloto (abrir laboratorios/index.html);
+                       cada una se lanza con «Simular» y tiene modo manual:
   red.html             Lab 1 · La red actual frente a la segmentada: misma batería de pings en los dos escenarios.
   verifactu.html       Lab 2 · Cadena de facturas con SHA-256: alteración detectada y corrección con rectificativa.
   hora_punta.html      Lab 3 · Hora punta simulada en paralelo: papel, voz y tableta contra KDS, mismo flujo de pedidos.
