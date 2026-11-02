@@ -12,3 +12,9 @@ docs/presentacion/kds_presentacion.pdf
 
 # Carpeta generada por docs/reto1/generar_html.py (el ZIP sí se guarda)
 docs/reto1/entrega/
+
+# Estado que crea docs/reto1/servidor.py si se arranca fuera de la entrega (lleva el PIN y las sesiones)
+docs/reto1/sesion_servidor.json
+docs/reto1/sesion_servidor.tmp
+docs/reto1/guion_vivo.json
+docs/reto1/guion_vivo.tmp
