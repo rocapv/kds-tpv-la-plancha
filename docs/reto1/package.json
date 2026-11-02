@@ -10,7 +10,6 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "docx": "^9.8.1",
-    "pptxgenjs": "^4.0.1"
+    "docx": "^9.8.1"
   }
 }

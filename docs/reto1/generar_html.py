@@ -1,13 +1,18 @@
 #!/usr/bin/env python3
-"""Presentación del Reto 1 (HTML + CSS + JS en ficheros separados) y ZIP de entrega con los laboratorios.
+"""Presentación del Reto 1 (HTML + CSS + JS en ficheros separados), servida por la LAN, y ZIP de entrega.
 
 Sigue los ocho puntos del informe (contextualización, empresa de referencia, entorno económico, modelo de
 negocio y finanzas, servicios, publicidad, conclusiones y bibliografía), termina con un cuestionario de tres preguntas (sin anunciarlo antes). 12-15 minutos: el guion hablado vive en
 guion.json. Los laboratorios son páginas aparte en laboratorios/ y van en el ZIP, no en la presentación.
 
+Se presenta con servidor.py: cada equipo de la LAN elige su vista (las diapositivas o el guion del orador con la
+diapositiva en pequeño) y todos ven siempre la misma diapositiva, la mueva quien la mueva. Abierta sin servidor
+(file://), presentacion.html funciona sola, sin sincronizar.
+
 Teclas: ← → / espacio / clic para avanzar, N guion del orador, T cronómetro de ensayo, M movimiento,
 F pantalla completa. Respeta `prefers-reduced-motion` salvo que se fuerce (M o ?movimiento=1).
-Uso: python3 generar_html.py  ->  entrega/ (presentacion.html, css/, js/, fig/, laboratorios/, LEEME.txt) y reto1_entrega.zip
+Uso: python3 generar_html.py  ->  entrega/ (index.html, presentacion.html, servidor.py, css/, js/, fig/,
+laboratorios/, LEEME.txt) y reto1_entrega.zip
 """
 import html, json, shutil, zipfile
 from pathlib import Path
@@ -34,8 +39,8 @@ def punto(n, titulo):
 
 def lab(titulo, fichero):
     """Diapositiva que carga un laboratorio de laboratorios/ a pantalla completa; no se anuncia antes."""
-    return ("labframe", f'''<div class="labbar"><span>{titulo}</span><span><button onclick="ver(i-1)">← anterior</button>
-<a href="laboratorios/{fichero}" target="_blank" rel="noopener">abrir en una pestaña nueva ↗</a><button onclick="ver(i+1)">siguiente →</button></span></div>
+    return ("labframe", f'''<div class="labbar"><span>{titulo}</span><span><button onclick="ir(i-1)">← anterior</button>
+<a href="laboratorios/{fichero}" target="_blank" rel="noopener">abrir en una pestaña nueva ↗</a><button onclick="ir(i+1)">siguiente →</button></span></div>
 <iframe data-src="laboratorios/{fichero}" title="{titulo}"></iframe>''')
 
 
@@ -316,6 +321,28 @@ body[data-dir=atras] .slide.on.portada{animation-name:entraAtras,flujo}
 html[data-mov="off"] *,html[data-mov="off"] *:before,html[data-mov="off"] *:after{animation:none!important;transition:none!important}
 #toast{position:fixed;top:16px;left:50%;translate:-50% 0;background:#23272b;color:#fff;font-size:15px;padding:10px 18px;border-radius:10px;border:1px solid #e67e22;z-index:20;opacity:0;pointer-events:none;transition:opacity .3s;max-width:90vw;text-align:center}
 #toast.on{opacity:1}
+/* ---- Vista del guion (?vista=guion): barra de mando, diapositiva en pequeño y guion al lado ---- */
+#mando{display:none}
+body.vg{background:#1b1e21}
+body.vg #mando{display:flex;position:fixed;top:0;left:0;right:0;height:52px;align-items:center;gap:12px;padding:0 16px;background:#23272b;color:#fff;z-index:12;font-size:15px}
+#mando button{font:inherit;font-size:15px;padding:8px 14px;border-radius:8px;border:1px solid #666;background:#2f353b;color:#fff;cursor:pointer;white-space:nowrap}
+#mando button:hover{background:var(--nar);border-color:var(--nar)}
+#posicion{flex:1;text-align:center;font-weight:bold;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#sincro{font-size:13px;color:#aaa;white-space:nowrap}#sincro.on{color:#7bd88f}#sincro.off{color:#ff8a80}
+body.vg #prog{top:52px}
+body.vg #deck{inset:auto;left:16px;top:68px;width:calc(46vw - 24px);height:calc((46vw - 24px) * .5625);overflow:hidden;border-radius:8px;box-shadow:0 8px 30px rgba(0,0,0,.5)}
+body.vg #notas{display:block;left:calc(46vw + 8px);right:16px;top:68px;bottom:16px;max-height:none;font-size:26px;border-top:0;border-left:4px solid var(--nar);border-radius:8px}
+body.vg #reloj{display:block;left:16px;top:calc(68px + (46vw - 24px) * .5625 + 16px);font-size:20px;color:#ddd}
+body.vg #siguiente{display:block;position:fixed;left:16px;width:calc(46vw - 24px);top:calc(68px + (46vw - 24px) * .5625 + 52px);color:#aaa;font-size:16px;line-height:1.4}
+#siguiente{display:none}#siguiente b{color:#fff}
+body.vg #ayuda{display:none}
+@media (max-width:820px){
+ body.vg #mando{gap:8px;padding:0 8px}#mando .largo{display:none}
+ body.vg #deck{width:calc(100vw - 32px);height:calc((100vw - 32px) * .5625)}
+ body.vg #reloj{top:calc(68px + (100vw - 32px) * .5625 + 10px);right:16px;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+ body.vg #siguiente{display:none}
+ body.vg #notas{left:16px;top:calc(68px + (100vw - 32px) * .5625 + 42px);font-size:20px;border-left:0;border-top:4px solid var(--nar)}}
+@media print{#mando,#siguiente{display:none!important}}
 @media print{#prog{display:none}.slide,.slide *,.slide *:before{animation:none!important;transition:none!important;translate:none!important;scale:none!important}}
 """
 
@@ -328,6 +355,11 @@ if(pedido==='1'||pedido==='0'){eleccion=pedido==='1'?'on':'off';try{localStorage
 let quieto=eleccion?eleccion==='off':SO_QUIETO;
 document.documentElement.dataset.mov=quieto?'off':'on';
 let i=-1,tok=0,salida=null;
+const VISTA=new URLSearchParams(location.search).get('vista')==='guion'?'guion':'diapositiva';
+document.body.classList.toggle('vg',VISTA==='guion');
+const deck=document.getElementById('deck');
+// Servida por servidor.py, la presentación se sincroniza: ir() avisa al servidor y este a todos los clientes.
+const EN_RED=location.protocol.startsWith('http');
 const SEL='h1,h2,.badge,.logo,.sub,.pie,.lead,.nota,.banda,.card,.fila,.num.xl,.split>img,img.ancho,.barras>*,#quiz,.labbar,iframe';
 sl.forEach(s=>{const c=[...s.querySelectorAll(SEL)];
  c.filter(a=>!c.some(o=>o!==a&&o.contains(a))).forEach((el,k)=>{el.classList.add('rev');
@@ -356,15 +388,21 @@ function contar(el,t){
 const restaura=v=>v.querySelectorAll('.num[data-final]').forEach(e=>e.textContent=e.dataset.final);
 const mmss=s=>{s=Math.round(Math.abs(s));return Math.floor(s/60)+':'+String(s%60).padStart(2,'0')};
 const TOTAL=sl.reduce((a,x)=>a+parseFloat(x.dataset.min),0);
-function pinta(){const s=sl[i],cab=document.createElement('span');cab.className='cab';
+function pinta(){const s=sl[i],cab=document.createElement('span'),sig=sl[i+1];cab.className='cab';
  cab.textContent=`Diapositiva ${i+1} de ${sl.length} · ${s.dataset.min} min · acumulado ${mmss(s.dataset.acum*60)} de ${mmss(TOTAL*60)}`;
- notas.replaceChildren(cab,document.createTextNode(s.dataset.notas));notas.scrollTop=0}
+ notas.replaceChildren(cab,document.createTextNode(s.dataset.notas));notas.scrollTop=0;
+ document.getElementById('posicion').textContent=`${i+1} / ${sl.length} · ${s.dataset.titulo}`;
+ document.getElementById('siguiente').innerHTML=sig?`Siguiente: <b>${sig.dataset.titulo}</b>`:'Última diapositiva'}
 const reloj=document.getElementById('reloj');let t0=0,acum=0,corre=false;
 function tic(){const t=acum+(corre?(performance.now()-t0)/1000:0),fin=parseFloat(sl[i].dataset.acum)*60,ini=fin-parseFloat(sl[i].dataset.min)*60,
  d=t<ini?t-ini:t>fin?t-fin:0;
  reloj.textContent=`${mmss(t)} / ${mmss(TOTAL*60)} · diapositiva ${i+1}: ${mmss(ini)}–${mmss(fin)} · ${d===0?'en hora':mmss(d)+(d>0?' de retraso':' de adelanto')}`}
 setInterval(tic,500);
-function fit(){const k=Math.min(innerWidth/1280,innerHeight/720);sl.forEach(s=>s.style.transform=`scale(${k})`)}
+function crono(){if(corre){acum+=(performance.now()-t0)/1000;corre=false}else{t0=performance.now();corre=true;reloj.classList.add('on')}tic()}
+function fit(){const k=Math.min(deck.clientWidth/1280,deck.clientHeight/720);sl.forEach(s=>s.style.transform=`scale(${k})`)}
+// ir(): lo que pide quien maneja (teclas, clic, botones); ver(): lo que se muestra, también cuando llega del servidor.
+function ir(n){n=Math.max(0,Math.min(sl.length-1,n));ver(n);
+ if(EN_RED)fetch('ir',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({i:n})}).catch(()=>{})}
 function ver(n){n=Math.max(0,Math.min(sl.length-1,n));if(n===i)return;
  document.body.dataset.dir=n<i?'atras':'adelante';
  if(i>=0){const v=sl[i];restaura(v);v.classList.remove('on');
@@ -385,17 +423,18 @@ function alterna(){quieto=!quieto;document.documentElement.dataset.mov=quieto?'o
  const t=++tok;s.querySelectorAll('.num').forEach(el=>contar(el,t))}
 addEventListener('beforeprint',()=>{tok++;sl.forEach(restaura)});
 // Dentro de un laboratorio o del cuestionario, el teclado y el ratón son suyos: las flechas mueven los deslizadores, no las diapositivas.
-const interactivo=el=>el&&el.closest&&el.closest('#quiz,.labbar,iframe,input,button');
+const interactivo=el=>el&&el.closest&&el.closest('#quiz,.labbar,#mando,iframe,input,button');
 addEventListener('keydown',ev=>{if(interactivo(ev.target)&&['ArrowRight','ArrowLeft',' '].includes(ev.key))return;
- if(['ArrowRight','PageDown',' '].includes(ev.key)){ev.preventDefault();ver(i+1)}
- else if(['ArrowLeft','PageUp'].includes(ev.key))ver(i-1);else if(ev.key==='Home')ver(0);else if(ev.key==='End')ver(sl.length-1);
- else if(ev.key==='n'||ev.key==='N')notas.classList.toggle('on');
+ if(['ArrowRight','PageDown',' '].includes(ev.key)){ev.preventDefault();ir(i+1)}
+ else if(['ArrowLeft','PageUp'].includes(ev.key))ir(i-1);else if(ev.key==='Home')ir(0);else if(ev.key==='End')ir(sl.length-1);
+ else if((ev.key==='n'||ev.key==='N')&&VISTA!=='guion')notas.classList.toggle('on');
  else if(ev.key==='m'||ev.key==='M')alterna();
  else if(ev.key==='T'){acum=0;t0=performance.now();tic()}
- else if(ev.key==='t'){if(corre){acum+=(performance.now()-t0)/1000;corre=false}else{t0=performance.now();corre=true;reloj.classList.add('on')}tic()}
+ else if(ev.key==='t')crono();
  else if(ev.key==='f'||ev.key==='F'){document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen()}});
-document.getElementById('deck').addEventListener('click',ev=>{if(interactivo(ev.target))return;ver(ev.clientX>innerWidth/3?i+1:i-1)});
-let x0=null;addEventListener('touchstart',e=>{x0=interactivo(e.target)?null:e.touches[0].clientX});addEventListener('touchend',e=>{if(x0===null)return;const d=e.changedTouches[0].clientX-x0;if(Math.abs(d)>40)ver(d<0?i+1:i-1);x0=null});
+// En la vista del guion, la diapositiva pequeña no avanza al tocarla: se avanza con los botones, las teclas o deslizando.
+deck.addEventListener('click',ev=>{if(interactivo(ev.target)||VISTA==='guion')return;ir(ev.clientX>innerWidth/3?i+1:i-1)});
+let x0=null;addEventListener('touchstart',e=>{x0=interactivo(e.target)?null:e.touches[0].clientX});addEventListener('touchend',e=>{if(x0===null)return;const d=e.changedTouches[0].clientX-x0;if(Math.abs(d)>40)ir(d<0?i+1:i-1);x0=null});
 
 /* ---------- Cuestionario ---------- */
 const PREG=[
@@ -422,11 +461,28 @@ function quizFin(){const msg=qp===3?'¡Pleno! Habéis escuchado de verdad.':qp==
   sl[i].append(c);setTimeout(()=>c.remove(),4500)}}
 
 addEventListener('resize',fit);fit();ver((parseInt(location.hash.slice(1))||1)-1);
+if(VISTA==='guion')reloj.classList.add('on');
+/* ---------- Sincronización con servidor.py ---------- */
+const sincro=document.getElementById('sincro');
+function estadoRed(d,txt){const det=document.createElement('span');det.className='largo';
+ if(!d){sincro.className='off';det.textContent=' '+(txt||'sin conexión');sincro.replaceChildren('○',det);return}
+ const c=d.clientes||{};sincro.className='on';det.textContent=` en red · ${c.diapositiva||0} diapositivas · ${c.guion||0} guion`;
+ sincro.replaceChildren('●',det)}
+if(EN_RED){let caido=false;
+ const es=new EventSource('eventos?vista='+VISTA);
+ es.onmessage=ev=>{const d=JSON.parse(ev.data);if(typeof d.i==='number'&&d.i!==i)ver(d.i);estadoRed(d);
+  if(caido){caido=false;if(VISTA!=='guion')aviso('Conexión recuperada')}};
+ es.onerror=()=>{estadoRed(null);
+  if(es.readyState===EventSource.CLOSED){estadoRed(null,'sin servidor: modo local');return}
+  if(!caido){caido=true;if(VISTA!=='guion')aviso('Sin conexión con el servidor: se reintenta solo',4000)}}}
+else estadoRed(null,'abierta sin servidor: modo local');
+// Tras pulsar un botón de la barra, el foco vuelve a la página para que las flechas sigan avanzando.
+document.getElementById('mando').addEventListener('click',()=>document.activeElement.blur());
 if(SO_QUIETO&&!eleccion)aviso('Tu sistema tiene las animaciones desactivadas. Pulsa M para activar el movimiento.',9000);
 """
 
 cuerpo = "".join(
-    f'<section class="slide {c}" data-notas="{e(GUION[k]["texto"])}" data-min="{GUION[k]["min"]}" '
+    f'<section class="slide {c}" data-notas="{e(GUION[k]["texto"])}" data-titulo="{e(GUION[k]["titulo"])}" data-min="{GUION[k]["min"]}" '
     f'data-acum="{sum(GUION[j]["min"] for j in range(1, k + 1))}" aria-label="Diapositiva {k}">{h}'
     + (f'<span class="num-pag">{k}</span>' if k > 1 else "") + "</section>"
     for k, (c, h) in enumerate(S, 1))
@@ -446,20 +502,48 @@ doc = f"""<!doctype html>
 <html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Reto 1 · ServiPass</title><link rel="stylesheet" href="css/presentacion.css"></head>
 <body><div id="prog"><i></i></div><div id="deck">{cuerpo}</div><div id="notas"></div>
-<div id="toast"></div><div id="reloj"></div><div id="ayuda">← → avanzar · N guion · T cronómetro · M movimiento · F pantalla completa</div><script src="js/presentacion.js"></script></body></html>"""
+<div id="mando"><button onclick="ir(i-1)">← <span class="largo">Anterior</span></button><span id="posicion"></span><span id="sincro"></span>
+<button onclick="crono()">⏱ <span class="largo">Cronómetro</span></button><button onclick="ir(i+1)"><span class="largo">Siguiente</span> →</button></div>
+<div id="siguiente"></div><div id="toast"></div><div id="reloj"></div><div id="ayuda">← → avanzar · N guion · T cronómetro · M movimiento · F pantalla completa</div><script src="js/presentacion.js"></script></body></html>"""
 (ENTREGA / "presentacion.html").write_text(doc, encoding="utf-8")
+shutil.copy(AQUI / "servidor.py", ENTREGA / "servidor.py")
+(ENTREGA / "index.html").write_text(f"""<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Reto 1 · ServiPass · elegir vista</title><style>
+body{{margin:0;min-height:100vh;background:#23272b;color:#fff;font-family:Arial,Helvetica,sans-serif;display:grid;place-items:center}}
+main{{width:min(900px,calc(100vw - 32px));padding:32px 0}}h1{{font-size:30px;margin:18px 0 6px}}p{{color:#ccc;font-size:17px;line-height:1.45}}
+img{{width:110px;border-radius:18px}}.op{{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px;margin-top:26px}}
+a.c{{display:block;background:#2f353b;border:2px solid #444;border-radius:14px;padding:22px 24px;color:#fff;text-decoration:none;transition:border-color .2s,transform .2s}}
+a.c:hover{{border-color:#e67e22;transform:translateY(-3px)}}a.c b{{display:block;font-size:22px;color:#e67e22;margin-bottom:8px}}a.c span{{color:#ccc;font-size:15px;line-height:1.4}}
+small{{display:block;margin-top:26px;color:#999;font-size:14px}}small a{{color:#e67e22}}</style></head>
+<body><main><img src="{LOGO}" alt="Logo de ServiPass"><h1>Reto 1 · ServiPass</h1>
+<p>Elige qué ve este equipo. Todos los equipos conectados ven siempre la misma diapositiva: si alguien avanza, avanzan todos.</p>
+<div class="op"><a class="c" href="presentacion.html"><b>Diapositivas</b><span>Para el proyector o la pantalla del público, a pantalla completa (tecla F).</span></a>
+<a class="c" href="presentacion.html?vista=guion"><b>Guion del orador</b><span>El texto de cada diapositiva, la diapositiva en pequeño, la siguiente, el cronómetro y los botones para avanzar.</span></a></div>
+<small>Los tres laboratorios, por separado: <a href="laboratorios/index.html">laboratorios/index.html</a></small></main></body></html>""", encoding="utf-8")
 MIN = sum(d["min"] for d in GUION.values())
 (ENTREGA / "LEEME.txt").write_text(f"""Reto 1 · Proyecto Intermodular I · ServiPass
 Riches Manuel y Roca · 1.º CFGS ASIR · IES Conselleria · octubre de 2026
 
-Descomprimir la carpeta entera y abrir los ficheros con cualquier navegador (no hace falta conexión ni servidor).
+CÓMO SE PRESENTA (servidor en la red local, sin internet)
+1. Descomprimir la carpeta entera en el equipo que hará de servidor y, dentro de ella, ejecutar:
+       python3 servidor.py            (en Windows: py servidor.py; opción --puerto 8000)
+   Solo necesita Python 3, sin instalar nada más. La primera vez, Windows puede pedir permiso en el cortafuegos
+   para la red privada: hay que permitirlo.
+2. El servidor imprime su dirección, por ejemplo http://192.168.1.20:8000/. Abrirla en cada equipo, tableta o
+   móvil de la misma red y elegir la vista: «Diapositivas» (proyector) o «Guion del orador».
+3. Todos ven siempre la misma diapositiva. Cualquiera puede avanzar o retroceder (teclas, clic o botones) y los
+   demás le siguen al momento; un equipo que se conecta tarde entra en la diapositiva actual.
+Sin servidor, presentacion.html también se abre con doble clic, pero cada equipo va por su cuenta.
 
-presentacion.html      Presentación ({len(S)} diapositivas, {MIN:g} min).
-                       Teclas: flechas o espacio para avanzar, N guion del orador, T cronómetro de ensayo,
-                       M animaciones sí/no, F pantalla completa. Tres diapositivas cargan los laboratorios (se pueden abrir
-                       también en una pestaña aparte); la última es un cuestionario de 3 preguntas.
+index.html             Elección de la vista.
+presentacion.html      Presentación ({len(S)} diapositivas, {MIN:g} min). Con ?vista=guion, vista del orador.
+                       Teclas: flechas o espacio para avanzar, N guion (en la vista de diapositivas), T cronómetro de
+                       ensayo, M animaciones sí/no, F pantalla completa. Tres diapositivas cargan los laboratorios (se
+                       pueden abrir también en una pestaña aparte); la última es un cuestionario de 3 preguntas.
+servidor.py            Servidor de la presentación: sirve la carpeta y sincroniza la diapositiva entre los equipos.
 css/presentacion.css   Estilos y animaciones de la presentación.
-js/presentacion.js     Navegación, contadores, cronómetro y cuestionario.
+js/presentacion.js     Navegación, sincronización con el servidor, contadores, cronómetro y cuestionario.
 fig/                   Figuras del informe (organigrama de ServiPass; flujo de la comanda y red actual del
                        cliente piloto, Burglar King; costes) y logo de ServiPass.
 laboratorios/          Tres simulaciones sobre Burglar King, el cliente piloto (abrir laboratorios/index.html);
