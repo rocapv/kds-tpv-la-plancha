@@ -3,7 +3,6 @@
 <title>Lab 3 · Hora punta · ServiPass</title><link rel="stylesheet" href="css/lab.css"></head>
 <body>
 <header><span class="pt">LAB 3</span><h1>Simulación: una hora punta con papel y con KDS</h1><a href="index.html">← laboratorios</a></header>
-<p class="intro">Se simula el mismo servicio dos veces a la vez, con <b>idéntico flujo de comandas de mesa y pedidos de reparto</b>. A la izquierda, el local de hoy: comandero de papel, aviso a voz y tableta de reparto que hay que copiar a mano. A la derecha, el proyecto: la comanda entra en la pantalla de cocina al tomarla y los pedidos de reparto entran solos. La cocina tarda lo mismo en los dos casos; lo que cambia es dónde entra la información y cuánto se pierde por el camino.</p>
 
 <div class="hud">
  <button class="prim" id="empezar">▶ Simular el servicio</button>
@@ -12,7 +11,6 @@
  <label>Velocidad <select id="vel"><option value="5">×5 · despacio</option><option value="10" selected>×10</option><option value="20">×20</option><option value="40">×40 · rápido</option></select></label>
  <span class="reloj" id="reloj">0:00</span>
 </div>
-<p class="intro" style="margin-top:0"><small>La velocidad es cuántos segundos del servicio pasan por cada segundo real. A ×10, los 3 minutos de hora punta y los platos que quedan en cocina duran algo más de un minuto; a ×5, unos dos. Se puede cambiar en marcha y pausar en cualquier momento. Cada tarjeta indica cuánto lleva en su fase, y la barra inferior marca lo que lleva en cocina o cuánto ha consumido un pedido de reparto de sus 4 minutos antes de caducar (en rojo, cuando le queda poco).</small></p>
 <div class="grid c2">
  <div class="card"><h3>Hoy: papel, voz y tableta</h3>
   <div class="hud"><span>Servidos <b id="p_serv">0</b></span><span>Perdidos <b id="p_perd">0</b></span><span>Ingresos <b id="p_ing">0 €</b></span></div>
