@@ -85,11 +85,11 @@
    "n": 8,
    "titulo": "Simulación: Verifactu",
    "min": 0.75,
-   "texto": "Segunda simulación, sobre el factor legal. Tres facturas de Burglar King de un mismo mediodía, cada una con la huella de la anterior. Alguien rebaja la segunda para pagar menos IVA, como permite un TPV sin Verifactu: su huella deja de cuadrar, se ve en rojo qué caracteres cambian, y la tercera ya no encaja con ella. La única corrección válida es una factura rectificativa. Por eso el TPV de Burglar King deja de ser legal en 2027, y por eso el nuestro tiene que cumplir antes de vender la primera licencia.",
+   "texto": "Segunda simulación, el factor legal: Verifactu. Arriba están las facturas de un mediodía de Burglar King, encadenadas. Cada casilla muestra su número y el principio y el final de su huella, un SHA-256 calculado como manda la Agencia Tributaria. Entre casilla y casilla está la huella completa de la anterior, que cada factura guarda dentro. Abajo, la factura con su QR tributario y el registro que se envía a Hacienda. Si rebajo un precio, como haría un TPV sin Verifactu, la huella cambia casi entera, la casilla se pone en rojo y la siguiente ya no encaja. Y rehacer la cadena no sirve: cada registro ya se envió a la AEAT al expedir la factura.",
    "rapidas": [
-    "Pulsar «Simular»: tres facturas encadenadas",
-    "«Rebajar la factura 2»: huella en rojo y eslabón roto",
-    "Solo vale la factura rectificativa"
+    "«Simular la emisión»: cada factura guarda la huella de la anterior",
+    "«Rebajar la 000128»: casilla en rojo y eslabón roto",
+    "«Rehacer la cadena»: encaja por dentro, pero no con lo enviado a la AEAT"
    ]
   },
   {

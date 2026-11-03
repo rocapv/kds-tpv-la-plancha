@@ -140,7 +140,7 @@ body.v-pc .slide.de-pc:not(.espejo) .labbar>span:first-child::after{content:' ·
 .slide.labframe{overflow:hidden}.slide.labframe iframe.hd{width:1920px;height:1014px;transform:scale(.666667);transform-origin:0 0}
 /* PC: la miniatura del laboratorio que se maneja aquí recibe clics; «Laboratorio grande» la lleva a toda la pantalla. */
 body.v-pc.lab-manda #deck{pointer-events:auto}body.v-pc #herr [data-h=labgrande]{display:none}body.v-pc.lab-manda #herr [data-h=labgrande]{display:inline-block}
-body.v-pc.lab-manda.lab-grande #deck{top:116px;width:calc(100vw - 32px);height:calc(100vh - 132px);z-index:35}
+body.v-pc.lab-manda.lab-grande #deck{top:116px;width:calc(100vw - 32px);height:calc(100vh - 132px);z-index:50;background:#1b1e21}  /* por encima del cronómetro y tapando el guion */
 .v-publico .labbar button,.v-publico .labbar a,.v-publico #ayuda{display:none}
 /* PC: barra arriba, diapositiva en pequeño con el reloj y los mandos debajo, y el guion a la derecha */
 body.v-pc{background:#1b1e21;--mw:calc(46vw - 24px);--mh:calc((46vw - 24px) * .5625)}

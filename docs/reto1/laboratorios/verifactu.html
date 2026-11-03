@@ -2,46 +2,127 @@
 <html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Lab 2 · Verifactu · ServiPass</title><link rel="stylesheet" href="css/lab.css">
 <style>
-.facturas{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:10px}
-@media (max-width:1100px){.facturas{grid-template-columns:1fr}}
-.fra{background:#fff;border:2px solid #ddd;border-radius:12px;padding:14px 14px 10px;font-size:14px;position:relative;transition:border-color .3s,box-shadow .3s}
-.fra.ok{border-color:var(--verde)}.fra.mal{border-color:var(--rojo);box-shadow:0 0 0 4px #fdecea}
-.fra.oculta{visibility:hidden}.fra.entra{animation:aparece .5s ease}
-.fra h3{margin:0 0 2px;font-size:16px}.fra .em{color:var(--gris);font-size:12px;line-height:1.35;margin-bottom:8px}
-.fra .meta{display:grid;grid-template-columns:auto 1fr;gap:3px 8px;font-size:13px;margin-bottom:8px}.fra .meta span{color:var(--gris)}
-.fra input{font:inherit;font-size:13px;border:1px solid transparent;border-radius:5px;padding:2px 4px;background:#f6f6f6;width:100%}
-.fra input:hover,.fra input:focus{border-color:var(--nar);background:#fff;outline:none}
-.fra input.cambiado{background:#fdecea;border-color:var(--rojo);color:var(--rojo);font-weight:bold}
-.fra table{width:100%;border-collapse:collapse;font-size:13px}.fra th{text-align:left;font-weight:normal;color:var(--gris);border-bottom:1px solid #ddd;padding:3px 2px}
-.fra td{padding:2px}.fra td.n{width:46px}.fra td.p{width:74px}.fra td.t{text-align:right;white-space:nowrap;width:62px}
-.fra .tot{display:grid;grid-template-columns:1fr auto;gap:2px 10px;margin-top:6px;font-size:13px}.fra .tot b{text-align:right}.fra .tot .g{font-size:16px}
-.fra .huellas{margin-top:10px;border-top:1px dashed #ccc;padding-top:8px;font-size:12px}
-.hex{font-family:Consolas,'Courier New',monospace;font-size:12.5px;letter-spacing:.5px;word-break:break-all;line-height:1.45;display:block;background:#f6f6f6;border-radius:6px;padding:4px 6px;margin:2px 0 6px}
-.hex i{font-style:normal;color:var(--rojo);background:#fdecea;font-weight:bold}
-.sello{position:absolute;top:10px;right:12px;font-size:13px;font-weight:bold;padding:3px 9px;border-radius:12px}
-.sello.ok{background:#e9f7ef;color:#1e8449}.sello.mal{background:var(--rojo);color:#fff}
-.enlace{font-size:12px;margin:0 0 8px;padding:4px 8px;border-radius:6px;background:#f2f2f2}
-.enlace.ok{background:#e9f7ef;color:#1e8449}.enlace.mal{background:#fdecea;color:var(--rojo);font-weight:bold}
-.firma{font-family:Consolas,'Courier New',monospace;font-size:11px;color:#555;word-break:break-all;background:#fbfbfb;border:1px solid #eee;border-radius:6px;padding:4px 6px;margin-top:4px}
-.firma i{font-style:normal;background:#fdecea;color:var(--rojo);font-weight:bold}
-details.cadena-txt summary{cursor:pointer;color:var(--nar);font-size:12px;margin-top:2px}
-.cuantos{font-size:12px;color:var(--gris)}
+/* Diseño fluido: la letra crece con el ancho y con el alto (14 px en el iframe de 1280×676 de la pizarra, 22 px
+   a 1920×1080, nunca menos de 13 px). En pantallas anchas todo cabe sin desplazar la página: cada panel se desplaza por dentro. */
+html{font-size:clamp(13px,min(1.25vw - 2px,2.07vh),22px);background:#fff}
+body{max-width:none;margin:0;padding:.55rem 1rem .8rem;font-size:1rem;min-height:0}
+.top{display:flex;align-items:center;flex-wrap:wrap;gap:.45rem .8rem;border-bottom:3px solid var(--nar);padding-bottom:.45rem;margin-bottom:.45rem}
+.top .pt{font-size:.95rem;padding:.25rem .7rem;border-radius:.5rem}
+.top h1{font-size:1.3rem;flex:1 1 16rem;min-width:0}
+.top a{font-size:.8rem}
+.acciones{display:flex;flex-wrap:wrap;gap:.4rem;margin:0}
+.acciones button{font-size:.88rem;padding:.35rem .75rem;border-radius:.45rem}
+.msg{margin:0 0 .45rem;min-height:1.4em;font-size:.95rem;line-height:1.4}
+/* Cadena: casillas en fila; delante de cada una, la huella de la anterior que lleva dentro */
+.cadena{display:flex;align-items:stretch;gap:0;padding:.2rem 0 .5rem;border-bottom:2px solid #eee;margin-bottom:.55rem}
+.ini{flex:none;width:3.2rem;display:flex;align-items:center;justify-content:center;text-align:center;font-size:.72rem;line-height:1.2;color:var(--gris);border:1px dashed #bbb;border-radius:.5rem;margin-right:.3rem}
+.par{flex:1 1 0;min-width:0;display:flex;align-items:stretch}
+.cas{flex:1 1 0;min-width:0;display:flex;flex-direction:column;justify-content:center;gap:.25rem;align-items:center;padding:.45rem .25rem;border:2px solid #ccc;border-radius:.65rem;background:#fafafa;font:inherit;cursor:pointer;transition:border-color .3s,background .3s,box-shadow .3s,opacity .4s}
+.cas:hover{transform:none;background:#fff}
+.cas b{font-size:.86rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.cas .hc{font-family:Consolas,'Courier New',monospace;font-size:1.25rem;font-weight:bold;letter-spacing:.06em}
+.cas .marca{font-size:.78rem;font-weight:bold}
+.cas.ok{border-color:var(--verde);background:#f3fbf6}.cas.ok .marca{color:var(--verde)}
+.cas.mal{border-color:var(--rojo);background:#fdecea}.cas.mal .hc,.cas.mal .marca{color:var(--rojo)}
+.cas.sel{box-shadow:0 0 0 .25rem var(--nar);border-color:var(--nar)}
+.cas.oculta,.enl.oculta{opacity:0}.cas.calc .hc{color:var(--gris)}
+.enl{flex:none;width:5.3rem;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.12rem;padding:0 .2rem;transition:opacity .4s}
+.enl .fl{font-size:.72rem;color:var(--gris);white-space:nowrap}
+.enl .hx{font-family:Consolas,'Courier New',monospace;font-size:.74rem;line-height:1.13;letter-spacing:.02em;background:#f2f2f2;border-radius:.3rem;padding:.2rem .3rem;border:1px solid #e2e2e2}
+.enl .hx span{display:block}.enl .hx i{font-style:normal;color:#fff;background:var(--rojo)}
+.enl.ok .hx{background:#eef8f2;border-color:#bfe3cc}.enl.ok .fl{color:var(--verde)}
+.enl.roto .hx{background:#fdecea;border-color:var(--rojo)}.enl.roto .fl{color:var(--rojo);font-weight:bold}
+/* Factura modelo, registro de alta y huella */
+.modelo{display:grid;gap:.7rem;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr) minmax(0,1fr);grid-template-areas:"papel reg huella";align-items:start}
+.papel{grid-area:papel}.registro{grid-area:reg}.huella{grid-area:huella}
+.panel{border:1px solid #ddd;border-radius:.45rem;padding:.6rem .75rem;background:#fff;min-width:0}
+.papel{box-shadow:0 .3rem 1rem rgba(0,0,0,.08);font-size:.9rem}
+.panel h3{font-size:.95rem;margin:0 0 .4rem;display:flex;justify-content:space-between;align-items:center;gap:.5rem}
+.cab{display:grid;grid-template-columns:8.6rem minmax(0,1fr);gap:.8rem;align-items:start;border-bottom:2px solid var(--osc);padding-bottom:.4rem;margin-bottom:.35rem}
+.qrb{text-align:center;font-size:.74rem;line-height:1.2}.qrb .qr{width:8rem;height:8rem;margin:.15rem auto}.qrb .qr svg{width:100%;height:100%;display:block}
+.qrb .vf{display:block;font-weight:bold}
+.emi input.nom{font-size:1.05rem;font-weight:bold;margin-bottom:.2rem}
+.datos{display:grid;grid-template-columns:auto minmax(0,1fr);gap:.15rem .55rem;align-items:center}.datos span{color:var(--gris);font-size:.82rem}
+.tit{display:flex;align-items:center;gap:.6rem;margin:.1rem 0 .25rem}.tit h2{font-size:.98rem;margin:0;letter-spacing:.05em;white-space:nowrap}.tit input{flex:1}
+.dest{display:grid;grid-template-columns:auto minmax(0,1.6fr) auto minmax(0,1fr);gap:.12rem .45rem;align-items:center;background:var(--claro);border-radius:.35rem;padding:.25rem .45rem;margin-bottom:.3rem}
+.dest span{color:var(--gris);font-size:.78rem}.dest input[data-c="desDir"]{grid-column:2/-1}.dest span:nth-of-type(3){grid-column:1}
+
+.papel table{font-size:.86rem}.papel th{background:#f3f3f3;font-weight:normal;color:var(--gris);padding:.2rem .3rem}.papel td{padding:.1rem .15rem;border-bottom:1px solid #eee}
+.papel td.n{width:3.2rem}.papel td.p{width:5rem}.papel td.t{width:3.1rem}.papel td.imp{text-align:right;white-space:nowrap;width:5.4rem;padding-right:.3rem;font-variant-numeric:tabular-nums}
+.desg{display:grid;grid-template-columns:1fr auto auto;gap:.05rem .9rem;margin-top:.35rem;font-size:.86rem;font-variant-numeric:tabular-nums}.desg b{text-align:right}.desg .h{color:var(--gris);font-size:.74rem;text-align:right}
+.desg .tot{font-size:1.15rem;border-top:2px solid var(--osc);padding-top:.15rem;margin-top:.1rem}
+.papel .pie{margin-top:.25rem;font-size:.74rem;color:var(--gris)}
+input.e,select.e{font:inherit;color:inherit;border:1px solid transparent;border-radius:.25rem;padding:.1rem .25rem;background:#f5f5f5;width:100%;min-width:0}
+input.e:hover,input.e:focus,select.e:hover,select.e:focus{border-color:var(--nar);background:#fff;outline:none}
+input.num{text-align:right;font-variant-numeric:tabular-nums}
+.e.ch-h{background:#fdecea;border-color:var(--rojo);color:var(--rojo);font-weight:bold}
+.e.ch-r{background:#fff4dc;border-color:#e0a800;color:#8a6100;font-weight:bold}
+.e.ch-f{background:#eaf2fb;border-color:var(--azul);color:#1d5f8f}
+.campos{columns:15rem;column-gap:1rem;font-size:.8rem}
+.fr{break-inside:avoid;display:flex;flex-wrap:wrap;align-items:baseline;gap:0 .45rem;padding:.03rem .2rem;border-bottom:1px solid #f0f0f0;line-height:1.22}
+.fr .c{font-family:Consolas,'Courier New',monospace;color:#555;font-size:.76rem}
+.fr .v{font-family:Consolas,'Courier New',monospace;word-break:break-all;flex:1 1 6rem;min-width:0}
+.fr.h .c{color:var(--nar);font-weight:bold}.fr.h .c::after{content:' #'}
+.fr.g{background:#f6f6f6;color:var(--gris);font-size:.74rem;padding-top:.12rem;border-bottom:0}
+.fr.dif-h .v{color:var(--rojo);font-weight:bold}.fr.dif-r .v{color:#8a6100;font-weight:bold}
+.fr input.e{font-family:Consolas,'Courier New',monospace;font-size:.78rem;padding:0 .2rem}
+.sello{font-size:.82rem;font-weight:bold;padding:.15rem .6rem;border-radius:1rem;white-space:nowrap}.sello.ok{background:#e9f7ef;color:#1e8449}.sello.mal{background:var(--rojo);color:#fff}
+.huella{font-size:.85rem}
+.lbl{font-size:.76rem;color:var(--gris);margin-top:.35rem}.cuantos{font-weight:bold}
+.huella input.e{font-family:Consolas,'Courier New',monospace;font-size:.78rem}
+.firma{font-family:Consolas,'Courier New',monospace;font-size:.76rem;word-break:break-all;background:#fbfbfb;border:1px solid #eee;border-radius:.35rem;padding:.3rem .45rem;margin:.15rem 0 0;line-height:1.4}
+.firma i{font-style:normal;background:#fdecea;color:var(--rojo);font-weight:bold}.firma u{text-decoration:none;color:var(--nar)}
+.hex{font-family:Consolas,'Courier New',monospace;font-size:.84rem;letter-spacing:.03em;word-break:break-all;line-height:1.4;display:block;background:#f6f6f6;border-radius:.35rem;padding:.2rem .45rem;margin:.1rem 0 0}
+.hex i{font-style:normal;color:#fff;background:var(--rojo)}
+.url{font-family:Consolas,'Courier New',monospace;font-size:.72rem;word-break:break-all;color:#555}
+.ley{display:flex;flex-wrap:wrap;gap:.2rem .8rem;font-size:.74rem;color:var(--gris);margin-top:.5rem;border-top:1px solid #eee;padding-top:.35rem}
+.ley span::before{content:'';display:inline-block;width:.75rem;height:.75rem;border-radius:.2rem;margin-right:.3rem;vertical-align:-.1rem}
+.ley .lh::before{background:#fdecea;border:1px solid var(--rojo)}.ley .lr::before{background:#fff4dc;border:1px solid #e0a800}.ley .lf::before{background:#eaf2fb;border:1px solid var(--azul)}.ley .ln::before{display:none}
+footer{margin-top:1rem;font-size:.75rem}
+/* Pantalla ancha (pizarra, PC, proyector): una sola pantalla, sin desplazar la página */
+@media (min-width:1100px) and (min-height:560px){
+ body{height:100vh;display:flex;flex-direction:column;overflow:hidden;padding-bottom:.6rem}
+ .modelo{flex:1 1 auto;min-height:0;align-items:stretch}
+ .panel{overflow:auto;max-height:100%}
+ .par{display:contents}          /* casillas iguales: la primera no lleva enlace delante */
+ footer{display:none}
+}
+/* Intermedia: la cadena en dos filas, factura y huella arriba y el registro debajo */
+@media (max-width:1099px){
+ .cadena{flex-wrap:wrap;row-gap:.5rem}.par{flex:1 1 30%}
+ .modelo{grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-areas:"papel huella" "reg reg"}
+ .cab{grid-template-columns:max(8.6rem,140px) minmax(0,1fr)}.qrb .qr{width:max(8rem,132px);height:max(8rem,132px)}   /* que se pueda leer desde la pantalla */
+}
+/* Estrecha (móvil): todo en una columna; la cadena en vertical y cada huella en dos líneas */
+@media (max-width:680px){
+ body{padding:.5rem .6rem}
+ .cadena{flex-direction:column;flex-wrap:nowrap}.ini{width:auto;margin:0 0 .3rem;padding:.25rem}
+ .par{flex-direction:column;flex:none}
+ .cas{flex-direction:row;justify-content:space-between;padding:.4rem .7rem}
+ .enl{width:auto;flex-direction:row;gap:.5rem;padding:.25rem 0;justify-content:flex-start}
+ .enl .hx span{display:inline}.enl .hx{word-break:break-all;flex:1}
+ .modelo{grid-template-columns:minmax(0,1fr);grid-template-areas:"papel" "huella" "reg"}
+ .cab{grid-template-columns:minmax(0,1fr)}
+ .dest{grid-template-columns:auto minmax(0,1fr)}.dest input[data-c="desDir"]{grid-column:auto}
+}
 </style></head>
 <body>
-<header><span class="pt">LAB 2</span><h1>Simulación: Verifactu, la cadena de facturas</h1><a href="index.html">← laboratorios</a></header>
-<p class="intro">Con Verifactu (Real Decreto 1007/2023), cada factura queda registrada con una <b>huella</b>: un código SHA-256 calculado con los datos de la factura <b>y con la huella de la factura anterior</b>. Así las facturas forman una cadena. Abajo hay tres facturas de Burglar King ya emitidas, con su huella registrada. <b>Cambia lo que quieras de cualquiera de ellas</b> (un precio, una cantidad, el número o la hora): la huella que se recalcula deja de coincidir con la registrada, y la factura siguiente, que apuntaba a la huella antigua, ya no encaja.</p>
-<div class="acciones">
- <button class="prim" id="simular">▶ Simular</button>
- <button id="alterar">Rebajar la factura 2 (como un TPV sin Verifactu)</button>
- <button id="restaurar">Restaurar las originales</button>
- <span class="estado" id="paso"></span>
-</div>
-<div class="msg" id="msg">Las tres facturas están tal y como se emitieron: las huellas cuadran y la cadena está íntegra.</div>
-<div class="facturas" id="facturas"></div>
-<div class="grid c2" style="margin-top:14px">
- <div class="card"><h3>Qué se ve en cada factura</h3><p><b>Huella registrada</b>: la que se calculó al emitir la factura y quedó guardada (y, en Verifactu, enviada a la Agencia Tributaria). <b>Huella recalculada</b>: la que sale ahora con los datos que tiene la factura. Si alguien cambia un solo céntimo, cambia casi toda la huella: los caracteres en rojo son los que ya no coinciden. El recuadro de arriba de cada factura indica si su «huella anterior» coincide con la huella real de la factura previa.</p></div>
- <div class="card tint"><h3>Cómo se calcula</h3><p>La huella es el SHA-256 de una cadena con el NIF del emisor, el número, la fecha, el tipo de factura, la cuota de IVA, el importe total, la <b>huella anterior</b> y la fecha y hora del registro, con el formato del reglamento. Se puede ver la cadena exacta en «ver lo que se firma» de cada factura.</p><p style="margin-top:8px"><small>Simplificación didáctica: el registro real tiene más campos y lleva además código QR y firma. Datos de las facturas inventados. Fuentes: Ley 11/2021, RD 1007/2023, Orden HAC/1177/2024, RD-ley 15/2025.</small></p></div>
-</div>
+<header class="top"><span class="pt">LAB 2</span><h1>Simulación: Verifactu, la cadena de facturas</h1>
+ <div class="acciones">
+  <button class="prim" id="simular">▶ Simular la emisión</button>
+  <button id="alterar">Rebajar la factura 000128</button>
+  <button id="rehacer">Rehacer la cadena (fraude)</button>
+  <button id="restaurar">Restaurar</button>
+ </div>
+ <a href="index.html">← laboratorios</a></header>
+<div class="msg" id="msg"></div>
+<nav class="cadena" id="cadena" aria-label="Cadena de registros"></nav>
+<section class="modelo">
+ <article class="panel papel" id="papel"></article>
+ <section class="panel registro" id="registro"></section>
+ <aside class="panel huella" id="huella"></aside>
+</section>
 <footer>Lab 2 · Reto 1 · Riches Manuel y Roca · 1.º CFGS ASIR · IES Conselleria</footer>
+<script src="js/qr.js"></script>
 <script src="js/verifactu.js"></script>
 </body></html>
