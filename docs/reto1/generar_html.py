@@ -2,7 +2,7 @@
 """Presentación del Reto 1 (HTML + CSS + JS en ficheros separados), servida por la LAN, y ZIP de entrega.
 
 Sigue los ocho puntos del informe (contextualización, empresa de referencia, entorno económico, modelo de
-negocio y finanzas, servicios, publicidad, conclusiones y bibliografía), y deja al final, como opción, un cuestionario de cinco preguntas para el público (no se llega a él con «siguiente»: se abre con su botón). 12-15 minutos: el guion hablado vive en
+negocio y finanzas, servicios, publicidad, conclusiones y bibliografía), y deja al final, como opción, un cuestionario de seis preguntas para el público (no se llega a él con «siguiente»: se abre con su botón). 12-15 minutos: el guion hablado vive en
 guion.json. Los laboratorios son páginas aparte en laboratorios/ y van en el ZIP, no en la presentación.
 
 Se presenta con servidor.py, y cada equipo de la LAN elige su vista:
@@ -133,15 +133,15 @@ PROYECTO = [("Equipos (20 % de margen)", 3850, "#E67E22"), ("Instalación y form
 S.append(("", f"""
 {punto(4, "Modelo de negocio: un proyecto tipo de 7.450 €")}
 <div class="barras g">{''.join(f'<span class="id">{round(v / 74.5)} %</span><div class="barra"><i style="width:{v / 74.5 * 1.5:.1f}%;background:{c}"></i><b>{v:,} €</b></div><span>{t}</span>'.replace(',', '.') for t, v, c in PROYECTO)}</div>
-<div class="tras-barras">{tarjetas([f'<b class="num">{n}</b><span>{t}</span>' for n, t in [("3.340 €", "de margen por instalación"), ("27", "instalaciones al año: punto muerto"), ("25.265 €", "antes de impuestos el tercer año (−29.669 € el primero)")]], 3, "card stat")}</div>
-<p class="nota">Escenario: 18, 24 y 30 instalaciones en los años 1 a 3. El soporte se cobra al instalar, pero cuenta como ingreso en diez años: 90 € por cliente y año (Resolución del ICAC de 10/02/2021).</p>"""))
+<div class="tras-barras">{tarjetas([f'<b class="num">{n}</b><span>{t}</span>' for n, t in [("3.340 €", "de margen por instalación"), ("27", "instalaciones al año: punto muerto"), ("33.870 €", "antes de impuestos el tercer año (−24.158 € el primero)")]], 3, "card stat")}</div>
+<p class="nota">Escenario: 18, 24 y 30 instalaciones en los años 1 a 3; 9, 8 y 6 de ellas, de locales mecenas que ya tienen la licencia (margen de 2.440 €). El soporte se cobra al instalar, pero cuenta como ingreso en diez años: 90 € por cliente y año (Resolución del ICAC de 10/02/2021).</p>"""))
 
 
 # 9 · Punto 4.1 y 4.2
 S.append(("", f"""
 {punto("4.1 · 4.2", "Financiación y salarios")}
 <div class="grid c2">
- <div class="card"><h3>Financiación · 32.500 €</h3>{lista(["Equipos de trabajo, fianza y, sobre todo, un <b>colchón de tres meses</b> de gastos fijos", "<b>15.000 €</b> de los socios y un microcrédito de MicroBank de <b>17.500 €</b> a tres años, sin garantías", "ICO y ENISA como alternativas · Kit Digital cerrado · Digitaliza-CV pide unos 20.000 € de proyecto", "El anticipo del 50 % paga los equipos de cada cliente"])}</div>
+ <div class="card"><h3>Micromecenazgo · 50.000 €</h3>{lista(["Campaña de recompensa en Verkami: <b>todo o nada</b> en 40 días, 6,5 % de comisión", "Desde <b>1 €</b>, diez años de servicio · <b>10 €</b>, de por vida · <b>100 €</b>, y las expansiones de la siguiente versión · <b>500 €</b>, y soporte gratis para siempre", "Quedan <b>38.072 €</b> tras el IVA y la comisión: sin deuda ni intereses, y los mecenas son los primeros clientes", "Riesgos: licencias casi regaladas y soporte sin fin · plan B: socios y microcrédito"])}</div>
  <div class="card tint"><h3>Salarios: convenio estatal TIC</h3>
   <div class="barras s"><span class="id">C3</span><div class="barra"><i style="width:100%"></i><b>24.105 €</b></div><span>cada socio</span>
   <span class="id">D1</span><div class="barra"><i style="width:85%;background:#D35400"></i><b>20.436 €</b></div><span>primer técnico</span>
@@ -183,7 +183,8 @@ S.append(("dark", f"""
 {punto(7, "Conclusiones")}
 <div class="pasos">{''.join(f'<div class="fila"><span class="dot g">{k}</span><p>{t}</p></div>' for k, t in enumerate([
   "Una microempresa que vende a microempresas: un <b>TPV + KDS propio</b> con pago único y diez años de soporte.",
-  "Viable a medio plazo: punto muerto en <b>27 instalaciones</b>; −29.669 € el primer año, −2.786 € el segundo y 25.265 € el tercero.",
+  "Viable a medio plazo: punto muerto en <b>26-27 instalaciones</b>; −24.158 € el primer año, −8.634 € el segundo y 33.870 € el tercero.",
+  "Sin deuda: un <b>micromecenazgo</b> de 50.000 €, pagado con licencias para los mecenas y soporte para siempre que hay que vigilar.",
   "El entorno pone fecha: <b>Verifactu el 1/1/2027</b>, Windows 10 sin soporte y una cocina que sigue en papel.",
   "<b>1.800 €</b> de licencia frente a 10.700 € de suscripción: competir en precio, no en funciones, y crecer según el soporte."], 1))}</div>"""))
 
@@ -192,15 +193,15 @@ S.append(("dark", f"""
 {punto(8, "Bibliografía")}
 <div class="grid c3 bib">
  <div class="card oscura"><h3>Sector y empresas</h3>{lista(["INE (2025) · Profesional Horeca (2025) · Hosteltur (2026)", "Cegid (2023) · capital-riesgo.es (2022, 2023) · Taylor (2023)", "El Periòdic (2025) · Riches Manuel y Roca (2026)"])}</div>
- <div class="card oscura"><h3>Finanzas y trabajo</h3>{lista(["XIX Convenio TIC (BOE-A-2026-9024) · RD 126/2026 (SMI)", "Cámara de España (2022) · ICO (s.f.) · Intelectium (s.f.)", "Billin (2026) · idealista/news (2026) · Digitaliza CV (2026)"])}</div>
+ <div class="card oscura"><h3>Finanzas y trabajo</h3>{lista(["XIX Convenio TIC (BOE-A-2026-9024) · RD 126/2026 (SMI)", "Verkami (s.f., 2025) · Ley 5/2015 · Reglamento (UE) 2020/1503", "Cámara de España (2022) · ICO (s.f.) · Intelectium (s.f.)", "Billin (2026) · idealista/news (2026) · Digitaliza CV (2026)"])}</div>
  <div class="card oscura"><h3>Mercado y normativa</h3>{lista(["idealista, Fotocasa, Habitaclia y Nuroa (2026)", "Garrigues (2025) · Microsoft (2025) · L'Express Franchise (2026)", "Ley 11/2021 · RD 1007/2023 · RGPD · Resolución del ICAC (2021)"])}</div>
 </div>
-<p class="pie">47 referencias en formato APA (7.ª ed.) en el punto 8 del informe.</p>
+<p class="pie">51 referencias en formato APA (7.ª ed.) en el punto 8 del informe.</p>
 <button class="opc-q" onclick="ir(i+1,true)">¿? Preguntas para el público (opcional)</button>"""))
 
 # 14 · Cuestionario
 S.append(("lab quiz opcional", """
-<h2><span class="pt">¿?</span>Cinco preguntas para terminar</h2>
+<h2><span class="pt">¿?</span>Seis preguntas para terminar</h2>
 <div id="quiz"></div>"""))
 
 

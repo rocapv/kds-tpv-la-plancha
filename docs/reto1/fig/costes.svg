@@ -1,39 +1,43 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="700" viewBox="0 0 1600 700" font-family="Liberation Sans">
-<rect width="1600" height="700" fill="#ffffff"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="740" viewBox="0 0 1600 740" font-family="Liberation Sans">
+<rect width="1600" height="740" fill="#ffffff"/>
 <text x="60" y="64" font-size="34" font-weight="bold" fill="#222">Año 1 (2027): ingresos y gastos de ServiPass (sin IVA)</text>
-<text x="60" y="102" font-size="24" fill="#666">18 instalaciones · tres socios · ingresos 136.710 € · gastos 166.379 € · resultado antes de impuestos −29.669 €</text>
+<text x="60" y="102" font-size="24" fill="#666">18 instalaciones · tres socios · micromecenazgo · ingresos 144.418 € · gastos 168.576 € · resultado antes de impuestos −24.158 €</text>
 <text x="60" y="198" font-size="26" font-weight="bold" fill="#333">Ingresos</text>
-<rect x="180.0" y="140" width="574.8" height="90" fill="#E67E22"/>
-<text x="467.4" y="196" text-anchor="middle" font-size="24" font-weight="bold" fill="#fff">69k</text>
-<rect x="754.8" y="140" width="268.7" height="90" fill="#D35400"/>
-<text x="889.2" y="196" text-anchor="middle" font-size="24" font-weight="bold" fill="#fff">32k</text>
-<rect x="1023.5" y="140" width="141.1" height="90" fill="#F5B041"/>
-<text x="1094.1" y="196" text-anchor="middle" font-size="24" font-weight="bold" fill="#fff">17k</text>
-<rect x="1164.6" y="140" width="119.4" height="90" fill="#F8C471"/>
-<text x="1224.3" y="196" text-anchor="middle" font-size="24" font-weight="bold" fill="#fff">14k</text>
-<rect x="1284.1" y="140" width="29.9" height="90" fill="#FAD7A0"/>
+<rect x="180.0" y="140" width="567.3" height="90" fill="#E67E22"/>
+<text x="463.7" y="196" text-anchor="middle" font-size="24" font-weight="bold" fill="#fff">69k</text>
+<rect x="747.3" y="140" width="265.2" height="90" fill="#D35400"/>
+<text x="879.9" y="196" text-anchor="middle" font-size="24" font-weight="bold" fill="#fff">32k</text>
+<rect x="1012.5" y="140" width="71.1" height="90" fill="#F5B041"/>
+<rect x="1083.6" y="140" width="131.2" height="90" fill="#F0B27A"/>
+<text x="1149.3" y="196" text-anchor="middle" font-size="24" font-weight="bold" fill="#fff">16k</text>
+<rect x="1214.9" y="140" width="117.9" height="90" fill="#F8C471"/>
+<text x="1273.8" y="196" text-anchor="middle" font-size="24" font-weight="bold" fill="#fff">14k</text>
+<rect x="1332.8" y="140" width="29.5" height="90" fill="#FAD7A0"/>
 <text x="60" y="318" font-size="26" font-weight="bold" fill="#333">Gastos</text>
-<rect x="180.0" y="260" width="479.2" height="90" fill="#566573"/>
-<text x="419.6" y="316" text-anchor="middle" font-size="24" font-weight="bold" fill="#fff">58k</text>
-<rect x="659.2" y="260" width="47.8" height="90" fill="#7F8C8D"/>
-<rect x="707.0" y="260" width="689.4" height="90" fill="#2C3E50"/>
-<text x="1051.7" y="316" text-anchor="middle" font-size="24" font-weight="bold" fill="#fff">83k</text>
-<rect x="1396.4" y="260" width="48.8" height="90" fill="#95A5A6"/>
-<rect x="1445.2" y="260" width="93.6" height="90" fill="#BDC3C7"/>
-<text x="1492.0" y="316" text-anchor="middle" font-size="24" font-weight="bold" fill="#fff">11k</text>
-<rect x="1538.7" y="260" width="21.3" height="90" fill="#D5DBDB"/>
-<rect x="1313.9" y="140" width="246.1" height="90" fill="#fdecea" stroke="#c0392b" stroke-width="2" stroke-dasharray="8 5"/>
-<text x="1437.0" y="196" text-anchor="middle" font-size="22" font-weight="bold" fill="#c0392b">pérdida</text>
+<rect x="180.0" y="260" width="473.0" height="90" fill="#566573"/>
+<text x="416.5" y="316" text-anchor="middle" font-size="24" font-weight="bold" fill="#fff">58k</text>
+<rect x="653.0" y="260" width="47.2" height="90" fill="#7F8C8D"/>
+<rect x="700.2" y="260" width="680.4" height="90" fill="#2C3E50"/>
+<text x="1040.4" y="316" text-anchor="middle" font-size="24" font-weight="bold" fill="#fff">83k</text>
+<rect x="1380.6" y="260" width="48.1" height="90" fill="#95A5A6"/>
+<rect x="1428.7" y="260" width="92.3" height="90" fill="#BDC3C7"/>
+<text x="1474.9" y="316" text-anchor="middle" font-size="24" font-weight="bold" fill="#fff">11k</text>
+<rect x="1521.0" y="260" width="26.6" height="90" fill="#ABB2B9"/>
+<rect x="1547.6" y="260" width="12.4" height="90" fill="#D5DBDB"/>
+<rect x="1362.2" y="140" width="197.8" height="90" fill="#fdecea" stroke="#c0392b" stroke-width="2" stroke-dasharray="8 5"/>
+<text x="1461.1" y="196" text-anchor="middle" font-size="22" font-weight="bold" fill="#c0392b">pérdida</text>
 <g transform="translate(60,400)"><rect width="26" height="26" fill="#E67E22"/><text x="40" y="21" font-size="22" fill="#333">Equipos vendidos · 69.300 €</text></g>
 <g transform="translate(60,442)"><rect width="26" height="26" fill="#D35400"/><text x="40" y="21" font-size="22" fill="#333">Instalación y formación · 32.400 €</text></g>
-<g transform="translate(60,484)"><rect width="26" height="26" fill="#F5B041"/><text x="40" y="21" font-size="22" fill="#333">Licencias · 17.010 €</text></g>
-<g transform="translate(60,526)"><rect width="26" height="26" fill="#F8C471"/><text x="40" y="21" font-size="22" fill="#333">Infraestructura · 14.400 €</text></g>
-<g transform="translate(60,568)"><rect width="26" height="26" fill="#FAD7A0"/><text x="40" y="21" font-size="22" fill="#333">Ampliaciones · 3.600 €</text></g>
+<g transform="translate(60,484)"><rect width="26" height="26" fill="#F5B041"/><text x="40" y="21" font-size="22" fill="#333">Licencias vendidas · 8.685 €</text></g>
+<g transform="translate(60,526)"><rect width="26" height="26" fill="#F0B27A"/><text x="40" y="21" font-size="22" fill="#333">Micromecenazgo · 16.033 €</text></g>
+<g transform="translate(60,568)"><rect width="26" height="26" fill="#F8C471"/><text x="40" y="21" font-size="22" fill="#333">Infraestructura · 14.400 €</text></g>
+<g transform="translate(60,610)"><rect width="26" height="26" fill="#FAD7A0"/><text x="40" y="21" font-size="22" fill="#333">Ampliaciones · 3.600 €</text></g>
 <g transform="translate(820,400)"><rect width="26" height="26" fill="#566573"/><text x="40" y="21" font-size="22" fill="#333">Coste de los equipos · 57.780 €</text></g>
 <g transform="translate(820,442)"><rect width="26" height="26" fill="#7F8C8D"/><text x="40" y="21" font-size="22" fill="#333">Material · 5.760 €</text></g>
 <g transform="translate(820,484)"><rect width="26" height="26" fill="#2C3E50"/><text x="40" y="21" font-size="22" fill="#333">Personal (tres socios) · 83.116 €</text></g>
 <g transform="translate(820,526)"><rect width="26" height="26" fill="#95A5A6"/><text x="40" y="21" font-size="22" fill="#333">Alquiler · 5.880 €</text></g>
 <g transform="translate(820,568)"><rect width="26" height="26" fill="#BDC3C7"/><text x="40" y="21" font-size="22" fill="#333">Otros gastos generales · 11.280 €</text></g>
-<g transform="translate(820,610)"><rect width="26" height="26" fill="#D5DBDB"/><text x="40" y="21" font-size="22" fill="#333">Amortización e intereses · 2.563 €</text></g>
-<text x="60" y="672" font-size="21" fill="#555">Las licencias cuentan el derecho de uso y la parte del año del soporte; además se cobran 15.390 € de soporte por adelantado que aún no son ingreso.</text>
+<g transform="translate(820,610)"><rect width="26" height="26" fill="#ABB2B9"/><text x="40" y="21" font-size="22" fill="#333">Comisión de la campaña · 3.250 €</text></g>
+<g transform="translate(820,652)"><rect width="26" height="26" fill="#D5DBDB"/><text x="40" y="21" font-size="22" fill="#333">Amortización · 1.510 €</text></g>
+<text x="60" y="712" font-size="21" fill="#555">El micromecenazgo cuenta la parte de las recompensas entregada en el año; además se cobran unos 7.900 € de soporte por adelantado que aún no son ingreso.</text>
 </svg>

@@ -22,7 +22,7 @@ AQUI = Path(__file__).resolve().parent
 SESION, GUION_VIVO = AQUI / "sesion_servidor.json", AQUI / "guion_vivo.json"
 VISTAS = ("presentacion", "publico", "pc", "mando")
 CONTROL = ("presentacion", "pc", "mando")
-PREGUNTAS, OPCIONES = 5, 4                   # PREGUNTAS = número de preguntas de PREG en presentacion.js
+PREGUNTAS, OPCIONES = 6, 4                   # PREGUNTAS = número de preguntas de PREG en presentacion.js
 MAX_CUERPO = 2_000_000                       # una foto de laboratorio cabe de sobra
 
 cerrojo = threading.RLock()

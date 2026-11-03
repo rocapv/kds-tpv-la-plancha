@@ -108,22 +108,23 @@
    "n": 10,
    "titulo": "4. Modelo de negocio: el proyecto tipo",
    "min": 1,
-   "texto": "El modelo de negocio. Un proyecto tipo cuesta siete mil cuatrocientos cincuenta euros sin IVA: tres mil ochocientos cincuenta de equipos con un veinte por ciento de margen, mil ochocientos de instalación y mil ochocientos de licencia. La licencia tiene dos mitades: el derecho de uso cuenta como ingreso al instalar, y el soporte se reparte en diez años, porque es un servicio que todavía debemos. Cada instalación deja tres mil trescientos cuarenta euros de margen. Con tres socios, el punto muerto está en unas veintisiete instalaciones al año: con dieciocho, el primer año perdemos unos treinta mil euros, el segundo quedamos casi en equilibrio y el tercero, con treinta, ganamos unos veinticinco mil antes de impuestos.",
+   "texto": "El modelo de negocio. Un proyecto tipo cuesta siete mil cuatrocientos cincuenta euros sin IVA: tres mil ochocientos cincuenta de equipos con un veinte por ciento de margen, mil ochocientos de instalación y mil ochocientos de licencia. La licencia tiene dos mitades: el derecho de uso cuenta como ingreso al instalar, y el soporte se reparte en diez años. Cada instalación deja tres mil trescientos cuarenta euros de margen, o dos mil cuatrocientos cuarenta si el local ya tiene la licencia por haber sido mecenas. El punto muerto está en unas veintisiete instalaciones al año: con dieciocho, el primer año perdemos unos veinticuatro mil euros, el segundo unos ocho mil seiscientos y el tercero, con treinta, ganamos unos treinta y cuatro mil antes de impuestos, aunque trece mil cuatrocientos son las expansiones que los mecenas pagaron por adelantado.",
    "rapidas": [
     "Proyecto tipo de 7.450 €: 3.850 equipos, 1.800 instalación y 1.800 licencia",
     "Licencia: el uso, al instalar; el soporte, repartido en 10 años",
-    "Margen de 3.340 € por instalación; punto muerto en 27 al año",
-    "Año 1, −29.700 €; año 2, casi en equilibrio; año 3, unos 25.300 €"
+    "Margen de 3.340 € por instalación (2.440 si es de un mecenas); punto muerto en 26-27 al año",
+    "Año 1, −24.200 €; año 2, −8.600 €; año 3, unos 33.900 € (20.500 sin las expansiones)"
    ]
   },
   {
    "n": 11,
    "titulo": "4.1 y 4.2. Financiación y salarios",
    "min": 1,
-   "texto": "Financiación: para empezar necesitamos unos treinta y dos mil quinientos euros, sobre todo para un colchón de tres meses de gastos fijos. Quince mil los ponemos los socios, cinco mil cada uno, y diecisiete mil quinientos vienen de un microcrédito de MicroBank a tres años, sin garantías. El Kit Digital cerró en 2025 y Digitaliza-CV pide proyectos de unos veinte mil euros, así que no contamos con ayudas. Salarios: tomamos como referencia el convenio estatal de consultoría y tecnologías de la información. Cada socio se asigna el nivel C3, veinticuatro mil ciento cinco euros al año, y el primer técnico, cuando pasemos de cuarenta y cinco instalaciones al año, entraría en el D1.",
+   "texto": "Financiación: necesitamos unos treinta y ocho mil euros, sobre todo para el colchón de los primeros meses, y salen de un micromecenazgo de recompensa en Verkami. Desde un euro, el mecenas tiene el servicio diez años; desde diez, de por vida; desde cien, además, las expansiones de la siguiente versión, y desde quinientos, soporte gratis para siempre. Pedimos cincuenta mil, todo o nada; tras el IVA y la comisión quedan unos treinta y ocho mil. Sin deuda ni intereses, pero cada licencia de un mecenas es una venta que no haremos. Plan B: los socios y un microcrédito. Salarios: tomamos como referencia el convenio estatal de consultoría y tecnologías de la información. Cada socio se asigna el nivel C3, veinticuatro mil ciento cinco euros al año, y el primer técnico, cuando pasemos de cuarenta y cinco instalaciones al año, entraría en el D1.",
    "rapidas": [
-    "Hacen falta 32.500 €: 15.000 de los socios y 17.500 de microcrédito",
-    "Sin ayudas: Kit Digital cerrado y Digitaliza-CV fuera de alcance",
+    "Micromecenazgo en Verkami: 50.000 €, todo o nada; quedan 38.072 € tras IVA y comisión",
+    "Niveles: 1 € diez años · 10 € de por vida · 100 € expansiones · 500 € soporte para siempre",
+    "Riesgo: licencias casi regaladas y soporte sin fin; plan B, socios y microcrédito",
     "Convenio TIC: socio en C3 (24.105 €); técnico en D1 a partir de 45 instalaciones al año"
    ]
   },
@@ -166,10 +167,11 @@
    "n": 15,
    "titulo": "7. Conclusiones",
    "min": 1,
-   "texto": "Conclusiones. ServiPass es una microempresa que vende a microempresas un sistema propio, con un pago único y diez años de soporte. Es viable a medio plazo, pero con un arranque duro: con tres socios el punto muerto está en unas veintisiete instalaciones, el primer año se pierde dinero y el beneficio llega en el tercero. La licencia cobrada por adelantado da caja, pero la mitad es soporte que debemos durante una década. El entorno pone fecha, con Verifactu en 2027 y Windows 10 sin soporte, y el precio es nuestra ventaja: mil ochocientos euros frente a casi once mil de una suscripción. A un restaurante pequeño no le falta dinero: le falta alguien que diseñe su tecnología, la deje funcionando sola y responda cuando falle.",
+   "texto": "Conclusiones. ServiPass es una microempresa que vende a microempresas un sistema propio, con un pago único y diez años de soporte. Es viable a medio plazo, pero con un arranque duro: con tres socios el punto muerto está en unas veintisiete instalaciones, el primer año se pierde dinero y el beneficio llega en el tercero. Arrancamos sin deuda, con micromecenazgo, pagado con licencias para los mecenas. La licencia cobrada por adelantado da caja, pero la mitad es soporte que debemos durante una década. El entorno pone fecha, con Verifactu en 2027 y Windows 10 sin soporte, y el precio es nuestra ventaja: mil ochocientos euros frente a casi once mil de una suscripción. A un restaurante pequeño no le falta dinero: le falta alguien que diseñe su tecnología, la deje funcionando sola y responda cuando falle.",
    "rapidas": [
     "Microempresa con producto propio y pago único",
-    "Viable a medio plazo: punto muerto en 27 instalaciones; beneficio el año 3",
+    "Viable a medio plazo: punto muerto en 26-27 instalaciones; beneficio el año 3",
+    "Sin deuda: micromecenazgo, a cambio de licencias para los mecenas",
     "Pone fecha Verifactu en 2027; nuestra ventaja es el precio",
     "Al local le falta alguien que diseñe y responda"
    ]
@@ -187,9 +189,9 @@
   },
   {
    "n": 17,
-   "titulo": "Cinco preguntas para terminar (opcional)",
+   "titulo": "Seis preguntas para terminar (opcional)",
    "min": 0.5,
-   "texto": "Para terminar, cinco preguntas rápidas sobre lo que hemos contado. Quien quiera, que responda en la pantalla. Después, quedamos abiertos a vuestras preguntas. Gracias.",
+   "texto": "Para terminar, seis preguntas rápidas sobre lo que hemos contado. Quien quiera, que responda en la pantalla. Después, quedamos abiertos a vuestras preguntas. Gracias.",
    "rapidas": [
     "Pedir al público que entre en la dirección de la pizarra",
     "Cerrar cada votación y comentar la respuesta",

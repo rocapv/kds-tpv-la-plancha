@@ -211,7 +211,7 @@ function labAccion(lab,id){if(red)return manda('lab/accion',{lab,id});pulsaLab(l
 /* ---------- Cuestionario ---------- */
 const PREG=[
  {q:'¿Cuántas instalaciones al año necesita ServiPass para no perder dinero?',o:['18','22','27','45'],ok:2,
-  x:'<b>Unas 27</b>: cada instalación deja 3.340 € de margen y los costes fijos que deben cubrir son unos 89.800 € (102.840 € menos lo que pagan la infraestructura, las ampliaciones y el soporte). Con 18 instalaciones, el primer año cierra con −29.669 €.'},
+  x:'<b>Unas 27</b> (26 el primer año): cada instalación deja 3.340 € de margen, o 2.440 € si el local ya tiene la licencia por ser mecenas, y los costes fijos que deben cubrir son unos 76.200 € el primer año. Con 18 instalaciones, el primer año cierra con −24.158 €.'},
  {q:'¿Desde cuándo tiene que facturar Burglar King, que es una sociedad, con un sistema que cumpla Verifactu?',o:['1 de enero de 2026','1 de julio de 2026','1 de enero de 2027','1 de julio de 2027'],ok:2,
   x:'<b>El 1 de enero de 2027</b> para las sociedades; el resto, el 1 de julio de 2027 (Real Decreto-ley 15/2025). Por eso el TPV de ServiPass cumple Verifactu antes de vender la primera licencia.'},
  {q:'¿Cuánto pagaría en diez años un local por el plan básico de Last.app con su pantalla de cocina?',o:['1.800 €','4.250 €','10.700 €','25.000 €'],ok:2,
@@ -219,7 +219,9 @@ const PREG=[
  {q:'En la cadena de facturas, alguien rebaja el precio de la factura 2 de 3. ¿Qué se ve al verificar?',o:['Nada: la huella solo usa el número de factura','Solo cambia el total de la factura 2','La huella de la 2 deja de cuadrar y la 3 ya no encaja con ella','Hacienda corrige el precio sola'],ok:2,
   x:'<b>Se rompe la cadena</b>: la huella de la factura 2 se calcula con su importe, así que al recalcularla ya no coincide con la registrada, y la 3 guarda la huella antigua de la 2. La única corrección válida es una factura rectificativa.'},
  {q:'Con la red segmentada que instala ServiPass, ¿qué puede hacer el móvil de un cliente conectado a la wifi del local?',o:['Llegar a la caja para pagar','Ver las cámaras','Navegar por internet, pero no llegar a la caja ni al grabador','Nada: la wifi de clientes desaparece'],ok:2,
-  x:'<b>Solo internet</b>: la red de clientes queda separada de la del negocio y de la de las cámaras. Lo necesario funciona y lo peligroso queda bloqueado.'}];
+  x:'<b>Solo internet</b>: la red de clientes queda separada de la del negocio y de la de las cámaras. Lo necesario funciona y lo peligroso queda bloqueado.'},
+ {q:'En la campaña de micromecenazgo de ServiPass, ¿qué recibe quien aporta 10 €?',o:['Nada: es una donación','Diez años de licencia','La licencia de por vida','Una participación en la empresa'],ok:2,
+  x:'<b>La licencia de por vida</b>. Desde 1 € son diez años; desde 100 €, además, las expansiones de la siguiente versión, y desde 500 €, soporte gratis para siempre. Es micromecenazgo de recompensa: no es un préstamo ni una participación, sino una venta anticipada que lleva IVA.'}];
 const letra=k=>String.fromCharCode(65+k);
 const Q=document.getElementById('quiz');
 const msgFinal=n=>{const N=PREG.length;return n===N?'¡Pleno! Habéis escuchado de verdad.':n===N-1?'Muy bien: solo una se ha escapado.':n*2>=N?'Más de la mitad: buen trabajo.':n>0?`${n} de ${N}: el informe tiene las respuestas.`:'Ninguna… toca releer el informe.'};
