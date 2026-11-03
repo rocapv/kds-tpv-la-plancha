@@ -131,7 +131,7 @@ function ver(n){n=Math.max(0,Math.min(sl.length-1,n));if(n===i)return;
  prog.style.transform=`scaleX(${(i+1)/sl.length})`;
  try{history.replaceState(null,'','#'+(i+1))}catch(e){}
  const t=++tok;sl[i].querySelectorAll('.num').forEach(el=>contar(el,t));
- document.body.classList.toggle('lab',sl[i].classList.contains('labframe'));
+ document.body.classList.toggle('lab',sl[i].classList.contains('labframe'));marcaLab();
  cargaLabs(sl[i]);
  if(sl[i].classList.contains('quiz'))quizMuestra();
  UI.pinta();tic()}
@@ -157,26 +157,34 @@ document.addEventListener('click',ev=>{const b=ev.target.closest&&ev.target.clos
 
 /* ---------- Laboratorios: se ejecutan en la pizarra principal y los demás reciben un espejo ---------- */
 const BOTONES_LAB={'red.html':[['sim_actual','Red actual'],['sim_prop','Red segmentada'],['sim_ambas','Las dos seguidas'],['reiniciar','Reiniciar']],
- 'verifactu.html':[['simular','Simular'],['alterar','Rebajar la factura 2'],['restaurar','Restaurar las originales']],
+ 'verifactu.html':[['simular','Simular la emisión'],['alterar','Rebajar la 000128'],['rehacer','Rehacer la cadena (fraude)'],['restaurar','Restaurar']],
  'hora_punta.html':[['empezar','Simular el servicio'],['pausa','Pausa / seguir']]};
 const labDe=f=>(f.dataset.lab||f.dataset.src||'').split('/').pop();
 let miId=null,soyPrincipal=false;
-// Los espejos cargan el laboratorio sin sus scripts (srcdoc en un sandbox): solo muestran lo que manda la pizarra.
-const ejecutaLabs=()=>!red||(VISTA==='presentacion'&&soyPrincipal);
+// Los espejos cargan el laboratorio sin sus scripts (srcdoc en un sandbox): solo muestran lo que manda quien lo ejecuta.
+// Casi todos se ejecutan en la pizarra principal; los de LABS_PC, en el PC principal si hay uno conectado: allí se editan,
+// la pizarra solo los enseña y se desplaza por ellos, y el público sigue el desplazamiento de la pizarra.
+const LABS_PC=new Set(['verifactu.html']);let principalPc=null;
+const mandaPc=lab=>red&&LABS_PC.has(lab)&&!!principalPc;
+const ejecutaLab=lab=>!red||(mandaPc(lab)?VISTA==='pc'&&miId===principalPc:VISTA==='presentacion'&&soyPrincipal);
 const LABS={};
 function cargaLab(f){const url=f.dataset.lab;
- if(ejecutaLabs()){f.removeAttribute('sandbox');f.removeAttribute('srcdoc');f.src=url;return}
+ if(ejecutaLab(labDe(f))){f.removeAttribute('sandbox');f.removeAttribute('srcdoc');f.src=url;return}
  f.setAttribute('sandbox','allow-same-origin');f.removeAttribute('src');
- fetch(url).then(r=>r.text()).then(t=>{f.srcdoc=t.replace(/<script[\s\S]*?<\/script>/gi,'').replace(/<head>/i,`<head><base href="${new URL(url,location.href).href}">`)})}
+ fetch(url).then(r=>r.text()).then(t=>{f.srcdoc=t.replace(/<script[\s\S]*?<\/script>/gi,'').replace(/<head>/i,`<head><base href="${new URL(url,location.href).href}"><style>input,select,textarea,button,a,label,summary{pointer-events:none!important}</style>`)})}
 function cargaLabs(s){if(VISTA==='mando')return;
  s.querySelectorAll('iframe[data-src]').forEach(f=>{f.dataset.lab=f.dataset.src;f.removeAttribute('data-src');
   f.addEventListener('load',()=>labCargado(f));cargaLab(f)})}
-function rolLabs(){document.body.classList.toggle('espejo',red&&!ejecutaLabs());
- document.querySelectorAll('iframe[data-lab]').forEach(f=>{if(ejecutaLabs()!==!f.hasAttribute('sandbox'))cargaLab(f)})}
+function rolLabs(){document.querySelectorAll('iframe[data-lab]').forEach(f=>{const lab=labDe(f),s=f.closest('.slide');
+  s.classList.toggle('espejo',red&&!ejecutaLab(lab));s.classList.toggle('de-pc',mandaPc(lab));
+  if(ejecutaLab(lab)!==!f.hasAttribute('sandbox'))cargaLab(f)});marcaLab()}
+// En el PC, si la diapositiva es un laboratorio que se maneja desde aquí, la miniatura deja de ser solo imagen.
+function marcaLab(){const f=i>=0&&sl[i].querySelector('iframe[data-lab],iframe[data-src]'),m=VISTA==='pc'&&red&&!!f&&ejecutaLab(labDe(f));
+ if(m!==document.body.classList.contains('lab-manda')){document.body.classList.toggle('lab-manda',m);fit()}}
 function labCargado(f){const lab=labDe(f),L=LABS[lab]||(LABS[lab]={});L.f=f;L.listo=false;
  if(L.obs){L.obs.disconnect();L.obs=null}
  if(!red)return;
- if(!ejecutaLabs())return pideFoto(lab);
+ if(!ejecutaLab(lab)){if(VISTA==='presentacion'&&soyPrincipal&&mandaPc(lab))sigueScroll(lab,f);return pideFoto(lab)}
  const doc=f.contentDocument;if(!doc||!doc.body)return;
  L.sucias=new Set();L.todo=false;
  L.obs=new MutationObserver(rs=>{rs.forEach(r=>{let n=r.target.nodeType===1?r.target:r.target.parentElement;
@@ -188,22 +196,29 @@ function programa(lab){const L=LABS[lab];if(L.temp)return;L.temp=setTimeout(()=>
 // El documento entero (html) no entra aquí: su desplazamiento viaja aparte, en «arriba».
 function ruta(el,doc){if(el.id)return '#'+el.id;const p=[];while(el&&el!==doc.body&&el.parentElement){p.unshift([...el.parentElement.children].indexOf(el));el=el.parentElement}return p.join('.')}
 function busca(r,doc){if(r[0]==='#')return doc.getElementById(r.slice(1));let el=doc.body;for(const k of r.split('.').filter(x=>x!==''))el=el&&el.children[+k];return el}
-function extras(doc){return{valores:[...doc.querySelectorAll('input,select,textarea')].map(e=>[ruta(e,doc),e.value,e.checked===true]),
- scroll:[...doc.querySelectorAll('*')].filter(e=>e.scrollTop>0&&e!==doc.documentElement&&e!==doc.body).map(e=>[ruta(e,doc),e.scrollTop]),arriba:(doc.scrollingElement||doc.documentElement).scrollTop}}
-function mandaParche(lab){const L=LABS[lab],doc=L.f&&L.f.contentDocument;if(!doc||!doc.body||!ejecutaLabs())return;
+const desplaz=doc=>({scroll:[...doc.querySelectorAll('*')].filter(e=>e.scrollTop>0&&e!==doc.documentElement&&e!==doc.body).map(e=>[ruta(e,doc),e.scrollTop]),arriba:(doc.scrollingElement||doc.documentElement).scrollTop});
+function extras(doc){return{valores:[...doc.querySelectorAll('input,select,textarea')].map(e=>[ruta(e,doc),e.value,e.checked===true]),...desplaz(doc)}}
+function ponDesp(doc,d){for(const[r,top]of d.scroll||[]){const el=busca(r,doc);if(el)el.scrollTop=top}
+ (doc.scrollingElement||doc.documentElement).scrollTop=d.arriba||0}
+// La pizarra principal, cuando el laboratorio lo maneja el PC, manda su propio desplazamiento para que el público lo siga.
+function sigueScroll(lab,f){const doc=f.contentDocument,L=LABS[lab];if(!doc)return;
+ doc.addEventListener('scroll',()=>{if(L.tempS)return;L.tempS=setTimeout(()=>{L.tempS=null;
+  if(VISTA==='presentacion'&&soyPrincipal&&mandaPc(lab)&&f.contentDocument===doc)manda('lab/scroll',{id:miId,lab,...desplaz(doc)})},120)},true)}
+function mandaParche(lab){const L=LABS[lab],doc=L.f&&L.f.contentDocument;if(!doc||!doc.body||!ejecutaLab(lab))return;
  let raices=[...L.sucias].filter(n=>doc.body.contains(n));L.sucias.clear();
  if(L.todo||raices.length>40){L.todo=false;return mandaFoto(lab)}
  raices=raices.filter(n=>!raices.some(o=>o!==n&&o.contains(n)));
  manda('lab/parche',{id:miId,lab,raices:raices.map(n=>[n.id,n.outerHTML]),...extras(doc)})}
-function mandaFoto(lab){const L=LABS[lab],doc=L&&L.f&&L.f.contentDocument;if(!doc||!doc.body||!ejecutaLabs())return;
+function mandaFoto(lab){const L=LABS[lab],doc=L&&L.f&&L.f.contentDocument;if(!doc||!doc.body||!ejecutaLab(lab))return;
  manda('lab/foto',{id:miId,lab,html:doc.body.innerHTML,clase:doc.body.className,...extras(doc)})}
-function aplicaLab(d,foto){const L=LABS[d.lab],doc=L&&L.f&&L.f.contentDocument;if(!doc||!doc.body||ejecutaLabs())return;
+function aplicaLab(d,foto){const L=LABS[d.lab],doc=L&&L.f&&L.f.contentDocument;if(!doc||!doc.body||ejecutaLab(d.lab))return;
  if(foto){doc.body.innerHTML=d.html;doc.body.className=d.clase||'';L.listo=true}
  else{if(!L.listo)return pideFoto(d.lab);
   for(const[id,html]of d.raices){const el=doc.getElementById(id);if(!el){L.listo=false;return pideFoto(d.lab)}el.outerHTML=html}}
  for(const[r,v,c]of d.valores||[]){const el=busca(r,doc);if(el){el.value=v;if(el.type==='checkbox'||el.type==='radio')el.checked=c}}
- for(const[r,top]of d.scroll||[]){const el=busca(r,doc);if(el)el.scrollTop=top}
- (doc.scrollingElement||doc.documentElement).scrollTop=d.arriba||0}
+ // Si lo maneja el PC, su desplazamiento no se copia: la pizarra se mueve sola y el público sigue a la pizarra.
+ if(mandaPc(d.lab)&&VISTA!=='pc'){if(L.desp&&VISTA!=='presentacion')ponDesp(doc,L.desp);return}
+ ponDesp(doc,d)}
 function pideFoto(lab){if(red)fetch('lab/pedir',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({lab})}).catch(()=>{})}
 function pulsaLab(lab,id){const L=LABS[lab],b=L&&L.f&&L.f.contentDocument&&L.f.contentDocument.getElementById(id);if(b&&!b.disabled)b.click()}
 function labAccion(lab,id){if(red)return manda('lab/accion',{lab,id});pulsaLab(lab,id)}
@@ -310,13 +325,16 @@ function conecta(){if(es)es.close();
  es.addEventListener('equipos',json(d=>{EQUIPOS=d.lista||[];pintaFlot()}));
  es.addEventListener('lab_parche',json(d=>aplicaLab(d,false)));
  es.addEventListener('lab_foto',json(d=>aplicaLab(d,true)));
- es.addEventListener('lab_pedir',json(d=>{if(ejecutaLabs())mandaFoto(d.lab)}));
- es.addEventListener('lab_accion',json(d=>{if(ejecutaLabs())pulsaLab(d.lab,d.id)}));
+ es.addEventListener('lab_pedir',json(d=>{if(ejecutaLab(d.lab))mandaFoto(d.lab)}));
+ es.addEventListener('lab_accion',json(d=>{if(ejecutaLab(d.lab))pulsaLab(d.lab,d.id)}));
+ es.addEventListener('lab_scroll',json(d=>{const L=LABS[d.lab];if(!L||VISTA==='presentacion'||ejecutaLab(d.lab))return;L.desp=d;
+  const doc=L.f&&L.f.contentDocument;if(doc&&doc.body&&L.listo)ponDesp(doc,d)}));
  es.onerror=()=>{estadoRed(null);
   if(es.readyState===EventSource.CLOSED){es=null;return CONTROL?compruebaToken():sinServidor('sin servidor: modo local')}
   if(!caido){caido=true;aviso('Sin conexión con el servidor: se reintenta solo',4000)}}}
 function aplicaEstado(d){ultimo=d;desfase=d.ahora-Date.now();crono=d.crono;
- const p=VISTA==='presentacion'&&d.principal===miId;if(p!==soyPrincipal){soyPrincipal=p;rolLabs()}else document.body.classList.toggle('espejo',!ejecutaLabs());
+ const p=VISTA==='presentacion'&&d.principal===miId,pp=d.principal_pc||null;
+ if(p!==soyPrincipal||pp!==principalPc){soyPrincipal=p;principalPc=pp;rolLabs()}
  if(d.mov&&(d.mov==='off')!==quieto)ponQuieto(d.mov==='off');
  const alFin=quiz&&quiz.fase!=='fin'&&d.quiz.fase==='fin';quiz=d.quiz;
  if(d.i!==i)ver(d.i);else if(enQuiz())pintaQuiz();
@@ -364,7 +382,8 @@ if(VISTA==='pc'){
   <button id="b_mov" onclick="alterna()"></button><button onclick="ir(i+1)"><span class="largo">Siguiente</span> →</button></div>`),
   nodo('<div id="lateral"><div id="siguiente"></div><section class="ctx"></section></div>'),
   nodo(`<div id="herr"><button data-h="menos" title="Letra más pequeña">A−</button><button data-h="mas" title="Letra más grande">A+</button><button data-h="ajustar" title="La letra crece hasta que el guion llena la caja">⤢ Ajustar a la caja</button>
-  <button data-h="lectura">Modo lectura</button><button data-h="auto" title="El texto avanza solo con el cronómetro">Desplazamiento automático</button><button data-h="editar">✎ Editar</button></div>`));
+  <button data-h="lectura">Modo lectura</button><button data-h="auto" title="El texto avanza solo con el cronómetro">Desplazamiento automático</button><button data-h="editar">✎ Editar</button>
+  <button data-h="labgrande" title="El laboratorio ocupa la pantalla del PC para manejarlo cómodamente">⤢ Laboratorio grande</button></div>`));
  // Mayor tamaño de letra con el que el guion cabe entero en la caja (búsqueda binaria, de 14 a 64 px).
  const ajusta=()=>{if(!prefs.ajustar||editando!==null)return;let lo=14,hi=64;notas.style.fontSize=hi+'px';
   if(notas.scrollHeight<=notas.clientHeight)return;
@@ -378,6 +397,7 @@ if(VISTA==='pc'){
   if(h==='menos'||h==='mas'){if(prefs.ajustar)prefs.tam=Math.round(parseFloat(notas.style.fontSize)||prefs.tam);prefs.ajustar=false;
    prefs.tam=h==='menos'?Math.max(14,prefs.tam-2):Math.min(64,prefs.tam+2)}
   else if(h==='ajustar')prefs.ajustar=!prefs.ajustar;
+  else if(h==='labgrande'){ev.target.classList.toggle('on',document.body.classList.toggle('lab-grande'));fit();return}
   else if(h==='lectura')prefs.lectura=!prefs.lectura;else if(h==='auto')prefs.auto=!prefs.auto;else if(h==='editar')return abreEditor();aplicaPrefs()});
  aplicaPrefs();
  function abreEditor(){if(editando!==null)return;editando=i;const s=sl[i];

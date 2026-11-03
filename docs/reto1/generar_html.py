@@ -43,11 +43,12 @@ def punto(n, titulo):
     return f'<h2><span class="pt">{n}</span>{titulo}</h2>'
 
 
-def lab(titulo, fichero):
-    """Diapositiva que carga un laboratorio de laboratorios/ a pantalla completa; no se anuncia antes."""
+def lab(titulo, fichero, hd=False):
+    """Diapositiva que carga un laboratorio de laboratorios/ a pantalla completa; no se anuncia antes.
+    hd: el laboratorio ve una ventana de 1920 px de ancho (en un proyector de 1920×1080 se ve sin escalar)."""
     return ("labframe", f'''<div class="labbar"><span>{titulo}</span><span><button onclick="ir(i-1)">← anterior</button>
 <a href="laboratorios/{fichero}" target="_blank" rel="noopener">abrir en una pestaña nueva ↗</a><button onclick="ir(i+1)">siguiente →</button></span></div>
-<iframe data-src="laboratorios/{fichero}" title="{titulo}"></iframe>''')
+<iframe data-src="laboratorios/{fichero}" title="{titulo}"{' class="hd"' if hd else ''}></iframe>''')
 
 
 S = []   # (clase, html)
@@ -116,7 +117,7 @@ S.append(("", f"""
   ("L", "Legal", "Verifactu también para quien hace el software; encargado del tratamiento (RGPD)")]], 3, "card pestel")}"""))
 
 # Lab 2 (tras el factor legal del PESTEL)
-S.append(lab("Simulación: Verifactu, la cadena de facturas", "verifactu.html"))
+S.append(lab("Simulación: Verifactu, la cadena de facturas", "verifactu.html", hd=True))
 
 # 7 · Punto 3.2: micro
 S.append(("", f"""

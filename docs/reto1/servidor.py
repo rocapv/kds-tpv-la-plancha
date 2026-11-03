@@ -22,6 +22,7 @@ AQUI = Path(__file__).resolve().parent
 SESION, GUION_VIVO = AQUI / "sesion_servidor.json", AQUI / "guion_vivo.json"
 VISTAS = ("presentacion", "publico", "pc", "mando")
 CONTROL = ("presentacion", "pc", "mando")
+LABS_PC = ("verifactu.html",)                # laboratorios que se manejan desde el PC; la pizarra y el público los reflejan
 PREGUNTAS, OPCIONES = 6, 4                   # PREGUNTAS = número de preguntas de PREG en presentacion.js
 MAX_CUERPO = 2_000_000                       # una foto de laboratorio cabe de sobra
 
@@ -54,11 +55,17 @@ def guarda_json(ruta, datos):
     os.replace(tmp, ruta)
 
 
-def principal():
-    """La pizarra principal es la primera vista de presentación que se conectó y sigue conectada."""
+def principal(vista="presentacion"):
+    """La pizarra principal (o el PC principal) es la primera vista de ese tipo que se conectó y sigue conectada."""
     with cerrojo:
-        pres = [(s["desde"], k) for k, s in suscritos.items() if s["vista"] == "presentacion"]
+        pres = [(s["desde"], k) for k, s in suscritos.items() if s["vista"] == vista]
     return min(pres)[1] if pres else None
+
+
+def motor(lab):
+    """Quién ejecuta un laboratorio: el PC principal para los de LABS_PC (si hay un PC conectado); si no, la pizarra."""
+    pc = principal("pc") if lab in LABS_PC else None
+    return pc or principal()
 
 
 def foto_estado():
@@ -70,7 +77,7 @@ def foto_estado():
         return {"i": estado["i"], "mov": estado["mov"], "crono": dict(estado["crono"]), "ahora": ahora_ms(),
                 "quiz": {"ronda": q["ronda"], "q": q["q"], "fase": q["fase"],
                          "recuentos": [[sum(1 for o in v.values() if o == k) for k in range(OPCIONES)] for v in q["votos"]]},
-                "clientes": cuentas, "principal": principal(), "publico_url": publico_url}
+                "clientes": cuentas, "principal": principal(), "principal_pc": principal("pc"), "publico_url": publico_url}
 
 
 def emite(evento, datos, a=None):
@@ -143,7 +150,7 @@ def pide_foto(lab):
     with cerrojo:
         pedidos_en_cola.discard(lab)
         ultimo_pedido[lab] = time.time()
-        p = principal()
+        p = motor(lab)
     if p:
         emite("lab_pedir", {"lab": lab}, a=p)
     return bool(p)
@@ -218,7 +225,7 @@ class Manejador(SimpleHTTPRequestHandler):
             return self.send_error(401, "Hace falta el PIN")
         acciones = {"/ir": self._ir, "/mov": self._mov, "/crono": self._crono, "/quiz": self._quiz,
                     "/guion": self._guion, "/lab/accion": self._lab_accion, "/lab/parche": self._lab_reenvia,
-                    "/lab/foto": self._lab_reenvia}
+                    "/lab/foto": self._lab_reenvia, "/lab/scroll": self._lab_scroll}
         if ruta not in acciones:
             return self.send_error(404)
         try:
@@ -332,11 +339,19 @@ class Manejador(SimpleHTTPRequestHandler):
         return self._json({"ok": True})
 
     def _lab_reenvia(self, d, ruta):
-        """Parches y fotos del laboratorio: solo los acepta de la pizarra principal y los reparte a todos."""
+        """Parches y fotos del laboratorio: solo los acepta de quien lo ejecuta (motor) y los reparte a todos."""
+        with cerrojo:
+            if d.get("id") != motor(str(d.get("lab", ""))):
+                return self._json({"ok": False, "motivo": "este equipo no ejecuta ese laboratorio"}, 409)
+        emite("lab_parche" if ruta.endswith("parche") else "lab_foto", d)
+        return self._json({"ok": True})
+
+    def _lab_scroll(self, d, _):
+        """Desplazamiento de la pizarra principal por un laboratorio que maneja el PC: el público lo sigue."""
         with cerrojo:
             if d.get("id") != principal():
                 return self._json({"ok": False, "motivo": "no eres la pizarra principal"}, 409)
-        emite("lab_parche" if ruta.endswith("parche") else "lab_foto", d)
+        emite("lab_scroll", d)
         return self._json({"ok": True})
 
     def _lab_pedir(self, d):

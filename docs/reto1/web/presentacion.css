@@ -131,8 +131,16 @@ html[data-mov="off"] *,html[data-mov="off"] *:before,html[data-mov="off"] *:afte
 #flot .eq b{font-family:Consolas,'Courier New',monospace;font-weight:normal;color:#fff}#flot .eq span:last-of-type{justify-self:end;white-space:nowrap}
 #flot .eq.on span:last-of-type{color:#7bd88f}#flot .eq.off span:last-of-type{color:#f0a020}
 #flot .eq i{position:absolute;left:0;bottom:2px;height:3px;border-radius:2px;background:#f0a020;transition:width .5s linear}#flot .eq.on i{background:#43b05c}
-body.espejo .slide.labframe iframe{pointer-events:none}
-body.espejo .labbar>span:first-child::after{content:' · espejo de la pizarra';color:#aaa;font-size:13px}
+/* Espejos de laboratorio: no se tocan. Si lo maneja el PC, la pizarra sí puede desplazarse (los controles siguen inertes). */
+.slide.espejo.labframe iframe{pointer-events:none}body.v-presentacion .slide.espejo.de-pc.labframe iframe{pointer-events:auto}
+.slide.espejo .labbar>span:first-child::after{content:' · espejo de la pizarra';color:#aaa;font-size:13px}
+.slide.espejo.de-pc .labbar>span:first-child::after{content:' · se maneja desde el PC'}
+body.v-pc .slide.de-pc:not(.espejo) .labbar>span:first-child::after{content:' · se maneja desde aquí';color:#7bd88f;font-size:13px}
+/* Laboratorio con ventana real de 1920 px (1920×1014), reducida para caber en la diapositiva de 1280×720. */
+.slide.labframe{overflow:hidden}.slide.labframe iframe.hd{width:1920px;height:1014px;transform:scale(.666667);transform-origin:0 0}
+/* PC: la miniatura del laboratorio que se maneja aquí recibe clics; «Laboratorio grande» la lleva a toda la pantalla. */
+body.v-pc.lab-manda #deck{pointer-events:auto}body.v-pc #herr [data-h=labgrande]{display:none}body.v-pc.lab-manda #herr [data-h=labgrande]{display:inline-block}
+body.v-pc.lab-manda.lab-grande #deck{top:116px;width:calc(100vw - 32px);height:calc(100vh - 132px);z-index:35}
 .v-publico .labbar button,.v-publico .labbar a,.v-publico #ayuda{display:none}
 /* PC: barra arriba, diapositiva en pequeño con el reloj y los mandos debajo, y el guion a la derecha */
 body.v-pc{background:#1b1e21;--mw:calc(46vw - 24px);--mh:calc((46vw - 24px) * .5625)}
