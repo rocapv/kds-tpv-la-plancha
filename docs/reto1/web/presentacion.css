@@ -234,3 +234,4 @@ body.v-mando #movil{display:flex;flex-direction:column;gap:12px;padding:12px 14p
  body.v-pc #notas{left:16px;top:calc(68px + var(--mh) + var(--rh,146px) + 72px);font-size:20px;border-left:0;border-top:4px solid var(--nar)}}
 @media print{#barra,#herr,#lateral,#movil,#voto,#pin{display:none!important}}
 @media print{#prog{display:none}.slide,.slide *,.slide *:before{animation:none!important;transition:none!important;translate:none!important;scale:none!important}}
+#notas s,#movil s{opacity:.55;text-decoration-thickness:2px}

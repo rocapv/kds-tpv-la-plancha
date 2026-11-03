@@ -40,7 +40,7 @@ const fmtN=(x,dec)=>{const[a,b]=Math.abs(x).toFixed(dec).split('.');return (x<0?
 function contar(el,t){
  if(el.closest('.panel'))return;
  const f=el.dataset.final||(el.dataset.final=el.textContent.trim()),m=f.match(CIFRA);el.textContent=f;
- if(!m||quieto)return;
+ if(!m||quieto||/^\d$/.test(f))return;                // una sola cifra (los 3 socios) sale ya con su valor: contando, se leía un 2
  const dec=(m[3]||'').length,val=parseFloat(m[2].replace(/\./g,'')+(dec?'.'+m[3]:'')),suf=m[4]||'';
  const r=el.closest('.rev'),ini=performance.now()+250+85*(r?parseInt(r.style.getPropertyValue('--i'))||0:0)+150;
  el.textContent=fmtN(0,dec)+suf;
@@ -67,7 +67,10 @@ let editando=null;
 function pintaNotas(){if(editando!==null)return;
  const s=sl[i],cab=document.createElement('span'),txt=document.createElement('div');cab.className='cab';txt.className='texto';
  cab.textContent=`Diapositiva ${i+1} de ${sl.length} · ${s.dataset.min} min · acumulado ${mmss(s.dataset.acum*60)} de ${mmss(TOTAL*60)}`;
- txt.textContent=s.dataset.notas;notas.replaceChildren(cab,txt);notas.scrollTop=0}
+ conTachado(txt,s.dataset.notas);notas.replaceChildren(cab,txt);notas.scrollTop=0}
+// En el guion y en las notas rápidas, lo escrito entre <tachar> y <tachar> (o </tachar>) se ve tachado.
+function conTachado(el,texto){el.replaceChildren();let tachar=false;
+ for(const trozo of String(texto||'').split(/<\/?tachar>/i)){if(trozo)el.append(tachar?Object.assign(document.createElement('s'),{textContent:trozo}):trozo);tachar=!tachar}}
 function aplicaGuion(d){const s=sl[d.n-1];if(!s)return;
  if(d.borrar){s.dataset.notas=s.dataset.notasOrig;s.dataset.rapidas=s.dataset.rapidasOrig}
  else{s.dataset.notas=d.texto;s.dataset.rapidas=JSON.stringify(d.rapidas||[])}
@@ -405,8 +408,8 @@ if(VISTA==='mando'){
   <footer><button onclick="ir(i-1)">← Anterior</button><button onclick="ir(i+1)">Siguiente →</button></footer></div>`));
  const M=$('#movil');
  UI.pinta=()=>{const s=sl[i],rs=rapidas(s);M.querySelector('.pos b').textContent=`${i+1} / ${sl.length}`;M.querySelector('.pos span').textContent=s.dataset.titulo;
-  M.querySelector('.rapidas').replaceChildren(...(rs.length?rs:['(sin notas rápidas: abre el guion completo)']).map(x=>{const li=document.createElement('li');li.textContent=x;return li}));
-  M.querySelector('.completo').textContent=s.dataset.notas;
+  M.querySelector('.rapidas').replaceChildren(...(rs.length?rs:['(sin notas rápidas: abre el guion completo)']).map(x=>{const li=document.createElement('li');conTachado(li,x);return li}));
+  conTachado(M.querySelector('.completo'),s.dataset.notas);
   M.querySelector('.ver-completo').textContent=M.classList.contains('completo-on')?'Ver las notas rápidas':'Ver el guion completo';UI.ctx()};
  UI.ctx=()=>{M.querySelector('.ctx').innerHTML=htmlCtx();$('#m_mov').textContent=quieto?'✦ Animar: no':'✦ Animar: sí';$('#m_crono').textContent=textoCrono()};
  UI.tic=(t,ini,fin,hora,html,est)=>{const r=M.querySelector('.reloj-m');r.innerHTML=html;r.dataset.estado=est;$('#m_crono').textContent=textoCrono()}}
