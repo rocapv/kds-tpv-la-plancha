@@ -196,7 +196,6 @@ S.append(("dark", f"""
  <div class="card oscura"><h3>Finanzas y trabajo</h3>{lista(["XIX Convenio TIC (BOE-A-2026-9024) · RD 126/2026 (SMI)", "Verkami (s.f., 2025) · Ley 5/2015 · Reglamento (UE) 2020/1503", "Cámara de España (2022) · ICO (s.f.) · Intelectium (s.f.)", "Billin (2026) · idealista/news (2026) · Digitaliza CV (2026)"])}</div>
  <div class="card oscura"><h3>Mercado y normativa</h3>{lista(["idealista, Fotocasa, Habitaclia y Nuroa (2026)", "Garrigues (2025) · Microsoft (2025) · L'Express Franchise (2026)", "Ley 11/2021 · RD 1007/2023 · RGPD · Resolución del ICAC (2021)"])}</div>
 </div>
-<p class="pie">51 referencias en formato APA (7.ª ed.) en el punto 8 del informe.</p>
 <button class="opc-q" onclick="ir(i+1,true)">¿? Preguntas para el público (opcional)</button>"""))
 
 # 14 · Cuestionario
