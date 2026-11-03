@@ -124,6 +124,13 @@ html[data-mov="off"] *,html[data-mov="off"] *:before,html[data-mov="off"] *:afte
 /* ---- Vistas con servidor: presentación (pizarra), público, PC (guion) y móvil (mando) ---- */
 #barra,#herr,#lateral,#movil,#voto{display:none}
 #sincro{font-size:13px;color:#aaa;white-space:nowrap}#sincro.on{color:#7bd88f}#sincro.off{color:#ff8a80}
+#sincro .sv{cursor:help;border-bottom:1px dotted currentColor;padding:2px 0}
+#flot{position:fixed;z-index:60;display:none;background:#23272b;color:#eee;border:1px solid #555;border-radius:10px;padding:10px 12px;font-size:13px;min-width:320px;max-width:min(560px,94vw);box-shadow:0 10px 30px rgba(0,0,0,.55)}
+#flot.on{display:block}#flot h4{margin:0 0 6px;font-size:14px;color:#fff}#flot .peq{margin:4px 0;color:#aaa}
+#flot .eq{position:relative;display:grid;grid-template-columns:auto auto 1fr;gap:10px;align-items:baseline;padding:6px 4px 9px;border-bottom:1px solid #333;font-variant-numeric:tabular-nums}
+#flot .eq b{font-family:Consolas,'Courier New',monospace;font-weight:normal;color:#fff}#flot .eq span:last-of-type{justify-self:end;white-space:nowrap}
+#flot .eq.on span:last-of-type{color:#7bd88f}#flot .eq.off span:last-of-type{color:#f0a020}
+#flot .eq i{position:absolute;left:0;bottom:2px;height:3px;border-radius:2px;background:#f0a020;transition:width .5s linear}#flot .eq.on i{background:#43b05c}
 body.espejo .slide.labframe iframe{pointer-events:none}
 body.espejo .labbar>span:first-child::after{content:' · espejo de la pizarra';color:#aaa;font-size:13px}
 .v-publico .labbar button,.v-publico .labbar a,.v-publico #ayuda{display:none}
@@ -137,13 +144,38 @@ body.v-pc #barra{display:flex;position:fixed;top:0;left:0;right:0;height:52px;al
 body.v-pc #prog{top:52px}
 body.v-pc #deck{inset:auto;left:16px;top:68px;width:var(--mw);height:var(--mh);overflow:hidden;border-radius:8px;box-shadow:0 8px 30px rgba(0,0,0,.5);pointer-events:none}
 body.v-pc #deck .ctl{visibility:hidden}
-body.v-pc #reloj{display:block;left:16px;width:var(--mw);top:calc(68px + var(--mh) + 14px);font-size:18px;color:#ddd;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-body.v-pc #reloj.corre{color:#7bd88f}
-body.v-pc #lateral{display:block;position:fixed;left:16px;width:var(--mw);top:calc(68px + var(--mh) + 46px);bottom:16px;overflow:auto;color:#ddd}
+/* Cronómetro: en la pizarra, discreto (solo el tiempo y el estado, con su color); en el PC y el móvil, grande. */
+#reloj,.reloj-m{--c:#9aa0a6}
+#reloj[data-estado=en-hora],.reloj-m[data-estado=en-hora]{--c:#43b05c}#reloj[data-estado=adelanto],.reloj-m[data-estado=adelanto]{--c:#4aa3df}
+#reloj[data-estado=retraso],.reloj-m[data-estado=retraso]{--c:#f0a020}#reloj[data-estado=tarde],.reloj-m[data-estado=tarde]{--c:#e53935}
+#reloj .cr-t{color:var(--c);font-weight:bold;margin-right:6px}#reloj .cr-de{margin-right:6px}#reloj .cr-est{color:var(--c)}
+#reloj .cr-dia,#reloj .cr-barra{display:none}
+#movil .reloj-m{display:grid;grid-template-columns:auto auto 1fr;align-items:baseline;gap:2px 14px;background:#23272b;border-radius:12px;border-left:10px solid var(--c);padding:8px 16px 12px;color:#ddd;font-variant-numeric:tabular-nums;white-space:normal}
+body.v-pc #reloj{left:16px;width:var(--mw);top:calc(68px + var(--mh) + 12px);box-sizing:border-box;background:#23272b;border-radius:12px;border-left:10px solid var(--c);
+ padding:8px 16px 10px;color:#ddd;font-variant-numeric:tabular-nums;white-space:nowrap;z-index:40}
+body.v-pc #reloj .cg1{font-size:14px;line-height:1.4;color:#ccc;position:relative;z-index:2}body.v-pc #reloj .cg-pausa{color:var(--c)}
+body.v-pc #reloj .cg2{font-size:min(140px,calc(var(--mw) / 4.4));line-height:.95;font-weight:bold;color:#ffd54f;margin-top:2px}
+body.v-pc #reloj .cg3{font-size:min(70px,calc(var(--mw) / 8.8));line-height:1;font-weight:bold;color:#4dd0e1;margin-top:4px}
+body.v-pc #reloj .pasado{color:#ff5252}
+body.v-pc #reloj .cg2 span,body.v-pc #reloj .cg3 span{display:inline-block}  /* su caja no invade las otras líneas */
+body.v-pc #reloj [data-tip]{position:relative;cursor:help}
+body.v-pc #reloj [data-tip]:hover::after{content:attr(data-tip);position:absolute;left:0;top:calc(100% + 6px);z-index:70;width:max-content;max-width:360px;white-space:normal;
+ background:#111;color:#eee;border:1px solid #666;border-radius:8px;padding:7px 11px;font:normal 14px/1.35 system-ui,sans-serif;pointer-events:none;box-shadow:0 8px 24px rgba(0,0,0,.6)}
+#movil .reloj-m .cr-t{font-size:64px;line-height:1;color:var(--c);font-weight:bold;margin:0}
+#movil .reloj-m .cr-de{font-size:20px;color:#aaa;margin:0}
+#movil .reloj-m .cr-est{font-size:26px;font-weight:bold;color:var(--c);justify-self:end;text-align:right}
+#movil .reloj-m .cr-dia{display:block;grid-column:1/-1;font-size:15px;color:#bbb;margin-top:4px}
+#movil .reloj-m .cr-barra{display:block;grid-column:1/-1;position:relative;height:16px;background:#3a3f45;border-radius:8px;margin-top:6px;overflow:visible}
+.cr-barra .p{position:absolute;left:0;top:0;bottom:0;background:var(--c);border-radius:8px;transition:width .5s linear}
+.cr-barra .v{position:absolute;top:-4px;bottom:-4px;border:2px solid #fff;border-radius:5px;opacity:.85;box-sizing:border-box}
+#movil .reloj-m{flex-basis:100%;margin-top:6px;padding:6px 12px 10px}#movil .reloj-m .cr-t{font-size:48px}#movil .reloj-m .cr-est{font-size:20px}
+body.v-pc #lateral{display:block;position:fixed;left:16px;width:var(--mw);top:calc(68px + var(--mh) + var(--rh,146px) + 26px);bottom:16px;overflow:auto;color:#ddd}
 #siguiente{color:#aaa;font-size:16px;line-height:1.4;margin-bottom:12px}#siguiente b{color:#fff}
 body.v-pc #herr{display:flex;position:fixed;left:calc(46vw + 8px);right:16px;top:68px;height:40px;gap:8px;align-items:center;flex-wrap:wrap;z-index:11}
 body.v-pc #notas{display:block;left:calc(46vw + 8px);right:16px;top:118px;bottom:16px;max-height:none;font-size:26px;border-top:0;border-left:4px solid var(--nar);border-radius:8px}
 body.v-pc #ayuda{display:none}
+.slide .opc-q{position:absolute;right:58px;bottom:44px;font:inherit;font-size:16px;padding:8px 16px;border-radius:10px;border:1px solid #888;background:transparent;color:#ddd;cursor:pointer}
+.slide .opc-q:hover{background:var(--nar);border-color:var(--nar);color:#fff}.v-publico .opc-q{display:none}
 body.lectura #notas{background:#121416;color:#e8e8e8;border-color:#e6a35c}body.lectura #notas .cab{color:#e6a35c}
 #notas textarea{display:block;width:100%;font:inherit;font-size:.8em;line-height:1.45;padding:10px 12px;border-radius:8px;border:1px solid #ccc;background:#fff;color:#222;resize:vertical}
 .ed-texto{min-height:44vh}.ed-rapidas{min-height:7em}.ed-lbl{display:block;font-size:14px;margin:12px 0 4px;color:#8a5a14;white-space:normal}
@@ -160,7 +192,7 @@ body.lectura #notas{background:#121416;color:#e8e8e8;border-color:#e6a35c}body.l
 body.v-mando{background:#1b1e21;color:#fff}html:has(body.v-mando),body.v-mando{height:auto;overflow:auto}
 body.v-mando #deck,body.v-mando #prog,body.v-mando #ayuda,body.v-mando #reloj{display:none}
 body.v-mando #movil{display:flex;flex-direction:column;gap:12px;padding:12px 14px 100px;font-size:17px}
-#movil header{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:14px;color:#bbb}
+#movil header{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px;font-size:14px;color:#bbb}
 #movil .reloj-m{font-variant-numeric:tabular-nums;white-space:nowrap}
 #movil .pos b{display:block;font-size:30px;color:var(--nar)}#movil .pos span{font-size:19px;font-weight:bold;line-height:1.3}
 #movil .rapidas{background:#fffbe8;color:#222;border-radius:12px;padding:12px 16px 12px 36px;margin:0}#movil .rapidas li{font-size:20px;line-height:1.35;margin:8px 0}
@@ -198,7 +230,7 @@ body.v-mando #movil{display:flex;flex-direction:column;gap:12px;padding:12px 14p
  body.v-pc{--mw:calc(100vw - 32px);--mh:calc((100vw - 32px) * .5625)}
  body.v-pc #barra{gap:6px;padding:0 8px}#barra .largo,#sincro .largo{display:none}
  body.v-pc #lateral{display:none}
- body.v-pc #herr{left:16px;top:calc(68px + var(--mh) + 44px)}
- body.v-pc #notas{left:16px;top:calc(68px + var(--mh) + 92px);font-size:20px;border-left:0;border-top:4px solid var(--nar)}}
+ body.v-pc #herr{left:16px;top:calc(68px + var(--mh) + var(--rh,146px) + 24px)}
+ body.v-pc #notas{left:16px;top:calc(68px + var(--mh) + var(--rh,146px) + 72px);font-size:20px;border-left:0;border-top:4px solid var(--nar)}}
 @media print{#barra,#herr,#lateral,#movil,#voto,#pin{display:none!important}}
 @media print{#prog{display:none}.slide,.slide *,.slide *:before{animation:none!important;transition:none!important;translate:none!important;scale:none!important}}

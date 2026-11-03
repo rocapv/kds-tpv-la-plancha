@@ -6,7 +6,7 @@
 <line x1="800" y1="150" x2="800" y2="300" stroke="#555" stroke-width="5"/><text x="815" y="220" font-size="22" fill="#555">fibra 600 Mb/s</text>
 <rect x="590" y="300" width="420" height="120" rx="14" fill="#e67e22"/><text x="800" y="350" text-anchor="middle" font-size="30" font-weight="bold" fill="#fff">Router de la operadora</text><text x="800" y="390" text-anchor="middle" font-size="22" fill="#fff">wifi 5 · 4 puertos LAN · en el almacén</text>
 <path d="M640 420 V480 H330 V540" stroke="#555" stroke-width="5" fill="none"/><path d="M720 420 V540" stroke="#555" stroke-width="5" fill="none"/>
-<rect x="200" y="540" width="260" height="110" rx="12" fill="#fff" stroke="#555" stroke-width="2"/><text x="330" y="585" text-anchor="middle" font-size="24" fill="#333">PC del TPV</text><text x="330" y="620" text-anchor="middle" font-size="19" fill="#666">Windows 10 · impresora USB</text>
+<rect x="200" y="540" width="260" height="110" rx="12" fill="#fff" stroke="#555" stroke-width="2"/><text x="330" y="585" text-anchor="middle" font-size="24" fill="#333">PC del TPV</text><text x="330" y="620" text-anchor="middle" font-size="19" fill="#666">Windows XP · impresora USB</text>
 <rect x="590" y="540" width="260" height="110" rx="12" fill="#fff" stroke="#555" stroke-width="2"/><text x="720" y="585" text-anchor="middle" font-size="24" fill="#333">Grabador + 2 cámaras</text><text x="720" y="620" text-anchor="middle" font-size="19" fill="#666">acceso remoto P2P</text>
 <path d="M940 420 V720" stroke="#e67e22" stroke-width="4" stroke-dasharray="12 9" fill="none"/>
 <path d="M177 720 H1417" stroke="#e67e22" stroke-width="4" stroke-dasharray="12 9" fill="none"/>

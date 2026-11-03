@@ -77,21 +77,49 @@ function aplicaGuion(d){const s=sl[d.n-1];if(!s)return;
 let crono={corre:false,acum:0,desde:0},desfase=0;     // desfase: reloj del servidor menos el de este equipo (ms)
 const tiempo=()=>crono.acum+(crono.corre?(Date.now()+desfase-crono.desde)/1000:0);
 const reloj=document.getElementById('reloj');
+let diapoT0={i:-1,t:0};                               // en qué momento de la presentación se entró en la diapositiva actual
 function tic(){if(i<0)return;const t=tiempo(),fin=parseFloat(sl[i].dataset.acum)*60,ini=fin-parseFloat(sl[i].dataset.min)*60,
  d=t<ini?t-ini:t>fin?t-fin:0,hora=d===0?'en hora':mmss(d)+(d>0?' de retraso':' de adelanto');
- reloj.textContent=`${mmss(t)} / ${mmss(TOTAL*60)} · diapositiva ${i+1}: ${mmss(ini)}–${mmss(fin)} · ${hora}`;
- reloj.classList.toggle('corre',crono.corre);UI.tic(t,ini,fin,hora)}
+ // Estado del ritmo, que da el color: en hora (verde), adelanto (azul), retraso < 1 min (ámbar), retraso mayor (rojo).
+ const est=!crono.corre&&t===0?'parado':d===0?'en-hora':d<0?'adelanto':d<60?'retraso':'tarde',T=TOTAL*60||1;
+ const txt=!crono.corre?(t>0?'en pausa · '+hora:'pulsa ▶ para empezar'):hora;
+ const html=`<b class="cr-t">${mmss(t)}</b><span class="cr-de">de ${mmss(T)}</span><span class="cr-est">${txt}</span>`+
+  `<span class="cr-dia">Diapositiva ${i+1}: debería ir entre ${mmss(ini)} y ${mmss(fin)}</span>`+
+  `<span class="cr-barra"><i class="v" style="left:${(ini/T*100).toFixed(2)}%;width:${((fin-ini)/T*100).toFixed(2)}%"></i><i class="p" style="width:${Math.min(100,t/T*100).toFixed(2)}%"></i></span>`;
+ if(diapoT0.i!==i||t<diapoT0.t)diapoT0={i,t};
+ if(VISTA==='pc')pintaGrande(reloj,{ed:t-diapoT0.t,nd:fin-ini,t,T,txt});else reloj.innerHTML=html;reloj.dataset.estado=est;
+ reloj.classList.toggle('corre',crono.corre);UI.tic(t,ini,fin,hora,html,est);pintaFlot()}
 setInterval(tic,500);
 function cronoAlterna(){if(red)return manda('crono',{accion:'alterna'});
  const ahora=Date.now();if(crono.corre){crono.acum+=(ahora-crono.desde)/1000;crono.corre=false}else{crono.desde=ahora;crono.corre=true}
  reloj.classList.add('on');tic();UI.ctx()}
 function cronoReinicia(){if(red)return manda('crono',{accion:'reinicia'});crono.acum=0;crono.desde=Date.now();tic()}
+/* Cronómetro grande del PC. Primera línea: tiempo en esta diapositiva / previsto · diapositiva n/total · tiempo total;
+   debajo, lo que queda de esta diapositiva (diez veces mayor) y lo que queda de la presentación (cinco veces).
+   Se construye una sola vez y luego solo cambian los textos, para que el recuadro de ayuda no parpadee. */
+function pintaGrande(el,v){
+ if(!el.querySelector('.cg1'))el.innerHTML='<div class="cg1"><span class="cg-ed" data-tip="Tiempo que llevas en esta diapositiva"></span> / '+
+  '<span class="cg-nd" data-tip="Tiempo previsto en el guion para esta diapositiva"></span> · <span class="cg-n" data-tip="Diapositiva actual / número de diapositivas"></span> · '+
+  '<span class="cg-tt"></span><span class="cg-pausa"></span></div><div class="cg2"><span></span></div><div class="cg3"><span></span></div>';
+ const q=s=>el.querySelector(s),rd=v.nd-v.ed,rp=v.T-v.t,d2=q('.cg2 span'),d3=q('.cg3 span');
+ q('.cg-ed').textContent=mmss(v.ed);q('.cg-nd').textContent=mmss(v.nd);q('.cg-n').textContent=`${i+1}/${sl.length}`;q('.cg-tt').textContent=mmss(v.t);
+ q('.cg-tt').dataset.tip=`Tiempo total transcurrido de la presentación (${v.txt})`;
+ q('.cg-pausa').textContent=crono.corre?'':' · '+(v.t>0?'⏸ en pausa':'pulsa ▶ para empezar');
+ d2.textContent=(rd<0?'−':'')+mmss(rd);d2.parentElement.classList.toggle('pasado',rd<0);
+ d2.dataset.tip=rd<0?`Cuenta atrás de esta diapositiva: te pasas en ${mmss(rd)} de los ${mmss(v.nd)} previstos`:`Cuenta atrás de esta diapositiva: queda ${mmss(rd)} de los ${mmss(v.nd)} previstos`;
+ d3.textContent=(rp<0?'−':'')+mmss(rp);d3.parentElement.classList.toggle('pasado',rp<0);
+ d3.dataset.tip=rp<0?`Cuenta atrás de la presentación: te pasas en ${mmss(rp)} de los ${mmss(v.T)} previstos`:`Cuenta atrás de la presentación: queda ${mmss(rp)} de los ${mmss(v.T)} previstos`;
+ const h=el.offsetHeight+'px';if(document.body.style.getPropertyValue('--rh')!==h)document.body.style.setProperty('--rh',h)}
 const textoCrono=()=>crono.corre?'⏸ Pausar':crono.acum>0?'▶ Seguir':'▶ Cronómetro';
 
 /* ---------- Navegación ---------- */
 function fit(){const k=Math.min(deck.clientWidth/1280,deck.clientHeight/720);sl.forEach(s=>s.style.transform=`scale(${k})`)}
 // ir(): lo que pide un control (teclas, clic, botones); ver(): lo que se muestra, también cuando llega del servidor.
-function ir(n){if(!CONTROL&&red)return;n=Math.max(0,Math.min(sl.length-1,n));ver(n);if(red)manda('ir',{i:n})}
+// Las diapositivas .opcional (el cuestionario) solo se abren a propósito: ir(n,true).
+const opcional=k=>!!sl[k]&&sl[k].classList.contains('opcional');
+const ultimaNormal=()=>{let k=sl.length-1;while(k>0&&opcional(k))k--;return k};
+function ir(n,forzar){if(!CONTROL&&red)return;n=Math.max(0,Math.min(sl.length-1,n));
+ if(!forzar&&opcional(n)&&!opcional(i))return;ver(n);if(red)manda('ir',{i:n})}
 function ver(n){n=Math.max(0,Math.min(sl.length-1,n));if(n===i)return;
  document.body.dataset.dir=n<i?'atras':'adelante';
  if(i>=0){const v=sl[i];restaura(v);v.classList.remove('on');
@@ -113,7 +141,7 @@ addEventListener('keydown',ev=>{const tg=ev.target;
  if(ev.key==='f'||ev.key==='F')return pantallaCompleta();
  if(!CONTROL)return;
  if(['ArrowRight','PageDown',' '].includes(ev.key)){ev.preventDefault();ir(i+1)}
- else if(['ArrowLeft','PageUp'].includes(ev.key))ir(i-1);else if(ev.key==='Home')ir(0);else if(ev.key==='End')ir(sl.length-1);
+ else if(['ArrowLeft','PageUp'].includes(ev.key))ir(i-1);else if(ev.key==='Home')ir(0);else if(ev.key==='End')ir(ultimaNormal());
  else if((ev.key==='n'||ev.key==='N')&&VISTA==='presentacion')notas.classList.toggle('on');
  else if(ev.key==='m'||ev.key==='M')alterna();
  else if(ev.key==='T')cronoReinicia();
@@ -126,7 +154,7 @@ document.addEventListener('click',ev=>{const b=ev.target.closest&&ev.target.clos
 
 /* ---------- Laboratorios: se ejecutan en la pizarra principal y los demás reciben un espejo ---------- */
 const BOTONES_LAB={'red.html':[['sim_actual','Red actual'],['sim_prop','Red segmentada'],['sim_ambas','Las dos seguidas'],['reiniciar','Reiniciar']],
- 'verifactu.html':[['simular','Simular'],['rapido','Emitir 5 al azar'],['verificar','Verificar la cadena'],['borrar','Borrar la última'],['reiniciar','Empezar de cero']],
+ 'verifactu.html':[['simular','Simular'],['alterar','Rebajar la factura 2'],['restaurar','Restaurar las originales']],
  'hora_punta.html':[['empezar','Simular el servicio'],['pausa','Pausa / seguir']]};
 const labDe=f=>(f.dataset.lab||f.dataset.src||'').split('/').pop();
 let miId=null,soyPrincipal=false;
@@ -154,10 +182,11 @@ function labCargado(f){const lab=labDe(f),L=LABS[lab]||(LABS[lab]={});L.f=f;L.li
  ['input','change','scroll'].forEach(t=>doc.addEventListener(t,()=>programa(lab),true));
  setTimeout(()=>mandaFoto(lab),250)}
 function programa(lab){const L=LABS[lab];if(L.temp)return;L.temp=setTimeout(()=>{L.temp=null;mandaParche(lab)},120)}
-function ruta(el,doc){if(el.id)return '#'+el.id;const p=[];while(el&&el!==doc.body){p.unshift([...el.parentElement.children].indexOf(el));el=el.parentElement}return p.join('.')}
+// El documento entero (html) no entra aquí: su desplazamiento viaja aparte, en «arriba».
+function ruta(el,doc){if(el.id)return '#'+el.id;const p=[];while(el&&el!==doc.body&&el.parentElement){p.unshift([...el.parentElement.children].indexOf(el));el=el.parentElement}return p.join('.')}
 function busca(r,doc){if(r[0]==='#')return doc.getElementById(r.slice(1));let el=doc.body;for(const k of r.split('.').filter(x=>x!==''))el=el&&el.children[+k];return el}
 function extras(doc){return{valores:[...doc.querySelectorAll('input,select,textarea')].map(e=>[ruta(e,doc),e.value,e.checked===true]),
- scroll:[...doc.querySelectorAll('*')].filter(e=>e.scrollTop>0).map(e=>[ruta(e,doc),e.scrollTop]),arriba:(doc.scrollingElement||doc.documentElement).scrollTop}}
+ scroll:[...doc.querySelectorAll('*')].filter(e=>e.scrollTop>0&&e!==doc.documentElement&&e!==doc.body).map(e=>[ruta(e,doc),e.scrollTop]),arriba:(doc.scrollingElement||doc.documentElement).scrollTop}}
 function mandaParche(lab){const L=LABS[lab],doc=L.f&&L.f.contentDocument;if(!doc||!doc.body||!ejecutaLabs())return;
  let raices=[...L.sucias].filter(n=>doc.body.contains(n));L.sucias.clear();
  if(L.todo||raices.length>40){L.todo=false;return mandaFoto(lab)}
@@ -178,15 +207,19 @@ function labAccion(lab,id){if(red)return manda('lab/accion',{lab,id});pulsaLab(l
 
 /* ---------- Cuestionario ---------- */
 const PREG=[
- {q:'¿Cuántas instalaciones al año necesita ServiPass para no perder dinero?',o:['12','18,5','24','30'],ok:1,
-  x:'<b>Unas 18,5</b>: cada instalación deja 3.340 € de margen y los costes fijos que deben cubrir son unos 61.700 €. Con 18 instalaciones, el primer año cierra con −1.589 €.'},
- {q:'Si ServiPass vendiera un programa de facturación que no cumple Verifactu, ¿a qué sanción se expondría?',o:['A ninguna: la multa es para el restaurante','50.000 € por ejercicio','150.000 € por ejercicio y por tipo de programa','Al cierre del local'],ok:2,
-  x:'<b>150.000 € por ejercicio y por cada tipo de programa</b> (art. 201 bis de la Ley General Tributaria); el restaurante que lo usa, 50.000 €. Por eso el TPV de ServiPass cumple Verifactu antes de vender la primera licencia.'},
+ {q:'¿Cuántas instalaciones al año necesita ServiPass para no perder dinero?',o:['18','22','27','45'],ok:2,
+  x:'<b>Unas 27</b>: cada instalación deja 3.340 € de margen y los costes fijos que deben cubrir son unos 89.800 € (102.840 € menos lo que pagan la infraestructura, las ampliaciones y el soporte). Con 18 instalaciones, el primer año cierra con −29.669 €.'},
+ {q:'¿Desde cuándo tiene que facturar Burglar King, que es una sociedad, con un sistema que cumpla Verifactu?',o:['1 de enero de 2026','1 de julio de 2026','1 de enero de 2027','1 de julio de 2027'],ok:2,
+  x:'<b>El 1 de enero de 2027</b> para las sociedades; el resto, el 1 de julio de 2027 (Real Decreto-ley 15/2025). Por eso el TPV de ServiPass cumple Verifactu antes de vender la primera licencia.'},
  {q:'¿Cuánto pagaría en diez años un local por el plan básico de Last.app con su pantalla de cocina?',o:['1.800 €','4.250 €','10.700 €','25.000 €'],ok:2,
-  x:'<b>10.700 €</b>: 85 € al mes durante diez años más 500 € de alta, solo por el software. La licencia de ServiPass del mismo periodo cuesta 1.800 €.'}];
+  x:'<b>10.700 €</b>: 85 € al mes durante diez años más 500 € de alta, solo por el software. La licencia de ServiPass del mismo periodo cuesta 1.800 €.'},
+ {q:'En la cadena de facturas, alguien rebaja el precio de la factura 2 de 3. ¿Qué se ve al verificar?',o:['Nada: la huella solo usa el número de factura','Solo cambia el total de la factura 2','La huella de la 2 deja de cuadrar y la 3 ya no encaja con ella','Hacienda corrige el precio sola'],ok:2,
+  x:'<b>Se rompe la cadena</b>: la huella de la factura 2 se calcula con su importe, así que al recalcularla ya no coincide con la registrada, y la 3 guarda la huella antigua de la 2. La única corrección válida es una factura rectificativa.'},
+ {q:'Con la red segmentada que instala ServiPass, ¿qué puede hacer el móvil de un cliente conectado a la wifi del local?',o:['Llegar a la caja para pagar','Ver las cámaras','Navegar por internet, pero no llegar a la caja ni al grabador','Nada: la wifi de clientes desaparece'],ok:2,
+  x:'<b>Solo internet</b>: la red de clientes queda separada de la del negocio y de la de las cámaras. Lo necesario funciona y lo peligroso queda bloqueado.'}];
 const letra=k=>String.fromCharCode(65+k);
 const Q=document.getElementById('quiz');
-const msgFinal=n=>n===3?'¡Pleno! Habéis escuchado de verdad.':n===2?'Muy bien: solo una se ha escapado.':n===1?'Una de tres: el informe tiene las respuestas.':'Ninguna… toca releer el informe.';
+const msgFinal=n=>{const N=PREG.length;return n===N?'¡Pleno! Habéis escuchado de verdad.':n===N-1?'Muy bien: solo una se ha escapado.':n*2>=N?'Más de la mitad: buen trabajo.':n>0?`${n} de ${N}: el informe tiene las respuestas.`:'Ninguna… toca releer el informe.'};
 function confeti(){if(quieto)return;const c=document.createElement('div');c.className='conf';
  for(let k=0;k<80;k++){const e=document.createElement('i');e.style.left=Math.random()*100+'%';e.style.background=['#e67e22','#27ae60','#f1c40f','#3498db'][k%4];e.style.animationDelay=Math.random()*1.2+'s';e.style.animationDuration=(2+Math.random()*1.5)+'s';c.append(e)}
  sl[i].append(c);setTimeout(()=>c.remove(),4500)}
@@ -201,8 +234,8 @@ function quizPinta(){if(qi>=PREG.length){quizFin();return}
   Q.querySelector('.fb').innerHTML=(ok?'✔ Correcto. ':'✘ No. ')+p.x;
   const sig=document.createElement('button');sig.textContent=qi<PREG.length-1?'Siguiente pregunta →':'Ver resultado';sig.addEventListener('click',()=>{qi++;quizPinta()});
   Q.querySelector('.qbar').append(sig)}))}
-function quizFin(){Q.innerHTML=`<div class="final"><div class="qn">Resultado</div><b class="num">${qp} / 3</b><p>${msgFinal(qp)}</p><button class="otra">Repetir el cuestionario</button></div>`;
- Q.querySelector('.otra').addEventListener('click',quizInicio);if(qp>=2)confeti()}
+function quizFin(){Q.innerHTML=`<div class="final"><div class="qn">Resultado</div><b class="num">${qp} / ${PREG.length}</b><p>${msgFinal(qp)}</p><button class="otra">Repetir el cuestionario</button></div>`;
+ Q.querySelector('.otra').addEventListener('click',quizInicio);if(qp*3>=PREG.length*2)confeti()}
 // Con servidor: vota el público y la pizarra enseña el recuento en directo.
 let quiz=null,ultimo={};
 const cid=lee('reto1_cid','')||(()=>{const c=Math.random().toString(36).slice(2)+Date.now().toString(36);guarda('reto1_cid',c);return c})();
@@ -228,7 +261,7 @@ function htmlVoto(){const q=quiz,n=q.q,p=PREG[n];
  const mio=misVotos.v[n];
  if(q.fase==='espera')return `<div class="qn">Cuestionario</div><div class="q">La votación se abre enseguida.</div><p class="fb">Mira la pizarra.</p>`;
  if(q.fase==='fin'){const ac=PREG.filter((p,k)=>misVotos.v[k]===p.ok).length;
-  return `<div class="final"><div class="qn">Tu resultado</div><b class="num">${ac} / 3</b><p>${msgFinal(ac).replace('Habéis escuchado','Has escuchado')}</p></div>`}
+  return `<div class="final"><div class="qn">Tu resultado</div><b class="num">${ac} / ${PREG.length}</b><p>${msgFinal(ac).replace('Habéis escuchado','Has escuchado')}</p></div>`}
  const res=q.fase==='resuelta';
  return `<div class="qn">Pregunta ${n+1} de ${PREG.length}</div><div class="q">${p.q}</div>
   <div class="ops">${p.o.map((o,k)=>`<button data-k="${k}" ${res?'disabled':''} class="${mio===k?'mio':''} ${res&&k===p.ok?'ok':''} ${res&&mio===k&&k!==p.ok?'ko':''}">${letra(k)}. ${o}</button>`).join('')}</div>
@@ -242,6 +275,7 @@ function htmlCtx(){const s=sl[i];if(!s)return '';const f=s.querySelector('iframe
  if(enQuiz()&&red&&quiz){const n=quiz.q,p=PREG[n],r=quiz.recuentos[n],tot=r.reduce((a,b)=>a+b,0);
   return `<h3>Cuestionario · ${quiz.fase==='fin'?'resultado':`pregunta ${n+1} de ${PREG.length}`}</h3>${quiz.fase==='fin'?'':`<div class="mini-votos">${p.o.map((o,k)=>`<div class="${k===p.ok?'ok':''}" style="--p:${tot?Math.round(100*r[k]/tot):0}%">${letra(k)}. ${o} · <b>${r[k]}</b></div>`).join('')}</div>
    <p class="peq">${tot} voto(s) de ${(ultimo.clientes||{}).publico||0} conectado(s) · correcta: ${letra(p.ok)}</p>`}<div class="botones">${botonQuiz(quiz,n)}${quiz.fase!=='fin'?ctl('reiniciar','Repetir cuestionario'):''}</div>`}
+ if(opcional(i+1)&&!opcional(i))return `<h3>Al terminar</h3><div class="botones"><button onclick="ir(i+1,true)">¿? Abrir las preguntas para el público</button></div><p class="peq">Opcional: «Siguiente» no pasa a ellas.</p>`;
  return ''}
 
 /* ---------- Conexión con el servidor ---------- */
@@ -268,6 +302,7 @@ function conecta(){if(es)es.close();
  es.addEventListener('hola',json(d=>{miId=d.id}));
  es.addEventListener('estado',json(d=>{aplicaEstado(d);if(caido){caido=false;if(VISTA!=='publico')aviso('Conexión recuperada')}}));
  es.addEventListener('guion',json(aplicaGuion));
+ es.addEventListener('equipos',json(d=>{EQUIPOS=d.lista||[];pintaFlot()}));
  es.addEventListener('lab_parche',json(d=>aplicaLab(d,false)));
  es.addEventListener('lab_foto',json(d=>aplicaLab(d,true)));
  es.addEventListener('lab_pedir',json(d=>{if(ejecutaLabs())mandaFoto(d.lab)}));
@@ -282,16 +317,35 @@ function aplicaEstado(d){ultimo=d;desfase=d.ahora-Date.now();crono=d.crono;
  if(d.i!==i)ver(d.i);else if(enQuiz())pintaQuiz();
  if(alFin&&VISTA==='presentacion'&&enQuiz()){const ac=PREG.map((p,k)=>{const r=quiz.recuentos[k],t=r.reduce((a,b)=>a+b,0);return t?r[p.ok]/t:0});if(ac.reduce((a,b)=>a+b,0)/PREG.length>=.5)confeti()}
  estadoRed(d);UI.ctx();tic()}
+const VISTAS_N=[['presentacion','pizarra'],['publico','público'],['pc','PC'],['mando','móvil']];
 function estadoRed(d,txt){const el=document.getElementById('sincro');if(!el)return;const det=document.createElement('span');det.className='largo';
  if(!d){el.className='off';det.textContent=' '+(txt||'sin conexión');el.replaceChildren('○',det);return}
  const c=d.clientes||{};el.className='on';
- det.textContent=` en red · ${c.presentacion||0} pizarra · ${c.publico||0} público · ${c.pc||0} PC · ${c.mando||0} móvil`;el.replaceChildren('●',det)}
+ det.innerHTML=' en red · '+VISTAS_N.map(([v,n])=>`<span class="sv" data-v="${v}" tabindex="0">${c[v]||0} ${n}</span>`).join(' · ');el.replaceChildren('●',det)}
+/* Flotante de equipos: al pasar por encima de «pizarra», «público», «PC» o «móvil» (o al tocarlo en el móvil),
+   sus equipos con MAC, IP y «visto hace»; los desconectados se ven 10 minutos, con una barra que se vacía. */
+let EQUIPOS=[],flotV=null,flotEl=null;
+const flot=document.createElement('div');flot.id='flot';document.body.append(flot);
+function abreFlot(el){flotV=el.dataset.v;flotEl=el;flot.classList.add('on');pintaFlot()}
+function cierraFlot(){flotV=null;flotEl=null;flot.classList.remove('on')}
+document.addEventListener('mouseover',ev=>{const s=ev.target.closest&&ev.target.closest('.sv');if(s)abreFlot(s)});
+document.addEventListener('mouseout',ev=>{const s=ev.target.closest&&ev.target.closest('.sv');if(s&&!(ev.relatedTarget&&s.contains(ev.relatedTarget)))cierraFlot()});
+document.addEventListener('click',ev=>{const s=ev.target.closest&&ev.target.closest('.sv');if(s){ev.stopPropagation();flotV===s.dataset.v?cierraFlot():abreFlot(s)}else if(flotV)cierraFlot()},true);
+function pintaFlot(){if(!flotV)return;
+ // al entrar o salir alguien se redibuja el contador: el flotante sigue abierto sobre el elemento nuevo
+ if(!flotEl||!document.body.contains(flotEl))flotEl=document.querySelector(`#sincro .sv[data-v="${flotV}"]`);
+ if(!flotEl)return cierraFlot();
+ const nombre=(VISTAS_N.find(x=>x[0]===flotV)||[,''])[1],ahora=Date.now()+desfase;
+ const lista=EQUIPOS.filter(e=>e.vista===flotV).map(e=>({...e,hace:Math.max(0,(ahora-e.visto)/1000)})).filter(e=>e.conectado||e.hace<=600);
+ flot.innerHTML=`<h4>${nombre} · ${lista.filter(e=>e.conectado).length} conectado(s) · últimos 10 min</h4>`+(!CONTROL?'<p class="peq">Solo se ve con PIN.</p>':
+  lista.length?lista.map(e=>`<div class="eq ${e.conectado?'on':'off'}"><b>${e.mac}</b><span>${e.ip}</span><span>${e.conectado?'conectado ahora':'visto hace '+mmss(e.hace)}</span><i style="width:${e.conectado?100:Math.max(0,100-e.hace/6).toFixed(1)}%"></i></div>`).join(''):'<p class="peq">Ningún equipo en los últimos 10 minutos.</p>');
+ const r=flotEl.getBoundingClientRect(),w=flot.offsetWidth;
+ flot.style.left=Math.max(8,Math.min(innerWidth-w-8,r.left))+'px';flot.style.top=(r.bottom+8)+'px'}
 
 /* ---------- Interfaz de cada vista ---------- */
 const UI={pinta(){},ctx(){},tic(){},voto(){}};
 const raiz=document.getElementById('ui');
 const nodo=h=>{const t=document.createElement('template');t.innerHTML=h.trim();return t.content.firstElementChild};
-document.getElementById('ayuda').textContent=VISTA==='publico'?'F pantalla completa':'← → avanzar · N guion · T cronómetro · M movimiento · F pantalla completa';
 if(VISTA==='presentacion')UI.pinta=pintaNotas;
 if(VISTA==='publico'){
  raiz.append(nodo('<div id="voto" aria-live="polite"></div>'));const V=$('#voto');
@@ -299,17 +353,26 @@ if(VISTA==='publico'){
   V.querySelectorAll('.ops button').forEach(b=>b.addEventListener('click',()=>vota(+b.dataset.k)))};
  UI.pinta=()=>UI.voto()}
 if(VISTA==='pc'){
- let prefs=Object.assign({tam:26,lectura:false,auto:false},leeJSON('reto1_pc',{}));
+ let prefs=Object.assign({tam:26,lectura:false,auto:false,ajustar:true},leeJSON('reto1_pc',{}));
  raiz.append(nodo(`<div id="barra"><button onclick="ir(i-1)">← <span class="largo">Anterior</span></button><span id="posicion"></span><span id="sincro"></span>
   <button id="b_crono" onclick="cronoAlterna()"></button><button onclick="cronoReinicia()" title="Cronómetro a cero">↺</button>
   <button id="b_mov" onclick="alterna()"></button><button onclick="ir(i+1)"><span class="largo">Siguiente</span> →</button></div>`),
   nodo('<div id="lateral"><div id="siguiente"></div><section class="ctx"></section></div>'),
-  nodo(`<div id="herr"><button data-h="menos" title="Letra más pequeña">A−</button><button data-h="mas" title="Letra más grande">A+</button>
+  nodo(`<div id="herr"><button data-h="menos" title="Letra más pequeña">A−</button><button data-h="mas" title="Letra más grande">A+</button><button data-h="ajustar" title="La letra crece hasta que el guion llena la caja">⤢ Ajustar a la caja</button>
   <button data-h="lectura">Modo lectura</button><button data-h="auto" title="El texto avanza solo con el cronómetro">Desplazamiento automático</button><button data-h="editar">✎ Editar</button></div>`));
- const H=$('#herr'),aplicaPrefs=()=>{notas.style.fontSize=prefs.tam+'px';document.body.classList.toggle('lectura',prefs.lectura);
+ // Mayor tamaño de letra con el que el guion cabe entero en la caja (búsqueda binaria, de 14 a 64 px).
+ const ajusta=()=>{if(!prefs.ajustar||editando!==null)return;let lo=14,hi=64;notas.style.fontSize=hi+'px';
+  if(notas.scrollHeight<=notas.clientHeight)return;
+  for(let k=0;k<12;k++){const m=(lo+hi)/2;notas.style.fontSize=m+'px';if(notas.scrollHeight<=notas.clientHeight)lo=m;else hi=m}
+  notas.style.fontSize=Math.floor(lo)+'px'};
+ addEventListener('resize',()=>requestAnimationFrame(ajusta));
+ const H=$('#herr'),aplicaPrefs=()=>{if(prefs.ajustar)ajusta();else notas.style.fontSize=prefs.tam+'px';document.body.classList.toggle('lectura',prefs.lectura);
+  H.querySelector('[data-h=ajustar]').classList.toggle('on',prefs.ajustar);
   H.querySelector('[data-h=lectura]').classList.toggle('on',prefs.lectura);H.querySelector('[data-h=auto]').classList.toggle('on',prefs.auto);guarda('reto1_pc',prefs)};
  H.addEventListener('click',ev=>{const h=ev.target.dataset&&ev.target.dataset.h;if(!h)return;
-  if(h==='menos')prefs.tam=Math.max(16,prefs.tam-2);else if(h==='mas')prefs.tam=Math.min(48,prefs.tam+2);
+  if(h==='menos'||h==='mas'){if(prefs.ajustar)prefs.tam=Math.round(parseFloat(notas.style.fontSize)||prefs.tam);prefs.ajustar=false;
+   prefs.tam=h==='menos'?Math.max(14,prefs.tam-2):Math.min(64,prefs.tam+2)}
+  else if(h==='ajustar')prefs.ajustar=!prefs.ajustar;
   else if(h==='lectura')prefs.lectura=!prefs.lectura;else if(h==='auto')prefs.auto=!prefs.auto;else if(h==='editar')return abreEditor();aplicaPrefs()});
  aplicaPrefs();
  function abreEditor(){if(editando!==null)return;editando=i;const s=sl[i];
@@ -324,10 +387,10 @@ if(VISTA==='pc'){
    const cierra=()=>{editando=null;UI.pinta()};
    if(!red){aplicaGuion(datos);return cierra()}
    manda('guion',datos).then(res=>{if(res&&res.ok)cierra();else bar.querySelector('.ed-msg').textContent='No se ha podido guardar.'})})}
- UI.pinta=()=>{const s=sl[i],sig=sl[i+1];pintaNotas();
+ UI.pinta=()=>{const s=sl[i],sig=sl[i+1];pintaNotas();requestAnimationFrame(ajusta);
   if(editando!==null&&editando!==i)notas.querySelector('.cab').textContent=`Editando la diapositiva ${editando+1} · la presentación va por la ${i+1}`;
   $('#posicion').textContent=`${i+1} / ${sl.length} · ${s.dataset.titulo}`;
-  $('#siguiente').innerHTML=sig?`Siguiente: <b>${sig.dataset.titulo}</b>`:'Última diapositiva';UI.ctx()};
+  $('#siguiente').innerHTML=sig&&!opcional(i+1)?`Siguiente: <b>${sig.dataset.titulo}</b>`:sig?'Última diapositiva · las preguntas al público son opcionales':'Última diapositiva';UI.ctx()};
  UI.ctx=()=>{$('#lateral .ctx').innerHTML=htmlCtx();$('#b_mov').textContent=quieto?'✦ Animaciones: no':'✦ Animaciones: sí';$('#b_crono').textContent=textoCrono()};
  UI.tic=(t,ini,fin)=>{$('#b_crono').textContent=textoCrono();
   if(prefs.auto&&crono.corre&&editando===null){const max=notas.scrollHeight-notas.clientHeight;
@@ -346,7 +409,7 @@ if(VISTA==='mando'){
   M.querySelector('.completo').textContent=s.dataset.notas;
   M.querySelector('.ver-completo').textContent=M.classList.contains('completo-on')?'Ver las notas rápidas':'Ver el guion completo';UI.ctx()};
  UI.ctx=()=>{M.querySelector('.ctx').innerHTML=htmlCtx();$('#m_mov').textContent=quieto?'✦ Animar: no':'✦ Animar: sí';$('#m_crono').textContent=textoCrono()};
- UI.tic=(t,ini,fin,hora)=>{M.querySelector('.reloj-m').textContent=`${mmss(t)} · ${hora}`;$('#m_crono').textContent=textoCrono()}}
+ UI.tic=(t,ini,fin,hora,html,est)=>{const r=M.querySelector('.reloj-m');r.innerHTML=html;r.dataset.estado=est;$('#m_crono').textContent=textoCrono()}}
 
 /* ---------- Arranque ---------- */
 addEventListener('resize',fit);fit();

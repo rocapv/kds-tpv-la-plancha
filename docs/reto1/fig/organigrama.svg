@@ -4,7 +4,7 @@
 <g stroke="#999" stroke-width="3" stroke-dasharray="10 8" fill="none"><path d="M960 130 H1180"/><path d="M640 130 H420"/></g>
 <rect x="640" y="70" width="320" height="120" rx="14" fill="#e67e22"/>
 <text x="800" y="120" text-anchor="middle" font-size="34" font-weight="bold" fill="#fff">Dirección</text>
-<text x="800" y="160" text-anchor="middle" font-size="24" fill="#fff">los dos socios</text>
+<text x="800" y="160" text-anchor="middle" font-size="24" fill="#fff">los tres socios</text>
 <rect x="80" y="80" width="340" height="100" rx="14" fill="#f2f2f2" stroke="#999" stroke-width="3"/>
 <text x="250.0" y="124.0" text-anchor="middle" font-size="26" fill="#333">Proveedores</text>
 <text x="250.0" y="160.0" text-anchor="middle" font-size="21" fill="#666">mayorista de informática</text>
@@ -20,7 +20,7 @@
 <path d="M245.0 450 V500" stroke="#555" stroke-width="3"/>
 <rect x="105" y="500" width="280" height="100" rx="14" fill="#fff" stroke="#555" stroke-width="2"/>
 <text x="245.0" y="543" text-anchor="middle" font-size="23" fill="#333">un socio responsable</text>
-<text x="245.0" y="577" text-anchor="middle" font-size="21" fill="#666">y el otro, suplente</text>
+<text x="245.0" y="577" text-anchor="middle" font-size="21" fill="#666">y otro, suplente</text>
 <rect x="450" y="300" width="330" height="150" rx="14" fill="#fdebd9" stroke="#e67e22" stroke-width="3"/>
 <text x="615.0" y="352" text-anchor="middle" font-size="30" font-weight="bold" fill="#333">Implantación</text>
 <text x="615.0" y="392" text-anchor="middle" font-size="22" fill="#555">auditoría, red, equipos</text>
@@ -28,7 +28,7 @@
 <path d="M615.0 450 V500" stroke="#555" stroke-width="3"/>
 <rect x="475" y="500" width="280" height="100" rx="14" fill="#fff" stroke="#555" stroke-width="2"/>
 <text x="615.0" y="543" text-anchor="middle" font-size="23" fill="#333">un socio responsable</text>
-<text x="615.0" y="577" text-anchor="middle" font-size="21" fill="#666">y el otro, suplente</text>
+<text x="615.0" y="577" text-anchor="middle" font-size="21" fill="#666">y otro, suplente</text>
 <rect x="820" y="300" width="330" height="150" rx="14" fill="#fdebd9" stroke="#e67e22" stroke-width="3"/>
 <text x="985.0" y="352" text-anchor="middle" font-size="30" font-weight="bold" fill="#333">Software</text>
 <text x="985.0" y="392" text-anchor="middle" font-size="22" fill="#555">TPV + KDS, Verifactu</text>
@@ -36,7 +36,7 @@
 <path d="M985.0 450 V500" stroke="#555" stroke-width="3"/>
 <rect x="845" y="500" width="280" height="100" rx="14" fill="#fff" stroke="#555" stroke-width="2"/>
 <text x="985.0" y="543" text-anchor="middle" font-size="23" fill="#333">un socio responsable</text>
-<text x="985.0" y="577" text-anchor="middle" font-size="21" fill="#666">y el otro, suplente</text>
+<text x="985.0" y="577" text-anchor="middle" font-size="21" fill="#666">y otro, suplente</text>
 <rect x="1190" y="300" width="330" height="150" rx="14" fill="#fdebd9" stroke="#e67e22" stroke-width="3"/>
 <text x="1355.0" y="352" text-anchor="middle" font-size="30" font-weight="bold" fill="#333">Soporte</text>
 <text x="1355.0" y="392" text-anchor="middle" font-size="22" fill="#555">guardia, copias</text>
@@ -44,7 +44,7 @@
 <path d="M1355.0 450 V500" stroke="#555" stroke-width="3"/>
 <rect x="1215" y="500" width="280" height="100" rx="14" fill="#fff" stroke="#555" stroke-width="2"/>
 <text x="1355.0" y="543" text-anchor="middle" font-size="23" fill="#333">un socio responsable</text>
-<text x="1355.0" y="577" text-anchor="middle" font-size="21" fill="#666">y el otro, suplente</text>
+<text x="1355.0" y="577" text-anchor="middle" font-size="21" fill="#666">y otro, suplente</text>
 <text x="800" y="680" text-anchor="middle" font-size="22" fill="#666">Línea continua: dependencia · discontinua: relación externa · cada área tiene un responsable y un suplente</text>
-<text x="800" y="715" text-anchor="middle" font-size="22" fill="#666">Primera contratación prevista: un técnico de implantación y soporte, a partir de 30 instalaciones al año</text>
+<text x="800" y="715" text-anchor="middle" font-size="22" fill="#666">Primera contratación prevista: un técnico de implantación y soporte, a partir de 45 instalaciones al año</text>
 </svg>

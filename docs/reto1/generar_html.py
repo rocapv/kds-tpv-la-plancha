@@ -2,7 +2,7 @@
 """Presentación del Reto 1 (HTML + CSS + JS en ficheros separados), servida por la LAN, y ZIP de entrega.
 
 Sigue los ocho puntos del informe (contextualización, empresa de referencia, entorno económico, modelo de
-negocio y finanzas, servicios, publicidad, conclusiones y bibliografía), termina con un cuestionario de tres preguntas (sin anunciarlo antes). 12-15 minutos: el guion hablado vive en
+negocio y finanzas, servicios, publicidad, conclusiones y bibliografía), y deja al final, como opción, un cuestionario de cinco preguntas para el público (no se llega a él con «siguiente»: se abre con su botón). 12-15 minutos: el guion hablado vive en
 guion.json. Los laboratorios son páginas aparte en laboratorios/ y van en el ZIP, no en la presentación.
 
 Se presenta con servidor.py, y cada equipo de la LAN elige su vista:
@@ -71,9 +71,9 @@ S.append(("", f"""
 # 3 · Punto 1: la empresa
 S.append(("", f"""
 {punto(1, "ServiPass: la tecnología de la hostelería pequeña")}
-{tarjetas([f'<b class="num">{n}</b><span>{t}</span>' for n, t in [("2", "socios que trabajan en la empresa"), ("7.450 €", "proyecto tipo, sin IVA"), ("10", "años de licencia con soporte"), ("18", "instalaciones el primer año")]], 4, "card stat")}
+{tarjetas([f'<b class="num">{n}</b><span>{t}</span>' for n, t in [("3", "socios que trabajan en la empresa"), ("7.450 €", "proyecto tipo, sin IVA"), ("10", "años de licencia con soporte"), ("18", "instalaciones el primer año")]], 4, "card stat")}
 <div class="split mitad"><img src="{img('organigrama.png')}" alt="Organigrama de ServiPass">
-<div class="card tint"><h3>Burjassot, 2026</h3>{lista(["Red, wifi, caja, Verifactu, copias y un <b>TPV + KDS propio</b>", "Microempresa que vende a microempresas: el <b>93 %</b> de los locales es independiente", "Dos socios, cuatro áreas: cada uno es <b>suplente</b> del otro", "Empresa ficticia; datos del sector reales"])}</div></div>"""))
+<div class="card tint"><h3>Burjassot, 2026</h3>{lista(["Red, wifi, caja, Verifactu, copias y un <b>TPV + KDS propio</b>", "Microempresa que vende a microempresas: el <b>93 %</b> de los locales es independiente", "Tres socios, cuatro áreas: cada una con responsable y <b>suplente</b>", "Empresa ficticia; datos del sector reales"])}</div></div>"""))
 
 # 4 · Punto 1: flujo de trabajo y cliente piloto
 S.append(("", f"""
@@ -85,7 +85,7 @@ S.append(("", f"""
 <h3 class="sec">Lo que encontró la auditoría del cliente piloto, Burglar King</h3>
 {tarjetas([f'<div class="fila"><span class="dot rojo">{k}</span><b>{t}</b></div><p>{d}</p>' for k, (t, d) in enumerate([
   ("La comanda no entra en ningún sistema", "hasta que se teclea para cobrar"),
-  ("TPV de 2015 con Windows 10", "sin soporte, sin copias y sin Verifactu"),
+  ("TPV de 2005 con Windows XP", "sin soporte, sin copias y sin Verifactu"),
   ("Una sola red para todo", "caja, cámaras expuestas y móviles de los clientes")], 1)], 3)}"""))
 
 # Lab 1 (tras la red del cliente piloto)
@@ -108,12 +108,12 @@ S.append(("", f"""
 S.append(("", f"""
 {punto("3.1", "Factores macroeconómicos (PESTEL)")}
 {tarjetas([f'<b class="letra">{l}</b><h3>{t}</h3><p>{d}</p>' for l, t, d in [
-  ("P", "Político", "Verifactu el <b>1/1/2027</b> para sociedades: la principal fuente de demanda; Kit Digital cerrado"),
+  ("P", "Político", "Verifactu el <b>1/1/2027</b> para sociedades: la principal fuente de demanda"),
   ("E", "Económico", "<b>13.698</b> bares y restaurantes en la provincia; rentabilidad <b>−0,9 %</b>; IPC del <b>4,9 %</b>"),
   ("S", "Social", "El <b>81,6 %</b> de las empresas tiene dos asalariados o menos: el cliente no tiene informático"),
   ("T", "Tecnológico", "Windows 10 sin soporte; la digitalización se quedó en el cobro, no en la cocina"),
   ("A", "Ambiental", "Retirada de los equipos viejos como RAEE; bisfenol A en el papel térmico; ticket electrónico"),
-  ("L", "Legal", "Verifactu también para quien hace el software (hasta <b>150.000 €</b>); encargado del tratamiento (RGPD)")]], 3, "card pestel")}"""))
+  ("L", "Legal", "Verifactu también para quien hace el software; encargado del tratamiento (RGPD)")]], 3, "card pestel")}"""))
 
 # Lab 2 (tras el factor legal del PESTEL)
 S.append(lab("Simulación: Verifactu, la cadena de facturas", "verifactu.html"))
@@ -122,7 +122,7 @@ S.append(lab("Simulación: Verifactu, la cadena de facturas", "verifactu.html"))
 S.append(("", f"""
 {punto("3.2", "Factores microeconómicos")}
 <div class="grid c3">
- <div class="card"><h3>Clientes</h3>{lista(["Hamburguesería y comida rápida: prioridad <b>1</b>", "Bar de barrio: volumen de mercado", "Restaurante de mantel: tercera", "Cadenas: ya tienen su sistema, fuera de mercado"])}</div>
+ <div class="card"><h3>Clientes</h3>{lista(["Hamburguesería y comida rápida", "Bar de barrio: volumen de mercado", "Restaurante de mantel: importa el pase", "Cadenas: ya tienen su sistema, fuera de mercado"])}</div>
  <div class="card"><h3>Proveedores</h3>{lista(["Mayorista de informática: dependencia <b>alta</b>", "Repositorio y copias, operadoras y gestoría: media", "Aseguradora: baja", "Sin almacén: los equipos se compran con el anticipo"])}</div>
  <div class="card tint"><h3>Competencia</h3>{lista(["Cobran <b>por terminal o por pantalla</b>; la de cocina, casi siempre aparte", "Last.app con pantalla de cocina: <b>85 €/mes</b>, 10.700 € en diez años", "ServiPass: <b>1.800 €</b> por diez años", "Competencia monopolística: cercanía y confianza"])}</div>
 </div>"""))
@@ -133,7 +133,7 @@ PROYECTO = [("Equipos (20 % de margen)", 3850, "#E67E22"), ("Instalación y form
 S.append(("", f"""
 {punto(4, "Modelo de negocio: un proyecto tipo de 7.450 €")}
 <div class="barras g">{''.join(f'<span class="id">{round(v / 74.5)} %</span><div class="barra"><i style="width:{v / 74.5 * 1.5:.1f}%;background:{c}"></i><b>{v:,} €</b></div><span>{t}</span>'.replace(',', '.') for t, v, c in PROYECTO)}</div>
-<div class="tras-barras">{tarjetas([f'<b class="num">{n}</b><span>{t}</span>' for n, t in [("3.340 €", "de margen por instalación"), ("18,5", "instalaciones al año: punto muerto"), ("53.229 €", "antes de impuestos el tercer año (−1.589 € el primero)")]], 3, "card stat")}</div>
+<div class="tras-barras">{tarjetas([f'<b class="num">{n}</b><span>{t}</span>' for n, t in [("3.340 €", "de margen por instalación"), ("27", "instalaciones al año: punto muerto"), ("25.265 €", "antes de impuestos el tercer año (−29.669 € el primero)")]], 3, "card stat")}</div>
 <p class="nota">Escenario: 18, 24 y 30 instalaciones en los años 1 a 3. El soporte se cobra al instalar, pero cuenta como ingreso en diez años: 90 € por cliente y año (Resolución del ICAC de 10/02/2021).</p>"""))
 
 
@@ -141,12 +141,12 @@ S.append(("", f"""
 S.append(("", f"""
 {punto("4.1 · 4.2", "Financiación y salarios")}
 <div class="grid c2">
- <div class="card"><h3>Financiación · 25.000 €</h3>{lista(["Equipos de trabajo, fianza y, sobre todo, un <b>colchón de tres meses</b> de gastos fijos", "<b>10.000 €</b> de los socios y un microcrédito de MicroBank de <b>15.000 €</b> a tres años, sin garantías", "ICO y ENISA como alternativas · Kit Digital cerrado · Digitaliza-CV pide unos 20.000 € de proyecto", "El anticipo del 50 % paga los equipos de cada cliente"])}</div>
+ <div class="card"><h3>Financiación · 32.500 €</h3>{lista(["Equipos de trabajo, fianza y, sobre todo, un <b>colchón de tres meses</b> de gastos fijos", "<b>15.000 €</b> de los socios y un microcrédito de MicroBank de <b>17.500 €</b> a tres años, sin garantías", "ICO y ENISA como alternativas · Kit Digital cerrado · Digitaliza-CV pide unos 20.000 € de proyecto", "El anticipo del 50 % paga los equipos de cada cliente"])}</div>
  <div class="card tint"><h3>Salarios: convenio estatal TIC</h3>
   <div class="barras s"><span class="id">C3</span><div class="barra"><i style="width:100%"></i><b>24.105 €</b></div><span>cada socio</span>
   <span class="id">D1</span><div class="barra"><i style="width:85%;background:#D35400"></i><b>20.436 €</b></div><span>primer técnico</span>
   <span class="id">SMI</span><div class="barra"><i style="width:71%;background:#aaa"></i><b>17.094 €</b></div><span>mínimo legal</span></div>
-  <p>XIX Convenio de consultoría y tecnologías de la información, área 3 (BOE-A-2026-9024). Coste de los dos socios: <b>55.411 €/año</b>. Se contrata al pasar de 30 instalaciones al año.</p></div>
+  <p>XIX Convenio de consultoría y tecnologías de la información, área 3 (BOE-A-2026-9024). Coste de los tres socios: <b>83.116 €/año</b>. Se contrata al pasar de 45 instalaciones al año.</p></div>
 </div>"""))
 
 
@@ -183,7 +183,7 @@ S.append(("dark", f"""
 {punto(7, "Conclusiones")}
 <div class="pasos">{''.join(f'<div class="fila"><span class="dot g">{k}</span><p>{t}</p></div>' for k, t in enumerate([
   "Una microempresa que vende a microempresas: un <b>TPV + KDS propio</b> con pago único y diez años de soporte.",
-  "Viable pero ajustada: punto muerto en <b>18,5 instalaciones</b>; −1.589 € el primer año, 25.238 € y 53.229 € los dos siguientes.",
+  "Viable a medio plazo: punto muerto en <b>27 instalaciones</b>; −29.669 € el primer año, −2.786 € el segundo y 25.265 € el tercero.",
   "El entorno pone fecha: <b>Verifactu el 1/1/2027</b>, Windows 10 sin soporte y una cocina que sigue en papel.",
   "<b>1.800 €</b> de licencia frente a 10.700 € de suscripción: competir en precio, no en funciones, y crecer según el soporte."], 1))}</div>"""))
 
@@ -195,11 +195,12 @@ S.append(("dark", f"""
  <div class="card oscura"><h3>Finanzas y trabajo</h3>{lista(["XIX Convenio TIC (BOE-A-2026-9024) · RD 126/2026 (SMI)", "Cámara de España (2022) · ICO (s.f.) · Intelectium (s.f.)", "Billin (2026) · idealista/news (2026) · Digitaliza CV (2026)"])}</div>
  <div class="card oscura"><h3>Mercado y normativa</h3>{lista(["idealista, Fotocasa, Habitaclia y Nuroa (2026)", "Garrigues (2025) · Microsoft (2025) · L'Express Franchise (2026)", "Ley 11/2021 · RD 1007/2023 · RGPD · Resolución del ICAC (2021)"])}</div>
 </div>
-<p class="pie">47 referencias en formato APA (7.ª ed.) en el punto 8 del informe.</p>"""))
+<p class="pie">47 referencias en formato APA (7.ª ed.) en el punto 8 del informe.</p>
+<button class="opc-q" onclick="ir(i+1,true)">¿? Preguntas para el público (opcional)</button>"""))
 
 # 14 · Cuestionario
-S.append(("lab quiz", """
-<h2><span class="pt">¿?</span>Tres preguntas para terminar</h2>
+S.append(("lab quiz opcional", """
+<h2><span class="pt">¿?</span>Cinco preguntas para terminar</h2>
 <div id="quiz"></div>"""))
 
 
@@ -229,7 +230,7 @@ doc = f"""<!doctype html>
 <html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Reto 1 · ServiPass</title><link rel="stylesheet" href="css/presentacion.css"></head>
 <body><div id="prog"><i></i></div><div id="deck">{cuerpo}</div><div id="notas"></div><div id="ui"></div>
-<div id="toast"></div><div id="reloj"></div><div id="ayuda"></div><script src="js/presentacion.js"></script></body></html>"""
+<div id="toast"></div><div id="reloj"></div><script src="js/presentacion.js"></script></body></html>"""
 (ENTREGA / "presentacion.html").write_text(doc, encoding="utf-8")
 shutil.copy(AQUI / "servidor.py", ENTREGA / "servidor.py")
 (ENTREGA / "index.html").write_text(f"""<!doctype html>
@@ -279,8 +280,8 @@ Sin servidor, presentacion.html también se abre con doble clic, pero cada equip
 index.html             Elección de la vista.
 presentacion.html      Presentación ({len(S)} diapositivas, {MIN:g} min). ?vista=pc, ?vista=mando o ?vista=publico.
                        Teclas: flechas o espacio para avanzar, N guion (en la pizarra), t cronómetro (T lo reinicia),
-                       M animaciones sí/no, F pantalla completa. Tres diapositivas cargan los laboratorios; la
-                       última es el cuestionario de 3 preguntas.
+                       M animaciones sí/no, F pantalla completa. Tres diapositivas cargan los laboratorios. Tras la
+                       bibliografía, un botón abre, si se quiere, el cuestionario de 3 preguntas.
 servidor.py            Servidor de la presentación: sirve la carpeta, guarda el estado global y lo reparte.
 css/presentacion.css   Estilos y animaciones de la presentación.
 js/presentacion.js     Vistas, PIN, navegación, sincronización, espejo de los laboratorios, votación y edición.
@@ -289,7 +290,7 @@ fig/                   Figuras del informe (organigrama de ServiPass; flujo de l
 laboratorios/          Tres simulaciones sobre Burglar King, el cliente piloto (abrir laboratorios/index.html);
                        cada una se lanza con «Simular» y tiene modo manual:
   red.html             Lab 1 · La red actual frente a la segmentada: misma batería de pings en los dos escenarios.
-  verifactu.html       Lab 2 · Cadena de facturas con SHA-256: alteración detectada y corrección con rectificativa.
+  verifactu.html       Lab 2 · Tres facturas completas encadenadas con SHA-256: cualquier cambio rompe la huella a la vista.
   hora_punta.html      Lab 3 · Hora punta simulada en paralelo: papel, voz y tableta contra KDS, mismo flujo de pedidos.
   css/lab.css, js/     Estilos y lógica de cada laboratorio (JavaScript sin dependencias).
 

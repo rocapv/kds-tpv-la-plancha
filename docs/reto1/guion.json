@@ -27,9 +27,9 @@
    "n": 3,
    "titulo": "1. Contextualización: ServiPass",
    "min": 1,
-   "texto": "ServiPass nace en 2026 en Burjassot con dos socios. Diseña, instala y mantiene la tecnología de bares y restaurantes pequeños: la red, el wifi de los clientes, la caja, la facturación adaptada a Verifactu, las copias y, como producto propio, un TPV con pantallas de cocina que funciona dentro del local. Se vende con un pago único: un proyecto tipo de siete mil cuatrocientos cincuenta euros, con una licencia de diez años que incluye actualizaciones y soporte. Es una microempresa que vende a microempresas: el noventa y tres por ciento de los locales son independientes y no tienen a nadie que sepa de informática. La estructura es plana: dos socios, cuatro áreas, y cada uno es suplente del otro.",
+   "texto": "ServiPass nace en 2026 en Burjassot con tres socios. Diseña, instala y mantiene la tecnología de bares y restaurantes pequeños: la red, el wifi de los clientes, la caja, la facturación adaptada a Verifactu, las copias y, como producto propio, un TPV con pantallas de cocina que funciona dentro del local. Se vende con un pago único: un proyecto tipo de siete mil cuatrocientos cincuenta euros, con una licencia de diez años que incluye actualizaciones y soporte. Es una microempresa que vende a microempresas: el noventa y tres por ciento de los locales son independientes y no tienen a nadie que sepa de informática. La estructura es plana: tres socios y cuatro áreas, cada una con un responsable y un suplente.",
    "rapidas": [
-    "Burjassot, 2026, dos socios",
+    "Burjassot, 2026, tres socios",
     "Red, wifi, caja, Verifactu, copias y TPV + KDS propio",
     "Pago único: 7.450 € y licencia de 10 años",
     "Microempresa que vende a microempresas (93 %)"
@@ -39,11 +39,11 @@
    "n": 4,
    "titulo": "1. El ciclo de un proyecto y el cliente piloto",
    "min": 1,
-   "texto": "El flujo central es el ciclo de un cliente. Lo captamos en horas valle, auditamos el local en un día, cerramos un presupuesto con un anticipo del cincuenta por ciento, preparamos los equipos en la maqueta del taller y los instalamos en dos o tres días, aprovechando el cierre del local. Después vienen la formación, el primer servicio acompañado y diez años de soporte. La auditoría de Burglar King, nuestro cliente piloto, muestra el punto de partida típico: la comanda no entra en ningún sistema hasta el cobro, el TPV de 2015 funciona con Windows 10 sin soporte ni copias, y una sola red lo mezcla todo, cámaras incluidas.",
+   "texto": "El flujo central es el ciclo de un cliente. Lo captamos en horas valle, auditamos el local en un día, cerramos un presupuesto con un anticipo del cincuenta por ciento, preparamos los equipos en la maqueta del taller y los instalamos en dos o tres días, aprovechando el cierre del local. Después vienen la formación, el primer servicio acompañado y diez años de soporte. La auditoría de Burglar King, nuestro cliente piloto, muestra el punto de partida típico: la comanda no entra en ningún sistema hasta el cobro, el TPV es de 2005 y funciona con Windows XP, sin soporte ni copias, y una sola red lo mezcla todo, cámaras incluidas.",
    "rapidas": [
     "Ciclo: captación, auditoría, presupuesto (50 %), preparación, instalación, puesta en marcha, soporte",
     "Se instala en los días de cierre del local",
-    "Burglar King: comanda en papel, TPV de 2015 sin soporte, una sola red"
+    "Burglar King: comanda en papel, TPV de 2005 con Windows XP, una sola red"
    ]
   },
   {
@@ -73,9 +73,9 @@
    "n": 7,
    "titulo": "3.1. Factores macroeconómicos (PESTEL)",
    "min": 1,
-   "texto": "El macroentorno con el método PESTEL. Político: Verifactu, aplazado al uno de enero de 2027 para las sociedades, es nuestra principal fuente de demanda, y el Kit Digital ya no existe. Económico: casi catorce mil bares y restaurantes en la provincia, pero con la rentabilidad a la baja y el IPC en el cuatro coma nueve. Social: el cliente no tiene informático y compra a quien le da confianza. Tecnológico: Windows 10 sin soporte y una digitalización que se quedó en el cobro. Ambiental: retirar los equipos viejos como residuos electrónicos y reducir el papel. Legal: Verifactu también obliga a quien hace el software, y somos encargados del tratamiento de los datos de nuestros clientes.",
+   "texto": "El macroentorno con el método PESTEL. Político: Verifactu, aplazado al uno de enero de 2027 para las sociedades, es nuestra principal fuente de demanda. Económico: casi catorce mil bares y restaurantes en la provincia, pero con la rentabilidad a la baja y el IPC en el cuatro coma nueve. Social: el cliente no tiene informático y compra a quien le da confianza. Tecnológico: Windows 10 sin soporte y una digitalización que se quedó en el cobro. Ambiental: retirar los equipos viejos como residuos electrónicos y reducir el papel. Legal: Verifactu también obliga a quien hace el software, y somos encargados del tratamiento de los datos de nuestros clientes.",
    "rapidas": [
-    "P: Verifactu el 1/1/2027, sin Kit Digital",
+    "P: Verifactu el 1/1/2027",
     "E: 13.698 locales, rentabilidad −0,9 %, IPC 4,9 %",
     "S y T: el cliente no tiene informático; Windows 10 sin soporte",
     "A y L: RAEE y papel; Verifactu también para el software; RGPD"
@@ -85,10 +85,10 @@
    "n": 8,
    "titulo": "Simulación: Verifactu",
    "min": 0.75,
-   "texto": "Segunda simulación, sobre el factor legal. Se emiten seis facturas, cada una con la huella de la anterior. Alguien rebaja una para pagar menos IVA, como permite un TPV sin Verifactu: al verificar, la cadena se rompe desde esa factura, y la única corrección válida es una rectificativa. Por eso el TPV de Burglar King deja de ser legal en 2027, y por eso el nuestro tiene que cumplir antes de vender la primera licencia.",
+   "texto": "Segunda simulación, sobre el factor legal. Tres facturas de Burglar King de un mismo mediodía, cada una con la huella de la anterior. Alguien rebaja la segunda para pagar menos IVA, como permite un TPV sin Verifactu: su huella deja de cuadrar, se ve en rojo qué caracteres cambian, y la tercera ya no encaja con ella. La única corrección válida es una factura rectificativa. Por eso el TPV de Burglar King deja de ser legal en 2027, y por eso el nuestro tiene que cumplir antes de vender la primera licencia.",
    "rapidas": [
-    "Pulsar «Simular»: seis facturas encadenadas",
-    "Se altera una y la cadena se rompe",
+    "Pulsar «Simular»: tres facturas encadenadas",
+    "«Rebajar la factura 2»: huella en rojo y eslabón roto",
     "Solo vale la factura rectificativa"
    ]
   },
@@ -108,23 +108,23 @@
    "n": 10,
    "titulo": "4. Modelo de negocio: el proyecto tipo",
    "min": 1,
-   "texto": "El modelo de negocio. Un proyecto tipo cuesta siete mil cuatrocientos cincuenta euros sin IVA: tres mil ochocientos cincuenta de equipos con un veinte por ciento de margen, mil ochocientos de instalación y mil ochocientos de licencia. La licencia tiene dos mitades: el derecho de uso cuenta como ingreso al instalar, y el soporte se reparte en diez años, porque es un servicio que todavía debemos. Cada instalación deja tres mil trescientos cuarenta euros de margen, y el punto muerto está en dieciocho instalaciones y media al año. Con dieciocho, el primer año cerramos casi en equilibrio; el tercero, con treinta, dejamos unos cincuenta y tres mil euros antes de impuestos.",
+   "texto": "El modelo de negocio. Un proyecto tipo cuesta siete mil cuatrocientos cincuenta euros sin IVA: tres mil ochocientos cincuenta de equipos con un veinte por ciento de margen, mil ochocientos de instalación y mil ochocientos de licencia. La licencia tiene dos mitades: el derecho de uso cuenta como ingreso al instalar, y el soporte se reparte en diez años, porque es un servicio que todavía debemos. Cada instalación deja tres mil trescientos cuarenta euros de margen. Con tres socios, el punto muerto está en unas veintisiete instalaciones al año: con dieciocho, el primer año perdemos unos treinta mil euros, el segundo quedamos casi en equilibrio y el tercero, con treinta, ganamos unos veinticinco mil antes de impuestos.",
    "rapidas": [
     "Proyecto tipo de 7.450 €: 3.850 equipos, 1.800 instalación y 1.800 licencia",
     "Licencia: el uso, al instalar; el soporte, repartido en 10 años",
-    "Margen de 3.340 € por instalación; punto muerto en 18,5 al año",
-    "Año 1, casi en equilibrio; año 3, unos 53.000 €"
+    "Margen de 3.340 € por instalación; punto muerto en 27 al año",
+    "Año 1, −29.700 €; año 2, casi en equilibrio; año 3, unos 25.300 €"
    ]
   },
   {
    "n": 11,
    "titulo": "4.1 y 4.2. Financiación y salarios",
    "min": 1,
-   "texto": "Financiación: para empezar necesitamos unos veinticinco mil euros, sobre todo para un colchón de tres meses de gastos fijos. Diez mil los ponemos los socios y quince mil vienen de un microcrédito de MicroBank a tres años, sin garantías. El Kit Digital cerró en 2025 y Digitaliza-CV pide proyectos de unos veinte mil euros, así que no contamos con ayudas. Salarios: tomamos como referencia el convenio estatal de consultoría y tecnologías de la información. Cada socio se asigna el nivel C3, veinticuatro mil ciento cinco euros al año, y el primer técnico, cuando pasemos de treinta instalaciones al año, entraría en el D1.",
+   "texto": "Financiación: para empezar necesitamos unos treinta y dos mil quinientos euros, sobre todo para un colchón de tres meses de gastos fijos. Quince mil los ponemos los socios, cinco mil cada uno, y diecisiete mil quinientos vienen de un microcrédito de MicroBank a tres años, sin garantías. El Kit Digital cerró en 2025 y Digitaliza-CV pide proyectos de unos veinte mil euros, así que no contamos con ayudas. Salarios: tomamos como referencia el convenio estatal de consultoría y tecnologías de la información. Cada socio se asigna el nivel C3, veinticuatro mil ciento cinco euros al año, y el primer técnico, cuando pasemos de cuarenta y cinco instalaciones al año, entraría en el D1.",
    "rapidas": [
-    "Hacen falta 25.000 €: 10.000 de los socios y 15.000 de microcrédito",
+    "Hacen falta 32.500 €: 15.000 de los socios y 17.500 de microcrédito",
     "Sin ayudas: Kit Digital cerrado y Digitaliza-CV fuera de alcance",
-    "Convenio TIC: socio en C3 (24.105 €); técnico en D1 a partir de 30 instalaciones al año"
+    "Convenio TIC: socio en C3 (24.105 €); técnico en D1 a partir de 45 instalaciones al año"
    ]
   },
   {
@@ -166,10 +166,10 @@
    "n": 15,
    "titulo": "7. Conclusiones",
    "min": 1,
-   "texto": "Conclusiones. ServiPass es una microempresa que vende a microempresas un sistema propio, con un pago único y diez años de soporte. Es viable pero ajustada: el punto muerto coincide con el primer año y el beneficio llega en el segundo y el tercero. La licencia cobrada por adelantado da caja, pero la mitad es soporte que debemos durante una década. El entorno pone fecha, con Verifactu en 2027 y Windows 10 sin soporte, y el precio es nuestra ventaja: mil ochocientos euros frente a casi once mil de una suscripción. A un restaurante pequeño no le falta dinero: le falta alguien que diseñe su tecnología, la deje funcionando sola y responda cuando falle.",
+   "texto": "Conclusiones. ServiPass es una microempresa que vende a microempresas un sistema propio, con un pago único y diez años de soporte. Es viable a medio plazo, pero con un arranque duro: con tres socios el punto muerto está en unas veintisiete instalaciones, el primer año se pierde dinero y el beneficio llega en el tercero. La licencia cobrada por adelantado da caja, pero la mitad es soporte que debemos durante una década. El entorno pone fecha, con Verifactu en 2027 y Windows 10 sin soporte, y el precio es nuestra ventaja: mil ochocientos euros frente a casi once mil de una suscripción. A un restaurante pequeño no le falta dinero: le falta alguien que diseñe su tecnología, la deje funcionando sola y responda cuando falle.",
    "rapidas": [
     "Microempresa con producto propio y pago único",
-    "Viable pero ajustada: el punto muerto llega el año 1",
+    "Viable a medio plazo: punto muerto en 27 instalaciones; beneficio el año 3",
     "Pone fecha Verifactu en 2027; nuestra ventaja es el precio",
     "Al local le falta alguien que diseñe y responda"
    ]
@@ -178,7 +178,7 @@
    "n": 16,
    "titulo": "8. Bibliografía",
    "min": 0.5,
-   "texto": "Las fuentes principales: INE, Profesional Horeca y Hosteltur para el sector; Cegid, capital-riesgo.es y Tech.eu para las empresas de referencia; el convenio de consultoría del BOE para los salarios; idealista, Fotocasa, Habitaclia y Nuroa para los alquileres; y la normativa del BOE y del DOUE. Las cuarenta y siete referencias están en formato APA en el informe.",
+   "texto": "Las fuentes principales: INE, Profesional Horeca y Hosteltur para el sector; Cegid, capital-riesgo.es y Tech.eu para las empresas de referencia; el convenio de consultoría del BOE para los salarios; idealista, Fotocasa, Habitaclia y Nuroa para los alquileres; y la normativa del BOE y del DOUE. Las cuarenta y siete referencias están en formato APA en el informe. Gracias por escucharnos: quedamos abiertos a vuestras preguntas.",
    "rapidas": [
     "Sector: INE, Profesional Horeca y Hosteltur",
     "Empresas de referencia: Cegid, capital-riesgo.es y Tech.eu",
@@ -187,9 +187,9 @@
   },
   {
    "n": 17,
-   "titulo": "Tres preguntas para terminar",
+   "titulo": "Cinco preguntas para terminar (opcional)",
    "min": 0.5,
-   "texto": "Para terminar, tres preguntas rápidas sobre lo que hemos contado. Quien quiera, que responda en la pantalla. Después, quedamos abiertos a vuestras preguntas. Gracias.",
+   "texto": "Para terminar, cinco preguntas rápidas sobre lo que hemos contado. Quien quiera, que responda en la pantalla. Después, quedamos abiertos a vuestras preguntas. Gracias.",
    "rapidas": [
     "Pedir al público que entre en la dirección de la pizarra",
     "Cerrar cada votación y comentar la respuesta",

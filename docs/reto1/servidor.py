@@ -13,7 +13,7 @@ El PIN, las sesiones abiertas y el estado se guardan en sesion_servidor.json: re
 nadie y la presentación sigue en la misma diapositiva, con el cronómetro y los votos como estaban.
 Los cambios del guion hechos desde el PC se guardan en guion_vivo.json, junto a este fichero.
 """
-import argparse, functools, json, os, queue, secrets, select, socket, threading, time
+import argparse, functools, json, os, queue, re, secrets, select, socket, subprocess, threading, time, uuid
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlsplit
@@ -22,7 +22,7 @@ AQUI = Path(__file__).resolve().parent
 SESION, GUION_VIVO = AQUI / "sesion_servidor.json", AQUI / "guion_vivo.json"
 VISTAS = ("presentacion", "publico", "pc", "mando")
 CONTROL = ("presentacion", "pc", "mando")
-PREGUNTAS, OPCIONES = 3, 4
+PREGUNTAS, OPCIONES = 5, 4                   # PREGUNTAS = número de preguntas de PREG en presentacion.js
 MAX_CUERPO = 2_000_000                       # una foto de laboratorio cabe de sobra
 
 cerrojo = threading.RLock()
@@ -35,6 +35,9 @@ fallos = {}                                  # ip -> [intentos fallidos, bloquea
 ultimo_pedido = {}                           # laboratorio -> momento de la última petición de foto
 pedidos_en_cola = set()                      # laboratorios con una petición de foto aplazada
 publico_url = ""
+VENTANA = 600                                # un equipo desconectado se sigue mostrando 10 minutos
+vistos = {}                                  # (ip, vista) -> {"ip", "vista", "mac", "visto", "conectados"}
+macs = {}                                    # ip -> (mac, cuándo se miró)
 
 
 def hora():
@@ -89,6 +92,51 @@ def emite_estado(cambia=True):
     if cambia:
         guarda_sesion()
     emite("estado", foto_estado())
+    emite_control("equipos", {"lista": lista_equipos(), "ahora": ahora_ms()})
+
+
+def emite_control(evento, datos):
+    """Como emite(), pero solo a las vistas con PIN: las MAC y las IP no llegan a los móviles del público."""
+    msg = f"event: {evento}\ndata: {json.dumps(datos, ensure_ascii=False)}\n\n".encode()
+    with cerrojo:
+        for s in suscritos.values():
+            if s["vista"] in CONTROL:
+                s["cola"].put(msg)
+
+
+def mac_de(ip):
+    """MAC de un equipo de la LAN, sacada de la tabla ARP de este servidor (el navegador no puede darla)."""
+    if ip in macs and macs[ip][1] > time.time() - 300:
+        return macs[ip][0]
+    mac = None
+    if ip.startswith("127.") or ip == "::1" or ip in direcciones():
+        n = uuid.getnode()
+        mac = ":".join(f"{(n >> d) & 0xff:02x}" for d in range(40, -1, -8)) + " (el propio servidor)"
+    else:
+        try:                                 # Linux (Raspa)
+            for linea in Path("/proc/net/arp").read_text().splitlines()[1:]:
+                c = linea.split()
+                if c and c[0] == ip and c[3] != "00:00:00:00:00:00":
+                    mac = c[3]
+        except OSError:                      # Windows y macOS
+            try:
+                salida = subprocess.run(["arp", "-a", ip], capture_output=True, text=True, timeout=3).stdout
+                m = re.search(r"(?:[0-9a-fA-F]{1,2}[:-]){5}[0-9a-fA-F]{1,2}", salida)
+                mac = m.group(0).replace("-", ":").lower() if m else None
+            except (OSError, subprocess.SubprocessError):
+                pass
+    macs[ip] = (mac or "desconocida", time.time())
+    return macs[ip][0]
+
+
+def lista_equipos():
+    """Equipos conectados y los que se fueron hace menos de 10 minutos, con la hora a la que se vieron."""
+    ahora = time.time()
+    with cerrojo:
+        for k in [k for k, e in vistos.items() if not e["conectados"] and ahora - e["visto"] > VENTANA]:
+            del vistos[k]
+        return sorted(({"vista": e["vista"], "ip": e["ip"], "mac": e["mac"], "conectado": e["conectados"] > 0,
+                        "visto": e["visto"] * 1000} for e in vistos.values()), key=lambda e: (not e["conectado"], e["ip"]))
 
 
 def pide_foto(lab):
@@ -322,9 +370,13 @@ class Manejador(SimpleHTTPRequestHandler):
         self.send_header("X-Accel-Buffering", "no")
         self.end_headers()
         yo, cola = secrets.token_hex(6), queue.SimpleQueue()
+        ip = self.client_address[0]
+        clave, mac = (ip, vista), mac_de(ip)
         with cerrojo:
             antes = principal()
             suscritos[yo] = {"cola": cola, "vista": vista, "desde": time.monotonic()}
+            e = vistos.setdefault(clave, {"ip": ip, "vista": vista, "conectados": 0})
+            e.update(mac=mac, visto=time.time(), conectados=e["conectados"] + 1)
         emite("hola", {"id": yo}, a=yo)
         emite_estado(cambia=False)
         print(f"{hora()}  {self.client_address[0]:<15} se conecta ({vista}){' · pizarra principal' if principal() == yo and antes != yo else ''}", flush=True)
@@ -347,11 +399,16 @@ class Manejador(SimpleHTTPRequestHandler):
                         msg = None
                 self.wfile.flush()
                 ultimo = time.monotonic()
+                with cerrojo:
+                    if clave in vistos:
+                        vistos[clave]["visto"] = time.time()
         except (BrokenPipeError, ConnectionResetError, ConnectionAbortedError, OSError):
             pass
         finally:
             with cerrojo:
                 suscritos.pop(yo, None)
+                if clave in vistos:
+                    vistos[clave].update(visto=time.time(), conectados=max(0, vistos[clave]["conectados"] - 1))
             emite_estado(cambia=False)
             print(f"{hora()}  {self.client_address[0]:<15} se desconecta ({vista})", flush=True)
 
