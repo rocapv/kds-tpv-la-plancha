@@ -4,7 +4,11 @@
 const $ = s => document.querySelector(s);
 const PLATOS = [['Clásica + patatas', 11.5], ['Doble queso', 13.9], ['Menú de mediodía', 12.0], ['Pollo crujiente', 12.5], ['Vegetal', 11.0], ['Bebida', 2.5]];
 const COCINA = [240, 420], PACIENCIA_MESA = 900, PACIENCIA_TABLETA = 240, PACIENCIA_PASE = 300; // segundos simulados
-let timer = null, t = 0, dur = 180, vel = 8, semillaBase = 20261015;
+// La velocidad es cuántos segundos del servicio pasan por cada segundo real (×10: una hora punta de 3 minutos
+// y los platos que quedan en cocina duran poco más de un minuto). Antes cada fotograma avanzaba 8 s y todo
+// pasaba en unos diez segundos: no daba tiempo a ver cómo se acumulaba la espera.
+const FPS = 10, QUEDA = 30;                // fotogramas por segundo; segundos simulados que se ve un pedido ya cerrado
+let timer = null, t = 0, acc = 0, dur = 180, vel = 10, semillaBase = 20261015;
 const eur = x => x.toFixed(2).replace('.', ',') + ' €';
 const mmss = s => Math.floor(s / 60) + ':' + String(Math.floor(s % 60)).padStart(2, '0');
 function Rnd(seed) { let s = seed; return () => { s = (s * 1103515245 + 12345) & 0x7fffffff; return s / 0x7fffffff; }; }
@@ -32,57 +36,107 @@ function Lado(modo, flujo) {
       if (p.rep) { if (modo === 'kds') { p.fase = 'cocina'; p.tf = t; } else { p.fase = 'tableta'; p.tf = t; p.plazo = t + 40 + r() * 40 + 8 * cargaDe(L); } }
       else { p.fase = 'mesa'; p.tf = t; p.plazo = t + 20 + r() * 20 + (modo === 'papel' ? 6 * cargaDe(L) : 0); }
       L.vivos.push(p); }
-    const carga = L.vivos.filter(p => ['mesa', 'apuntado', 'tableta'].includes(p.fase)).length;
+    const carga = cargaDe(L);
     L.vivos.forEach(p => {
       const e = t - p.tf;
       if (p.fase === 'mesa' && t >= p.plazo) { // el camarero toma nota
         if (modo === 'kds') { p.fase = 'cocina'; p.tf = t; }
-        else { p.fase = 'apuntado'; p.tf = t; p.plazo = t + 15 + r() * 20 + 8 * carga; if (r() < 0.15) p.plazo += 60; } // ilegible: se rehace
+        else { p.fase = 'apuntado'; p.tf = t; p.plazo = t + 15 + r() * 20 + 8 * carga; if (r() < 0.15) { p.plazo += 60; p.ilegible = true; } } // ilegible: se rehace
       } else if (p.fase === 'apuntado' && t >= p.plazo) { p.fase = 'cocina'; p.tf = t; }
       else if (p.fase === 'tableta' && t >= p.plazo) { // se acuerda de la tableta… o no
-        if (carga >= 2 && r() < 0.3) { p.plazo = t + 30 + r() * 60; } else { p.fase = 'cocina'; p.tf = t; } // o se olvida un rato de la tableta
+        if (carga >= 2 && r() < 0.3) { p.plazo = t + 30 + r() * 60; p.olvido = true; } else { p.fase = 'cocina'; p.tf = t; } // o se olvida un rato de la tableta
       }
       else if (p.fase === 'cocina' && e >= p.cocina) { p.fase = 'pase'; p.tf = t; p.plazo = t + 10 + r() * 30 + (modo === 'papel' ? 20 : 0); }
-      else if (p.fase === 'pase' && t >= p.plazo) { p.fase = 'servido'; L.stats.servidos++; L.stats.esperas.push(t - p.t0); L.stats.ingresos += p.total; }
+      else if (p.fase === 'pase' && t >= p.plazo) { p.fase = 'servido'; p.tfin = t; L.stats.servidos++; L.stats.esperas.push(t - p.t0); L.stats.ingresos += p.total; }
       if (p.fase === 'mesa' && t - p.t0 >= PACIENCIA_MESA) pierde(L, p, 'la mesa se fue');
       if (p.fase === 'apuntado' && t - p.t0 >= PACIENCIA_MESA) pierde(L, p, 'comanda perdida en el bolsillo');
       if (p.fase === 'tableta' && t - p.t0 >= PACIENCIA_TABLETA) pierde(L, p, 'caducó en la tableta');
       if (p.fase === 'pase' && t - p.tf >= PACIENCIA_PASE) pierde(L, p, 'se enfrió en el pase');
     });
-    L.vivos = L.vivos.filter(p => !['servido', 'perdido'].includes(p.fase) || t - p.tfin < 6);
+    L.vivos = L.vivos.filter(p => !['servido', 'perdido'].includes(p.fase) || t - p.tfin < QUEDA);
   };
   return L;
 }
 function pierde(L, p, por) { p.fase = 'perdido'; p.por = por; p.tfin = t; L.stats.perdidos++; if (p.rep) L.stats.repPerd++; }
 
+// ---------------------------------------------------------------- Pintado
+// Cada pedido es SIEMPRE la misma tarjeta: solo se mueve de columna cuando cambia de fase (y entonces se ve
+// entrar). Redibujar todo en cada fotograma reiniciaba la animación de entrada y el tablero parpadeaba.
 let P, K, flujo;
-function tarjeta(p, modo) {
-  const txt = { mesa: 'esperando al camarero', apuntado: 'comanda en papel, camino de cocina', tableta: 'en la tableta, sin copiar', cocina: 'en cocina', pase: 'en el pase', servido: 'servido', perdido: p.por }[p.fase];
-  return `<div class="ped ${p.rep ? 'rep' : 'mesa'} ${p.fase === 'pase' ? 'listo' : ''} ${p.fase === 'perdido' ? 'mal' : ''}" style="${p.fase === 'perdido' ? 'border-color:var(--rojo);background:#fdecea' : ''}"><b>${p.mesa}</b> · ${eur(p.total)}<small>${p.items.join(', ')} · ${txt}</small></div>`;
+const NODOS = { p: new Map(), k: new Map() };
+const COLUMNA = { mesa: 'sala', apuntado: 'sala', tableta: 'sala', perdido: 'sala', cocina: 'cocina', pase: 'pase', servido: 'pase' };
+const MAX_COL = 6;
+function estado(p) {
+  const e = mmss(t - p.tf);
+  switch (p.fase) {
+    case 'mesa': return `esperando al camarero · ${e}`;
+    case 'apuntado': return `comanda en papel, camino de cocina · ${e}${p.ilegible ? ' · letra ilegible: se rehace' : ''}`;
+    case 'tableta': return `en la tableta, sin copiar · ${mmss(t - p.t0)} de 4:00${p.olvido ? ' · ¡olvidado!' : ''}`;
+    case 'cocina': return `en cocina · ${e} de ${mmss(p.cocina)}`;
+    case 'pase': return `listo en el pase · ${e}`;
+    case 'servido': return `servido en ${mmss(p.tfin - p.t0)}`;
+    default: return p.por;
+  }
+}
+function tarjeta(pre, p) {
+  let el = NODOS[pre].get(p.id);
+  if (!el) {
+    el = document.createElement('div');
+    el.innerHTML = `<b>${p.mesa}</b> · ${eur(p.total)}<small class="it">${p.items.join(', ')}</small><small class="es"></small><i class="t"></i>`;
+    NODOS[pre].set(p.id, el);
+  }
+  el.className = `ped ${p.rep ? 'rep' : 'mesa'}${['pase', 'servido'].includes(p.fase) ? ' listo' : ''}${p.fase === 'perdido' ? ' mal' : ''}`;
+  el.style.cssText = p.fase === 'perdido' ? 'border-color:var(--rojo);background:#fdecea' : '';
+  el.querySelector('.es').textContent = estado(p);
+  const barra = el.querySelector('.t');
+  const avance = p.fase === 'cocina' ? (t - p.tf) / p.cocina : p.fase === 'tableta' ? (t - p.t0) / PACIENCIA_TABLETA : null;
+  barra.style.width = avance === null ? '0' : Math.min(100, avance * 100) + '%';
+  barra.classList.toggle('ya', p.fase === 'tableta' && avance > 0.6);
+  return el;
 }
 function pintaLado(L, pre) {
-  const v = L.vivos; const g = f => v.filter(p => f.includes(p.fase));
-  $(`#${pre}_sala`).innerHTML = g(['mesa', 'apuntado', 'tableta', 'perdido']).slice(-5).map(p => tarjeta(p)).join('') || '<small>—</small>';
-  $(`#${pre}_cocina`).innerHTML = g(['cocina']).slice(-5).map(p => tarjeta(p)).join('') || '<small>—</small>';
-  $(`#${pre}_pase`).innerHTML = g(['pase', 'servido']).slice(-5).map(p => tarjeta(p)).join('') || '<small>—</small>';
-  $(`#${pre}_c1`).textContent = g(['mesa', 'apuntado', 'tableta']).length; $(`#${pre}_c2`).textContent = g(['cocina']).length; $(`#${pre}_c3`).textContent = g(['pase']).length;
+  const v = L.vivos, vistos = new Set();
+  for (const col of ['sala', 'cocina', 'pase']) {
+    const caja = $(`#${pre}_${col}`), lista = v.filter(p => COLUMNA[p.fase] === col).slice(-MAX_COL);
+    caja.querySelector(':scope > small.vacio')?.remove();
+    lista.forEach(p => { const el = tarjeta(pre, p); vistos.add(el); if (el.parentNode !== caja) caja.appendChild(el); });
+    [...caja.querySelectorAll(':scope > .ped')].forEach(el => { if (!vistos.has(el)) el.remove(); });
+    if (!lista.length) caja.insertAdjacentHTML('beforeend', '<small class="vacio">—</small>');
+  }
+  const ids = new Set(v.map(p => p.id));
+  for (const id of NODOS[pre].keys()) if (!ids.has(id)) NODOS[pre].delete(id);
+  const g = f => v.filter(p => f.includes(p.fase)).length;
+  $(`#${pre}_c1`).textContent = g(['mesa', 'apuntado', 'tableta']); $(`#${pre}_c2`).textContent = g(['cocina']); $(`#${pre}_c3`).textContent = g(['pase']);
   $(`#${pre}_serv`).textContent = L.stats.servidos; $(`#${pre}_perd`).textContent = L.stats.perdidos; $(`#${pre}_ing`).textContent = eur(L.stats.ingresos);
 }
+
+// ---------------------------------------------------------------- Bucle
 function paso() {
-  for (let k = 0; k < vel; k++) { t++; P.tic(); K.tic(); if (t >= dur + 900) break; }
-  $('#reloj').textContent = mmss(Math.min(t, dur)) + (t > dur ? ' · último servicio' : '');
+  acc += vel / FPS;
+  while (acc >= 1) { acc--; t++; P.tic(); K.tic(); if (t >= dur + 900) break; }
+  $('#reloj').textContent = t <= dur ? mmss(t) : `${mmss(dur)} · fin de la hora punta: se terminan los pedidos en curso (${mmss(t - dur)})`;
   pintaLado(P, 'p'); pintaLado(K, 'k');
-  const vivos = P.vivos.some(p => !['servido', 'perdido'].includes(p.fase)) || K.vivos.some(p => !['servido', 'perdido'].includes(p.fase));
-  if (t >= dur + 900 || (t >= dur && !vivos)) termina();
+  const enCurso = L => L.vivos.some(p => !['servido', 'perdido'].includes(p.fase));
+  if (t >= dur + 900 || (t >= dur && !enCurso(P) && !enCurso(K))) termina();
 }
+const arranca = () => { timer = setInterval(paso, 1000 / FPS); $('#pausa').textContent = '⏸ Pausa'; };
+const para = () => { clearInterval(timer); timer = null; };
+$('#vel').addEventListener('change', () => { vel = +$('#vel').value; });   // se puede cambiar en marcha
+$('#pausa').addEventListener('click', () => {
+  if (!P || $('#empezar').disabled === false) return;
+  if (timer) { para(); $('#pausa').textContent = '▶ Seguir'; $('#msg').textContent = 'En pausa.'; }
+  else { arranca(); $('#msg').textContent = 'Simulando… mismo flujo de pedidos a los dos lados.'; }
+});
 $('#empezar').addEventListener('click', () => {
-  if (timer) return; dur = +$('#dur').value; vel = +$('#vel').value; t = 0; flujo = generaFlujo(dur); P = Lado('papel', flujo); K = Lado('kds', flujo);
-  $('#empezar').disabled = true; $('#msg').textContent = 'Simulando… mismo flujo de pedidos a los dos lados.'; $('#comparativa').textContent = '';
+  if (timer) return; dur = +$('#dur').value; vel = +$('#vel').value; t = 0; acc = 0; flujo = generaFlujo(dur); P = Lado('papel', flujo); K = Lado('kds', flujo);
+  NODOS.p.clear(); NODOS.k.clear(); document.querySelectorAll('.tablero .ped').forEach(el => el.remove());
+  $('#empezar').disabled = true; $('#pausa').disabled = false;
+  $('#msg').textContent = 'Simulando… mismo flujo de pedidos a los dos lados.'; $('#comparativa').textContent = '';
   ['r_papel', 'r_kds'].forEach(id => { $('#' + id).classList.remove('mejor'); [...$('#' + id).children].slice(1).forEach(c => c.textContent = '—'); });
-  timer = setInterval(paso, 1000 / 8);
+  arranca();
 });
 function termina() {
-  clearInterval(timer); timer = null; $('#empezar').disabled = false;
+  para(); $('#empezar').disabled = false; $('#pausa').disabled = true; $('#pausa').textContent = '⏸ Pausa';
   [P, K].forEach(L => L.vivos.filter(p => !['servido', 'perdido'].includes(p.fase)).forEach(p => pierde(L, p, 'se acabó el servicio')));
   const fila = (L, id) => { const m = L.stats.esperas.length ? L.stats.esperas.reduce((a, b) => a + b, 0) / L.stats.esperas.length : 0; L.media = m;
     [L.stats.llegados, L.stats.servidos, L.stats.perdidos, mmss(m) + ' min', eur(L.stats.ingresos)].forEach((v, k) => $('#' + id).children[k + 1].textContent = v); };

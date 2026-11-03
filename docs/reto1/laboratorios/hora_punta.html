@@ -7,10 +7,12 @@
 
 <div class="hud">
  <button class="prim" id="empezar">▶ Simular el servicio</button>
+ <button id="pausa" disabled>⏸ Pausa</button>
  <label>Duración <select id="dur"><option value="60">1 minuto de hora punta</option><option value="180" selected>3 minutos de hora punta</option><option value="600">10 minutos</option></select></label>
- <label>Velocidad <select id="vel"><option value="4">×4</option><option value="8" selected>×8</option><option value="16">×16</option></select></label>
+ <label>Velocidad <select id="vel"><option value="5">×5 · despacio</option><option value="10" selected>×10</option><option value="20">×20</option><option value="40">×40 · rápido</option></select></label>
  <span class="reloj" id="reloj">0:00</span>
 </div>
+<p class="intro" style="margin-top:0"><small>La velocidad es cuántos segundos del servicio pasan por cada segundo real. A ×10, los 3 minutos de hora punta y los platos que quedan en cocina duran algo más de un minuto; a ×5, unos dos. Se puede cambiar en marcha y pausar en cualquier momento. Cada tarjeta indica cuánto lleva en su fase, y la barra inferior marca lo que lleva en cocina o cuánto ha consumido un pedido de reparto de sus 4 minutos antes de caducar (en rojo, cuando le queda poco).</small></p>
 <div class="grid c2">
  <div class="card"><h3>Hoy: papel, voz y tableta</h3>
   <div class="hud"><span>Servidos <b id="p_serv">0</b></span><span>Perdidos <b id="p_perd">0</b></span><span>Ingresos <b id="p_ing">0 €</b></span></div>

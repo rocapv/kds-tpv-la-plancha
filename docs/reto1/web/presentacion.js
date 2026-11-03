@@ -127,7 +127,7 @@ document.addEventListener('click',ev=>{const b=ev.target.closest&&ev.target.clos
 /* ---------- Laboratorios: se ejecutan en la pizarra principal y los demás reciben un espejo ---------- */
 const BOTONES_LAB={'red.html':[['sim_actual','Red actual'],['sim_prop','Red segmentada'],['sim_ambas','Las dos seguidas'],['reiniciar','Reiniciar']],
  'verifactu.html':[['simular','Simular'],['rapido','Emitir 5 al azar'],['verificar','Verificar la cadena'],['borrar','Borrar la última'],['reiniciar','Empezar de cero']],
- 'hora_punta.html':[['empezar','Simular el servicio']]};
+ 'hora_punta.html':[['empezar','Simular el servicio'],['pausa','Pausa / seguir']]};
 const labDe=f=>(f.dataset.lab||f.dataset.src||'').split('/').pop();
 let miId=null,soyPrincipal=false;
 // Los espejos cargan el laboratorio sin sus scripts (srcdoc en un sandbox): solo muestran lo que manda la pizarra.
